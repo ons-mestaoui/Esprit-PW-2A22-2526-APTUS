@@ -1,0 +1,355 @@
+/* ============================================================
+   Aptus — CV Generator Module Styles
+   ============================================================ */
+
+/* ── CV Landing Hero ──────────────────────────── */
+.cv-hero {
+  background: var(--gradient-hero);
+  padding: var(--space-24) var(--space-6);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-12);
+}
+.cv-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.cv-hero__content {
+  position: relative;
+  z-index: 1;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.cv-hero h1 {
+  color: #FFFFFF;
+  font-size: var(--fs-2xl);
+  margin-bottom: var(--space-4);
+}
+.cv-hero p {
+  color: rgba(255,255,255,0.85);
+  font-size: var(--fs-md);
+  margin-bottom: var(--space-8);
+}
+
+/* ── CV Video Placeholder ─────────────────────── */
+.cv-video-placeholder {
+  max-width: 700px;
+  margin: 0 auto var(--space-12);
+  aspect-ratio: 16/9;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  overflow: hidden;
+}
+.cv-video-placeholder__play {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  box-shadow: 0 4px 20px rgba(108, 92, 231, 0.4);
+  transition: var(--transition-base);
+  cursor: pointer;
+}
+.cv-video-placeholder__play:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 30px rgba(108, 92, 231, 0.5);
+}
+
+/* ── CV Steps ─────────────────────────────────── */
+.cv-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+  max-width: 900px;
+  margin: 0 auto var(--space-12);
+}
+.cv-step {
+  text-align: center;
+  padding: var(--space-6);
+  position: relative;
+}
+.cv-step__number {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: #FFFFFF;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4);
+}
+.cv-step__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--space-2);
+}
+.cv-step__text {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Template Gallery ─────────────────────────── */
+.cv-gallery-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: var(--space-6);
+}
+
+/* Sidebar Filters */
+.cv-sidebar {
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--space-4));
+  align-self: start;
+}
+.cv-sidebar__section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+.cv-sidebar__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.cv-sidebar__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.cv-sidebar__option:hover {
+  color: var(--accent-primary);
+}
+.cv-sidebar__option input[type="checkbox"],
+.cv-sidebar__option input[type="radio"] {
+  accent-color: var(--accent-primary);
+}
+
+/* Template Cards */
+.cv-templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-6);
+}
+.template-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: var(--transition-base);
+  cursor: pointer;
+}
+.template-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-primary);
+}
+.template-card__preview {
+  aspect-ratio: 3/4;
+  background: var(--gradient-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.template-card__preview-inner {
+  width: 75%;
+  height: 85%;
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.template-card__preview-line {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-tertiary);
+}
+.template-card__preview-line.accent {
+  background: var(--accent-primary);
+  width: 40%;
+}
+.template-card__preview-line.short { width: 60%; }
+.template-card__preview-line.medium { width: 80%; }
+.template-card__preview-block {
+  height: 20px;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  margin-top: var(--space-2);
+}
+.template-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(108, 92, 231, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: var(--transition-base);
+}
+.template-card:hover .template-card__overlay {
+  opacity: 1;
+}
+.template-card__overlay .btn {
+  color: #FFF;
+  border: 2px solid #FFF;
+  font-size: var(--fs-sm);
+}
+.template-card__info {
+  padding: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.template-card__name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+.template-card__category {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+
+/* ── My CVs Dashboard ─────────────────────────── */
+.my-cvs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-6);
+}
+.my-cv-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: var(--transition-base);
+}
+.my-cv-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+.my-cv-card__preview {
+  aspect-ratio: 3/4;
+  background: var(--gradient-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.my-cv-card__body {
+  padding: var(--space-4);
+}
+.my-cv-card__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--space-1);
+}
+.my-cv-card__date {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-3);
+}
+.my-cv-card__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ── CV Tips Footer ───────────────────────────── */
+.cv-tips {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  margin-top: var(--space-12);
+}
+.cv-tips__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+}
+.cv-tip {
+  display: flex;
+  gap: var(--space-3);
+}
+.cv-tip__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-primary-light);
+  color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cv-tip__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--space-1);
+}
+.cv-tip__text {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+/* ── Trust Badges ─────────────────────────────── */
+.trust-badges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-color);
+}
+.trust-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+.trust-badge i {
+  color: var(--accent-secondary);
+}
+
+/* ── Responsive ───────────────────────────────── */
+@media (max-width: 768px) {
+  .cv-gallery-layout {
+    grid-template-columns: 1fr;
+  }
+  .cv-sidebar {
+    position: static;
+  }
+  .cv-steps {
+    grid-template-columns: 1fr;
+  }
+}
