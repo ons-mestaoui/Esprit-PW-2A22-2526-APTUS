@@ -22,17 +22,24 @@ include_once __DIR__ . '/../../controller/UtilisateurC.php';
 $error = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Les champs
-    $raison_sociale = $_POST['raison_sociale'] ?? '';
-    $siret = $_POST['siret'] ?? '';
-    $secteur = $_POST['secteur'] ?? '';
-    $email = $_POST['email'] ?? '';
-    $password = $_POST['password'] ?? '';
-    $password_confirm = $_POST['password_confirm'] ?? '';
+    $raison_sociale = trim($_POST['raison_sociale'] ?? '');
+    $siret = trim($_POST['siret'] ?? '');
+    $secteur = trim($_POST['secteur'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $password_confirm = trim($_POST['password_confirm'] ?? '');
     
-    // Champs optionnels qui vont pour le moment dans les autres tables ou juste en visuel
-    $site_web = $_POST['site_web'] ?? '';
-    $telephone = $_POST['telephone'] ?? null; // Si on a
+    // Champs optionnels
+    $site_web = trim($_POST['site_web'] ?? '');
+    $telephone = trim($_POST['telephone'] ?? '');
+    $taille = $_POST['taille'] ?? null;
+    $description = trim($_POST['description'] ?? '');
+    $annee_fondation = !empty($_POST['annee_fondation']) ? $_POST['annee_fondation'] : null;
     
+    $adresse = trim($_POST['adresse'] ?? '');
+    $ville = trim($_POST['ville'] ?? '');
+    $pays = trim($_POST['pays'] ?? '');
+
     if ($password !== $password_confirm) {
         $error = "Les mots de passe ne correspondent pas.";
     } elseif (empty($raison_sociale) || empty($siret) || empty($email) || empty($password)) {
@@ -52,26 +59,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($last_id) {
                 try {
-                    $db = config::getConnexion();
+                    include_once __DIR__ . '/../../controller/EntrepriseC.php';
+                    include_once __DIR__ . '/../../controller/ProfilC.php';
+                    $entrepriseC = new EntrepriseC();
+                    $profilC = new ProfilC();
                     
-                    // 1. Profil (Logo et Site Web)
+                    // 1. Profil
                     $photo_base64 = null;
                     if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
                         $imageData = file_get_contents($_FILES['logo']['tmp_name']);
                         $mimeType = !empty($_FILES['logo']['type']) ? $_FILES['logo']['type'] : 'image/jpeg'; 
                         $photo_base64 = 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
                     }
-                    $queryP = $db->prepare("INSERT INTO profil (id_utilisateur, photo, siteWeb, dateCreation, dateMiseAJour) VALUES (:id, :photo, :site, NOW(), NOW())");
-                    $queryP->execute(['id' => $last_id, 'photo' => $photo_base64, 'site' => $site_web]);
+                    $profil = new Profil(null, $last_id, $photo_base64, $description, $adresse, $ville, $pays, null, null, $site_web);
+                    $profilC->addProfil($profil);
                     
-                    // 2. Entreprise (Secteur, SIRET, Raison Sociale)
-                    $queryE = $db->prepare("INSERT INTO entreprise (id_entreprise, secteur, siret, raisonSociale) VALUES (:id, :secteur, :siret, :raisonSociale)");
-                    $queryE->execute([
-                        'id' => $last_id,
-                        'secteur' => $secteur,
-                        'siret' => $siret,
-                        'raisonSociale' => $raison_sociale
-                    ]);
+                    // 2. Entreprise
+                    $ent = new Entreprise($last_id, $secteur, $siret, $raison_sociale, $taille, $annee_fondation);
+                    $entrepriseC->addEntreprise($ent);
 
                     $_SESSION['id_utilisateur'] = $last_id;
                     $_SESSION['nom'] = $raison_sociale;
@@ -166,6 +171,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="auth-form__row">
           <div class="form-group">
+            <label class="form-label" for="ent-annee">Année de fondation</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="calendar" style="width:18px;height:18px;"></i>
+              <input type="number" class="input" id="ent-annee" name="annee_fondation" placeholder="Ex: 2012">
+            </div>
+          </div>
+          <!-- Le div vide pour balancer la grid ou alors l'email peut y aller. Je vais juste mettre un form-group vide pour aligner, ou je met l'année seule -->
+        </div>
+
+        <div class="auth-form__row">
+          <div class="form-group">
+            <label class="form-label" for="ent-pays">Pays</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="globe" style="width:18px;height:18px;"></i>
+              <input type="text" class="input" id="ent-pays" name="pays" placeholder="Ex: France">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ent-ville">Ville</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="map-pin" style="width:18px;height:18px;"></i>
+              <input type="text" class="input" id="ent-ville" name="ville" placeholder="Ex: Paris">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ent-adresse">Adresse Complète</label>
+          <input type="text" class="input" id="ent-adresse" name="adresse" placeholder="12 Avenue des Champs Elysées">
+        </div>
+
+        <div class="auth-form__row">
+          <div class="form-group">
             <label class="form-label" for="ent-email">Email Professionnel</label>
             <div class="input-icon-wrapper">
               <i data-lucide="mail" style="width:18px;height:18px;"></i>
@@ -210,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="drop-zone__prompt">
               <i data-lucide="image" style="width:32px;height:32px;"></i>
               <span>Déposez votre logo ici ou <span class="text-accent">parcourir</span></span>
-              <span class="text-xs text-tertiary">PNG, JPG, SVG — Max. 2MB</span>
+              <span class="text-xs text-tertiary">PNG, JPG, SVG — Max. 200MB</span>
             </div>
             <div class="drop-zone__preview"></div>
           </div>

@@ -13,7 +13,69 @@
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
 </head>
 <body>
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+include_once __DIR__ . '/../../controller/UtilisateurC.php';
+include_once __DIR__ . '/../../controller/AdminC.php';
 
+$error = "";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nom = trim($_POST['nom'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $password_confirm = trim($_POST['password_confirm'] ?? '');
+    $niveau = trim($_POST['niveau'] ?? '1');
+    
+    $adresse = trim($_POST['adresse'] ?? '');
+    $ville = trim($_POST['ville'] ?? '');
+    $pays = trim($_POST['pays'] ?? '');
+    $date_naissance = !empty($_POST['date_naissance']) ? $_POST['date_naissance'] : null;
+
+    if ($password !== $password_confirm) {
+        $error = "Les mots de passe ne correspondent pas.";
+    } elseif (empty($nom) || empty($email) || empty($password)) {
+        $error = "Veuillez remplir tous les champs obligatoires.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Le format de l'adresse email est invalide.";
+    } elseif (strlen($password) < 8) {
+        $error = "Le mot de passe doit contenir au moins 8 caractères.";
+    } else {
+        $utilisateurC = new UtilisateurC();
+        if ($utilisateurC->emailExists($email)) {
+            $error = "Cette adresse email est déjà utilisée.";
+        } else {
+            $utilisateur = new Utilisateur(0, $nom, '', $email, $password, 'Admin', null);
+            $last_id = $utilisateurC->addUtilisateur($utilisateur);
+
+            if ($last_id) {
+                try {
+                    $adminC = new AdminC();
+                    $adminModel = new Admin($last_id, $niveau);
+                    $adminC->addAdmin($adminModel);
+
+                    include_once __DIR__ . '/../../controller/ProfilC.php';
+                    $profilC = new ProfilC();
+                    $p = new Profil(null, $last_id, null, null, $adresse, $ville, $pays, $date_naissance, null, null);
+                    $profilC->addProfil($p);
+
+                    $_SESSION['id_utilisateur'] = $last_id;
+                    $_SESSION['nom'] = $nom;
+                    $_SESSION['role'] = 'Admin';
+                    
+                    header("Location: ../backoffice/dashboard.php");
+                    exit();
+                } catch (Exception $e) {
+                    $error = "Erreur de création admin : " . $e->getMessage();
+                }
+            } else {
+                $error = "Erreur lors de la création du compte.";
+            }
+        }
+    }
+}
+?>
   <div class="auth-page">
     <div class="auth-card">
       <div class="auth-card__logo">
@@ -32,7 +94,13 @@
 
       <!-- Security Notice Removed -->
 
-      <div class="auth-form" id="signup-admin-form">
+      <?php if (!empty($error)): ?>
+        <div class="alert alert-danger" style="color:red; text-align:center; margin-bottom: 15px;">
+            <?php echo htmlspecialchars($error); ?>
+        </div>
+      <?php endif; ?>
+
+      <form class="auth-form" id="signup-admin-form" method="POST" action="">
 
         <div class="form-group">
           <label class="form-label" for="admin-nom">Nom complet</label>
@@ -66,11 +134,45 @@
           </div>
         </div>
 
-        <a href="../backoffice/dashboard.php" class="btn btn-primary btn-lg w-full" style="text-decoration:none;" id="signup-admin-submit">
+        <div class="form-group">
+          <label class="form-label" for="admin-date">Date de naissance</label>
+          <div class="input-icon-wrapper">
+            <i data-lucide="calendar" style="width:18px;height:18px;"></i>
+            <input type="date" class="input" id="admin-date" name="date_naissance">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="admin-pays">Pays</label>
+          <div class="input-icon-wrapper">
+            <i data-lucide="globe" style="width:18px;height:18px;"></i>
+            <input type="text" class="input" id="admin-pays" name="pays" placeholder="Ex: Tunisie" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="admin-ville">Ville</label>
+          <div class="input-icon-wrapper">
+            <i data-lucide="map-pin" style="width:18px;height:18px;"></i>
+            <input type="text" class="input" id="admin-ville" name="ville" placeholder="Ex: Tunis" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="admin-adresse">Adresse Complète</label>
+          <input type="text" class="input" id="admin-adresse" name="adresse" placeholder="Ex: 12 Rue Principale">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="admin-niveau">Niveau (ex: 1, 2, SuperAdmin)</label>
+          <div class="input-icon-wrapper">
+            <i data-lucide="award" style="width:18px;height:18px;"></i>
+            <input type="text" class="input" id="admin-niveau" name="niveau" placeholder="ex: SuperAdmin" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg w-full" id="signup-admin-submit">
           <i data-lucide="shield-check" style="width:18px;height:18px;"></i>
           Créer le compte admin
-        </a>
-      </div>
+        </button>
+      </form>
 
       <div class="auth-footer">
         <a href="login.php">← Retour à la connexion</a>

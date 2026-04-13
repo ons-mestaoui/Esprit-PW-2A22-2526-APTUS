@@ -21,8 +21,8 @@ include_once __DIR__ . '/../../controller/UtilisateurC.php';
 
 $error = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'] ?? '';
-    $password = $_POST['password'] ?? '';
+    $email = trim($_POST['email'] ?? '');
+    $password = trim($_POST['password'] ?? '');
 
     if (!empty($email) && !empty($password)) {
         $db = config::getConnexion();
@@ -34,15 +34,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($user && password_verify($password, $user['motDePasse'])) {
                 $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
                 $_SESSION['nom'] = $user['nom'];
-                $_SESSION['prenom'] = $user['prenom'];
+                $_SESSION['prenom'] = $user['prenom'] ?? '';
                 $_SESSION['role'] = $user['role'];
 
-                if ($user['role'] === 'Admin') {
+                // Redirection basée sur le rôle (insensible à la casse par sécurité)
+                $role = strtolower($user['role']);
+                if ($role === 'admin') {
                     header("Location: ../backoffice/dashboard.php");
-                } elseif ($user['role'] === 'Candidat') {
+                } elseif ($role === 'candidat') {
                     header("Location: jobs_feed.php");
-                } elseif ($user['role'] === 'Entreprise') {
+                } elseif ($role === 'entreprise') {
                     header("Location: hr_posts.php");
+                } else {
+                    // Par défaut si rôle inconnu
+                    header("Location: landing.php");
                 }
                 exit();
             } else {

@@ -1,3 +1,11 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$userName = $_SESSION['nom'] ?? 'Utilisateur';
+$userRole = $_SESSION['role'] ?? 'Candidat';
+$currentRole = $userRole;
+?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
@@ -40,7 +48,6 @@
        TOP NAVIGATION BAR
        ═══════════════════════════════════════════ -->
   <nav class="landing-nav glass-nav" id="landing-nav">
-    <?php $currentRole = isset($userRole) ? $userRole : 'Candidat'; ?>
     <!-- Logo -->
     <a href="<?php echo ($currentRole === 'Entreprise') ? 'hr_posts.php' : 'jobs_feed.php'; ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
       <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="landing-nav__logo-icon" style="background:none;">
@@ -99,7 +106,7 @@
             Paramètres
           </a>
           <div class="dropdown-divider"></div>
-          <a href="login.php" class="dropdown-item" id="dropdown-logout" style="color:var(--accent-tertiary);">
+          <a href="logout.php" class="dropdown-item" id="dropdown-logout" style="color:var(--accent-tertiary);">
             <i data-lucide="log-out" style="width:16px;height:16px;"></i>
             Déconnexion
           </a>

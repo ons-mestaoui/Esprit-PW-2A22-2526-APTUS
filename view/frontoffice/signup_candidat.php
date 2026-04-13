@@ -21,15 +21,20 @@ include_once __DIR__ . '/../../controller/UtilisateurC.php';
 
 $error = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nom = $_POST['nom'] ?? '';
-    $prenom = $_POST['prenom'] ?? '';
-    $email = $_POST['email'] ?? '';
-    $password = $_POST['password'] ?? '';
-    $password_confirm = $_POST['password_confirm'] ?? '';
-    $telephone = $_POST['telephone'] ?? null;
+    $nom = trim($_POST['nom'] ?? '');
+    $prenom = trim($_POST['prenom'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $password_confirm = trim($_POST['password_confirm'] ?? '');
+    $telephone = trim($_POST['telephone'] ?? '');
     $competences = $_POST['competences'] ?? '';
     $niveauEtudes = $_POST['niveauEtudes'] ?? null;
     $niveau = $_POST['niveau'] ?? null;
+    
+    $adresse = trim($_POST['adresse'] ?? '');
+    $ville = trim($_POST['ville'] ?? '');
+    $pays = trim($_POST['pays'] ?? '');
+    $date_naissance = !empty($_POST['date_naissance']) ? $_POST['date_naissance'] : null;
 
     if ($password !== $password_confirm) {
         $error = "Les mots de passe ne correspondent pas.";
@@ -50,14 +55,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($last_id) {
                 // Add Candidat details
                 try {
-                    $db = config::getConnexion();
-                    $query = $db->prepare("INSERT INTO candidat (id_candidat, competences, niveauEtudes, niveau) VALUES (:id, :competences, :niveauEtudes, :niveau)");
-                    $query->execute([
-                        'id' => $last_id,
-                        'competences' => $competences,
-                        'niveauEtudes' => $niveauEtudes,
-                        'niveau' => $niveau
-                    ]);
+                    include_once __DIR__ . '/../../controller/CandidatC.php';
+                    include_once __DIR__ . '/../../controller/ProfilC.php';
+                    $candidatC = new CandidatC();
+                    $profilC = new ProfilC();
+                    
+                    $c = new Candidat($last_id, $competences, $niveauEtudes, $niveau);
+                    $candidatC->addCandidat($c);
+
+                    $p = new Profil(null, $last_id, null, null, $adresse, $ville, $pays, $date_naissance, null, null);
+                    $profilC->addProfil($p);
+
                     // Set Session for Auto-Login
                     $_SESSION['id_utilisateur'] = $last_id;
                     $_SESSION['nom'] = $nom;
@@ -152,6 +160,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <div class="input-icon-wrapper">
             <i data-lucide="phone" style="width:18px;height:18px;"></i>
             <input type="tel" class="input" id="candidat-tel" name="telephone" placeholder="+216 XX XXX XXX">
+          </div>
+        </div>
+
+        <div class="auth-form__row">
+          <div class="form-group">
+            <label class="form-label" for="candidat-date">Date de naissance</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="calendar" style="width:18px;height:18px;"></i>
+              <input type="date" class="input" id="candidat-date" name="date_naissance">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="candidat-pays">Pays</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="globe" style="width:18px;height:18px;"></i>
+              <input type="text" class="input" id="candidat-pays" name="pays" placeholder="Ex: Tunisie">
+            </div>
+          </div>
+        </div>
+        
+        <div class="auth-form__row">
+          <div class="form-group">
+            <label class="form-label" for="candidat-ville">Ville</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="map-pin" style="width:18px;height:18px;"></i>
+              <input type="text" class="input" id="candidat-ville" name="ville" placeholder="Ex: Tunis">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="candidat-adresse">Adresse Complète</label>
+            <input type="text" class="input" id="candidat-adresse" name="adresse" placeholder="Ex: 12 Rue des Oliviers">
           </div>
         </div>
 

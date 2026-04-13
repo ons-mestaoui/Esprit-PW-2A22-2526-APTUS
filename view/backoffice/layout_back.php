@@ -1,3 +1,16 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Access Control: Only Admins can access backoffice
+if (!isset($_SESSION['role']) || strtolower($_SESSION['role']) !== 'admin') {
+    header("Location: ../frontoffice/login.php");
+    exit();
+}
+
+$adminName = $_SESSION['nom'] ?? 'Administrateur';
+?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
@@ -73,7 +86,7 @@
 
       <!-- Footer / Logout -->
       <div class="sidebar__footer">
-        <a href="../frontoffice/login.php" class="sidebar__logout" id="sidebar-logout">
+        <a href="../frontoffice/logout.php" class="sidebar__logout" id="sidebar-logout">
           <i data-lucide="log-out"></i>
           <span>Déconnexion</span>
         </a>
@@ -130,7 +143,7 @@
               Paramètres
             </a>
             <div class="dropdown-divider"></div>
-            <a href="../frontoffice/login.php" class="dropdown-item" style="color:var(--accent-tertiary);">
+            <a href="../frontoffice/logout.php" class="dropdown-item" style="color:var(--accent-tertiary);">
               <i data-lucide="log-out" style="width:16px;height:16px;"></i>
               Déconnexion
             </a>

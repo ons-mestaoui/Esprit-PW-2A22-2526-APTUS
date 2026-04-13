@@ -14,17 +14,16 @@ $utilisateurC = new UtilisateurC();
 $id = $_SESSION['id_utilisateur'];
 $user = $utilisateurC->getUtilisateurById($id);
 
-// Récupérer données candidat
-$db = config::getConnexion();
-$stmt = $db->prepare("SELECT * FROM candidat WHERE id_candidat = :id");
-$stmt->execute(['id' => $id]);
-$candidat = $stmt->fetch();
+include_once __DIR__ . '/../../controller/CandidatC.php';
+include_once __DIR__ . '/../../controller/ProfilC.php';
+
+$candidatC = new CandidatC();
+$profilC = new ProfilC();
+
+$candidat = $candidatC->getCandidatById($id);
 $competences = $candidat ? htmlspecialchars($candidat['competences'] ?? '') : '';
 
-// Récupérer données profil
-$stmtP = $db->prepare("SELECT * FROM profil WHERE id_utilisateur = :id");
-$stmtP->execute(['id' => $id]);
-$profil = $stmtP->fetch();
+$profil = $profilC->getProfilByIdUtilisateur($id);
 
 $success = "";
 $error = "";
@@ -37,6 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $competences_update = $_POST['competences'] ?? '';
     $niveauEtudes = $_POST['niveauEtudes'] ?? null;
     $niveau = $_POST['niveau'] ?? null;
+    
+    $adresse = $_POST['adresse'] ?? null;
+    $ville = $_POST['ville'] ?? null;
+    $pays = $_POST['pays'] ?? null;
+    $date_naissance = !empty($_POST['date_naissance']) ? $_POST['date_naissance'] : null;
 
     if (empty($nom) || empty($prenom) || empty($email)) {
         $error = "Veuillez remplir les champs obligatoires (Nom, Prénom, Email).";
@@ -60,48 +64,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Mettre à jour utilisateur
-            // ...
-            $query = $db->prepare("UPDATE utilisateur SET nom = :nom, prenom = :prenom, email = :email, telephone = :telephone WHERE id_utilisateur = :id");
-            $query->execute([
-                'id' => $id,
-                'nom' => $nom,
-                'prenom' => $prenom,
-                'email' => $email,
-                'telephone' => $telephone
-            ]);
+            $utilisateur_model = new Utilisateur($id, $nom, $prenom, $email, $user['motDePasse'], $user['role'], $telephone, $user['photo'] ?? null);
+            $utilisateurC->updateUtilisateur($utilisateur_model, $id);
 
             // Mettre à jour profil
+            $p = new Profil(null, $id, $photo_base64, $profil['bio']??null, $adresse, $ville, $pays, $date_naissance, $profil['linkedin']??null, $profil['siteWeb']??null);
             if ($profil) {
-                $queryP = $db->prepare("UPDATE profil SET photo = :photo, dateMiseAJour = NOW() WHERE id_utilisateur = :id");
-                $queryP->execute(['id' => $id, 'photo' => $photo_base64]);
+                $profilC->updateProfil($p, $id);
             } else {
-                $queryP = $db->prepare("INSERT INTO profil (id_utilisateur, photo, dateCreation, dateMiseAJour) VALUES (:id, :photo, NOW(), NOW())");
-                $queryP->execute(['id' => $id, 'photo' => $photo_base64]);
+                $profilC->addProfil($p);
             }
             
             // Mettre à jour candidat 
+            $c = new Candidat($id, $competences_update, $niveauEtudes, $niveau);
             if ($candidat) {
-                $queryC = $db->prepare("UPDATE candidat SET competences = :competences, niveauEtudes = :niveauEtudes, niveau = :niveau WHERE id_candidat = :id");
-                $queryC->execute([
-                    'id' => $id, 
-                    'competences' => $competences_update,
-                    'niveauEtudes' => $niveauEtudes,
-                    'niveau' => $niveau
-                ]);
+                $candidatC->updateCandidat($c, $id);
             } else {
-                $queryC = $db->prepare("INSERT INTO candidat (id_candidat, competences, niveauEtudes, niveau) VALUES (:id, :competences, :niveauEtudes, :niveau)");
-                $queryC->execute([
-                    'id' => $id, 
-                    'competences' => $competences_update,
-                    'niveauEtudes' => $niveauEtudes,
-                    'niveau' => $niveau
-                ]);
+                $candidatC->addCandidat($c);
             }
 
             // Rafraîchir les données
             $user = $utilisateurC->getUtilisateurById($id);
-            $stmtP->execute(['id' => $id]);
-            $profil = $stmtP->fetch();
+            $candidat = $candidatC->getCandidatById($id);
+            $profil = $profilC->getProfilByIdUtilisateur($id);
             
             $_SESSION['nom'] = $nom;
             $_SESSION['prenom'] = $prenom;
@@ -230,6 +215,32 @@ if (!isset($content)) {
             <i data-lucide="phone" style="width:18px;height:18px;"></i>
             <input type="tel" name="telephone" class="input" value="<?php echo htmlspecialchars($user['telephone'] ?? ''); ?>">
           </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Date de naissance</label>
+          <div class="input-icon-wrapper">
+            <i data-lucide="calendar" style="width:18px;height:18px;"></i>
+            <input type="date" name="date_naissance" class="input" value="<?php echo htmlspecialchars($profil['dateNaissance'] ?? ''); ?>">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pays</label>
+          <div class="input-icon-wrapper">
+            <i data-lucide="globe" style="width:18px;height:18px;"></i>
+            <input type="text" name="pays" class="input" value="<?php echo htmlspecialchars($profil['pays'] ?? ''); ?>" placeholder="Ex: Tunisie">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ville</label>
+          <div class="input-icon-wrapper">
+            <i data-lucide="map-pin" style="width:18px;height:18px;"></i>
+            <input type="text" name="ville" class="input" value="<?php echo htmlspecialchars($profil['ville'] ?? ''); ?>" placeholder="Ex: Tunis">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Adresse Complète</label>
+          <input type="text" name="adresse" class="input" value="<?php echo htmlspecialchars($profil['adresse'] ?? ''); ?>" placeholder="Ex: 12 Rue des Oliviers">
         </div>
 
         <div class="form-group">
