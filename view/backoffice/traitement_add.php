@@ -1,4 +1,5 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controller/FormationController.php';
 require_once __DIR__ . '/../../model/Formation.php';

@@ -1,4 +1,5 @@
 <?php 
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $pageTitle = "Mes Formations - Aptus AI";
 
 if (!isset($content)) {
