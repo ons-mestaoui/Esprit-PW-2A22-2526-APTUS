@@ -179,7 +179,7 @@ if (!isset($content)) {
           <td>
             <div class="flex gap-1">
               <a href="offres_admin.php?action=edit&id=<?php echo $o['id_offre']; ?>" class="btn btn-sm btn-ghost" title="Éditer"><i data-lucide="pencil" style="width:14px;height:14px;"></i></a>
-              <a href="offres_admin.php?action=delete&id=<?php echo $o['id_offre']; ?>" onclick="return confirm('Souhaitez-vous vraiment supprimer cette offre ?');" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></a>
+              <button type="button" onclick="confirmDelete(<?php echo $o['id_offre']; ?>, '<?php echo htmlspecialchars(addslashes($o['titre'] ?? '')); ?>')" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
             </div>
           </td>
         </tr>
@@ -301,4 +301,40 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 });
+
+function confirmDelete(id, titre) {
+    var titleEl = document.getElementById('delete-offer-title');
+    if(titleEl) titleEl.innerText = titre;
+    
+    var btnEl = document.getElementById('confirm-delete-btn');
+    if(btnEl) btnEl.href = "offres_admin.php?action=delete&id=" + id;
+    
+    var overlay = document.getElementById('delete-confirm-modal');
+    if (overlay) {
+        overlay.classList.add('active');
+        var modal = overlay.querySelector('.modal');
+        if (modal) modal.classList.add('active');
+    }
+}
 </script>
+
+<!-- ═══ Delete Confirmation Modal ═══ -->
+<div class="modal-overlay" id="delete-confirm-modal">
+  <div class="modal" style="max-width:400px; text-align:center;">
+    <div class="modal-body" style="padding: 2.5rem 1.5rem;">
+      <div style="background: rgba(220, 38, 38, 0.08); width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+        <i data-lucide="alert-triangle" style="width:34px;height:34px;color:#dc2626;"></i>
+      </div>
+      <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary);">Confirmation de suppression</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.5;">
+        Êtes-vous sûr de vouloir supprimer l'offre <br><strong id="delete-offer-title" style="color:var(--text-primary);"></strong> ?<br>Cette action est irréversible.
+      </p>
+      <div class="flex gap-3 justify-center">
+        <button type="button" class="btn btn-secondary modal-close" style="flex:1;">Annuler</button>
+        <a href="#" id="confirm-delete-btn" class="btn btn-primary" style="flex:1; background: #dc2626; border-color: #dc2626; display:flex; justify-content:center;">
+          Oui, Supprimer
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
