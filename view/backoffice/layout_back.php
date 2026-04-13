@@ -160,12 +160,44 @@
 
   <!-- Scripts -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="/aptus_first_official_version/view/assets/js/nav.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/forms.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/charts.js"></script>
   <?php if (isset($pageJS)): ?>
     <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
-  <script>lucide.createIcons();</script>
+  <script>
+    lucide.createIcons();
+
+    // SweetAlert2 Toast Global Configuration
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 4000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+      }
+    });
+
+    <?php if (isset($_SESSION['flash_success'])): ?>
+      Toast.fire({
+        icon: 'success',
+        title: <?php echo json_encode($_SESSION['flash_success']); ?>
+      });
+      <?php unset($_SESSION['flash_success']); ?>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['flash_error'])): ?>
+      Toast.fire({
+        icon: 'error',
+        title: <?php echo json_encode($_SESSION['flash_error']); ?>
+      });
+      <?php unset($_SESSION['flash_error']); ?>
+    <?php endif; ?>
+  </script>
 </body>
 </html>

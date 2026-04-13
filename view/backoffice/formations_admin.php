@@ -55,18 +55,7 @@ if (!isset($content)) {
                 Erreur: Impossible de supprimer une formation qui a des étudiants inscrits.
             </div>
         <?php endif; ?>
-        <?php if (isset($_SESSION['flash_success'])): ?>
-            <div style="color: green; margin: 0 15px; font-weight: bold;">
-                <?php echo $_SESSION['flash_success'];
-                unset($_SESSION['flash_success']); ?>
-            </div>
-        <?php endif; ?>
-        <?php if (isset($_SESSION['flash_error'])): ?>
-            <div style="color: red; margin: 0 15px; font-weight: bold;">
-                <?php echo $_SESSION['flash_error'];
-                unset($_SESSION['flash_error']); ?>
-            </div>
-        <?php endif; ?>
+
 
         <button class="btn btn-primary" data-modal="add-formation-modal" id="add-formation-btn">
             <i data-lucide="plus" style="width:18px;height:18px;"></i>
