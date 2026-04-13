@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $motDePasse = $_POST['motDePasse'] ?? '';
     $role = $_POST['role'] ?? 'Candidat';
     $telephone = $_POST['telephone'] ?? null;
+    $linkedin = $_POST['linkedin'] ?? '';
     $id_utilisateur = isset($_POST['id_utilisateur']) ? intval($_POST['id_utilisateur']) : 0;
 
     if (empty($nom) || empty($prenom) || empty($email)) {
@@ -44,24 +45,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $utilisateur = new Utilisateur($id_utilisateur, $nom, $prenom, $email, $motDePasse, $role, $telephone);
 
         if ($formAction === 'add') {
-            $utilisateurC->addUtilisateur($utilisateur);
+            $last_id = $utilisateurC->addUtilisateur($utilisateur);
+            if ($last_id) {
+                include_once __DIR__ . '/../../controller/ProfilC.php';
+                $profilC = new ProfilC();
+                $profil = new Profil(null, $last_id, null, null, null, null, null, null, $linkedin, null);
+                $profilC->addProfil($profil);
+            }
             header('Location: users.php');
             exit();
         } elseif ($formAction === 'update' && $id_utilisateur > 0) {
             $utilisateurC->updateUtilisateur($utilisateur, $id_utilisateur);
+            
+            include_once __DIR__ . '/../../controller/ProfilC.php';
+            $profilC = new ProfilC();
+            $existingProfil = $profilC->getProfilByIdUtilisateur($id_utilisateur);
+            
+            if ($existingProfil) {
+                $profil = new Profil(
+                    $existingProfil['id_profil'], $id_utilisateur, 
+                    $existingProfil['photo'], $existingProfil['bio'], 
+                    $existingProfil['adresse'], $existingProfil['ville'], $existingProfil['pays'], 
+                    $existingProfil['dateNaissance'], $linkedin, $existingProfil['siteWeb']
+                );
+                $profilC->updateProfil($profil, $id_utilisateur);
+            } else {
+                $profil = new Profil(null, $id_utilisateur, null, null, null, null, null, null, $linkedin, null);
+                $profilC->addProfil($profil);
+            }
+            
             header('Location: users.php');
             exit();
         }
     }
 }
 
-// If editing, fetch the user data
+// If editing, fetch the user data with profile
 if ($action === 'edit' && $id_edit > 0) {
-    $userToEdit = $utilisateurC->getUtilisateurById($id_edit);
+    try {
+        $db = config::getConnexion();
+        $query = $db->prepare("SELECT u.*, p.linkedin FROM utilisateur u LEFT JOIN profil p ON u.id_utilisateur = p.id_utilisateur WHERE u.id_utilisateur = :id");
+        $query->execute(['id' => $id_edit]);
+        $userToEdit = $query->fetch();
+    } catch (Exception $e) {
+        $userToEdit = $utilisateurC->getUtilisateurById($id_edit);
+    }
 }
 
-// Fetch all users for the list
-$usersListe = $utilisateurC->listerUtilisateurs();
+// Fetch all users with profile data for the list
+try {
+    $db = config::getConnexion();
+    $usersListe = $db->query("SELECT u.*, p.linkedin, p.dateCreation, p.dateMiseAJour 
+                              FROM utilisateur u 
+                              LEFT JOIN profil p ON u.id_utilisateur = p.id_utilisateur")->fetchAll();
+} catch (Exception $e) {
+    $usersListe = $utilisateurC->listerUtilisateurs(); // Fallback
+}
 
 if (!isset($content)) {
     $content = __FILE__;
@@ -145,6 +184,11 @@ if (!isset($content)) {
             <input type="text" name="telephone" class="input" value="<?php echo htmlspecialchars($userToEdit['telephone'] ?? ''); ?>">
         </div>
 
+        <div class="form-group mb-4">
+            <label class="form-label">LinkedIn (URL)</label>
+            <input type="url" name="linkedin" class="input" value="<?php echo htmlspecialchars($userToEdit['linkedin'] ?? ''); ?>" placeholder="https://linkedin.com/in/...">
+        </div>
+
         <div class="mt-6 flex gap-3">
             <button type="submit" class="btn btn-primary">
                 <?php echo $action === 'edit' ? 'Sauvegarder les modifications' : 'Créer l\'utilisateur'; ?>
@@ -163,7 +207,8 @@ if (!isset($content)) {
         <th>Utilisateur</th>
         <th>Email</th>
         <th>Rôle</th>
-        <th>Téléphone</th>
+        <th>Téléphone / LinkedIn</th>
+        <th>Création / Maj</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -189,7 +234,22 @@ if (!isset($content)) {
                 ?>
                 <span class="badge <?php echo $badge; ?>"><?php echo htmlspecialchars($u['role']); ?></span>
             </td>
-            <td class="text-sm text-secondary"><?php echo htmlspecialchars($u['telephone'] ?? '-'); ?></td>
+            <td class="text-sm">
+                <div class="flex flex-column gap-1">
+                    <span class="text-secondary"><?php echo htmlspecialchars($u['telephone'] ?? '-'); ?></span>
+                    <?php if (!empty($u['linkedin'])): ?>
+                        <a href="<?php echo htmlspecialchars($u['linkedin']); ?>" target="_blank" class="text-accent text-xs" style="text-decoration:none;">
+                            <i data-lucide="linkedin" style="width:12px;height:12px;vertical-align:middle;"></i> Profile
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </td>
+            <td class="text-xs text-secondary">
+                <div class="flex flex-column">
+                    <span>Créé: <?php echo !empty($u['dateCreation']) ? date('d/m/Y', strtotime($u['dateCreation'])) : '-'; ?></span>
+                    <span>Màj: <?php echo !empty($u['dateMiseAJour']) ? date('d/m/Y', strtotime($u['dateMiseAJour'])) : '-'; ?></span>
+                </div>
+            </td>
             <td>
               <div class="flex gap-1">
                 <a href="users.php?action=edit&id=<?php echo $u['id_utilisateur']; ?>" class="btn btn-sm btn-ghost" title="Éditer">

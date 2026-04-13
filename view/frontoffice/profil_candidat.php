@@ -182,6 +182,12 @@ if (!isset($content)) {
         <i data-lucide="phone" style="width:16px;height:16px;color:var(--text-tertiary);flex-shrink:0;"></i>
         <span class="text-sm"><?php echo htmlspecialchars($user['telephone'] ?? 'Non renseigné'); ?></span>
       </div>
+      <?php if (!empty($profil['dateMiseAJour'])): ?>
+      <div style="display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-2);padding-top:var(--space-2);border-top:1px dashed var(--border-color);">
+        <i data-lucide="refresh-cw" style="width:14px;height:14px;color:var(--text-tertiary);flex-shrink:0;"></i>
+        <span class="text-xs text-secondary">Mis à jour le <?php echo date('d/m/Y', strtotime($profil['dateMiseAJour'])); ?></span>
+      </div>
+      <?php endif; ?>
     </div>
   </div>
 

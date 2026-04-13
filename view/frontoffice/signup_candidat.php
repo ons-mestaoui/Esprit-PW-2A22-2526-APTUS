@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = trim($_POST['password'] ?? '');
     $password_confirm = trim($_POST['password_confirm'] ?? '');
     $telephone = trim($_POST['telephone'] ?? '');
+    $linkedin = trim($_POST['linkedin'] ?? '');
     $competences = $_POST['competences'] ?? '';
     $niveauEtudes = $_POST['niveauEtudes'] ?? null;
     $niveau = $_POST['niveau'] ?? null;
@@ -63,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $c = new Candidat($last_id, $competences, $niveauEtudes, $niveau);
                     $candidatC->addCandidat($c);
 
-                    $p = new Profil(null, $last_id, null, null, $adresse, $ville, $pays, $date_naissance, null, null);
-                    $profilC->addProfil($p);
+                    $p = new Profil(null, $last_id, null, null, $adresse, $ville, $pays, $date_naissance, $linkedin, null);
+    $profilC->addProfil($p);
 
                     // Set Session for Auto-Login
                     $_SESSION['id_utilisateur'] = $last_id;
@@ -155,11 +156,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="candidat-tel">Téléphone</label>
-          <div class="input-icon-wrapper">
-            <i data-lucide="phone" style="width:18px;height:18px;"></i>
-            <input type="tel" class="input" id="candidat-tel" name="telephone" placeholder="+216 XX XXX XXX">
+        <div class="auth-form__row">
+          <div class="form-group">
+            <label class="form-label" for="candidat-tel">Téléphone</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="phone" style="width:18px;height:18px;"></i>
+              <input type="tel" class="input" id="candidat-tel" name="telephone" placeholder="+216 XX XXX XXX">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="candidat-linkedin">LinkedIn</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="linkedin" style="width:18px;height:18px;"></i>
+              <input type="url" class="input" id="candidat-linkedin" name="linkedin" placeholder="https://linkedin.com/in/...">
+            </div>
           </div>
         </div>
 

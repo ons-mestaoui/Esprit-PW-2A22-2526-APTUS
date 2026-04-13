@@ -197,6 +197,12 @@ $fmtDate = date('d M. Y', strtotime($creationDate));
         <i data-lucide="calendar" style="width:16px;height:16px;color:var(--text-tertiary);flex-shrink:0;"></i>
         <span class="text-sm">Inscrit le <?php echo $fmtDate; ?></span>
       </div>
+      <?php if (!empty($profil['dateMiseAJour'])): ?>
+      <div style="display:flex;align-items:center;gap:var(--space-3);">
+        <i data-lucide="refresh-cw" style="width:16px;height:16px;color:var(--text-tertiary);flex-shrink:0;"></i>
+        <span class="text-sm">Mis à jour le <?php echo date('d/m/Y', strtotime($profil['dateMiseAJour'])); ?></span>
+      </div>
+      <?php endif; ?>
     </div>
   </div>
 

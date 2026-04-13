@@ -27,6 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = trim($_POST['password'] ?? '');
     $password_confirm = trim($_POST['password_confirm'] ?? '');
     $niveau = trim($_POST['niveau'] ?? '1');
+    $telephone = trim($_POST['telephone'] ?? '');
+    $linkedin = trim($_POST['linkedin'] ?? '');
     
     $adresse = trim($_POST['adresse'] ?? '');
     $ville = trim($_POST['ville'] ?? '');
@@ -46,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($utilisateurC->emailExists($email)) {
             $error = "Cette adresse email est déjà utilisée.";
         } else {
-            $utilisateur = new Utilisateur(0, $nom, '', $email, $password, 'Admin', null);
+            $utilisateur = new Utilisateur(0, $nom, '', $email, $password, 'Admin', $telephone);
             $last_id = $utilisateurC->addUtilisateur($utilisateur);
 
             if ($last_id) {
@@ -57,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     include_once __DIR__ . '/../../controller/ProfilC.php';
                     $profilC = new ProfilC();
-                    $p = new Profil(null, $last_id, null, null, $adresse, $ville, $pays, $date_naissance, null, null);
+                    $p = new Profil(null, $last_id, null, null, $adresse, $ville, $pays, $date_naissance, $linkedin, null);
                     $profilC->addProfil($p);
 
                     $_SESSION['id_utilisateur'] = $last_id;
@@ -131,6 +133,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <div class="input-icon-wrapper">
             <i data-lucide="lock" style="width:18px;height:18px;"></i>
             <input type="password" class="input" id="admin-password2" name="password_confirm" placeholder="Confirmez">
+          </div>
+        </div>
+
+        <div class="auth-form__row">
+          <div class="form-group">
+            <label class="form-label" for="admin-tel">Téléphone</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="phone" style="width:18px;height:18px;"></i>
+              <input type="tel" class="input" id="admin-tel" name="telephone" placeholder="+216 XX XXX XXX">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="admin-linkedin">LinkedIn</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="linkedin" style="width:18px;height:18px;"></i>
+              <input type="url" class="input" id="admin-linkedin" name="linkedin" placeholder="https://linkedin.com/in/...">
+            </div>
           </div>
         </div>
 

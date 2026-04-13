@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Champs optionnels
     $site_web = trim($_POST['site_web'] ?? '');
     $telephone = trim($_POST['telephone'] ?? '');
+    $linkedin = trim($_POST['linkedin'] ?? '');
     $taille = $_POST['taille'] ?? null;
     $description = trim($_POST['description'] ?? '');
     $annee_fondation = !empty($_POST['annee_fondation']) ? $_POST['annee_fondation'] : null;
@@ -71,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $mimeType = !empty($_FILES['logo']['type']) ? $_FILES['logo']['type'] : 'image/jpeg'; 
                         $photo_base64 = 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
                     }
-                    $profil = new Profil(null, $last_id, $photo_base64, $description, $adresse, $ville, $pays, null, null, $site_web);
+                    $profil = new Profil(null, $last_id, $photo_base64, $description, $adresse, $ville, $pays, null, $linkedin, $site_web);
                     $profilC->addProfil($profil);
                     
                     // 2. Entreprise
@@ -206,14 +207,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="ent-email">Email Professionnel</label>
             <div class="input-icon-wrapper">
               <i data-lucide="mail" style="width:18px;height:18px;"></i>
-              <input type="email" class="input" id="ent-email" name="email" placeholder="contact@entreprise.com">
+              <input type="email" class="input" id="ent-email" name="email" placeholder="contact@entreprise.com" required>
             </div>
           </div>
+          <div class="form-group">
+            <label class="form-label" for="ent-tel">Téléphone</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="phone" style="width:18px;height:18px;"></i>
+              <input type="tel" class="input" id="ent-tel" name="telephone" placeholder="+216 XX XXX XXX">
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-form__row">
           <div class="form-group">
             <label class="form-label" for="ent-site">Site Web</label>
             <div class="input-icon-wrapper">
               <i data-lucide="globe" style="width:18px;height:18px;"></i>
               <input type="url" class="input" id="ent-site" name="site_web" placeholder="https://www.entreprise.com">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ent-linkedin">LinkedIn</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="linkedin" style="width:18px;height:18px;"></i>
+              <input type="url" class="input" id="ent-linkedin" name="linkedin" placeholder="https://linkedin.com/company/...">
             </div>
           </div>
         </div>
