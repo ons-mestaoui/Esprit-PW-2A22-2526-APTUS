@@ -8,10 +8,23 @@ class FormationController
     {
         $db = config::getConnexion();
         try {
-            $liste = $db->query("SELECT * FROM Formation");
+            $liste = $db->query("
+                SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                FROM Formation f 
+                LEFT JOIN utilisateur u ON f.id_tuteur = u.id
+            ");
             return $liste;
         } catch (Exception $e) {
-            die('Erreur: ' . $e->getMessage());
+            try {
+                $liste = $db->query("
+                    SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                    FROM Formation f 
+                    LEFT JOIN User u ON f.id_tuteur = u.id
+                ");
+                return $liste;
+            } catch (Exception $e2) {
+                die('Erreur: ' . $e2->getMessage());
+            }
         }
     }
 
@@ -167,11 +180,27 @@ class FormationController
     {
         $db = config::getConnexion();
         try {
-            $query = $db->prepare("SELECT * FROM Formation WHERE id_formation = :id");
+            $query = $db->prepare("
+                SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                FROM Formation f 
+                LEFT JOIN utilisateur u ON f.id_tuteur = u.id 
+                WHERE f.id_formation = :id
+            ");
             $query->execute(['id' => $id]);
             return $query->fetch();
         } catch (Exception $e) {
-            die('Erreur: ' . $e->getMessage());
+            try {
+                $query = $db->prepare("
+                    SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                    FROM Formation f 
+                    LEFT JOIN User u ON f.id_tuteur = u.id 
+                    WHERE f.id_formation = :id
+                ");
+                $query->execute(['id' => $id]);
+                return $query->fetch();
+            } catch (Exception $e2) {
+                die('Erreur: ' . $e2->getMessage());
+            }
         }
     }
 

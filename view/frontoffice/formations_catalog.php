@@ -1,131 +1,141 @@
-<?php $pageTitle = "Formations"; $pageCSS = "formations.css"; ?>
+<?php 
+$pageTitle = "Catalogue des Formations - Aptus AI";
 
-<?php
 if (!isset($content)) {
+    require_once __DIR__ . '/../../config.php';
+    require_once __DIR__ . '/../../controller/FormationController.php';
+    $formationC = new FormationController();
+    
+    $liste = $formationC->listerFormations()->fetchAll();
+    
+    // Filter Mock logic
+    $q = $_GET['q'] ?? '';
+    $domaine = $_GET['domaine'] ?? '';
+    $niveau = $_GET['niveau'] ?? '';
+    
+    $formations = [];
+    $domainesMap = [];
+    foreach($liste as $f) {
+        if (!empty($f['domaine'])) {
+            $domainesMap[$f['domaine']] = true;
+        }
+        
+        $match = true;
+        if ($q && stripos($f['titre'], $q) === false && stripos($f['description'], $q) === false) $match = false;
+        if ($domaine && $f['domaine'] != $domaine) $match = false;
+        if ($niveau && $f['niveau'] != $niveau) $match = false;
+        
+        if ($match) {
+            $formations[] = $f;
+        }
+    }
+    $domaines = array_keys($domainesMap);
+    
     $content = __FILE__;
     include 'layout_front.php';
     exit();
 }
 ?>
-<!-- Included inside layout_front.php -->
 
-<div class="page-header">
-  <h1 class="page-header__title">
-    <i data-lucide="graduation-cap" style="width:28px;height:28px;color:var(--accent-primary);"></i>
-    Catalogue des Formations
-  </h1>
-  <p class="page-header__subtitle">Développez vos compétences avec nos formations certifiantes</p>
-</div>
+<div class="catalogue-layout" style="display: flex; gap: 2rem; margin-top: 1rem;">
+    <!-- SIDEBAR -->
+    <form id="filterForm" action="formations_catalog.php" method="get" class="sidebar" style="width: 250px; flex-shrink: 0;">
+        <input type="hidden" name="q" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
+        <input type="hidden" name="sort" value="<?php echo htmlspecialchars($_GET['sort'] ?? 'date_desc'); ?>">
+        <input type="hidden" name="domaine" id="hiddenDomaine" value="<?php echo htmlspecialchars($_GET['domaine'] ?? ''); ?>">
+        <input type="hidden" name="niveau" id="hiddenNiveau" value="<?php echo htmlspecialchars($_GET['niveau'] ?? ''); ?>">
 
-<!-- Top Search -->
-<div class="filter-bar mb-6">
-  <div class="search-bar" style="flex:1;max-width:400px;">
-    <i data-lucide="search" style="width:16px;height:16px;"></i>
-    <input type="text" class="input" placeholder="Rechercher une formation..." id="formation-search">
-  </div>
-  <select class="select" style="max-width:160px;">
-    <option>Tous les domaines</option>
-    <option>Développement</option>
-    <option>Data Science</option>
-    <option>Design</option>
-    <option>Marketing</option>
-    <option>Cybersécurité</option>
-  </select>
-  <select class="select" style="max-width:140px;">
-    <option>Plus récent</option>
-    <option>Plus populaire</option>
-    <option>Nom (A-Z)</option>
-  </select>
-</div>
-
-<div class="formations-layout">
-  <!-- ═══ SIDEBAR FILTERS ═══ -->
-  <aside class="cv-sidebar" style="position:sticky;top:calc(var(--topbar-height) + var(--space-4));align-self:start;">
-    <div class="cv-sidebar__section">
-      <div class="cv-sidebar__title">
-        <i data-lucide="layers" style="width:16px;height:16px;"></i>
-        Domaine
-      </div>
-      <label class="cv-sidebar__option"><input type="checkbox" checked> Tous</label>
-      <label class="cv-sidebar__option"><input type="checkbox"> Développement Web</label>
-      <label class="cv-sidebar__option"><input type="checkbox"> Data Science</label>
-      <label class="cv-sidebar__option"><input type="checkbox"> Design UI/UX</label>
-      <label class="cv-sidebar__option"><input type="checkbox"> Cybersécurité</label>
-      <label class="cv-sidebar__option"><input type="checkbox"> Marketing Digital</label>
-      <label class="cv-sidebar__option"><input type="checkbox"> Cloud & DevOps</label>
-    </div>
-
-    <div class="cv-sidebar__section">
-      <div class="cv-sidebar__title">
-        <i data-lucide="signal" style="width:16px;height:16px;"></i>
-        Niveau
-      </div>
-      <label class="cv-sidebar__option"><input type="checkbox" checked> Tous</label>
-      <label class="cv-sidebar__option"><input type="checkbox"> Débutant</label>
-      <label class="cv-sidebar__option"><input type="checkbox"> Intermédiaire</label>
-      <label class="cv-sidebar__option"><input type="checkbox"> Avancé</label>
-      <label class="cv-sidebar__option"><input type="checkbox"> Expert</label>
-    </div>
-
-    <div class="cv-sidebar__section">
-      <div class="cv-sidebar__title">
-        <i data-lucide="map-pin" style="width:16px;height:16px;"></i>
-        Lieu
-      </div>
-      <label class="cv-sidebar__option"><input type="radio" name="lieu" checked> Tous</label>
-      <label class="cv-sidebar__option"><input type="radio" name="lieu"> En ligne</label>
-      <label class="cv-sidebar__option"><input type="radio" name="lieu"> Présentiel</label>
-    </div>
-  </aside>
-
-  <!-- ═══ COURSE CARDS GRID ═══ -->
-  <div>
-    <div class="results-info mb-4">
-      <strong>12</strong> formations disponibles
-    </div>
-
-    <div class="courses-grid stagger">
-      <?php
-      $courses = [
-        ['title' => 'React.js Avancé : Hooks, Context & Performance', 'level' => 'Avancé', 'level_class' => 'advanced', 'tutor' => 'Ahmed Ben Ali', 'domain' => 'Développement', 'students' => 245, 'duration' => '24h'],
-        ['title' => 'Introduction à Python & Data Science', 'level' => 'Débutant', 'level_class' => 'beginner', 'tutor' => 'Sara Khediri', 'domain' => 'Data Science', 'students' => 890, 'duration' => '32h'],
-        ['title' => 'UI/UX Design : De Figma au Prototype', 'level' => 'Intermédiaire', 'level_class' => 'intermediate', 'tutor' => 'Nour Maalej', 'domain' => 'Design', 'students' => 312, 'duration' => '18h'],
-        ['title' => 'Cybersécurité Fondamentale', 'level' => 'Débutant', 'level_class' => 'beginner', 'tutor' => 'Youssef Hamdi', 'domain' => 'Cybersécurité', 'students' => 178, 'duration' => '20h'],
-        ['title' => 'Machine Learning avec TensorFlow', 'level' => 'Expert', 'level_class' => 'expert', 'tutor' => 'Mohamed Dridi', 'domain' => 'Data Science', 'students' => 156, 'duration' => '40h'],
-        ['title' => 'Marketing Digital & SEO', 'level' => 'Intermédiaire', 'level_class' => 'intermediate', 'tutor' => 'Fatma Jelassi', 'domain' => 'Marketing', 'students' => 423, 'duration' => '16h'],
-        ['title' => 'Docker & Kubernetes en Production', 'level' => 'Avancé', 'level_class' => 'advanced', 'tutor' => 'Ahmed Ben Ali', 'domain' => 'Cloud & DevOps', 'students' => 198, 'duration' => '28h'],
-        ['title' => 'JavaScript ES2025 Masterclass', 'level' => 'Intermédiaire', 'level_class' => 'intermediate', 'tutor' => 'Sara Khediri', 'domain' => 'Développement', 'students' => 567, 'duration' => '22h'],
-        ['title' => 'Node.js Backend Development', 'level' => 'Avancé', 'level_class' => 'advanced', 'tutor' => 'Youssef Hamdi', 'domain' => 'Développement', 'students' => 334, 'duration' => '30h'],
-      ];
-      foreach ($courses as $i => $c):
-      ?>
-      <div class="course-card animate-on-scroll" id="course-<?php echo $i; ?>">
-        <div class="course-card__image">
-          <div class="course-card__image-placeholder" style="animation-delay:<?php echo $i * 0.5; ?>s;">
-            <i data-lucide="graduation-cap" style="width:40px;height:40px;"></i>
-          </div>
-          <span class="course-card__level <?php echo $c['level_class']; ?>"><?php echo $c['level']; ?></span>
+        <div class="filter-section" style="margin-bottom: 2rem; background: white; padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-light); margin-bottom: 1rem;">Domaines</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <span class="filter-link <?php echo empty($_GET['domaine']) ? 'active' : ''; ?>" onclick="setFilter('domaine', '')" style="cursor: pointer; padding: 0.5rem; border-radius: 6px; font-size: 0.9rem;">Tous</span>
+                <?php foreach($domaines as $d): ?>
+                    <span class="filter-link <?php echo (($_GET['domaine'] ?? '') == $d) ? 'active' : ''; ?>" onclick="setFilter('domaine', '<?php echo addslashes($d); ?>')" style="cursor: pointer; padding: 0.5rem; border-radius: 6px; font-size: 0.9rem;">
+                        <?php echo htmlspecialchars($d); ?>
+                    </span>
+                <?php endforeach; ?>
+            </div>
         </div>
-        <div class="course-card__body">
-          <h3 class="course-card__title"><?php echo $c['title']; ?></h3>
-          <div class="course-card__meta">
-            <span class="course-card__meta-item"><i data-lucide="users" style="width:12px;height:12px;"></i> <?php echo $c['students']; ?></span>
-            <span class="course-card__meta-item"><i data-lucide="clock" style="width:12px;height:12px;"></i> <?php echo $c['duration']; ?></span>
-            <span class="badge badge-neutral"><?php echo $c['domain']; ?></span>
-          </div>
-          <div class="course-card__tutor">
-            <div class="avatar avatar-sm avatar-initials" style="width:24px;height:24px;font-size:10px;"><?php echo strtoupper(substr($c['tutor'], 0, 1) . substr(strstr($c['tutor'], ' '), 1, 1)); ?></div>
-            <?php echo $c['tutor']; ?>
-          </div>
-          <div class="course-card__footer">
-            <span class="badge badge-primary"><?php echo $c['domain']; ?></span>
-            <button class="btn btn-sm btn-primary">
-              <i data-lucide="eye" style="width:14px;height:14px;"></i> Voir détails
-            </button>
-          </div>
+
+        <div class="filter-section" style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-light); margin-bottom: 1rem;">Niveau</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <span class="filter-link <?php echo empty($_GET['niveau']) ? 'active' : ''; ?>" onclick="setFilter('niveau', '')" style="cursor: pointer; padding: 0.5rem; border-radius: 6px; font-size: 0.9rem;">Tous</span>
+                <?php foreach(['Débutant', 'Intermédiaire', 'Avancé', 'Expert'] as $n): ?>
+                    <span class="filter-link <?php echo (($_GET['niveau'] ?? '') == $n) ? 'active' : ''; ?>" onclick="setFilter('niveau', '<?php echo $n; ?>')" style="cursor: pointer; padding: 0.5rem; border-radius: 6px; font-size: 0.9rem;">
+                        <?php echo $n; ?>
+                    </span>
+                <?php endforeach; ?>
+            </div>
         </div>
-      </div>
-      <?php endforeach; ?>
+    </form>
+
+    <!-- CONTENT -->
+    <div class="main-content" style="flex: 1;">
+        <form id="topBarForm" action="formations_catalog.php" method="get" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem; background: white; padding: 1rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+            <input type="hidden" name="domaine" value="<?php echo htmlspecialchars($_GET['domaine'] ?? ''); ?>">
+            <input type="hidden" name="niveau" value="<?php echo htmlspecialchars($_GET['niveau'] ?? ''); ?>">
+            
+            <div style="flex: 1; position: relative;">
+                <input type="text" name="q" placeholder="Rechercher une formation..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" oninput="debounceSubmit()" style="width: 100%; border: thin solid #eee; background: transparent; padding: 0.5rem 0.5rem 0.5rem 2rem; border-radius:6px;">
+                <span style="position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%); opacity: 0.4;">🔍</span>
+            </div>
+
+            <select name="sort" onchange="this.form.submit()" class="select" style="max-width: 200px; background: #f8fafc; border:none;">
+                <option value="date_desc" <?php echo (($_GET['sort'] ?? '') == 'date_desc') ? 'selected' : ''; ?>>Plus récent</option>
+                <option value="date_asc" <?php echo (($_GET['sort'] ?? '') == 'date_asc') ? 'selected' : ''; ?>>Plus ancien</option>
+                <option value="titre_asc" <?php echo (($_GET['sort'] ?? '') == 'titre_asc') ? 'selected' : ''; ?>>Titre A-Z</option>
+            </select>
+        </form>
+
+        <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); display: grid; gap: 1.5rem;">
+            <?php if (!empty($formations)): foreach($formations as $f): ?>
+                <div class="card-flat" style="padding: 1.25rem; background: white; border-radius: 12px; border: 1px solid var(--border-color); display:flex; flex-direction:column;">
+                    <?php if (!empty($f['image_base64'])): ?>
+                        <div style="width:100%; height:150px; background: url('<?php echo $f['image_base64']; ?>') center/cover; border-radius:8px; margin-bottom:1rem;"></div>
+                    <?php else: ?>
+                        <div style="width:100%; height:150px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-primary)); opacity: 0.1; border-radius:8px; margin-bottom:1rem;"></div>
+                    <?php endif; ?>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                        <span class="badge badge-info" style="font-size: 0.7rem;"><?php echo htmlspecialchars($f['domaine'] ?? 'Général'); ?></span>
+                        <span class="badge badge-primary" style="font-size: 0.7rem;"><?php echo htmlspecialchars($f['niveau']); ?></span>
+                    </div>
+
+                    <h2 style="font-size: 1.1rem; margin-bottom: 0.5rem;"><?php echo htmlspecialchars($f['titre']); ?></h2>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); height: 3.2rem; overflow: hidden; margin-bottom: 1.5rem; flex:1;">
+                        <?php echo htmlspecialchars($f['description']); ?>
+                    </p>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: auto;">
+                        <span style="font-size: 0.8rem; color: var(--text-secondary);">
+                            <i data-lucide="<?php echo $f['is_online'] ? 'video' : 'map-pin'; ?>" style="width:14px;height:14px;vertical-align:middle;"></i>
+                            <?php echo $f['is_online'] ? 'Ligne' : 'Présentiel'; ?>
+                        </span>
+                        <a href="formation_detail.php?id=<?php echo $f['id_formation']; ?>" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Détails</a>
+                    </div>
+                </div>
+            <?php endforeach; else: ?>
+                <div style="grid-column: 1/-1; text-align: center; padding: 4rem; opacity: 0.4;">
+                    <span style="font-size: 3rem;">🔍</span>
+                    <p>Aucune formation trouvée.</p>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
-  </div>
 </div>
+
+<script>
+    function setFilter(name, value) {
+        document.getElementById('hidden' + name.charAt(0).toUpperCase() + name.slice(1)).value = value;
+        document.getElementById('filterForm').submit();
+    }
+
+    let searchTimeout;
+    function debounceSubmit() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            document.getElementById('topBarForm').submit();
+        }, 600);
+    }
+</script>

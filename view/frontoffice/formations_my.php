@@ -1,111 +1,116 @@
-<?php $pageTitle = "Mes Cours"; $pageCSS = "formations.css"; ?>
+<?php 
+$pageTitle = "Mes Formations - Aptus AI";
 
-<?php
 if (!isset($content)) {
+    // Basic setup if executed directly
+    require_once __DIR__ . '/../../config.php';
+    
+    $db = config::getConnexion();
+    $id_user = 10; // User candidat ID pour démonstration
+    $mesCours = [];
+    
+    try {
+        $stmt = $db->prepare("
+            SELECT f.*, i.statut, i.progression, 
+                   COALESCE(u.nom, 'Aptus') as tuteur_nom
+            FROM inscription i
+            JOIN Formation f ON i.id_formation = f.id_formation
+            LEFT JOIN utilisateur u ON f.id_tuteur = u.id
+            WHERE i.id_user = ?
+            ORDER BY i.date_inscription DESC
+        ");
+        $stmt->execute([$id_user]);
+        $mesCours = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        try {
+            $stmt = $db->prepare("
+                SELECT f.*, i.statut, i.progression, 
+                       COALESCE(u.nom, 'Aptus') as tuteur_nom
+                FROM Inscription i
+                JOIN Formation f ON i.id_formation = f.id_formation
+                LEFT JOIN User u ON f.id_tuteur = u.id
+                WHERE i.id_user = ?
+                ORDER BY i.date_inscription DESC
+            ");
+            $stmt->execute([$id_user]);
+            $mesCours = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e2) {
+            $mesCours = [];
+        }
+    }
+    
     $content = __FILE__;
     include 'layout_front.php';
     exit();
 }
 ?>
-<!-- Included inside layout_front.php -->
 
-<div class="page-header">
-  <div class="section-header">
-    <div>
-      <h1 class="page-header__title">
-        <i data-lucide="book-open" style="width:28px;height:28px;color:var(--accent-primary);"></i>
-        Mes Cours
-      </h1>
-      <p class="page-header__subtitle">Suivez votre progression et obtenez vos certificats</p>
-    </div>
-    <a href="formations_catalog.php" class="btn btn-primary">
-      <i data-lucide="plus" style="width:18px;height:18px;"></i>
-      Explorer le catalogue
-    </a>
-  </div>
+<div class="page-header" style="text-align: left; margin-bottom: 2rem;">
+  <h1 class="page-header__title">Mon Parcours d'Apprentissage</h1>
 </div>
 
-<!-- ═══ Gamification Stats ═══ -->
-<div class="gamification-stats stagger">
-  <div class="gamification-stat animate-on-scroll">
-    <div class="gamification-stat__icon" style="background:var(--stat-purple-bg);color:var(--stat-purple);">
-      <i data-lucide="trophy" style="width:24px;height:24px;"></i>
-    </div>
-    <div class="gamification-stat__value">3</div>
-    <div class="gamification-stat__label">Cours Complétés</div>
-  </div>
-  <div class="gamification-stat animate-on-scroll">
-    <div class="gamification-stat__icon" style="background:var(--stat-teal-bg);color:var(--stat-teal);">
-      <i data-lucide="zap" style="width:24px;height:24px;"></i>
-    </div>
-    <div class="gamification-stat__value">1,240</div>
-    <div class="gamification-stat__label">XP Gagnés</div>
-  </div>
-  <div class="gamification-stat animate-on-scroll">
-    <div class="gamification-stat__icon" style="background:var(--stat-orange-bg);color:var(--stat-orange);">
-      <i data-lucide="flame" style="width:24px;height:24px;"></i>
-    </div>
-    <div class="gamification-stat__value">12</div>
-    <div class="gamification-stat__label">Jours de Streak</div>
-  </div>
-</div>
+<div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+    <?php if (!empty($mesCours)): foreach($mesCours as $cours): ?>
+    <div class="card-flat" style="padding: 1.25rem; background: white; border-radius: 12px; border: 1px solid var(--border-color);">
+        <?php if (!empty($cours['image_base64'])): ?>
+            <div style="width:100%; height:150px; background: url('<?php echo $cours['image_base64']; ?>') center/cover; border-radius:8px; margin-bottom:1rem;"></div>
+        <?php else: ?>
+            <div style="width:100%; height:150px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-primary)); opacity: 0.1; border-radius:8px; margin-bottom:1rem;"></div>
+        <?php endif; ?>
 
-<!-- ═══ My Courses Grid ═══ -->
-<div class="my-courses-grid stagger">
-  <?php
-  $myCourses = [
-    ['title' => 'React.js Avancé : Hooks, Context & Performance', 'tutor' => 'Ahmed Ben Ali', 'progress' => 100, 'mode' => 'online', 'url' => 'https://meet.aptus.ai/react-advanced'],
-    ['title' => 'Introduction à Python & Data Science', 'tutor' => 'Sara Khediri', 'progress' => 72, 'mode' => 'online', 'url' => 'https://meet.aptus.ai/python-ds'],
-    ['title' => 'UI/UX Design : De Figma au Prototype', 'tutor' => 'Nour Maalej', 'progress' => 45, 'mode' => 'presentiel', 'url' => null],
-    ['title' => 'Cybersécurité Fondamentale', 'tutor' => 'Youssef Hamdi', 'progress' => 100, 'mode' => 'online', 'url' => 'https://meet.aptus.ai/cybersec'],
-    ['title' => 'Docker & Kubernetes en Production', 'tutor' => 'Ahmed Ben Ali', 'progress' => 18, 'mode' => 'online', 'url' => 'https://meet.aptus.ai/docker-k8s'],
-    ['title' => 'Machine Learning avec TensorFlow', 'tutor' => 'Mohamed Dridi', 'progress' => 100, 'mode' => 'presentiel', 'url' => null],
-  ];
-  foreach ($myCourses as $i => $mc):
-    $progressColor = $mc['progress'] === 100 ? 'var(--accent-secondary)' : 'var(--accent-primary)';
-  ?>
-  <div class="my-course-card animate-on-scroll" id="my-course-<?php echo $i; ?>">
-    <div class="my-course-card__header">
-      <div class="my-course-card__thumb">
-        <i data-lucide="book-open" style="width:20px;height:20px;color:rgba(255,255,255,0.6);"></i>
-      </div>
-      <div>
-        <h3 class="my-course-card__title"><?php echo $mc['title']; ?></h3>
-        <div class="my-course-card__tutor">
-          <i data-lucide="user" style="width:12px;height:12px;display:inline;vertical-align:-1px;"></i> <?php echo $mc['tutor']; ?>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span class="badge" style="font-size: 0.7rem; background: rgba(0,0,0,0.05);"><?php echo ($cours['is_online']) ? '🌐 En ligne' : '📍 Présentiel'; ?></span>
+            <span class="badge" style="font-size: 0.7rem; background: rgba(0,0,0,0.05);"><?php echo htmlspecialchars($cours['statut']); ?></span>
         </div>
-      </div>
-    </div>
 
-    <!-- Progress Bar -->
-    <div class="course-progress">
-      <div class="course-progress__info">
-        <span class="course-progress__label">Progression</span>
-        <span class="course-progress__value"><?php echo $mc['progress']; ?>%</span>
-      </div>
-      <div class="progress-bar">
-        <div class="progress-bar__fill" style="width:<?php echo $mc['progress']; ?>%;background:<?php echo ($mc['progress'] === 100) ? 'var(--accent-secondary)' : 'var(--gradient-primary)'; ?>;"></div>
-      </div>
-    </div>
+        <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;"><?php echo htmlspecialchars($cours['titre']); ?></h2>
+        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+            Tuteur : <b><?php echo htmlspecialchars($cours['tuteur_nom'] ?? 'Aptus'); ?></b>
+        </div>
 
-    <!-- Action Buttons -->
-    <div class="flex gap-2">
-      <?php if ($mc['progress'] === 100): ?>
-        <a href="certificate.php" class="btn btn-sm btn-success">
-          <i data-lucide="award" style="width:14px;height:14px;"></i> Générer Certificat
-        </a>
-      <?php elseif ($mc['mode'] === 'online' && $mc['url']): ?>
-        <a href="<?php echo $mc['url']; ?>" class="btn btn-sm btn-primary" target="_blank">
-          <i data-lucide="video" style="width:14px;height:14px;"></i> Rejoindre la Room
-        </a>
-      <?php endif; ?>
-      <button class="btn btn-sm btn-secondary">
-        <i data-lucide="play" style="width:14px;height:14px;"></i> Continuer
-      </button>
-      <span class="badge <?php echo $mc['mode'] === 'online' ? 'badge-info' : 'badge-warning'; ?>" style="margin-left:auto;align-self:center;">
-        <?php echo $mc['mode'] === 'online' ? 'En ligne' : 'Présentiel'; ?>
-      </span>
+        <div style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.5rem;">
+                <label>Progression</label>
+                <span><?php echo $cours['progression']; ?>%</span>
+            </div>
+            <progress value="<?php echo $cours['progression']; ?>" max="100" style="width: 100%; height: 8px; border-radius: 4px; overflow: hidden;"></progress>
+        </div>
+
+        <?php if ($cours['progression'] == 100): ?>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="background: rgba(16, 185, 129, 0.1); color: #059669; padding: 1rem; border-radius: 12px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
+                    <span style="font-size: 1.5rem;">
+                        <?php 
+                            $dom = strtolower($cours['domaine'] ?? '');
+                            if (strpos($dom, 'ia') !== false) echo '🤖';
+                            elseif (strpos($dom, 'code') !== false || strpos($dom, 'dev') !== false) echo '💻';
+                            else echo '🏅';
+                        ?>
+                    </span>
+                    Badge "Expert" Acquis !
+                </div>
+                <a href="certificate.php?f_id=<?php echo $cours['id_formation']; ?>" target="_blank" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); text-align:center;">
+                    🎓 Générer mon Certificat
+                </a>
+            </div>
+        <?php else: ?>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <?php if ($cours['is_online']): ?>
+                    <a href="<?php echo htmlspecialchars($cours['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn" style="background: #3b82f6; color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:6px;">📹 Rejoindre la Room</a>
+                <?php endif; ?>
+                
+                <?php if ($cours['date_formation'] <= date('Y-m-d')): ?>
+                    <a href="#" class="btn btn-primary" style="text-align:center;">Terminer la formation</a>
+                <?php else: ?>
+                    <button class="btn" style="background: #e2e8f0; color: #94a3b8; cursor: not-allowed; width:100%; border:none; padding:0.5rem; border-radius:6px;" disabled>Disponible le <?php echo date('d/m', strtotime($cours['date_formation'])); ?></button>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     </div>
-  </div>
-  <?php endforeach; ?>
+    <?php endforeach; else: ?>
+        <div style="grid-column: 1/-1; text-align: center; padding: 5rem; opacity: 0.4;">
+            <p>Vous n'avez pas encore d'inscriptions.</p>
+            <a href="formations_catalog.php" class="btn btn-primary" style="margin-top: 1rem;">Explorer le catalogue</a>
+        </div>
+    <?php endif; ?>
 </div>
