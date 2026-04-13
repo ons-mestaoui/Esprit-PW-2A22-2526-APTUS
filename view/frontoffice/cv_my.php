@@ -96,52 +96,43 @@ if (!isset($content)) {
     <div class="dashboard-preview-wrapper" style="--cv-accent: <?php echo htmlspecialchars($theme); ?>;">
       
       <!-- Eye overlay on hover -->
-      <div class="overlay-eye" onclick="window.location.href='cv_builder.php?cv_id=<?php echo $cv['id_cv']; ?>'">
+      <div class="overlay-eye" onclick="window.location.href='cv_form.php?cv_id=<?php echo $cv['id_cv']; ?>'">
         <i class="fa-solid fa-eye"></i>
       </div>
 
-      <!-- Scaled-down full CV render -->
-      <div class="dashboard-scaled-cv cv-render template-<?php echo htmlspecialchars($tplClass); ?>" style="--cv-accent: <?php echo htmlspecialchars($theme); ?>;">
-        
-        <?php if($isManager): ?>
-          <!-- Manager/Sidebar Layout -->
-          <div class="template-manager">
-            <div class="cv-sidebar">
-              <?php if(!empty($cv['urlPhoto'])): ?><img src="<?php echo $cv['urlPhoto']; ?>" class="cv-photo active" alt="Photo"><?php endif; ?>
-              <div class="cv-header" style="text-align:center; border:none; display:block;">
-                <div class="cv-name"><?php echo htmlspecialchars($cv['nomComplet']); ?></div>
-                <div class="cv-title"><?php echo htmlspecialchars($cv['titrePoste']); ?></div>
-                <div class="cv-contact"><?php echo htmlspecialchars($contactStr); ?></div>
-              </div>
-              <div class="cv-section"><div class="cv-section-title">Compétences</div><div class="cv-content"><?php echo str_replace(',', ' • ', htmlspecialchars($cv['competences'])); ?></div></div>
-              <div class="cv-section"><div class="cv-section-title">Langues</div><div class="cv-content"><?php echo htmlspecialchars($cv['langues']); ?></div></div>
-              <div class="cv-section"><div class="cv-section-title">Formation</div><div class="cv-content"><?php echo htmlspecialchars($cv['formation']); ?></div></div>
-            </div>
-            <div class="cv-main">
-              <div class="cv-section"><div class="cv-section-title">Résumé</div><div class="cv-content"><?php echo htmlspecialchars($cv['resume']); ?></div></div>
-              <div class="cv-section"><div class="cv-section-title">Expérience</div><div class="cv-content"><?php echo htmlspecialchars($cv['experience']); ?></div></div>
-            </div>
-          </div>
-
-        <?php else: ?>
-          <!-- Standard Layout -->
-          <div class="cv-header">
-            <?php if(!empty($cv['urlPhoto'])): ?><img src="<?php echo $cv['urlPhoto']; ?>" class="cv-photo active" alt="Photo"><?php endif; ?>
-            <div style="flex:1;">
-              <div class="cv-name"><?php echo htmlspecialchars($cv['nomComplet']); ?></div>
-              <div class="cv-title"><?php echo htmlspecialchars($cv['titrePoste']); ?></div>
-              <div class="cv-contact"><?php echo htmlspecialchars($contactStr); ?></div>
-            </div>
-          </div>
-          <div class="cv-section"><div class="cv-section-title">Résumé</div><div class="cv-content"><?php echo htmlspecialchars($cv['resume']); ?></div></div>
-          <div class="cv-section"><div class="cv-section-title">Expérience</div><div class="cv-content"><?php echo htmlspecialchars($cv['experience']); ?></div></div>
-          <div style="display:flex; gap:20px;">
-            <div class="cv-section" style="flex:1;"><div class="cv-section-title">Compétences</div><div class="cv-content"><?php echo str_replace(',', ' • ', htmlspecialchars($cv['competences'])); ?></div></div>
-            <div class="cv-section" style="flex:1;"><div class="cv-section-title">Langues</div><div class="cv-content"><?php echo htmlspecialchars($cv['langues']); ?></div></div>
-          </div>
-          <div class="cv-section"><div class="cv-section-title">Formation</div><div class="cv-content"><?php echo htmlspecialchars($cv['formation']); ?></div></div>
-        <?php endif; ?>
-
+      <!-- Scaled-down full CV render via iframe (uses actual template HTML from DB) -->
+      <?php
+        $previewHtml = $tpl['structureHtml'] ?? '';
+        $isFullHtml = stripos($previewHtml, '<!DOCTYPE') !== false || stripos($previewHtml, '<html') !== false;
+        if (!$isFullHtml) {
+            $previewHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"></head><body style="margin:0;padding:0;">' . $previewHtml . '</body></html>';
+        }
+        // Inject CSS to hide scrollbars inside the iframe
+        $hideScrollbarCSS = '<style>html,body{overflow:hidden!important;scrollbar-width:none!important;-ms-overflow-style:none!important;}::-webkit-scrollbar{display:none!important;}</style>';
+        if (stripos($previewHtml, '</head>') !== false) {
+            $previewHtml = str_ireplace('</head>', $hideScrollbarCSS . '</head>', $previewHtml);
+        } else {
+            $previewHtml = $hideScrollbarCSS . $previewHtml;
+        }
+      ?>
+      <div class="dashboard-scaled-cv" style="--cv-accent: <?php echo htmlspecialchars($theme); ?>;">
+        <iframe 
+          class="cv-preview-iframe" 
+          data-cv-id="<?php echo $cv['id_cv']; ?>"
+          data-cv='<?php echo htmlspecialchars(json_encode([
+            'nomComplet' => $cv['nomComplet'],
+            'titrePoste' => $cv['titrePoste'],
+            'infoContact' => $contactStr,
+            'resume' => $cv['resume'],
+            'experience' => $cv['experience'],
+            'competences' => str_replace(',', ' • ', $cv['competences']),
+            'formation' => $cv['formation'],
+            'langues' => $cv['langues'],
+            'urlPhoto' => $cv['urlPhoto'] ?? ''
+          ]), ENT_QUOTES); ?>'
+          srcdoc="<?php echo htmlspecialchars($previewHtml); ?>"
+          style="width:794px; height:1123px; transform-origin:top left; border:none; pointer-events:none;"
+        ></iframe>
       </div>
     </div>
 
@@ -154,7 +145,7 @@ if (!isset($content)) {
       </p>
       <div class="dashboard-actions">
         <div>
-          <a href="cv_builder.php?cv_id=<?php echo $cv['id_cv']; ?>" class="btn-primary-cv" style="text-decoration:none; font-size:0.8rem; padding:0.5rem 1rem;">
+          <a href="cv_form.php?cv_id=<?php echo $cv['id_cv']; ?>" class="btn-primary-cv" style="text-decoration:none; font-size:0.8rem; padding:0.5rem 1rem;">
             <i data-lucide="edit-3" style="width:14px;height:14px;display:inline;vertical-align:-2px;"></i> Éditer
           </a>
         </div>
@@ -197,6 +188,134 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.nav-anchor').forEach(a => a.classList.remove('active'));
         link.classList.add('active');
     }
+    
+    // Scale and populate iframe previews
+    document.querySelectorAll('.cv-preview-iframe').forEach(iframe => {
+        iframe.addEventListener('load', function() {
+            // Scale iframe to fit container
+            const container = iframe.closest('.dashboard-scaled-cv');
+            if (container) {
+                const cw = container.clientWidth;
+                const ch = container.clientHeight;
+                const scale = Math.min(cw / 794, ch / 1123, 1);
+                iframe.style.transform = `scale(${scale})`;
+            }
+            
+            // Inject CV data into iframe
+            const cvData = JSON.parse(iframe.dataset.cv || '{}');
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (!doc) return;
+            
+            function setText(selectors, value) {
+                for (const sel of selectors) {
+                    try {
+                        const el = doc.querySelector(sel);
+                        if (el) { el.innerText = value; return true; }
+                    } catch(e) {}
+                }
+                return false;
+            }
+            
+            function findByTitle(keywords, clearSiblings = false) {
+                const titles = doc.querySelectorAll('.side-title, .section-title, .main-title, h3, h4, .cv-section-title');
+                for (const t of titles) {
+                    const txt = t.textContent.toLowerCase();
+                    for (const kw of keywords) {
+                        if (txt.includes(kw)) {
+                            let next = t.nextElementSibling;
+                            if (next) {
+                                if (clearSiblings) {
+                                    let sibling = next.nextElementSibling;
+                                    while (sibling && !(sibling.tagName === 'H3' || sibling.tagName === 'H4' || sibling.classList.contains('main-title') || sibling.classList.contains('section-title'))) {
+                                        const toRemove = sibling;
+                                        sibling = sibling.nextElementSibling;
+                                        toRemove.remove();
+                                    }
+                                }
+                                return next;
+                            }
+                        }
+                    }
+                }
+                return null;
+            }
+            
+            // Name
+            if (cvData.nomComplet) {
+                setText(['#preview-nomComplet', '.sidebar h1', '.header-info h1', '.header-text h1', '.cv-name', 'h1[contenteditable]', 'h1'], cvData.nomComplet);
+            }
+            
+            // Title
+            if (cvData.titrePoste) {
+                setText(['#preview-titrePoste', '.sidebar h2', '.header-info h2', '.header-text h2', '.cv-title', 'h2[contenteditable]'], cvData.titrePoste);
+            }
+            
+            // Contact
+            if (cvData.infoContact) {
+                if (!setText(['#preview-infoContact', '.contact-info', '.cv-contact'], cvData.infoContact)) {
+                    // Try individual contact items
+                    const items = doc.querySelectorAll('.contact-item');
+                    const parts = cvData.infoContact.split('|').map(s => s.trim());
+                    items.forEach((item, i) => { if (parts[i]) item.innerText = parts[i]; });
+                }
+            }
+            
+            // Resume
+            if (cvData.resume) {
+                if (!setText(['#preview-resume', '.summary-text', '.summary'], cvData.resume)) {
+                    const el = findByTitle(['résumé', 'resume', 'profil', 'professionnel']);
+                    if (el) el.innerText = cvData.resume;
+                }
+            }
+            
+            // Experience  
+            if (cvData.experience) {
+                if (!setText(['#preview-experience'], cvData.experience)) {
+                    const el = findByTitle(['expérience', 'experience'], true);
+                    if (el) el.innerText = cvData.experience;
+                }
+            }
+            
+            // Competences
+            if (cvData.competences) {
+                if (!setText(['#preview-competences'], cvData.competences)) {
+                    const el = findByTitle(['compétence', 'competence', 'skills']);
+                    if (el) el.innerText = cvData.competences;
+                }
+            }
+            
+            // Formation
+            if (cvData.formation) {
+                if (!setText(['#preview-formation'], cvData.formation)) {
+                    const el = findByTitle(['formation', 'education', 'études']);
+                    if (el) el.innerText = cvData.formation;
+                }
+            }
+            
+            // Languages
+            if (cvData.langues) {
+                if (!setText(['#preview-langues'], cvData.langues)) {
+                    const el = findByTitle(['langue', 'language']);
+                    if (el) el.innerText = cvData.langues;
+                }
+            }
+            
+            // Photo
+            if (cvData.urlPhoto) {
+                const photos = doc.querySelectorAll('#preview-photo, #profile-pic, .cv-photo, .header-photo img');
+                photos.forEach(img => {
+                    if (img.tagName === 'IMG') { img.src = cvData.urlPhoto; img.style.display = 'block'; }
+                });
+                const photoText = doc.querySelector('#photo-text, .photo-text');
+                if (photoText) photoText.style.display = 'none';
+                // For templates with header-photo div but no img
+                const headerPhoto = doc.querySelector('.header-photo');
+                if (headerPhoto && !headerPhoto.querySelector('img')) {
+                    headerPhoto.innerHTML = '<img src="' + cvData.urlPhoto + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">';
+                }
+            }
+        });
+    });
 });
 
 function generatePDF(cvId) {

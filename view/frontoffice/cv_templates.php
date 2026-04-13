@@ -190,7 +190,7 @@ if (!isset($content)) {
               </div>
             <?php endif; ?>
             <div class="template-card__overlay">
-              <a href="cv_builder.php?template_id=<?php echo $t['id_template']; ?>" class="btn btn-sm" style="text-decoration:none;">
+              <a href="cv_form.php?template_id=<?php echo $t['id_template']; ?>" class="btn btn-sm" style="text-decoration:none;">
                 <i data-lucide="eye" style="width:14px;height:14px;"></i>
                 Utiliser ce Template
               </a>

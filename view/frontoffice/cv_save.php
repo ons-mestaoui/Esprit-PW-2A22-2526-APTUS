@@ -1,7 +1,7 @@
 <?php
 /**
- * save_cv_v2.php — Backend d'enregistrement CV (propre, sans IA)
- * Utilisé par cv_builder.php
+ * cv_save.php — Backend d'enregistrement CV (propre, sans IA)
+ * Utilisé par cv_form.php
  */
 header('Content-Type: application/json');
 error_reporting(E_ALL);
@@ -32,9 +32,33 @@ if (!$data) {
 $name  = trim($data['name']  ?? '');
 $email = trim($data['email'] ?? '');
 $title = trim($data['title'] ?? '');
+$phone = trim($data['phone'] ?? '');
+$location = trim($data['location'] ?? '');
+$summary = trim($data['summary'] ?? '');
 
-if (!$name || !$email || !$title) {
-    echo json_encode(['success' => false, 'message' => 'Nom, email et titre sont obligatoires.']);
+// Validation Backend (Sécurité additionnelle)
+if (strlen($name) < 3 || !preg_match('/^[\p{L}\s.\'-]+$/u', $name)) {
+    echo json_encode(['success' => false, 'message' => 'Veuillez entrer un nom valide (min. 3 lettres).']);
+    exit;
+}
+if (strlen($title) < 3 || strlen($title) > 100) {
+    echo json_encode(['success' => false, 'message' => 'Le titre du poste doit contenir entre 3 et 100 caractères.']);
+    exit;
+}
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    echo json_encode(['success' => false, 'message' => 'Veuillez entrer une adresse email valide.']);
+    exit;
+}
+if (!preg_match('/^\+?[0-9\s.\-()]{8,20}$/', $phone)) {
+    echo json_encode(['success' => false, 'message' => 'Numéro de téléphone invalide (min. 8 chiffres).']);
+    exit;
+}
+if (strlen($location) < 3) {
+    echo json_encode(['success' => false, 'message' => 'Veuillez préciser votre localisation (min. 3 caractères).']);
+    exit;
+}
+if (mb_strlen($summary) > 1000) {
+    echo json_encode(['success' => false, 'message' => 'Votre résumé est trop long (max 1000 caractères).']);
     exit;
 }
 

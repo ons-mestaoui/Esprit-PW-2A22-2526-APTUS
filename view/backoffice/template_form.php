@@ -20,29 +20,42 @@ if ($action === 'edit' && $id) {
 }
 
 // POST processing
+$backend_error = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nom = $_POST['nom'] ?? '';
+    $nom = trim($_POST['nom'] ?? '');
     
+    $description = '';
     if (isset($_POST['description']) && is_array($_POST['description'])) {
         $description = implode(', ', $_POST['description']);
-    } else {
-        $description = '';
     }
     
     $urlMiniature = $_POST['urlMiniature'] ?? '';
-    $structureHtml = $_POST['structureHtml'] ?? '';
+    $structureHtml = trim($_POST['structureHtml'] ?? '');
     $estPremium = isset($_POST['estPremium']) ? 1 : 0;
     
-    $tplObj = new Template(null, $nom, $description, $urlMiniature, $structureHtml, $estPremium);
-    
-    if ($action === 'edit' && $id) {
-        $tc->updateTemplate($id, $tplObj);
+    // Backend Validation
+    if (mb_strlen($nom) < 3 || mb_strlen($nom) > 150) {
+        $backend_error = "Le nom du template doit contenir entre 3 et 150 caractères.";
+    } elseif (empty($structureHtml)) {
+        $backend_error = "Le code HTML du template est obligatoire.";
+    } elseif (!preg_match('/<[a-z][\s\S]*>/i', $structureHtml)) {
+        $backend_error = "Le code doit contenir des balises HTML valides (ex: <div>, <span>).";
+    } elseif (stripos($structureHtml, '<?php') !== false) {
+        $backend_error = "L'insertion de code PHP est strictement interdite par sécurité.";
+    } elseif (preg_match('/<script\b/i', $structureHtml)) {
+        $backend_error = "L'insertion de scripts JavaScript (<script>) n'est pas autorisée.";
     } else {
-        $tc->addTemplate($tplObj);
+        $tplObj = new Template(null, $nom, $description, $urlMiniature, $structureHtml, $estPremium);
+        
+        if ($action === 'edit' && $id) {
+            $tc->updateTemplate($id, $tplObj);
+        } else {
+            $tc->addTemplate($tplObj);
+        }
+        
+        header("Location: cv_templates_admin.php");
+        exit;
     }
-    
-    header("Location: cv_templates_admin.php");
-    exit;
 }
 
 if (!isset($content)) {
@@ -52,10 +65,20 @@ if (!isset($content)) {
 }
 
 $nomVal = $template ? htmlspecialchars($template['nom'], ENT_QUOTES) : '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $backend_error) $nomVal = htmlspecialchars($_POST['nom'] ?? '', ENT_QUOTES);
+
 $descVal = $template ? $template['description'] : '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $backend_error) $descVal = implode(', ', $_POST['description'] ?? []);
 $descTags = array_map('trim', explode(',', $descVal));
+
 $htmlVal = $template ? htmlspecialchars($template['structureHtml'], ENT_QUOTES) : '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $backend_error) $htmlVal = htmlspecialchars($_POST['structureHtml'] ?? '', ENT_QUOTES);
+
 $urlVal = $template ? $template['urlMiniature'] : '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $backend_error) $urlVal = $_POST['urlMiniature'] ?? '';
+
+$isPremium = $template ? $template['estPremium'] : 0;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $backend_error) $isPremium = isset($_POST['estPremium']) ? 1 : 0;
 $isPremium = $template ? $template['estPremium'] : 0;
 ?>
 
@@ -71,6 +94,13 @@ $isPremium = $template ? $template['estPremium'] : 0;
   </div>
 </div>
 
+<?php if (!empty($backend_error)): ?>
+<div style="background: rgba(239,68,68,0.1); border: 1px solid #ef4444; color: #ef4444; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;">
+  <i data-lucide="alert-circle" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px;"></i>
+  <span style="vertical-align:middle;"><?php echo $backend_error; ?></span>
+</div>
+<?php endif; ?>
+
 <form method="POST" action="template_form.php?action=<?php echo $action; ?><?php echo $id ? '&id='.$id : ''; ?>" id="full-template-form" class="mt-4">
     <div class="grid gap-6 stagger" style="grid-template-columns: 1fr 400px; align-items: start;">
         
@@ -78,7 +108,8 @@ $isPremium = $template ? $template['estPremium'] : 0;
         <div class="card-flat" style="padding: 30px; display:flex; flex-direction:column; gap:24px;">
             <div class="form-group">
                 <label class="form-label" for="tpl-name" style="font-size: 15px;">Nom du template</label>
-                <input type="text" class="input" id="tpl-name" name="nom" required placeholder="Ex: Élégance Corporative" value="<?php echo $nomVal; ?>" style="padding: 12px; font-size:16px;">
+                <input type="text" class="input" id="tpl-name" name="nom" placeholder="Ex: Élégance Corporative" value="<?php echo $nomVal; ?>" style="padding: 12px; font-size:16px;">
+                <div class="error-msg" id="err-tpl-name" style="color:red; font-size:12px; display:none; margin-top:4px;"></div>
             </div>
 
             <div class="form-group">
@@ -141,7 +172,8 @@ $isPremium = $template ? $template['estPremium'] : 0;
                     <label class="form-label" for="tpl-html" style="font-size: 15px; margin:0;">Code Structure (HTML/CSS)</label>
                     <span class="text-xs" style="color:var(--text-tertiary);">Rendu en temps réel possible via le bouton à droite</span>
                 </div>
-                <textarea class="textarea" id="tpl-html" name="structureHtml" required placeholder="Écrivez le code source HTML/CSS du CV ici..." style="font-family: 'Fira Code', monospace; line-height: 1.5; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); color: #cbd5e1; flex-grow: 1; min-height: 400px; padding:15px; font-size:13px; resize:vertical;"><?php echo $htmlVal; ?></textarea>
+                <textarea class="textarea" id="tpl-html" name="structureHtml" placeholder="Écrivez le code source HTML/CSS du CV ici..." style="font-family: 'Fira Code', monospace; line-height: 1.5; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); color: #cbd5e1; flex-grow: 1; min-height: 400px; padding:15px; font-size:13px; resize:vertical;"><?php echo $htmlVal; ?></textarea>
+                <div class="error-msg" id="err-tpl-html" style="color:red; font-size:12px; display:none; margin-top:4px;"></div>
             </div>
         </div>
 
@@ -308,6 +340,66 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     tagInput.value = '';
                 }
+            }
+        });
+    }
+
+    // Custom JS Validation
+    function validateTemplateField(id) {
+        const field = document.getElementById(id);
+        const val = field.value.trim();
+        const errEl = document.getElementById('err-' + id);
+        let errorMsg = null;
+
+        if (id === 'tpl-name') {
+            if (val.length < 3 || val.length > 150) errorMsg = "Le nom du template doit contenir entre 3 et 150 caractères.";
+        } else if (id === 'tpl-html') {
+            if (val.length === 0) {
+                errorMsg = "Le code HTML du template est obligatoire.";
+            } else if (!/<[a-z][\s\S]*>/i.test(val)) {
+                errorMsg = "Le code doit contenir des balises HTML valides (ex: <div>, <style>).";
+            } else if (/<\?php/i.test(val)) {
+                errorMsg = "L'insertion de code PHP est strictement interdite par sécurité.";
+            } else if (/<script\b/i.test(val)) {
+                errorMsg = "L'insertion de scripts JS (<script>) n'est pas autorisée pour les templates OpenCV.";
+            }
+        }
+
+        if (errorMsg) {
+            if (errEl) { errEl.innerText = errorMsg; errEl.style.display = 'block'; }
+            field.style.borderColor = 'red';
+            return false;
+        } else {
+            if (errEl) { errEl.style.display = 'none'; }
+            field.style.borderColor = id === 'tpl-html' ? 'rgba(255,255,255,0.08)' : 'var(--border-color)';
+            return true;
+        }
+    }
+
+    ['tpl-name', 'tpl-html'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('blur', function() {
+                validateTemplateField(id);
+            });
+            el.addEventListener('input', function() {
+                if (el.style.borderColor === 'red') {
+                    validateTemplateField(id);
+                }
+            });
+        }
+    });
+
+    const form = document.getElementById('full-template-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let hasError = false;
+            
+            if (!validateTemplateField('tpl-name')) hasError = true;
+            if (!validateTemplateField('tpl-html')) hasError = true;
+
+            if (hasError) {
+                e.preventDefault(); // Stop form submission
             }
         });
     }
