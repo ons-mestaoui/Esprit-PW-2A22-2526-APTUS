@@ -17,8 +17,8 @@ class VeilleC
     public function ajouterRapport($rapport)
     {
         try {
-            $sql = "INSERT INTO rapport_marche (id_admin, titre, description, date_publication, region, secteur_principal, salaire_moyen_global, salaire_min_global, salaire_max_global, tendance_generale, niveau_demande_global, nombre_donnees, auteur) 
-                    VALUES (:id_admin, :titre, :description, :date_publication, :region, :secteur_principal, :salaire_moyen_global, :salaire_min_global, :salaire_max_global, :tendance_generale, :niveau_demande_global, :nombre_donnees, :auteur)";
+            $sql = "INSERT INTO rapport_marche (id_admin, titre, description, date_publication, region, secteur_principal, salaire_moyen_global, salaire_min_global, salaire_max_global, tendance_generale, niveau_demande_global, nombre_donnees, auteur, contenu_detaille, image_couverture, vues) 
+                    VALUES (:id_admin, :titre, :description, :date_publication, :region, :secteur_principal, :salaire_moyen_global, :salaire_min_global, :salaire_max_global, :tendance_generale, :niveau_demande_global, :nombre_donnees, :auteur, :contenu_detaille, :image_couverture, :vues)";
             
             $req = $this->db->prepare($sql);
             
@@ -35,6 +35,9 @@ class VeilleC
             $req->bindValue(':niveau_demande_global', $rapport->getNiveauDemandeGlobal());
             $req->bindValue(':nombre_donnees', $rapport->getNombreDonnees());
             $req->bindValue(':auteur', $rapport->getAuteur());
+            $req->bindValue(':contenu_detaille', $rapport->getContenuDetaille());
+            $req->bindValue(':image_couverture', $rapport->getImageCouverture());
+            $req->bindValue(':vues', $rapport->getVues());
             
             $req->execute();
             return $this->db->lastInsertId();
@@ -73,7 +76,8 @@ class VeilleC
             $sql = "UPDATE rapport_marche SET 
                     titre = :titre, description = :description, region = :region, secteur_principal = :secteur_principal, 
                     salaire_moyen_global = :salaire_moyen_global, salaire_min_global = :salaire_min_global, salaire_max_global = :salaire_max_global, 
-                    tendance_generale = :tendance_generale, niveau_demande_global = :niveau_demande_global, nombre_donnees = :nombre_donnees, auteur = :auteur 
+                    tendance_generale = :tendance_generale, niveau_demande_global = :niveau_demande_global, nombre_donnees = :nombre_donnees, auteur = :auteur,
+                    contenu_detaille = :contenu_detaille, image_couverture = :image_couverture
                     WHERE id_rapport_marche = :id_rapport_marche";
             
             $req = $this->db->prepare($sql);
@@ -90,6 +94,8 @@ class VeilleC
             $req->bindValue(':niveau_demande_global', $rapport->getNiveauDemandeGlobal());
             $req->bindValue(':nombre_donnees', $rapport->getNombreDonnees());
             $req->bindValue(':auteur', $rapport->getAuteur());
+            $req->bindValue(':contenu_detaille', $rapport->getContenuDetaille());
+            $req->bindValue(':image_couverture', $rapport->getImageCouverture());
             
             $req->execute();
         } catch (Exception $e) {
@@ -115,8 +121,8 @@ class VeilleC
     public function ajouterDonnee($donnee)
     {
         try {
-            $sql = "INSERT INTO donnee_marche (domaine, competence, salaire_min, salaire_max, salaire_moyen, demande, date_collecte) 
-                    VALUES (:domaine, :competence, :salaire_min, :salaire_max, :salaire_moyen, :demande, :date_collecte)";
+            $sql = "INSERT INTO donnee_marche (domaine, competence, salaire_min, salaire_max, salaire_moyen, demande, date_collecte, description) 
+                    VALUES (:domaine, :competence, :salaire_min, :salaire_max, :salaire_moyen, :demande, :date_collecte, :description)";
             
             $req = $this->db->prepare($sql);
             
@@ -127,6 +133,7 @@ class VeilleC
             $req->bindValue(':salaire_moyen', $donnee->getSalaireMoyen());
             $req->bindValue(':demande', $donnee->getDemande());
             $req->bindValue(':date_collecte', $donnee->getDateCollecte());
+            $req->bindValue(':description', $donnee->getDescription());
             
             $req->execute();
         } catch (Exception $e) {
@@ -179,7 +186,8 @@ class VeilleC
         try {
             $sql = "UPDATE donnee_marche SET 
                     domaine = :domaine, competence = :competence, salaire_min = :salaire_min, 
-                    salaire_max = :salaire_max, salaire_moyen = :salaire_moyen, demande = :demande, date_collecte = :date_collecte
+                    salaire_max = :salaire_max, salaire_moyen = :salaire_moyen, demande = :demande, date_collecte = :date_collecte,
+                    description = :description
                     WHERE id_donnee = :id_donnee";
             
             $req = $this->db->prepare($sql);
@@ -192,6 +200,7 @@ class VeilleC
             $req->bindValue(':salaire_moyen', $donnee->getSalaireMoyen());
             $req->bindValue(':demande', $donnee->getDemande());
             $req->bindValue(':date_collecte', $donnee->getDateCollecte());
+            $req->bindValue(':description', $donnee->getDescription());
             
             $req->execute();
         } catch (Exception $e) {
@@ -257,6 +266,18 @@ class VeilleC
             $sql = "DELETE FROM liaison_rapport_donnee WHERE id_rapport_marche = :id_rapport";
             $req = $this->db->prepare($sql);
             $req->bindParam(':id_rapport', $id_rapport);
+            $req->execute();
+        } catch (Exception $e) {
+            die('Erreur: ' . $e->getMessage());
+        }
+    }
+
+    public function incrementerViews($id)
+    {
+        try {
+            $sql = "UPDATE rapport_marche SET vues = vues + 1 WHERE id_rapport_marche = :id";
+            $req = $this->db->prepare($sql);
+            $req->bindParam(':id', $id);
             $req->execute();
         } catch (Exception $e) {
             die('Erreur: ' . $e->getMessage());

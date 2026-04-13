@@ -10,8 +10,9 @@ class DonneeMarche
     private $salaire_moyen;
     private $demande;
     private $date_collecte;
+    private $description;
 
-    public function __construct($id_rapport_marche, $domaine, $competence, $salaire_min, $salaire_max, $salaire_moyen, $demande, $date_collecte, $id_donnee = null)
+    public function __construct($id_rapport_marche, $domaine, $competence, $salaire_min, $salaire_max, $salaire_moyen, $demande, $date_collecte, $description = '', $id_donnee = null)
     {
         $this->id_donnee = $id_donnee;
         $this->id_rapport_marche = $id_rapport_marche;
@@ -22,6 +23,7 @@ class DonneeMarche
         $this->salaire_moyen = $salaire_moyen;
         $this->demande = $demande;
         $this->date_collecte = $date_collecte;
+        $this->description = $description;
     }
 
     public function getIdDonnee() { return $this->id_donnee; }
@@ -33,5 +35,6 @@ class DonneeMarche
     public function getSalaireMoyen() { return $this->salaire_moyen; }
     public function getDemande() { return $this->demande; }
     public function getDateCollecte() { return $this->date_collecte; }
+    public function getDescription() { return $this->description; }
 }
 ?>

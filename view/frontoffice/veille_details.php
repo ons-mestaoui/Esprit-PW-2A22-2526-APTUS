@@ -6,8 +6,10 @@ $rapport = null;
 $donnees = [];
 
 if (isset($_GET['id'])) {
-    $rapport = $vc->recupererRapport($_GET['id']);
+    $id_rapport = $_GET['id'];
+    $rapport = $vc->recupererRapport($id_rapport);
     if ($rapport) {
+        $vc->incrementerViews($id_rapport);
         $donnees = $vc->recupererDonneesParRapport($rapport['id_rapport_marche']);
     }
 }
@@ -65,8 +67,14 @@ if (!$rapport) {
         <div class="flex gap-5 text-secondary" style="margin-top:var(--space-4); font-size:0.95rem; font-weight:500;">
             <span style="display:flex;align-items:center;gap:8px;"><div class="avatar avatar-sm avatar-initials" style="width:24px;height:24px;font-size:10px;">A</div> <?php echo htmlspecialchars($rapport['auteur']); ?></span>
             <span style="display:flex;align-items:center;gap:6px;"><i data-lucide="calendar" style="width:16px;height:16px;"></i> <?php echo date('d M. Y', strtotime($rapport['date_publication'])); ?></span>
+            <span style="display:flex;align-items:center;gap:6px;"><i data-lucide="eye" style="width:16px;height:16px;"></i> <?php echo $rapport['vues']; ?> lectures</span>
         </div>
       </div>
+      <?php if (!empty($rapport['image_couverture'])): ?>
+        <div style="flex-shrink:0;">
+            <img src="<?php echo $rapport['image_couverture']; ?>" alt="Cover" style="width:180px; height:120px; object-fit:cover; border-radius:12px; border:2px solid #fff; box-shadow:0 8px 16px rgba(0,0,0,0.1);">
+        </div>
+      <?php endif; ?>
   </div>
 </div>
 
@@ -83,7 +91,15 @@ if (!$rapport) {
                 <p class="lead-text" style="color:var(--text-primary);">
                     Synthèse du rapport publié pour la région <strong><?php echo htmlspecialchars($rapport['region']); ?></strong> concernant le secteur <strong><?php echo htmlspecialchars($rapport['secteur_principal']); ?></strong>.
                 </p>
-                <div style="white-space: pre-wrap; margin-bottom:var(--space-8);"><?php echo htmlspecialchars($rapport['description']); ?></div>
+                <div style="white-space: pre-wrap; margin-bottom:var(--space-8); padding: var(--space-4); background: var(--bg-main); border-radius: var(--radius-sm); border-left: 4px solid var(--accent-primary);"><?php echo htmlspecialchars($rapport['description']); ?></div>
+
+                <div class="rich-content" style="margin-bottom: var(--space-8);">
+                    <?php if (!empty($rapport['contenu_detaille'])): ?>
+                        <?php echo $rapport['contenu_detaille']; ?>
+                    <?php else: ?>
+                        <p style="font-style:italic; opacity:0.6;">Aucun contenu détaillé disponible.</p>
+                    <?php endif; ?>
+                </div>
 
                 <h3 style="margin-top:var(--space-8); margin-bottom:var(--space-4); color:var(--text-primary); display:flex; align-items:center; gap:10px;">
                     <span style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; background:var(--accent-primary); color:#fff; border-radius:50%; font-size:16px;">$</span>
@@ -154,7 +170,12 @@ if (!$rapport) {
                                         <?php echo htmlspecialchars($d['domaine']); ?>
                                     </div>
                                 </td>
-                                <td style="padding:var(--space-4); font-weight:600; color:var(--text-primary);"><?php echo htmlspecialchars($d['competence']); ?></td>
+                                <td style="padding:var(--space-4); font-weight:600; color:var(--text-primary);">
+                                    <?php echo htmlspecialchars($d['competence']); ?>
+                                    <?php if (!empty($d['description'])): ?>
+                                        <div style="font-size:12px; font-weight:400; color:var(--text-tertiary); margin-top:4px;"><?php echo htmlspecialchars($d['description']); ?></div>
+                                    <?php endif; ?>
+                                </td>
                                 <td style="padding:var(--space-4);">
                                     <span style="font-family:monospace; background:var(--bg-main); padding:4px 8px; border-radius:4px;"><?php echo $d['salaire_min'] . ' - ' . $d['salaire_max']; ?></span> 
                                     <span style="color:var(--text-tertiary); font-size:0.85rem; margin-left:4px;">(Moy: <?php echo $d['salaire_moyen']; ?>)</span>

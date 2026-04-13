@@ -30,19 +30,25 @@ if (!isset($content)) {
     <?php if (count($dbReports) > 0): $featured = $dbReports[0]; ?>
     <article class="report-card report-card--featured animate-on-scroll" id="report-featured">
       <div class="report-card__header">
-        <div>
+        <div class="report-card__header-content">
           <h2 class="report-card__title"><?php echo htmlspecialchars($featured['titre']); ?></h2>
           <p class="report-card__excerpt">
             <?php echo htmlspecialchars(substr($featured['description'], 0, 300)) . '...'; ?>
           </p>
         </div>
       </div>
+      <?php if (!empty($featured['image_couverture'])): ?>
+        <img src="<?php echo $featured['image_couverture']; ?>" alt="Cover" class="report-card__image">
+      <?php endif; ?>
       <div class="report-card__meta">
         <span class="report-card__meta-item">
           <i data-lucide="user" style="width:12px;height:12px;"></i> <?php echo htmlspecialchars($featured['auteur']); ?>
         </span>
         <span class="report-card__meta-item">
           <i data-lucide="calendar" style="width:12px;height:12px;"></i> <?php echo date('d M. Y', strtotime($featured['date_publication'])); ?>
+        </span>
+        <span class="report-card__meta-item report-card__meta-item--views">
+          <i data-lucide="eye" style="width:12px;height:12px;"></i> <?php echo $featured['vues']; ?> vues
         </span>
         <span class="badge badge-info"><?php echo htmlspecialchars($featured['secteur_principal']); ?></span>
       </div>
@@ -65,18 +71,24 @@ if (!isset($content)) {
     ?>
     <article class="report-card animate-on-scroll" id="report-<?php echo $i; ?>">
       <div class="report-card__header">
-        <div>
+        <div class="report-card__header-content">
           <h3 class="report-card__title"><?php echo htmlspecialchars($r['titre']); ?></h3>
           <p class="report-card__excerpt"><?php echo htmlspecialchars(substr($r['description'], 0, 150)) . '...'; ?></p>
         </div>
         <span class="badge badge-primary report-card__category"><?php echo htmlspecialchars($r['secteur_principal']); ?></span>
       </div>
+      <?php if (!empty($r['image_couverture'])): ?>
+        <img src="<?php echo $r['image_couverture']; ?>" alt="Cover" class="report-card__image">
+      <?php endif; ?>
       <div class="report-card__meta">
         <span class="report-card__meta-item">
           <i data-lucide="user" style="width:12px;height:12px;"></i> <?php echo htmlspecialchars($r['auteur']); ?>
         </span>
         <span class="report-card__meta-item">
           <i data-lucide="calendar" style="width:12px;height:12px;"></i> <?php echo date('d M. Y', strtotime($r['date_publication'])); ?>
+        </span>
+        <span class="report-card__meta-item report-card__meta-item--views">
+          <i data-lucide="eye" style="width:12px;height:12px;"></i> <?php echo $r['vues']; ?> vues
         </span>
       </div>
       <div class="report-card__footer">

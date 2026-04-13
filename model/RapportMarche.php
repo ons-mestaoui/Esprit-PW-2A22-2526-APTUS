@@ -15,8 +15,11 @@ class RapportMarche
     private $niveau_demande_global;
     private $nombre_donnees;
     private $auteur;
+    private $contenu_detaille;
+    private $image_couverture;
+    private $vues;
 
-    public function __construct($id_admin, $titre, $description, $date_publication, $region, $secteur_principal, $salaire_moyen_global, $salaire_min_global, $salaire_max_global, $tendance_generale, $niveau_demande_global, $nombre_donnees, $auteur, $id_rapport_marche = null)
+    public function __construct($id_admin, $titre, $description, $date_publication, $region, $secteur_principal, $salaire_moyen_global, $salaire_min_global, $salaire_max_global, $tendance_generale, $niveau_demande_global, $nombre_donnees, $auteur, $contenu_detaille = '', $image_couverture = '', $vues = 0, $id_rapport_marche = null)
     {
         $this->id_rapport_marche = $id_rapport_marche;
         $this->id_admin = $id_admin;
@@ -32,6 +35,9 @@ class RapportMarche
         $this->niveau_demande_global = $niveau_demande_global;
         $this->nombre_donnees = $nombre_donnees;
         $this->auteur = $auteur;
+        $this->contenu_detaille = $contenu_detaille;
+        $this->image_couverture = $image_couverture;
+        $this->vues = $vues;
     }
 
     public function getIdRapportMarche() { return $this->id_rapport_marche; }
@@ -48,5 +54,8 @@ class RapportMarche
     public function getNiveauDemandeGlobal() { return $this->niveau_demande_global; }
     public function getNombreDonnees() { return $this->nombre_donnees; }
     public function getAuteur() { return $this->auteur; }
+    public function getContenuDetaille() { return $this->contenu_detaille; }
+    public function getImageCouverture() { return $this->image_couverture; }
+    public function getVues() { return $this->vues; }
 }
 ?>
