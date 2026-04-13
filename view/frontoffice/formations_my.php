@@ -1,4 +1,5 @@
 <?php 
+// Session nécessaire pour les messages flash (succès/erreur)
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $pageTitle = "Mes Formations - Aptus AI";
 
@@ -9,12 +10,13 @@ if (!isset($content)) {
     $inscriptionC = new InscriptionController();
     $id_user = 10; // Demo User
     
-    // Intercepter la demande de désinscription (POST)
+    // Si le candidat clique sur "Se désinscrire" -> traitement POST
+    // Le contrôleur appelle le Model qui vérifie les contraintes (date, statut)
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_formation'])) {
         $inscriptionC->desinscrire();
     }
 
-    // Action Terminer
+    // Terminer une formation : on vérifie en PHP que la date n'est pas dans le futur
     if (isset($_GET['finish_id'])) {
         try {
             $inscriptionC->terminerFormation((int)$_GET['finish_id'], $id_user);
@@ -69,6 +71,7 @@ if (!isset($content)) {
             <progress value="<?php echo $cours['progression']; ?>" max="100" style="width: 100%; height: 8px; border-radius: 4px; overflow: hidden;"></progress>
         </div>
 
+        <!-- Si la formation est annulée par l'admin, on bloque toutes les actions -->
         <?php if ($cours['statut'] === 'annulée'): ?>
             <div style="background: #fee2e2; color: #b91c1c; padding: 1rem; border-radius: 8px; text-align: center; font-weight: bold;">
                 Formation annulée
@@ -88,6 +91,7 @@ if (!isset($content)) {
                     <a href="<?php echo htmlspecialchars($cours['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn" style="background: #3b82f6; color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:6px;">📹 Rejoindre la Room</a>
                 <?php endif; ?>
                 
+                <!-- Contrainte : le bouton "Terminer" n'apparaît que si la date est passée -->
                 <?php if ($cours['date_formation'] <= date('Y-m-d')): ?>
                     <a href="formations_my.php?finish_id=<?php echo $cours['id_formation']; ?>" class="btn btn-primary" style="text-align:center;">Terminer la formation</a>
                 <?php else: ?>
@@ -111,6 +115,8 @@ if (!isset($content)) {
 </div>
 
 <script>
+    // Confirmation de désinscription avec SweetAlert2
+    // On bloque le submit par défaut et on attend la confirmation de l'utilisateur
     function confirmDesinscription(form, event, formationTitre) {
         event.preventDefault(); // Empêcher l'envoi immédiat
         Swal.fire({

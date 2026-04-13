@@ -1,10 +1,13 @@
 <?php
+// FormationController : gère toute la logique métier liée aux formations
+// C'est ici qu'on fait les contrôles de saisie (pas dans la vue)
 include_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../model/Formation.php';
 
 class FormationController
 {
 
+    // Récupère toutes les formations avec le nom du tuteur (jointure)
     public function listerFormations()
     {
         $db = config::getConnexion();
@@ -29,6 +32,7 @@ class FormationController
         }
     }
 
+    // Stats pour le dashboard admin (nb formations, inscrits, certificats, taux)
     public function getStatsGlobales()
     {
         $db = config::getConnexion();
@@ -92,8 +96,14 @@ class FormationController
         }
     }
 
+    // ============================================
+    // CONTRÔLES DE SAISIE (validation côté serveur)
+    // ============================================
+    // On fait tout ici en PHP, pas en HTML (pas de 'required' dans les inputs)
+    // Si un champ est invalide -> on lance une Exception que la vue va attraper
     private function validateFormation($formation)
     {
+        // Titre : obligatoire, entre 5 et 100 caractères
         $titre = trim($formation->getTitre());
         if (empty($titre)) {
             throw new Exception("Le titre est obligatoire.");
@@ -102,6 +112,8 @@ class FormationController
             throw new Exception("Le titre doit contenir entre 5 et 100 caractères.");
         }
 
+        // Description : obligatoire, au moins 20 caractères
+        // strip_tags() pour compter le vrai texte sans les balises HTML de Quill
         $descriptionText = trim(strip_tags($formation->getDescription()));
         if (empty($descriptionText)) {
             throw new Exception("La description est obligatoire.");
@@ -110,14 +122,17 @@ class FormationController
             throw new Exception("La description doit contenir au moins 20 caractères.");
         }
 
+        // Domaine : obligatoire
         if (empty(trim($formation->getDomaine()))) {
             throw new Exception("Le domaine est obligatoire.");
         }
 
+        // Niveau : obligatoire
         if (empty(trim($formation->getNiveau()))) {
             throw new Exception("Le niveau est obligatoire.");
         }
 
+        // Date : obligatoire + interdiction de mettre une date passée
         if (empty($formation->getDateFormation())) {
             throw new Exception("La date de formation est obligatoire.");
         }
@@ -125,27 +140,33 @@ class FormationController
             throw new Exception("La date de formation ne peut pas être dans le passé.");
         }
 
+        // Durée : optionnel, mais si rempli doit respecter le format "chiffre + unité"
+        // Exemples valides : 10h, 2 jours, 30min
         $duree = trim($formation->getDuree());
         if (!empty($duree)) {
-            // regex: start with digits, maybe space, end with letters (ex: 10h, 2 jours) 
             if (!preg_match('/^\d+\s*[A-Za-z]+$/', $duree)) {
                 throw new Exception("La durée doit avoir un format 'numérique + unité' (ex: 10h).");
             }
         }
 
+        // Tuteur : obligatoire (on doit choisir qui anime la formation)
         if (empty($formation->getIdTuteur())) {
             throw new Exception("Vous devez sélectionner un tuteur.");
         }
+        // NB: l'image n'est pas obligatoire
     }
 
+    // Génère un lien Jitsi Meet automatiquement pour les formations en ligne
     private function generateJitsiLink($titre)
     {
         $slug = preg_replace('/[^a-zA-Z0-9]+/', '-', strtolower($titre));
         return "https://meet.jit.si/Aptus_" . $slug . "_" . uniqid();
     }
 
+    // Ajout d'une formation : on valide d'abord, puis on insère en BDD
     public function addFormation($formation)
     {
+        // Appel de validateFormation() -> si erreur, elle lance une Exception
         $this->validateFormation($formation);
 
         // Logique métier : Génération automatique du lien si online et vide
@@ -182,6 +203,7 @@ class FormationController
         }
     }
 
+    // Suppression : on vérifie d'abord qu'il n'y a pas d'inscrits actifs
     public function deleteFormation($id)
     {
         $db = config::getConnexion();
@@ -250,6 +272,7 @@ class FormationController
         }
     }
 
+    // Récupère une formation par son ID (pour la page d'édition)
     public function getFormationById($id)
     {
         $db = config::getConnexion();
@@ -329,6 +352,8 @@ class FormationController
         echo json_encode($events);
     }
 
+    // Annulation d'une formation par l'admin
+    // -> passe la formation ET toutes ses inscriptions en statut 'annulée'
     public function annuler(int $id)
     {
         // Contrainte de sécurité : vérification du rôle (simulée via session)
@@ -349,9 +374,30 @@ class FormationController
                 throw new Exception("Cette formation est déjà annulée.");
             }
 
-            Formation::annulerFormation($id);
+            // Transaction : on annule la formation ET ses inscriptions en même temps
+            // Si l'une des deux requêtes échoue -> rollback complet
+            $db = config::getConnexion();
+            $db->beginTransaction();
+
+            $stmtF = $db->prepare("UPDATE Formation SET statut = 'annulée' WHERE id_formation = ?");
+            if (!$stmtF->execute([$id])) {
+                throw new Exception("Erreur lors de l'annulation de la formation.");
+            }
+
+            try {
+                $stmtI = $db->prepare("UPDATE inscription SET statut = 'annulée' WHERE id_formation = ?");
+                $stmtI->execute([$id]);
+            } catch (Exception $e) {
+                $stmtI = $db->prepare("UPDATE Inscription SET statut = 'annulée' WHERE id_formation = ?");
+                $stmtI->execute([$id]);
+            }
+
+            $db->commit();
             $_SESSION['flash_success'] = "La formation et ses inscriptions ont été annulées avec succès.";
         } catch (Exception $e) {
+            if (isset($db) && $db->inTransaction()) {
+                $db->rollBack();
+            }
             $_SESSION['flash_error'] = $e->getMessage();
         }
 

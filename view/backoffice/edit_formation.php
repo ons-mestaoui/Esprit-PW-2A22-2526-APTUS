@@ -1,4 +1,5 @@
 <?php
+// Session pour les messages flash
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $pageTitle = "Éditer Formation";
 $pageCSS = "formations.css";
@@ -21,12 +22,15 @@ if (isset($_GET['id'])) {
     exit();
 }
 
+// Traitement du formulaire d'édition (quand on clique sur "Enregistrer")
+// Même validation que l'ajout : passe par validateFormation() du contrôleur
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $is_online = (int) $_POST['is_online'];
     $lien_room = trim($_POST['online_url'] ?? '');
 
-    $image_base64 = $formation['image_base64']; // keep old image by default
+    // On garde l'ancienne image si l'admin ne remet pas de fichier
+    $image_base64 = $formation['image_base64'];
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $image_data = file_get_contents($_FILES['image']['tmp_name']);
         $type = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));

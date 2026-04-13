@@ -1,13 +1,15 @@
 <?php
+// On démarre la session ici (pas dans config.php pour respecter le squelette du tuteur)
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
-// 1. Configuration et Contrôleur
+// Inclusion du contrôleur et du modèle (architecture MVC)
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controller/FormationController.php';
 require_once __DIR__ . '/../../model/Formation.php';
 
 $formationC = new FormationController();
 
-// 2. Traitement de la suppression (si demandée)
+// Traitement de la suppression via GET
+// On passe par le contrôleur (pas de requête SQL directe dans la vue)
 if (isset($_GET['delete_id'])) {
     try {
         $formationC->deleteFormation($_GET['delete_id']);
@@ -19,7 +21,7 @@ if (isset($_GET['delete_id'])) {
     exit();
 }
 
-// 3. Récupération des données
+// Récupération des données pour peupler la vue
 $listeFormations = $formationC->listerFormations()->fetchAll();
 $tuteurs = $formationC->getTuteurs();
 $totalFormations = count($listeFormations);
@@ -197,6 +199,8 @@ if (!isset($content)) {
 
                 <div class="form-group" style="padding-bottom: 25px;">
                     <label class="form-label">Description (Contenu Riche)</label>
+            <!-- Textarea caché qui contient le HTML de Quill -->
+            <!-- C'est ce champ qui est envoyé dans le POST, pas le div Quill -->
                     <textarea class="textarea" name="description" id="hidden-description" style="display:none;"></textarea>
                     <div id="quill-editor" style="height: 150px; background: var(--bg-surface);"></div>
                 </div>
@@ -251,6 +255,7 @@ if (!isset($content)) {
                     </select>
                 </div>
 
+                <!-- Si online et pas d'URL fournie, le contrôleur génère un lien Jitsi auto -->
                 <div class="form-group" id="url-field" style="display:none;">
                     <label class="form-label">URL Room (Laissez vide pour Jitsi auto)</label>
                     <input type="url" class="input" name="online_url">

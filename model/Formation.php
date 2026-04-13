@@ -1,4 +1,7 @@
 <?php
+// Model Formation : représente une formation dans la BDD
+// Contient uniquement les attributs, le constructeur, et les getters/setters
+// Les requêtes SQL sont dans le Controller (FormationController.php)
 class Formation
 {
     private ?int $id_formation;
@@ -83,7 +86,7 @@ class Formation
         return $this->lien_api_room;
     }
 
-    // Setters (Exemples)
+    // Setters
     public function setTitre(string $titre)
     {
         $this->titre = $titre;
@@ -91,33 +94,5 @@ class Formation
     public function setDescription(string $description)
     {
         $this->description = $description;
-    }
-    // ... tu peux ajouter les autres setters si nécessaire
-
-    public static function annulerFormation(int $id)
-    {
-        $db = config::getConnexion();
-        try {
-            $db->beginTransaction();
-
-            $stmtF = $db->prepare("UPDATE Formation SET statut = 'annulée' WHERE id_formation = ?");
-            if (!$stmtF->execute([$id])) {
-                throw new Exception("Erreur lors de l'annulation de la formation dans la db.");
-            }
-
-            try {
-                $stmtI = $db->prepare("UPDATE inscription SET statut = 'annulée' WHERE id_formation = ?");
-                $stmtI->execute([$id]);
-            } catch (Exception $e) {
-                $stmtI = $db->prepare("UPDATE Inscription SET statut = 'annulée' WHERE id_formation = ?");
-                $stmtI->execute([$id]);
-            }
-
-            $db->commit();
-            return true;
-        } catch (Exception $e) {
-            $db->rollBack();
-            throw new Exception("Erreur lors de la transaction d'annulation : " . $e->getMessage());
-        }
     }
 }

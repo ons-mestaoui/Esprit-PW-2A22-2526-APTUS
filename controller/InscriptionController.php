@@ -1,9 +1,12 @@
 <?php
+// InscriptionController : gère les inscriptions/desinscriptions des candidats
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../model/Inscription.php';
 
 class InscriptionController
 {
+    // Récupère les formations auxquelles un candidat est inscrit
+    // On fait une jointure pour avoir aussi les infos de la formation et du tuteur
     public function listerMesFormations($id_user)
     {
         $db = config::getConnexion();
@@ -38,6 +41,8 @@ class InscriptionController
         }
     }
 
+    // Marquer une formation comme terminée (progression = 100%)
+    // Contrainte : on ne peut pas terminer une formation dont la date est dans le futur
     public function terminerFormation($id_formation, $id_user)
     {
         $db = config::getConnexion();
@@ -61,6 +66,8 @@ class InscriptionController
         }
     }
 
+    // Désinscription d'un candidat (action front-office)
+    // Contraintes vérifiées ici dans le contrôleur (pas dans le model)
     public function desinscrire()
     {
         if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_formation'])) {
@@ -68,7 +75,44 @@ class InscriptionController
             $id_user = $_SESSION['user_id'] ?? 10; // Récupère l'ID via session ou 10 pour la démo
 
             try {
-                Inscription::desinscrire($id_user, $id_formation);
+                $db = config::getConnexion();
+
+                // Contrainte 1 : Bloquer si la formation a déjà commencé (date passée)
+                $stmtF = $db->prepare("SELECT date_formation FROM Formation WHERE id_formation = ?");
+                $stmtF->execute([$id_formation]);
+                $date_f = $stmtF->fetchColumn();
+
+                if ($date_f && strtotime($date_f) <= strtotime(date('Y-m-d'))) {
+                    throw new Exception("Impossible de se désinscrire : la formation a déjà commencé ou est passée.");
+                }
+
+                // Contrainte 2 : Bloquer si le statut de l'inscription est 'Terminée'
+                $stmtI = null;
+                try {
+                    $stmtI = $db->prepare("SELECT statut FROM inscription WHERE id_formation = ? AND id_user = ?");
+                    $stmtI->execute([$id_formation, $id_user]);
+                } catch (Exception $e) {
+                    $stmtI = $db->prepare("SELECT statut FROM Inscription WHERE id_formation = ? AND id_user = ?");
+                    $stmtI->execute([$id_formation, $id_user]);
+                }
+
+                $statut_actuel = $stmtI->fetchColumn();
+                if ($statut_actuel === 'Terminée') {
+                    throw new Exception("Impossible de se désinscrire d'une formation déjà terminée.");
+                }
+
+                // Suppression de l'inscription
+                try {
+                    $delete = $db->prepare("DELETE FROM inscription WHERE id_formation = ? AND id_user = ?");
+                    $delete->execute([$id_formation, $id_user]);
+                    if ($delete->rowCount() == 0) {
+                        $delete = $db->prepare("DELETE FROM Inscription WHERE id_formation = ? AND id_user = ?");
+                        $delete->execute([$id_formation, $id_user]);
+                    }
+                } catch (Exception $e) {
+                    throw new Exception("Erreur système lors de la désinscription.");
+                }
+
                 $_SESSION['flash_success'] = "Vous vous êtes désinscrit de la formation avec succès.";
             } catch (Exception $e) {
                 $_SESSION['flash_error'] = $e->getMessage();
@@ -78,6 +122,8 @@ class InscriptionController
         }
     }
 
+    // Annulation d'une inscription par l'admin (back-office)
+    // On vérifie que c'est bien un admin avant de faire quoi que ce soit
     public function annulerAdmin()
     {
         if (isset($_GET['id_inscription'])) {
@@ -88,7 +134,14 @@ class InscriptionController
             }
 
             try {
-                Inscription::annulerParAdmin((int)$_GET['id_inscription']);
+                $db = config::getConnexion();
+                try {
+                    $update = $db->prepare("UPDATE inscription SET statut = 'annulée' WHERE id_inscri = ?");
+                    $update->execute([(int)$_GET['id_inscription']]);
+                } catch(Exception $e) {
+                    $update = $db->prepare("UPDATE Inscription SET statut = 'annulée' WHERE id_inscri = ?");
+                    $update->execute([(int)$_GET['id_inscription']]);
+                }
                 $_SESSION['flash_success'] = "L'inscription a été annulée.";
             } catch (Exception $e) {
                 $_SESSION['flash_error'] = "Erreur lors de l'annulation de l'inscription.";
@@ -98,6 +151,8 @@ class InscriptionController
         }
     }
 
+    // Changement de statut d'une inscription par l'admin
+    // Statuts possibles : En attente, En cours, Terminée, annulée, shortlisté, refusé
     public function updateStatut()
     {
         if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_inscription']) && isset($_POST['statut'])) {
@@ -107,8 +162,23 @@ class InscriptionController
                 exit();
             }
 
+            // Contrainte : on vérifie que le statut demandé est dans la liste autorisée
+            $statuts_autorises = ['En attente', 'En cours', 'Terminée', 'annulée', 'shortlisté', 'refusé'];
+            if (!in_array($_POST['statut'], $statuts_autorises)) {
+                $_SESSION['flash_error'] = "Statut invalide.";
+                header("Location: formations_admin.php");
+                exit();
+            }
+
             try {
-                Inscription::updateStatutAdmin((int)$_POST['id_inscription'], $_POST['statut']);
+                $db = config::getConnexion();
+                try {
+                    $update = $db->prepare("UPDATE inscription SET statut = ? WHERE id_inscri = ?");
+                    $update->execute([$_POST['statut'], (int)$_POST['id_inscription']]);
+                } catch(Exception $e) {
+                    $update = $db->prepare("UPDATE Inscription SET statut = ? WHERE id_inscri = ?");
+                    $update->execute([$_POST['statut'], (int)$_POST['id_inscription']]);
+                }
                 $_SESSION['flash_success'] = "Le statut de l'inscription a été mis à jour.";
             } catch (Exception $e) {
                 $_SESSION['flash_error'] = $e->getMessage();
