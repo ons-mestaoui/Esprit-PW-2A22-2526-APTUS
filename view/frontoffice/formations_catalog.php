@@ -104,7 +104,7 @@ if (!isset($content)) {
 
                     <h2 style="font-size: 1.1rem; margin-bottom: 0.5rem;"><?php echo htmlspecialchars($f['titre']); ?></h2>
                     <p style="font-size: 0.85rem; color: var(--text-secondary); height: 3.2rem; overflow: hidden; margin-bottom: 1.5rem; flex:1;">
-                        <?php echo htmlspecialchars($f['description']); ?>
+                        <?php echo htmlspecialchars(substr(strip_tags($f['description']), 0, 120)); ?>
                     </p>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: auto;">

@@ -81,9 +81,10 @@ if (!isset($content)) {
             <h1 style="font-size: 2rem; margin-bottom: 1.5rem;"><?php echo htmlspecialchars($formation['titre']); ?>
             </h1>
 
-            <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 2rem;">
-                <?php echo nl2br(htmlspecialchars($formation['description'])); ?>
-            </p>
+            <!-- Description en contenu riche (Quill) : on affiche le HTML directement -->
+            <div style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 2rem;">
+                <?php echo $formation['description']; ?>
+            </div>
 
             <div
                 style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
