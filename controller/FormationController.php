@@ -91,8 +91,37 @@ class FormationController
         }
     }
 
+    private function validateFormation($formation)
+    {
+        if (empty($formation->getTitre())) {
+            throw new Exception("Le titre est obligatoire.");
+        }
+        if (empty($formation->getDescription())) {
+            throw new Exception("La description est obligatoire.");
+        }
+        if (strtotime($formation->getDateFormation()) < strtotime(date('Y-m-d'))) {
+            throw new Exception("La date de formation ne peut pas être dans le passé.");
+        }
+    }
+
+    private function generateJitsiLink($titre)
+    {
+        $slug = preg_replace('/[^a-zA-Z0-9]+/', '-', strtolower($titre));
+        return "https://meet.jit.si/Aptus_" . $slug . "_" . uniqid();
+    }
+
     public function addFormation($formation)
     {
+        $this->validateFormation($formation);
+
+        // Logique métier : Génération automatique du lien si online et vide
+        $lien = $formation->getLienApiRoom();
+        if ($formation->getIsOnline() == 1 && empty($lien)) {
+            $lien = $this->generateJitsiLink($formation->getTitre());
+            // On peut soit modifier l'objet, soit gérer cela ici. 
+            // Pour rester simple, on va utiliser cette valeur dans l'execute.
+        }
+
         $db = config::getConnexion();
         try {
             $query = $db->prepare("
@@ -111,7 +140,7 @@ class FormationController
                 'image_base64' => $formation->getImageBase64(),
                 'id_tuteur' => $formation->getIdTuteur(),
                 'is_online' => $formation->getIsOnline(),
-                'lien_api_room' => $formation->getLienApiRoom()
+                'lien_api_room' => $lien
             ]);
             return $db->lastInsertId();
         } catch (Exception $e) {
@@ -149,6 +178,13 @@ class FormationController
 
     public function updateFormation($formation, $id)
     {
+        $this->validateFormation($formation);
+
+        $lien = $formation->getLienApiRoom();
+        if ($formation->getIsOnline() == 1 && empty($lien)) {
+            $lien = $this->generateJitsiLink($formation->getTitre());
+        }
+
         $db = config::getConnexion();
         try {
             $query = $db->prepare("
@@ -169,7 +205,7 @@ class FormationController
                 'image_base64' => $formation->getImageBase64(),
                 'id_tuteur' => $formation->getIdTuteur(),
                 'is_online' => $formation->getIsOnline(),
-                'lien_api_room' => $formation->getLienApiRoom()
+                'lien_api_room' => $lien
             ]);
         } catch (Exception $e) {
             die('Erreur: ' . $e->getMessage());
@@ -215,4 +251,43 @@ class FormationController
             die('Erreur: ' . $e->getMessage());
         }
     }
-}
+
+    // 1. Pour la liste à droite du calendrier
+    public function getFormationsByTuteur($id_tuteur) {
+        $db = config::getConnexion();
+        try {
+            $query = $db->prepare("
+                SELECT f.*, 
+                (SELECT COUNT(*) FROM Inscription WHERE id_formation = f.id_formation) as nb_inscrits
+                FROM Formation f 
+                WHERE f.id_tuteur = :id
+                ORDER BY f.date_formation ASC
+            ");
+            $query->execute(['id' => $id_tuteur]);
+            return $query->fetchAll();
+        } catch (Exception $e) {
+            die('Erreur: ' . $e->getMessage());
+        }
+    }
+
+    // 2. Pour le flux JSON du calendrier (FullCalendar)
+    public function getCalendarEventsJSON($id_tuteur) {
+        $formations = $this->getFormationsByTuteur($id_tuteur);
+        $events = [];
+        foreach($formations as $f) {
+            $events[] = [
+                'title' => $f['titre'],
+                'start' => $f['date_formation'],
+                'backgroundColor' => ($f['is_online']) ? '#3498db' : '#2ecc71',
+                'extendedProps' => [
+                    'is_online' => (bool)$f['is_online'],
+                    'nb_inscrits' => $f['nb_inscrits'],
+                    'description' => $f['description'],
+                    'lien_room' => $f['lien_api_room']
+                ]
+            ];
+        }
+        header('Content-Type: application/json');
+        echo json_encode($events);
+    }
+}

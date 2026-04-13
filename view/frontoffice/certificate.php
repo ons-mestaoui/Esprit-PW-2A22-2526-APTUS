@@ -3,13 +3,52 @@
 session_start();
 require_once __DIR__ . '/../../config.php';
 
-// Mock data
-$user = ['id' => 1, 'nom' => 'John Doe'];
+$id_user = 10; // For demo matching candidate test ID
+$id_formation = $_GET['f_id'] ?? 1;
+
+$db = config::getConnexion();
+
+$user = ['id' => $id_user, 'nom' => 'Candidat Aptus'];
 $cours_fini = [
-    'id_formation' => $_GET['f_id'] ?? 1,
-    'titre' => 'Masterclass Data & AI',
-    'tuteur_nom' => 'Dr. Ahmed Ben Ali'
+    'id_formation' => $id_formation,
+    'titre' => 'Formation',
+    'tuteur_nom' => 'Aptus AI'
 ];
+
+try {
+    // We try to fetch real data
+    $stmt = $db->prepare("
+        SELECT f.titre, COALESCE(u.nom, 'Aptus AI') as tuteur_nom, 
+               (SELECT nom FROM utilisateur WHERE id = ?) as etudiant_nom
+        FROM Formation f
+        LEFT JOIN utilisateur u ON f.id_tuteur = u.id
+        WHERE f.id_formation = ?
+    ");
+    $stmt->execute([$id_user, $id_formation]);
+    $data = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($data) {
+        if (!empty($data['etudiant_nom'])) $user['nom'] = $data['etudiant_nom'];
+        $cours_fini['titre'] = $data['titre'];
+        $cours_fini['tuteur_nom'] = $data['tuteur_nom'];
+    }
+} catch (Exception $e) {
+    try {
+        $stmt = $db->prepare("
+            SELECT f.titre, COALESCE(u.nom, 'Aptus AI') as tuteur_nom, 
+                   (SELECT nom FROM User WHERE id = ?) as etudiant_nom
+            FROM Formation f
+            LEFT JOIN User u ON f.id_tuteur = u.id
+            WHERE f.id_formation = ?
+        ");
+        $stmt->execute([$id_user, $id_formation]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($data) {
+            if (!empty($data['etudiant_nom'])) $user['nom'] = $data['etudiant_nom'];
+            $cours_fini['titre'] = $data['titre'];
+            $cours_fini['tuteur_nom'] = $data['tuteur_nom'];
+        }
+    } catch(Exception $e2) {}
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">

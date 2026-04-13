@@ -2,42 +2,24 @@
 $pageTitle = "Mes Formations - Aptus AI";
 
 if (!isset($content)) {
-    // Basic setup if executed directly
     require_once __DIR__ . '/../../config.php';
+    require_once __DIR__ . '/../../controller/InscriptionController.php';
     
-    $db = config::getConnexion();
-    $id_user = 10; // User candidat ID pour démonstration
-    $mesCours = [];
+    $inscriptionC = new InscriptionController();
+    $id_user = 10; // Demo User
     
-    try {
-        $stmt = $db->prepare("
-            SELECT f.*, i.statut, i.progression, 
-                   COALESCE(u.nom, 'Aptus') as tuteur_nom
-            FROM inscription i
-            JOIN Formation f ON i.id_formation = f.id_formation
-            LEFT JOIN utilisateur u ON f.id_tuteur = u.id
-            WHERE i.id_user = ?
-            ORDER BY i.date_inscription DESC
-        ");
-        $stmt->execute([$id_user]);
-        $mesCours = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
+    // Action Terminer
+    if (isset($_GET['finish_id'])) {
         try {
-            $stmt = $db->prepare("
-                SELECT f.*, i.statut, i.progression, 
-                       COALESCE(u.nom, 'Aptus') as tuteur_nom
-                FROM Inscription i
-                JOIN Formation f ON i.id_formation = f.id_formation
-                LEFT JOIN User u ON f.id_tuteur = u.id
-                WHERE i.id_user = ?
-                ORDER BY i.date_inscription DESC
-            ");
-            $stmt->execute([$id_user]);
-            $mesCours = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e2) {
-            $mesCours = [];
+            $inscriptionC->terminerFormation((int)$_GET['finish_id'], $id_user);
+        } catch (Exception $e) {
+            // Ici on pourrait stocker l'erreur en session pour l'afficher
         }
+        header("Location: formations_my.php");
+        exit();
     }
+    
+    $mesCours = $inscriptionC->listerMesFormations($id_user);
     
     $content = __FILE__;
     include 'layout_front.php';
@@ -100,7 +82,7 @@ if (!isset($content)) {
                 <?php endif; ?>
                 
                 <?php if ($cours['date_formation'] <= date('Y-m-d')): ?>
-                    <a href="#" class="btn btn-primary" style="text-align:center;">Terminer la formation</a>
+                    <a href="formations_my.php?finish_id=<?php echo $cours['id_formation']; ?>" class="btn btn-primary" style="text-align:center;">Terminer la formation</a>
                 <?php else: ?>
                     <button class="btn" style="background: #e2e8f0; color: #94a3b8; cursor: not-allowed; width:100%; border:none; padding:0.5rem; border-radius:6px;" disabled>Disponible le <?php echo date('d/m', strtotime($cours['date_formation'])); ?></button>
                 <?php endif; ?>
