@@ -94,20 +94,47 @@ class FormationController
 
     private function validateFormation($formation)
     {
-        if (empty(trim($formation->getTitre()))) {
+        $titre = trim($formation->getTitre());
+        if (empty($titre)) {
             throw new Exception("Le titre est obligatoire.");
         }
-        if (empty(trim($formation->getDescription()))) {
+        if (strlen($titre) < 5 || strlen($titre) > 100) {
+            throw new Exception("Le titre doit contenir entre 5 et 100 caractères.");
+        }
+
+        $descriptionText = trim(strip_tags($formation->getDescription()));
+        if (empty($descriptionText)) {
             throw new Exception("La description est obligatoire.");
         }
+        if (strlen($descriptionText) < 20) {
+            throw new Exception("La description doit contenir au moins 20 caractères.");
+        }
+
         if (empty(trim($formation->getDomaine()))) {
             throw new Exception("Le domaine est obligatoire.");
         }
+
+        if (empty(trim($formation->getNiveau()))) {
+            throw new Exception("Le niveau est obligatoire.");
+        }
+
         if (empty($formation->getDateFormation())) {
             throw new Exception("La date de formation est obligatoire.");
         }
         if (strtotime($formation->getDateFormation()) < strtotime(date('Y-m-d'))) {
             throw new Exception("La date de formation ne peut pas être dans le passé.");
+        }
+
+        $duree = trim($formation->getDuree());
+        if (!empty($duree)) {
+            // regex: start with digits, maybe space, end with letters (ex: 10h, 2 jours) 
+            if (!preg_match('/^\d+\s*[A-Za-z]+$/', $duree)) {
+                throw new Exception("La durée doit avoir un format 'numérique + unité' (ex: 10h).");
+            }
+        }
+
+        if (empty($formation->getIdTuteur())) {
+            throw new Exception("Vous devez sélectionner un tuteur.");
         }
     }
 
