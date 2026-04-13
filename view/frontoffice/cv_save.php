@@ -63,96 +63,56 @@ if (mb_strlen($summary) > 1000) {
 }
 
 try {
-    $db = config::getConnexion();
+    require_once __DIR__ . '/../../controller/CVC.php';
+    require_once __DIR__ . '/../../model/CV.php';
 
-    // Désactiver les FK pour éviter le problème id_candidat vide
-    $db->exec('SET FOREIGN_KEY_CHECKS = 0');
+    // Session user
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    $id_candidat = $_SESSION['user_id'] ?? null; // NULL est acceptable (colonne DEFAULT NULL)
 
-    // Construire l'infoContact
-    $phone    = trim($data['phone']    ?? '');
-    $location = trim($data['location'] ?? '');
+    // Construire l'infoContact consolidée
     $infoContact = implode(' | ', array_filter([$email, $phone, $location]));
 
     $cv_id       = !empty($data['cv_id'])       ? (int)$data['cv_id']       : null;
     $template_id = !empty($data['template_id']) ? (int)$data['template_id'] : null;
     $photo       = $data['photo']       ?? '';
     $couleur     = $data['color_theme'] ?? '#2563eb';
-    $summary     = $data['summary']     ?? '';
     $experience  = $data['experience']  ?? '';
     $skills      = $data['skills']      ?? '';
     $education   = $data['education']   ?? '';
     $languages   = $data['languages']   ?? '';
+    $ndoc        = 'CV ' . $name;
 
-    // Session user
-    if (session_status() === PHP_SESSION_NONE) session_start();
-    $id_candidat = $_SESSION['user_id'] ?? null; // NULL est acceptable (colonne DEFAULT NULL)
+    // Instanciation stricte du Modèle MVC
+    $cvModel = new CV(
+        $cv_id,
+        $id_candidat,
+        $template_id,
+        $ndoc,
+        $name,
+        $title,
+        $summary,
+        $infoContact,
+        $experience,
+        $education,
+        $skills,
+        $languages,
+        $photo,
+        $couleur,
+        'en_attente' // statut par défaut
+    );
+
+    // Appel du Contrôleur MVC
+    $cvc = new CVC();
 
     if ($cv_id) {
-        // UPDATE
-        $stmt = $db->prepare(
-            "UPDATE cv SET
-                id_template   = :tpl,
-                nomDocument   = :ndoc,
-                nomComplet    = :nom,
-                titrePoste    = :titre,
-                resume        = :resume,
-                infoContact   = :contact,
-                experience    = :exp,
-                formation     = :form,
-                competences   = :comp,
-                langues       = :lang,
-                urlPhoto      = :photo,
-                couleurTheme  = :couleur,
-                dateMiseAJour = NOW()
-            WHERE id_cv = :id"
-        );
-        $stmt->execute([
-            'tpl'     => $template_id,
-            'ndoc'    => 'CV ' . $name,
-            'nom'     => $name,
-            'titre'   => $title,
-            'resume'  => $summary,
-            'contact' => $infoContact,
-            'exp'     => $experience,
-            'form'    => $education,
-            'comp'    => $skills,
-            'lang'    => $languages,
-            'photo'   => $photo,
-            'couleur' => $couleur,
-            'id'      => $cv_id
-        ]);
+        // UPDATE (Délégation au Contrôleur)
+        $cvc->updateCV($cv_id, $cvModel);
         $newId = $cv_id;
     } else {
-        // INSERT
-        $stmt = $db->prepare(
-            "INSERT INTO cv
-                (id_candidat, id_template, nomDocument, nomComplet, titrePoste, resume,
-                 infoContact, experience, formation, competences, langues,
-                 urlPhoto, couleurTheme, statut, dateCreation, dateMiseAJour)
-            VALUES
-                (:cand, :tpl, :ndoc, :nom, :titre, :resume,
-                 :contact, :exp, :form, :comp, :lang,
-                 :photo, :couleur, 'en_attente', NOW(), NOW())"
-        );
-        $stmt->execute([
-            'cand'    => $id_candidat, // peut être NULL
-            'tpl'     => $template_id,
-            'ndoc'    => 'CV ' . $name,
-            'nom'     => $name,
-            'titre'   => $title,
-            'resume'  => $summary,
-            'contact' => $infoContact,
-            'exp'     => $experience,
-            'form'    => $education,
-            'comp'    => $skills,
-            'lang'    => $languages,
-            'photo'   => $photo,
-            'couleur' => $couleur
-        ]);
-        $newId = $db->lastInsertId();
+        // INSERT (Délégation au Contrôleur)
+        $newId = $cvc->addCV($cvModel);
     }
-
-    $db->exec('SET FOREIGN_KEY_CHECKS = 1');
 
     echo json_encode(['success' => true, 'id' => (int)$newId]);
 
