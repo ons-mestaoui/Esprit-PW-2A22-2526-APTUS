@@ -1,0 +1,490 @@
+/* ============================================================
+   Aptus — Formations Module Styles
+   ============================================================ */
+
+/* ── Catalog Layout ───────────────────────────── */
+.formations-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: var(--space-6);
+}
+
+/* ── Course Cards (16:9) ──────────────────────── */
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-6);
+}
+
+.course-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: var(--transition-base);
+}
+.course-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+  border-color: var(--accent-primary);
+}
+.course-card__image {
+  aspect-ratio: 16/9;
+  background: var(--gradient-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.course-card__image-placeholder {
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(135deg,
+      var(--accent-primary) 0%,
+      var(--accent-secondary) 50%,
+      var(--accent-info) 100%
+    );
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.course-card__image-placeholder i {
+  color: rgba(255,255,255,0.3);
+}
+.course-card__level {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: #FFFFFF;
+}
+.course-card__level.beginner   { background: #22C55E; }
+.course-card__level.intermediate { background: #F59E0B; }
+.course-card__level.advanced   { background: #EF4444; }
+.course-card__level.expert     { background: #8B5CF6; }
+
+.course-card__body {
+  padding: var(--space-4);
+}
+.course-card__title {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--space-2);
+  line-height: var(--lh-tight);
+}
+.course-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-4);
+}
+.course-card__meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.course-card__tutor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
+}
+.course-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-color-light);
+}
+
+/* ── My Courses Dashboard ─────────────────────── */
+.my-courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-6);
+}
+
+.my-course-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  transition: var(--transition-base);
+}
+.my-course-card:hover {
+  box-shadow: var(--shadow-md);
+}
+.my-course-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.my-course-card__thumb {
+  width: 80px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-primary);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.my-course-card__title {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--space-1);
+}
+.my-course-card__tutor {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+
+/* ── Progress Bar (Animated) ──────────────────── */
+.course-progress {
+  margin-bottom: var(--space-4);
+}
+.course-progress__info {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-xs);
+  margin-bottom: var(--space-2);
+}
+.course-progress__label {
+  color: var(--text-secondary);
+}
+.course-progress__value {
+  font-weight: var(--fw-semibold);
+  color: var(--accent-primary);
+}
+.course-progress .progress-bar {
+  height: 8px;
+}
+
+/* ── Gamification Stats ───────────────────────── */
+.gamification-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+.gamification-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  text-align: center;
+  transition: var(--transition-base);
+}
+.gamification-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.gamification-stat__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-3);
+}
+.gamification-stat__value {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: var(--space-1);
+}
+.gamification-stat__label {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+/* ── Smart Form (Admin) ───────────────────────── */
+.formation-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+}
+
+.lieu-toggle {
+  display: flex;
+  gap: var(--space-2);
+}
+.lieu-toggle__option {
+  flex: 1;
+  position: relative;
+}
+.lieu-toggle__option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.lieu-toggle__label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
+  transition: var(--transition-fast);
+}
+.lieu-toggle__option input:checked + .lieu-toggle__label {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary-light);
+  color: var(--accent-primary);
+}
+
+.conditional-field {
+  display: none;
+  animation: fadeInUp 0.3s ease forwards;
+}
+
+/* ── Drop Zone (16:9) ─────────────────────────── */
+.drop-zone--landscape {
+  aspect-ratio: 16/9;
+  max-width: 480px;
+  padding: var(--space-6);
+}
+
+/* ── Certificate ──────────────────────────────── */
+.certificate-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-8);
+  background: var(--bg-body);
+}
+.certificate-actions {
+  margin-bottom: var(--space-6);
+  display: flex;
+  gap: var(--space-3);
+}
+.certificate {
+  width: 297mm;
+  height: 210mm;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2xl);
+  padding: 40px 60px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: #1A1D2E;
+}
+
+/* Certificate border decorations */
+.certificate::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 2px solid var(--accent-primary);
+  border-radius: 8px;
+  pointer-events: none;
+}
+.certificate::after {
+  content: '';
+  position: absolute;
+  inset: 16px;
+  border: 1px solid rgba(107, 52, 163, 0.2);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.certificate__header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.certificate__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.certificate__logo-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 0;
+}
+.certificate__logo-text {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent-primary);
+}
+.certificate__label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: #6B7280;
+  margin-bottom: 8px;
+}
+.certificate__title {
+  font-size: 32px;
+  font-weight: 800;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.certificate__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.certificate__awarded-to {
+  font-size: 14px;
+  color: #6B7280;
+  margin-bottom: 12px;
+}
+.certificate__name {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1A1D2E;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--accent-primary);
+  padding-bottom: 8px;
+  display: inline-block;
+}
+.certificate__description {
+  font-size: 14px;
+  color: #6B7280;
+  max-width: 500px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.certificate__course-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1A1D2E;
+  margin-bottom: 8px;
+}
+.certificate__date {
+  font-size: 13px;
+  color: #9CA3AF;
+}
+
+.certificate__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: auto;
+  padding-top: 24px;
+}
+.certificate__signature {
+  text-align: center;
+}
+.certificate__signature-line {
+  width: 160px;
+  height: 1px;
+  background: #D1D5DB;
+  margin: 0 auto 8px;
+}
+.certificate__signature-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1A1D2E;
+}
+.certificate__signature-role {
+  font-size: 11px;
+  color: #9CA3AF;
+}
+.certificate__seal {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+  position: relative;
+}
+.certificate__seal::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(107, 52, 163, 0.3);
+  border-radius: 50%;
+}
+
+/* ── Print Styles ─────────────────────────────── */
+@media print {
+  body {
+    background: white !important;
+  }
+  .certificate-actions,
+  .topnav,
+  .front-footer,
+  .front-main > *:not(.certificate-page) {
+    display: none !important;
+  }
+  .certificate-page {
+    padding: 0;
+    min-height: auto;
+    background: white;
+  }
+  .certificate {
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+}
+
+/* ── Responsive ───────────────────────────────── */
+@media (max-width: 1024px) {
+  .formations-layout {
+    grid-template-columns: 1fr;
+  }
+  .gamification-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .courses-grid {
+    grid-template-columns: 1fr;
+  }
+  .my-courses-grid {
+    grid-template-columns: 1fr;
+  }
+  .certificate {
+    width: 100%;
+    height: auto;
+    aspect-ratio: auto;
+    padding: 24px;
+  }
+}

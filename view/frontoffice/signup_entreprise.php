@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscription Entreprise — Aptus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/auth.css">
+  <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+</head>
+<body>
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+include_once __DIR__ . '/../../controller/UtilisateurC.php';
+
+$error = "";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Les champs
+    $raison_sociale = $_POST['raison_sociale'] ?? '';
+    $siret = $_POST['siret'] ?? '';
+    $secteur = $_POST['secteur'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
+    $password_confirm = $_POST['password_confirm'] ?? '';
+    
+    // Champs optionnels qui vont pour le moment dans les autres tables ou juste en visuel
+    $site_web = $_POST['site_web'] ?? '';
+    $telephone = $_POST['telephone'] ?? null; // Si on a
+    
+    if ($password !== $password_confirm) {
+        $error = "Les mots de passe ne correspondent pas.";
+    } elseif (empty($raison_sociale) || empty($siret) || empty($email) || empty($password)) {
+        $error = "Veuillez remplir tous les champs obligatoires.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Le format de l'adresse email est invalide.";
+    } elseif (strlen($password) < 8) {
+        $error = "Le mot de passe doit contenir au moins 8 caractères.";
+    } else {
+        $utilisateurC = new UtilisateurC();
+        if ($utilisateurC->emailExists($email)) {
+            $error = "Cette adresse email est déjà utilisée par un autre compte.";
+        } else {
+            // Création dans "utilisateur" - nom prend raisonSociale, prenom est vide pour une entreprise
+            $utilisateur = new Utilisateur(0, $raison_sociale, '', $email, $password, 'Entreprise', $telephone);
+            $last_id = $utilisateurC->addUtilisateur($utilisateur);
+
+            if ($last_id) {
+                try {
+                    $db = config::getConnexion();
+                    
+                    // 1. Profil (Logo et Site Web)
+                    $photo_base64 = null;
+                    if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+                        $imageData = file_get_contents($_FILES['logo']['tmp_name']);
+                        $mimeType = !empty($_FILES['logo']['type']) ? $_FILES['logo']['type'] : 'image/jpeg'; 
+                        $photo_base64 = 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
+                    }
+                    $queryP = $db->prepare("INSERT INTO profil (id_utilisateur, photo, siteWeb, dateCreation, dateMiseAJour) VALUES (:id, :photo, :site, NOW(), NOW())");
+                    $queryP->execute(['id' => $last_id, 'photo' => $photo_base64, 'site' => $site_web]);
+                    
+                    // 2. Entreprise (Secteur, SIRET, Raison Sociale)
+                    $queryE = $db->prepare("INSERT INTO entreprise (id_entreprise, secteur, siret, raisonSociale) VALUES (:id, :secteur, :siret, :raisonSociale)");
+                    $queryE->execute([
+                        'id' => $last_id,
+                        'secteur' => $secteur,
+                        'siret' => $siret,
+                        'raisonSociale' => $raison_sociale
+                    ]);
+
+                    $_SESSION['id_utilisateur'] = $last_id;
+                    $_SESSION['nom'] = $raison_sociale;
+                    $_SESSION['role'] = 'Entreprise';
+                    header("Location: hr_posts.php"); // Redirection vers le dashboard entreprise approprié
+                    exit();
+                } catch (Exception $e) {
+                    $error = "Erreur de création entreprise : " . $e->getMessage();
+                }
+            } else {
+                $error = "Une erreur s'est produite lors de la création du compte.";
+            }
+        }
+    }
+}
+?>
+
+  <div class="auth-page">
+    <div class="auth-card auth-card--wide">
+      <div class="auth-card__logo">
+        <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="auth-card__logo-icon" style="background:none;padding:4px;">
+        <span class="auth-card__logo-text">Aptus</span>
+      </div>
+
+      <div class="auth-card__header">
+        <span class="auth-card__type-badge entreprise">
+          <i data-lucide="building-2" style="width:14px;height:14px;"></i>
+          Entreprise
+        </span>
+        <h1>Inscrivez votre entreprise</h1>
+        <p>Accédez à un vivier de talents qualifiés et boostez vos recrutements</p>
+      </div>
+
+      <div class="steps">
+        <span class="step-dot active"></span>
+        <span class="step-dot"></span>
+        <span class="step-dot"></span>
+      </div>
+
+      <?php if (!empty($error)): ?>
+        <div style="background-color:rgba(239,68,68,0.1);color:#ef4444;padding:12px;border-radius:8px;margin-bottom:var(--space-4);font-size:14px;border:1px solid rgba(239,68,68,0.2);">
+          <?php echo htmlspecialchars($error); ?>
+        </div>
+      <?php endif; ?>
+
+      <form method="POST" action="" enctype="multipart/form-data" class="auth-form" id="signup-entreprise-form">
+
+        <div class="auth-form__row">
+          <div class="form-group">
+            <label class="form-label" for="ent-nom">Raison sociale</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="building-2" style="width:18px;height:18px;"></i>
+              <input type="text" class="input" id="ent-nom" name="raison_sociale" placeholder="Ex: TechSphere" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ent-siret">N° SIRET</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="hash" style="width:18px;height:18px;"></i>
+              <input type="text" class="input" id="ent-siret" name="siret" placeholder="123 456 789 00012" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-form__row">
+          <div class="form-group">
+            <label class="form-label" for="ent-secteur">Secteur d'activité</label>
+            <select class="select" id="ent-secteur" name="secteur">
+              <option value="">Sélectionnez...</option>
+              <option value="tech">Technologie</option>
+              <option value="finance">Finance & Banque</option>
+              <option value="sante">Santé</option>
+              <option value="education">Éducation</option>
+              <option value="commerce">Commerce & Retail</option>
+              <option value="industrie">Industrie</option>
+              <option value="services">Services</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ent-taille">Taille</label>
+            <select class="select" id="ent-taille" name="taille">
+              <option value="">Sélectionnez...</option>
+              <option value="1-10">1-10 employés</option>
+              <option value="11-50">11-50 employés</option>
+              <option value="51-200">51-200 employés</option>
+              <option value="201-500">201-500 employés</option>
+              <option value="500+">500+ employés</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="auth-form__row">
+          <div class="form-group">
+            <label class="form-label" for="ent-email">Email Professionnel</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="mail" style="width:18px;height:18px;"></i>
+              <input type="email" class="input" id="ent-email" name="email" placeholder="contact@entreprise.com">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ent-site">Site Web</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="globe" style="width:18px;height:18px;"></i>
+              <input type="url" class="input" id="ent-site" name="site_web" placeholder="https://www.entreprise.com">
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-form__row">
+          <div class="form-group">
+            <label class="form-label" for="ent-password">Mot de passe</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="lock" style="width:18px;height:18px;"></i>
+              <input type="password" class="input" id="ent-password" name="password" placeholder="Min. 8 caractères">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ent-password2">Confirmer</label>
+            <div class="input-icon-wrapper">
+              <i data-lucide="lock" style="width:18px;height:18px;"></i>
+              <input type="password" class="input" id="ent-password2" name="password_confirm" placeholder="Confirmez">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="ent-description">Description de l'entreprise</label>
+          <textarea class="textarea" id="ent-description" name="description" rows="3" placeholder="Décrivez brièvement votre entreprise et sa mission..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Logo de l'entreprise</label>
+          <div class="drop-zone" id="logo-drop-zone">
+            <input type="file" class="drop-zone__input" name="logo" accept="image/*">
+            <div class="drop-zone__prompt">
+              <i data-lucide="image" style="width:32px;height:32px;"></i>
+              <span>Déposez votre logo ici ou <span class="text-accent">parcourir</span></span>
+              <span class="text-xs text-tertiary">PNG, JPG, SVG — Max. 2MB</span>
+            </div>
+            <div class="drop-zone__preview"></div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg w-full" id="signup-entreprise-submit">
+          <i data-lucide="building-2" style="width:18px;height:18px;"></i>
+          Inscrire l'entreprise
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Déjà inscrit ? <a href="login.php">Se connecter</a>
+      </div>
+
+      <div style="position:absolute;top:var(--space-4);right:var(--space-4);">
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
+          <i data-lucide="moon" class="icon-moon"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/aptus_first_official_version/view/assets/js/forms.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

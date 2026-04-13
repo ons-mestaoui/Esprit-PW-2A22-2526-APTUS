@@ -1,0 +1,213 @@
+<?php 
+$pageTitle = "Utilisateurs"; 
+include_once __DIR__ . '/../../controller/UtilisateurC.php';
+$utilisateurC = new UtilisateurC();
+
+// Variables from URL or Form
+$action = isset($_GET['action']) ? $_GET['action'] : 'list';
+$id_edit = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$userToEdit = null;
+
+// Handle Delete (GET)
+if ($action === 'delete' && $id_edit > 0) {
+    $utilisateurC->deleteUtilisateur($id_edit);
+    header('Location: users.php');
+    exit();
+}
+
+$error = "";
+$success = "";
+
+// Handle Add / Update (POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $formAction = $_POST['action'] ?? '';
+    
+    $nom = $_POST['nom'] ?? '';
+    $prenom = $_POST['prenom'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $motDePasse = $_POST['motDePasse'] ?? '';
+    $role = $_POST['role'] ?? 'Candidat';
+    $telephone = $_POST['telephone'] ?? null;
+    $id_utilisateur = isset($_POST['id_utilisateur']) ? intval($_POST['id_utilisateur']) : 0;
+
+    if (empty($nom) || empty($prenom) || empty($email)) {
+        $error = "Nom, prénom et email sont obligatoires.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Le format de l'email est invalide.";
+    } elseif ($formAction === 'add' && empty($motDePasse)) {
+        $error = "Le mot de passe est obligatoire pour la création.";
+    } elseif (!empty($motDePasse) && strlen($motDePasse) < 8) {
+        $error = "Le mot de passe doit contenir au moins 8 caractères.";
+    } elseif ($utilisateurC->emailExists($email, $formAction === 'update' ? $id_utilisateur : 0)) {
+        $error = "L'adresse email est déjà utilisée par un autre compte.";
+    } else {
+        $utilisateur = new Utilisateur($id_utilisateur, $nom, $prenom, $email, $motDePasse, $role, $telephone);
+
+        if ($formAction === 'add') {
+            $utilisateurC->addUtilisateur($utilisateur);
+            header('Location: users.php');
+            exit();
+        } elseif ($formAction === 'update' && $id_utilisateur > 0) {
+            $utilisateurC->updateUtilisateur($utilisateur, $id_utilisateur);
+            header('Location: users.php');
+            exit();
+        }
+    }
+}
+
+// If editing, fetch the user data
+if ($action === 'edit' && $id_edit > 0) {
+    $userToEdit = $utilisateurC->getUtilisateurById($id_edit);
+}
+
+// Fetch all users for the list
+$usersListe = $utilisateurC->listerUtilisateurs();
+
+if (!isset($content)) {
+    $content = __FILE__;
+    include 'layout_back.php';
+    exit();
+}
+?>
+
+<div class="back-page-header">
+  <div class="back-page-header__row">
+    <div>
+      <h1>Utilisateurs</h1>
+      <p>Gérez les comptes candidats, entreprises et administrateurs</p>
+    </div>
+    <div class="flex gap-3">
+      <?php if ($action !== 'add' && $action !== 'edit'): ?>
+      <a href="users.php?action=add" class="btn btn-primary" id="add-user-btn">
+        <i data-lucide="user-plus" style="width:18px;height:18px;"></i>
+        Ajouter
+      </a>
+      <?php else: ?>
+      <a href="users.php" class="btn btn-secondary">
+        <i data-lucide="arrow-left" style="width:18px;height:18px;"></i>
+        Retour à la liste
+      </a>
+      <?php endif; ?>
+    </div>
+  </div>
+</div>
+
+<?php if ($action === 'add' || $action === 'edit'): ?>
+<!-- ═══ Form (Add / Edit) ═══ -->
+<div class="card-flat" style="padding:var(--space-6); max-width:800px; margin:auto;">
+    <h2><?php echo $action === 'edit' ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'; ?></h2>
+    
+    <?php if (!empty($error)): ?>
+        <div class="alert alert-danger" style="color:red; margin-top:15px; margin-bottom:15px; padding:10px; border:1px solid red; background:#ffeaea; border-radius:5px;">
+            <?php echo $error; ?>
+        </div>
+    <?php endif; ?>
+
+    <form method="POST" action="users.php" class="mt-4">
+        <input type="hidden" name="action" value="<?php echo $action; ?>">
+        <?php if ($action === 'edit'): ?>
+            <input type="hidden" name="id_utilisateur" value="<?php echo htmlspecialchars($userToEdit['id_utilisateur'] ?? ''); ?>">
+        <?php endif; ?>
+        
+        <div class="grid grid-2 gap-4 mb-4">
+            <div class="form-group">
+                <label class="form-label">Nom</label>
+                <input type="text" name="nom" class="input" required value="<?php echo htmlspecialchars($userToEdit['nom'] ?? ''); ?>">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Prénom</label>
+                <input type="text" name="prenom" class="input" required value="<?php echo htmlspecialchars($userToEdit['prenom'] ?? ''); ?>">
+            </div>
+        </div>
+
+        <div class="form-group mb-4">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="input" required value="<?php echo htmlspecialchars($userToEdit['email'] ?? ''); ?>">
+        </div>
+
+        <div class="grid grid-2 gap-4 mb-4">
+            <div class="form-group">
+                <label class="form-label">Mot de passe <?php echo $action === 'edit' ? '(Laisser vide pour ne pas modifier)' : ''; ?></label>
+                <input type="password" name="motDePasse" class="input" <?php echo $action === 'add' ? 'required' : ''; ?>>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Rôle</label>
+                <select name="role" class="select" required>
+                    <option value="Candidat" <?php echo (isset($userToEdit['role']) && $userToEdit['role'] === 'Candidat') ? 'selected' : ''; ?>>Candidat</option>
+                    <option value="Entreprise" <?php echo (isset($userToEdit['role']) && $userToEdit['role'] === 'Entreprise') ? 'selected' : ''; ?>>Entreprise</option>
+                    <option value="Admin" <?php echo (isset($userToEdit['role']) && $userToEdit['role'] === 'Admin') ? 'selected' : ''; ?>>Admin</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group mb-4">
+            <label class="form-label">Téléphone</label>
+            <input type="text" name="telephone" class="input" value="<?php echo htmlspecialchars($userToEdit['telephone'] ?? ''); ?>">
+        </div>
+
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="btn btn-primary">
+                <?php echo $action === 'edit' ? 'Sauvegarder les modifications' : 'Créer l\'utilisateur'; ?>
+            </button>
+            <a href="users.php" class="btn btn-ghost">Annuler</a>
+        </div>
+    </form>
+</div>
+<?php else: ?>
+<!-- ═══ Users Table ═══ -->
+<div class="card-flat" style="overflow:hidden;">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Utilisateur</th>
+        <th>Email</th>
+        <th>Rôle</th>
+        <th>Téléphone</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php if (!empty($usersListe)): ?>
+          <?php foreach ($usersListe as $u): ?>
+          <tr>
+            <td class="text-secondary">#<?php echo htmlspecialchars($u['id_utilisateur']); ?></td>
+            <td>
+              <div class="flex items-center gap-3">
+                <div class="avatar avatar-sm avatar-initials" style="width:32px;height:32px;font-size:11px;">
+                    <?php echo htmlspecialchars(substr($u['prenom'], 0, 1) . substr($u['nom'], 0, 1)); ?>
+                </div>
+                <span class="fw-medium"><?php echo htmlspecialchars($u['nom'] . ' ' . $u['prenom']); ?></span>
+              </div>
+            </td>
+            <td class="text-sm text-secondary"><?php echo htmlspecialchars($u['email']); ?></td>
+            <td>
+                <?php 
+                $badge = 'badge-info';
+                if ($u['role'] === 'Admin') $badge = 'badge-danger';
+                elseif ($u['role'] === 'Entreprise') $badge = 'badge-primary';
+                ?>
+                <span class="badge <?php echo $badge; ?>"><?php echo htmlspecialchars($u['role']); ?></span>
+            </td>
+            <td class="text-sm text-secondary"><?php echo htmlspecialchars($u['telephone'] ?? '-'); ?></td>
+            <td>
+              <div class="flex gap-1">
+                <a href="users.php?action=edit&id=<?php echo $u['id_utilisateur']; ?>" class="btn btn-sm btn-ghost" title="Éditer">
+                    <i data-lucide="pencil" style="width:14px;height:14px;"></i>
+                </a>
+                <a href="users.php?action=delete&id=<?php echo $u['id_utilisateur']; ?>" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
+                    <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          <?php endforeach; ?>
+      <?php else: ?>
+          <tr>
+              <td colspan="6" class="text-center" style="padding:var(--space-6);">Aucun utilisateur trouvé.</td>
+          </tr>
+      <?php endif; ?>
+    </tbody>
+  </table>
+</div>
+<?php endif; ?>
