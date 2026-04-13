@@ -8,12 +8,18 @@ if (!isset($content)) {
     $inscriptionC = new InscriptionController();
     $id_user = 10; // Demo User
     
+    // Intercepter la demande de désinscription (POST)
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_formation'])) {
+        $inscriptionC->desinscrire();
+    }
+
     // Action Terminer
     if (isset($_GET['finish_id'])) {
         try {
             $inscriptionC->terminerFormation((int)$_GET['finish_id'], $id_user);
+            $_SESSION['flash_success'] = "Bravo, formation terminée !";
         } catch (Exception $e) {
-            // Ici on pourrait stocker l'erreur en session pour l'afficher
+            $_SESSION['flash_error'] = $e->getMessage();
         }
         header("Location: formations_my.php");
         exit();
@@ -31,6 +37,18 @@ if (!isset($content)) {
   <h1 class="page-header__title">Mon Parcours d'Apprentissage</h1>
 </div>
 
+<?php if (isset($_SESSION['flash_success'])): ?>
+    <div style="background: #10b981; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center;">
+        <?php echo $_SESSION['flash_success']; unset($_SESSION['flash_success']); ?>
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_SESSION['flash_error'])): ?>
+    <div style="background: #ef4444; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center;">
+        <?php echo $_SESSION['flash_error']; unset($_SESSION['flash_error']); ?>
+    </div>
+<?php endif; ?>
+
 <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
     <?php if (!empty($mesCours)): foreach($mesCours as $cours): ?>
     <div class="card-flat" style="padding: 1.25rem; background: white; border-radius: 12px; border: 1px solid var(--border-color);">
@@ -42,7 +60,9 @@ if (!isset($content)) {
 
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
             <span class="badge" style="font-size: 0.7rem; background: rgba(0,0,0,0.05);"><?php echo ($cours['is_online']) ? '🌐 En ligne' : '📍 Présentiel'; ?></span>
-            <span class="badge" style="font-size: 0.7rem; background: rgba(0,0,0,0.05);"><?php echo htmlspecialchars($cours['statut']); ?></span>
+            <span class="badge" style="font-size: 0.7rem; background: <?php echo ($cours['statut'] == 'annulée') ? '#fca5a5' : 'rgba(0,0,0,0.05)'; ?>;">
+                <?php echo htmlspecialchars($cours['statut']); ?>
+            </span>
         </div>
 
         <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;"><?php echo htmlspecialchars($cours['titre']); ?></h2>
@@ -58,21 +78,17 @@ if (!isset($content)) {
             <progress value="<?php echo $cours['progression']; ?>" max="100" style="width: 100%; height: 8px; border-radius: 4px; overflow: hidden;"></progress>
         </div>
 
-        <?php if ($cours['progression'] == 100): ?>
+        <?php if ($cours['statut'] === 'annulée'): ?>
+            <div style="background: #fee2e2; color: #b91c1c; padding: 1rem; border-radius: 8px; text-align: center; font-weight: bold;">
+                Formation annulée
+            </div>
+        <?php elseif ($cours['progression'] == 100 || $cours['statut'] === 'Terminée'): ?>
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                 <div style="background: rgba(16, 185, 129, 0.1); color: #059669; padding: 1rem; border-radius: 12px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
-                    <span style="font-size: 1.5rem;">
-                        <?php 
-                            $dom = strtolower($cours['domaine'] ?? '');
-                            if (strpos($dom, 'ia') !== false) echo '🤖';
-                            elseif (strpos($dom, 'code') !== false || strpos($dom, 'dev') !== false) echo '💻';
-                            else echo '🏅';
-                        ?>
-                    </span>
-                    Badge "Expert" Acquis !
+                    <span style="font-size: 1.5rem;">🎓</span> Badge "Expert" Acquis !
                 </div>
                 <a href="certificate.php?f_id=<?php echo $cours['id_formation']; ?>" target="_blank" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); text-align:center;">
-                    🎓 Générer mon Certificat
+                    Générer mon Certificat
                 </a>
             </div>
         <?php else: ?>
@@ -85,6 +101,12 @@ if (!isset($content)) {
                     <a href="formations_my.php?finish_id=<?php echo $cours['id_formation']; ?>" class="btn btn-primary" style="text-align:center;">Terminer la formation</a>
                 <?php else: ?>
                     <button class="btn" style="background: #e2e8f0; color: #94a3b8; cursor: not-allowed; width:100%; border:none; padding:0.5rem; border-radius:6px;" disabled>Disponible le <?php echo date('d/m', strtotime($cours['date_formation'])); ?></button>
+                    
+                    <!-- Bouton pour se désinscrire -->
+                    <form action="formations_my.php" method="POST" style="margin: 0;" onsubmit="return confirm('Êtes-vous sûr de vouloir vous désinscrire de cette formation ?');">
+                        <input type="hidden" name="id_formation" value="<?php echo $cours['id_formation']; ?>">
+                        <button type="submit" class="btn" style="width: 100%; background: white; color: #ef4444; border: 1px solid #ef4444; padding: 0.5rem; border-radius: 6px;">Se désinscrire</button>
+                    </form>
                 <?php endif; ?>
             </div>
         <?php endif; ?>

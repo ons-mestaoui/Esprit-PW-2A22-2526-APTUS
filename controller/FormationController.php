@@ -1,5 +1,6 @@
 <?php
 include_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../model/Formation.php';
 
 class FormationController
 {
@@ -23,7 +24,7 @@ class FormationController
                 ");
                 return $liste;
             } catch (Exception $e2) {
-                die('Erreur: ' . $e2->getMessage());
+                throw new Exception('Erreur: ' . $e2->getMessage());
             }
         }
     }
@@ -93,11 +94,17 @@ class FormationController
 
     private function validateFormation($formation)
     {
-        if (empty($formation->getTitre())) {
+        if (empty(trim($formation->getTitre()))) {
             throw new Exception("Le titre est obligatoire.");
         }
-        if (empty($formation->getDescription())) {
+        if (empty(trim($formation->getDescription()))) {
             throw new Exception("La description est obligatoire.");
+        }
+        if (empty(trim($formation->getDomaine()))) {
+            throw new Exception("Le domaine est obligatoire.");
+        }
+        if (empty($formation->getDateFormation())) {
+            throw new Exception("La date de formation est obligatoire.");
         }
         if (strtotime($formation->getDateFormation()) < strtotime(date('Y-m-d'))) {
             throw new Exception("La date de formation ne peut pas être dans le passé.");
@@ -144,7 +151,7 @@ class FormationController
             ]);
             return $db->lastInsertId();
         } catch (Exception $e) {
-            die('Erreur: ' . $e->getMessage());
+            throw new Exception('Erreur SQL: ' . $e->getMessage());
         }
     }
 
@@ -152,27 +159,31 @@ class FormationController
     {
         $db = config::getConnexion();
         try {
+            $checkF = $db->prepare("SELECT statut FROM Formation WHERE id_formation = :id");
+            $checkF->execute(['id' => $id]);
+            $statut_f = $checkF->fetchColumn();
+
             // Vérifier s'il y a des inscrits
+            $nb_inscrits = 0;
             try {
                 $check = $db->prepare("SELECT COUNT(*) FROM inscription WHERE id_formation = :id");
                 $check->execute(['id' => $id]);
-                if ($check->fetchColumn() > 0) {
-                    return false; // Impossible de supprimer
-                }
+                $nb_inscrits = $check->fetchColumn();
             } catch (Exception $e) {
-                // Table might be named Inscription with capital I
                 $check = $db->prepare("SELECT COUNT(*) FROM Inscription WHERE id_formation = :id");
                 $check->execute(['id' => $id]);
-                if ($check->fetchColumn() > 0) {
-                    return false;
-                }
+                $nb_inscrits = $check->fetchColumn();
+            }
+
+            if ($nb_inscrits > 0 && $statut_f !== 'annulée') {
+                throw new Exception("Impossible de supprimer une formation active avec des inscrits. Veuillez d'abord l'annuler.");
             }
 
             $query = $db->prepare("DELETE FROM Formation WHERE id_formation = :id");
             $query->execute(['id' => $id]);
             return true;
         } catch (Exception $e) {
-            die('Erreur: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -208,7 +219,7 @@ class FormationController
                 'lien_api_room' => $lien
             ]);
         } catch (Exception $e) {
-            die('Erreur: ' . $e->getMessage());
+            throw new Exception('Erreur SQL: ' . $e->getMessage());
         }
     }
 
@@ -235,7 +246,7 @@ class FormationController
                 $query->execute(['id' => $id]);
                 return $query->fetch();
             } catch (Exception $e2) {
-                die('Erreur: ' . $e2->getMessage());
+                throw new Exception('Erreur: ' . $e2->getMessage());
             }
         }
     }
@@ -248,7 +259,7 @@ class FormationController
             $query = $db->prepare("UPDATE Formation SET lien_api_room = :lien WHERE id_formation = :id");
             $query->execute(['id' => $id, 'lien' => $lien]);
         } catch (Exception $e) {
-            die('Erreur: ' . $e->getMessage());
+            throw new Exception('Erreur: ' . $e->getMessage());
         }
     }
 
@@ -266,7 +277,7 @@ class FormationController
             $query->execute(['id' => $id_tuteur]);
             return $query->fetchAll();
         } catch (Exception $e) {
-            die('Erreur: ' . $e->getMessage());
+            throw new Exception('Erreur: ' . $e->getMessage());
         }
     }
 
@@ -289,5 +300,35 @@ class FormationController
         }
         header('Content-Type: application/json');
         echo json_encode($events);
+    }
+
+    public function annuler(int $id)
+    {
+        // Contrainte de sécurité : vérification du rôle (simulée via session)
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            $_SESSION['flash_error'] = "Action non autorisée. Rôle admin requis.";
+            header('Location: formations_admin.php');
+            exit();
+        }
+
+        try {
+            $f = $this->getFormationById($id);
+            if (!$f) {
+                throw new Exception("Formation introuvable.");
+            }
+
+            // Contrainte : on ne peut pas annuler une formation déjà annulée
+            if ((isset($f['statut']) && $f['statut'] === 'annulée')) {
+                throw new Exception("Cette formation est déjà annulée.");
+            }
+
+            Formation::annulerFormation($id);
+            $_SESSION['flash_success'] = "La formation et ses inscriptions ont été annulées avec succès.";
+        } catch (Exception $e) {
+            $_SESSION['flash_error'] = $e->getMessage();
+        }
+
+        header('Location: formations_admin.php');
+        exit();
     }
 }

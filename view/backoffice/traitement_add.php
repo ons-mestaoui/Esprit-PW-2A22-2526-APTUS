@@ -31,9 +31,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         );
         
         $formationC->addFormation($f);
-        header('Location: formations_admin.php?msg=added');
+        $_SESSION['flash_success'] = "Formation ajoutée avec succès.";
+        header('Location: formations_admin.php');
     } catch (Exception $e) {
-        die("Erreur de validation : " . $e->getMessage());
+        $_SESSION['flash_error'] = "Erreur de validation : " . $e->getMessage();
+        header('Location: formations_admin.php');
     }
     exit();
 }

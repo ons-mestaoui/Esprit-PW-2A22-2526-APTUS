@@ -21,8 +21,8 @@ if (isset($_GET['id'])) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
-    $is_online = (int)$_POST['is_online'];
+
+    $is_online = (int) $_POST['is_online'];
     $lien_room = trim($_POST['online_url'] ?? '');
 
     $image_base64 = $formation['image_base64']; // keep old image by default
@@ -41,15 +41,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_POST['duree'] ?? '0',
             $_POST['date_formation'],
             $image_base64,
-            !empty($_POST['id_tuteur']) ? (int)$_POST['id_tuteur'] : null,
+            !empty($_POST['id_tuteur']) ? (int) $_POST['id_tuteur'] : null,
             $is_online,
             $lien_room
         );
-        
+
         $formationC->updateFormation($f, $_GET['id']);
-        header('Location: formations_admin.php?msg=updated');
+        $_SESSION['flash_success'] = "Formation modifiée avec succès.";
+        header('Location: formations_admin.php');
+        exit();
     } catch (Exception $e) {
         $error_msg = "Erreur de validation : " . $e->getMessage();
+        // Optionnel : passer à flash_error si on retourne sur la même vue après un header, mais ici il affiche sur la page
     }
 }
 ?>
@@ -80,26 +83,34 @@ if (!isset($content)) {
 
         <div class="form-group">
             <label class="form-label">Titre de la formation</label>
-            <input type="text" class="input" name="titre" value="<?php echo htmlspecialchars($formation['titre']); ?>" required>
+            <input type="text" class="input" name="titre" value="<?php echo htmlspecialchars($formation['titre']); ?>">
         </div>
 
-        <div class="form-group">
-            <label class="form-label">Description</label>
-            <textarea class="textarea" name="description" rows="3" required><?php echo htmlspecialchars($formation['description']); ?></textarea>
+        <div class="form-group" style="padding-bottom: 25px;">
+            <label class="form-label">Description (Contenu Riche)</label>
+            <textarea class="textarea" name="description" id="hidden-description-edit" style="display:none;"><?php echo htmlspecialchars($formation['description']); ?></textarea>
+            <div id="quill-editor-edit" style="height: 150px; background: var(--bg-surface);">
+                <?php echo $formation['description']; ?>
+            </div>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
             <div class="form-group">
                 <label class="form-label">Domaine</label>
-                <input type="text" class="input" name="domaine" value="<?php echo htmlspecialchars($formation['domaine']); ?>" required>
+                <input type="text" class="input" name="domaine"
+                    value="<?php echo htmlspecialchars($formation['domaine']); ?>">
             </div>
             <div class="form-group">
                 <label class="form-label">Niveau</label>
                 <select class="select" name="niveau">
-                    <option <?php if($formation['niveau'] == 'Débutant') echo 'selected'; ?>>Débutant</option>
-                    <option <?php if($formation['niveau'] == 'Intermédiaire') echo 'selected'; ?>>Intermédiaire</option>
-                    <option <?php if($formation['niveau'] == 'Avancé') echo 'selected'; ?>>Avancé</option>
-                    <option <?php if($formation['niveau'] == 'Expert') echo 'selected'; ?>>Expert</option>
+                    <option <?php if ($formation['niveau'] == 'Débutant')
+                        echo 'selected'; ?>>Débutant</option>
+                    <option <?php if ($formation['niveau'] == 'Intermédiaire')
+                        echo 'selected'; ?>>Intermédiaire</option>
+                    <option <?php if ($formation['niveau'] == 'Avancé')
+                        echo 'selected'; ?>>Avancé</option>
+                    <option <?php if ($formation['niveau'] == 'Expert')
+                        echo 'selected'; ?>>Expert</option>
                 </select>
             </div>
         </div>
@@ -107,11 +118,13 @@ if (!isset($content)) {
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
             <div class="form-group">
                 <label class="form-label">Date de début</label>
-                <input type="date" class="input" name="date_formation" min="<?php echo date('Y-m-d'); ?>" value="<?php echo date('Y-m-d', strtotime($formation['date_formation'])); ?>" required>
+                <input type="date" class="input" name="date_formation"
+                    value="<?php echo date('Y-m-d', strtotime($formation['date_formation'])); ?>">
             </div>
             <div class="form-group">
                 <label class="form-label">Durée</label>
-                <input type="text" class="input" name="duree" value="<?php echo htmlspecialchars($formation['duree']); ?>">
+                <input type="text" class="input" name="duree"
+                    value="<?php echo htmlspecialchars($formation['duree']); ?>">
             </div>
         </div>
 
@@ -119,17 +132,20 @@ if (!isset($content)) {
             <label class="form-label">Tuteur</label>
             <select class="select" name="id_tuteur">
                 <option value="">Sélectionnez un tuteur...</option>
-                <?php foreach($tuteurs as $t): ?>
-                    <option value="<?php echo $t['id']; ?>" <?php if($formation['id_tuteur'] == $t['id']) echo 'selected'; ?>><?php echo htmlspecialchars($t['nom']); ?></option>
+                <?php foreach ($tuteurs as $t): ?>
+                    <option value="<?php echo $t['id']; ?>" <?php if ($formation['id_tuteur'] == $t['id'])
+                           echo 'selected'; ?>>
+                        <?php echo htmlspecialchars($t['nom']); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
 
         <div class="form-group">
             <label class="form-label">Image (Laissez vide pour conserver l'actuelle)</label>
-            <?php if($formation['image_base64']): ?>
+            <?php if ($formation['image_base64']): ?>
                 <div style="margin-bottom: 10px;">
-                    <img src="<?php echo $formation['image_base64']; ?>" alt="" style="width:120px; height:68px; object-fit:cover; border-radius:4px;">
+                    <img src="<?php echo $formation['image_base64']; ?>" alt=""
+                        style="width:120px; height:68px; object-fit:cover; border-radius:4px;">
                 </div>
             <?php endif; ?>
             <input type="file" name="image" accept="image/*">
@@ -138,14 +154,18 @@ if (!isset($content)) {
         <div class="form-group">
             <label class="form-label">Modalité</label>
             <select class="select" name="is_online" id="lieu-select-edit">
-                <option value="0" <?php if($formation['is_online'] == 0) echo 'selected'; ?>>📍 Présentiel</option>
-                <option value="1" <?php if($formation['is_online'] == 1) echo 'selected'; ?>>🌐 En ligne</option>
+                <option value="0" <?php if ($formation['is_online'] == 0)
+                    echo 'selected'; ?>>📍 Présentiel</option>
+                <option value="1" <?php if ($formation['is_online'] == 1)
+                    echo 'selected'; ?>>🌐 En ligne</option>
             </select>
         </div>
 
-        <div class="form-group" id="url-field-edit" style="display:<?php echo $formation['is_online'] ? 'block' : 'none'; ?>;">
+        <div class="form-group" id="url-field-edit"
+            style="display:<?php echo $formation['is_online'] ? 'block' : 'none'; ?>;">
             <label class="form-label">URL Room</label>
-            <input type="url" class="input" name="online_url" value="<?php echo htmlspecialchars($formation['lien_api_room'] ?? ''); ?>">
+            <input type="url" class="input" name="online_url"
+                value="<?php echo htmlspecialchars($formation['lien_api_room'] ?? ''); ?>">
         </div>
 
         <button class="btn btn-primary" type="submit">Enregistrer les modifications</button>
@@ -154,6 +174,32 @@ if (!isset($content)) {
 </div>
 
 <script>
+    // Initialisation de Quill
+    var quillEdit = new Quill('#quill-editor-edit', {
+        theme: 'snow',
+        placeholder: 'Saisissez le corps du rapport ici...',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                ['link', 'blockquote', 'code-block'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['clean']
+            ]
+        }
+    });
+
+    // Synchronisation onSubmit
+    var formEdit = document.querySelector('form.auth-form');
+    formEdit.onsubmit = function() {
+        var hiddenDesc = document.querySelector('#hidden-description-edit');
+        hiddenDesc.value = quillEdit.root.innerHTML;
+        if (quillEdit.getText().trim().length === 0) {
+            hiddenDesc.value = "";
+        }
+    };
+
     document.getElementById('lieu-select-edit').addEventListener('change', function () {
         document.getElementById('url-field-edit').style.display = (this.value == '1') ? 'block' : 'none';
     });

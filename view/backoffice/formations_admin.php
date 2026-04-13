@@ -8,12 +8,13 @@ $formationC = new FormationController();
 
 // 2. Traitement de la suppression (si demandée)
 if (isset($_GET['delete_id'])) {
-    $success = $formationC->deleteFormation($_GET['delete_id']);
-    if ($success) {
-        header('Location: formations_admin.php?msg=deleted');
-    } else {
-        header('Location: formations_admin.php?error=has_inscrits');
+    try {
+        $formationC->deleteFormation($_GET['delete_id']);
+        $_SESSION['flash_success'] = "Formation supprimée avec succès.";
+    } catch (Exception $e) {
+        $_SESSION['flash_error'] = $e->getMessage();
     }
+    header('Location: formations_admin.php');
     exit();
 }
 
@@ -48,10 +49,22 @@ if (!isset($content)) {
                     <?php echo $totalFormations; ?>
                 </strong> formations publiées</p>
         </div>
-        
-        <?php if(isset($_GET['error']) && $_GET['error'] == 'has_inscrits'): ?>
+
+        <?php if (isset($_GET['error']) && $_GET['error'] == 'has_inscrits'): ?>
             <div style="color: red; margin: 0 15px; font-weight: bold;">
                 Erreur: Impossible de supprimer une formation qui a des étudiants inscrits.
+            </div>
+        <?php endif; ?>
+        <?php if (isset($_SESSION['flash_success'])): ?>
+            <div style="color: green; margin: 0 15px; font-weight: bold;">
+                <?php echo $_SESSION['flash_success'];
+                unset($_SESSION['flash_success']); ?>
+            </div>
+        <?php endif; ?>
+        <?php if (isset($_SESSION['flash_error'])): ?>
+            <div style="color: red; margin: 0 15px; font-weight: bold;">
+                <?php echo $_SESSION['flash_error'];
+                unset($_SESSION['flash_error']); ?>
             </div>
         <?php endif; ?>
 
@@ -189,18 +202,19 @@ if (!isset($content)) {
 
                 <div class="form-group">
                     <label class="form-label">Titre de la formation</label>
-                    <input type="text" class="input" name="titre" placeholder="Ex: Masterclass IA" required>
+                    <input type="text" class="input" name="titre" placeholder="Ex: Masterclass IA">
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <textarea class="textarea" name="description" rows="3" required></textarea>
+                <div class="form-group" style="padding-bottom: 25px;">
+                    <label class="form-label">Description (Contenu Riche)</label>
+                    <textarea class="textarea" name="description" id="hidden-description" style="display:none;"></textarea>
+                    <div id="quill-editor" style="height: 150px; background: var(--bg-surface);"></div>
                 </div>
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                     <div class="form-group">
                         <label class="form-label">Domaine</label>
-                        <input type="text" class="input" name="domaine" required>
+                        <input type="text" class="input" name="domaine">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Niveau</label>
@@ -216,7 +230,7 @@ if (!isset($content)) {
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                     <div class="form-group">
                         <label class="form-label">Date de début</label>
-                        <input type="date" class="input" name="date_formation" min="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" class="input" name="date_formation">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Durée (ex: 10h)</label>
@@ -228,7 +242,7 @@ if (!isset($content)) {
                     <label class="form-label">Tuteur (Optionnel)</label>
                     <select class="select" name="id_tuteur">
                         <option value="">Sélectionnez un tuteur...</option>
-                        <?php foreach($tuteurs as $t): ?>
+                        <?php foreach ($tuteurs as $t): ?>
                             <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['nom']); ?></option>
                         <?php endforeach; ?>
                     </select>
@@ -236,7 +250,7 @@ if (!isset($content)) {
 
                 <div class="form-group">
                     <label class="form-label">Image (16:9)</label>
-                    <input type="file" name="image" accept="image/*" required>
+                    <input type="file" name="image" accept="image/*">
                 </div>
 
                 <div class="form-group">
@@ -262,6 +276,33 @@ if (!isset($content)) {
 </div>
 
 <script>
+    // Initialisation de Quill (Éditeur de texte riche)
+    var quill = new Quill('#quill-editor', {
+        theme: 'snow',
+        placeholder: 'Saisissez le corps du rapport ici...',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                ['link', 'blockquote', 'code-block'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['clean']
+            ]
+        }
+    });
+
+    // Synchroniser Quill avec le textarea caché avant l'envoi du formulaire
+    var form = document.querySelector('#add-formation-form');
+    form.onsubmit = function() {
+        var hiddenDesc = document.querySelector('#hidden-description');
+        hiddenDesc.value = quill.root.innerHTML;
+        // On check si c'est pas vide
+        if (quill.getText().trim().length === 0) {
+            hiddenDesc.value = "";
+        }
+    };
+
     // Toggle dynamique du champ URL
     document.getElementById('lieu-select').addEventListener('change', function () {
         document.getElementById('url-field').style.display = (this.value == '1') ? 'block' : 'none';
