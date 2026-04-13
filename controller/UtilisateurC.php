@@ -2,8 +2,16 @@
 include_once __DIR__ . '/../config.php';
 include_once __DIR__ . '/../model/Utilisateur.php';
 
+/**
+ * Contrôleur UtilisateurC : Gère la logique métier des utilisateurs.
+ * Fait l'interface entre le Modèle (Utilisateur) et la Vue.
+ */
 class UtilisateurC {
 
+    /**
+     * Récupère la liste de tous les utilisateurs depuis la base de données.
+     * Utilise query() car il n'y a pas de paramètres externes.
+     */
     public function listerUtilisateurs() {
         $db = config::getConnexion();
         try {
@@ -28,9 +36,15 @@ class UtilisateurC {
         }
     }
 
+    /**
+     * Ajoute un nouvel utilisateur.
+     * @param Utilisateur $utilisateur Objet de type Utilisateur (POO)
+     * Utilise des requêtes préparées pour prévenir les injections SQL.
+     */
     public function addUtilisateur($utilisateur) {
         $db = config::getConnexion();
         try {
+            // Utilisation des getters de l'objet pour récupérer les données
             $query = $db->prepare("INSERT INTO utilisateur (nom, prenom, email, motDePasse, role, telephone) 
                                    VALUES (:nom, :prenom, :email, :motDePasse, :role, :telephone)");
             $query->execute([
@@ -64,10 +78,14 @@ class UtilisateurC {
         }
     }
 
+    /**
+     * Met à jour les informations d'un utilisateur.
+     * Gère la modification optionnelle du mot de passe.
+     */
     public function updateUtilisateur($utilisateur, $id) {
         $db = config::getConnexion();
         try {
-            // Si le mot de passe est vide, on ne le modifie pas
+            // Si le mot de passe est vide, on ne le modifie pas dans la base
             if (empty($utilisateur->getMotDePasse())) {
                 $query = $db->prepare("UPDATE utilisateur 
                                        SET nom = :nom, prenom = :prenom, email = :email, 

@@ -102,7 +102,8 @@
 .sidebar-link.active {
   color: var(--accent-primary);
   background: var(--accent-primary-light);
-  font-weight: var(--fw-semibold);
+  font-weight: var(--fw-bold);
+  box-shadow: inset 2px 0 0 0 var(--accent-primary);
 }
 .sidebar-link.active::before {
   content: '';
@@ -181,6 +182,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
   padding: 0 var(--space-6);

@@ -114,20 +114,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <!-- Signup Form -->
       <?php if (!empty($error)): ?>
-        <div class="alert alert-danger" style="color:red; text-align:center; margin-bottom: 15px;">
+        <!-- 
+           Note Académique : Conformément aux consignes, nous n'utilisons aucun attribut HTML5 (required, type="email", etc.).
+           La validation est gérée intégralement par le moteur custom dans assets/js/forms.js via les attributs 'data-*'.
+        -->
+        <div class="alert alert-danger" style="color:red; margin-bottom:15px; padding:10px; border:1px solid red; background:#ffeaea; border-radius:5px;">
             <?php echo $error; ?>
         </div>
       <?php endif; ?>
-      <form class="auth-form" id="signup-candidat-form" method="POST" action="">
+      <form class="auth-form" id="signup-candidat-form" method="POST" action="" data-validate>
 
         <div class="auth-form__row">
           <div class="form-group">
             <label class="form-label" for="candidat-nom">Nom</label>
-            <input type="text" class="input" id="candidat-nom" name="nom" placeholder="Votre nom">
+            <input type="text" class="input" id="candidat-nom" name="nom" placeholder="Votre nom" data-required="true">
           </div>
           <div class="form-group">
             <label class="form-label" for="candidat-prenom">Prénom</label>
-            <input type="text" class="input" id="candidat-prenom" name="prenom" placeholder="Votre prénom">
+            <input type="text" class="input" id="candidat-prenom" name="prenom" placeholder="Votre prénom" data-required="true">
           </div>
         </div>
 
@@ -135,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="form-label" for="candidat-email">Adresse Email</label>
           <div class="input-icon-wrapper">
             <i data-lucide="mail" style="width:18px;height:18px;"></i>
-            <input type="email" class="input" id="candidat-email" name="email" placeholder="votre@email.com">
+            <input type="text" class="input" id="candidat-email" name="email" placeholder="votre@email.com" data-required="true" data-type="email">
           </div>
         </div>
 
@@ -144,14 +148,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="candidat-password">Mot de passe</label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
-              <input type="password" class="input" id="candidat-password" name="password" placeholder="Min. 8 caractères">
+              <input type="password" class="input" id="candidat-password" name="password" placeholder="Min. 8 caractères" data-required="true">
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="candidat-password2">Confirmer</label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
-              <input type="password" class="input" id="candidat-password2" name="password_confirm" placeholder="Confirmez">
+              <input type="password" class="input" id="candidat-password2" name="password_confirm" placeholder="Confirmez" data-required="true" data-match="candidat-password">
             </div>
           </div>
         </div>
@@ -161,14 +165,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="candidat-tel">Téléphone</label>
             <div class="input-icon-wrapper">
               <i data-lucide="phone" style="width:18px;height:18px;"></i>
-              <input type="tel" class="input" id="candidat-tel" name="telephone" placeholder="+216 XX XXX XXX">
+              <input type="text" class="input" id="candidat-tel" name="telephone" placeholder="+216 XX XXX XXX">
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="candidat-linkedin">LinkedIn</label>
             <div class="input-icon-wrapper">
               <i data-lucide="linkedin" style="width:18px;height:18px;"></i>
-              <input type="url" class="input" id="candidat-linkedin" name="linkedin" placeholder="https://linkedin.com/in/...">
+              <input type="text" class="input" id="candidat-linkedin" name="linkedin" placeholder="https://linkedin.com/in/..." data-type="url">
             </div>
           </div>
         </div>
@@ -178,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="candidat-date">Date de naissance</label>
             <div class="input-icon-wrapper">
               <i data-lucide="calendar" style="width:18px;height:18px;"></i>
-              <input type="date" class="input" id="candidat-date" name="date_naissance">
+              <input type="text" class="input" id="candidat-date" name="date_naissance" placeholder="AAAA-MM-JJ">
             </div>
           </div>
           <div class="form-group">
@@ -280,7 +284,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </form>
 
       <div class="auth-footer">
-        Déjà inscrit ? <a href="login.php">Se connecter</a>
+        <div style="margin-bottom: var(--space-2);">Déjà inscrit ? <a href="login.php">Se connecter</a></div>
+        <a href="landing.php" class="back-to-site">
+          <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
+          Retour au site
+        </a>
       </div>
 
       <!-- Theme toggle -->

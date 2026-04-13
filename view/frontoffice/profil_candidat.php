@@ -131,7 +131,7 @@ if (!isset($content)) {
     </div>
 <?php endif; ?>
 
-<form method="POST" action="" enctype="multipart/form-data">
+<form method="POST" action="" enctype="multipart/form-data" data-validate>
 <div style="display:grid;grid-template-columns:1fr 2fr;gap:var(--space-6);align-items:start;">
 
   <!-- Left: Photo & Quick Info -->
@@ -202,24 +202,24 @@ if (!isset($content)) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
         <div class="form-group">
           <label class="form-label">Nom</label>
-          <input type="text" name="nom" class="input" value="<?php echo htmlspecialchars($user['nom']); ?>" required>
+          <input type="text" name="nom" class="input" value="<?php echo htmlspecialchars($user['nom']); ?>" data-required="true">
         </div>
         <div class="form-group">
           <label class="form-label">Prénom</label>
-          <input type="text" name="prenom" class="input" value="<?php echo htmlspecialchars($user['prenom']); ?>" required>
+          <input type="text" name="prenom" class="input" value="<?php echo htmlspecialchars($user['prenom']); ?>" data-required="true">
         </div>
         <div class="form-group">
           <label class="form-label">Email</label>
           <div class="input-icon-wrapper">
             <i data-lucide="mail" style="width:18px;height:18px;"></i>
-            <input type="email" name="email" class="input" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+            <input type="text" name="email" class="input" value="<?php echo htmlspecialchars($user['email']); ?>" data-required="true" data-type="email">
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Téléphone</label>
           <div class="input-icon-wrapper">
             <i data-lucide="phone" style="width:18px;height:18px;"></i>
-            <input type="tel" name="telephone" class="input" value="<?php echo htmlspecialchars($user['telephone'] ?? ''); ?>">
+            <input type="text" name="telephone" class="input" value="<?php echo htmlspecialchars($user['telephone'] ?? ''); ?>">
           </div>
         </div>
 
@@ -227,7 +227,7 @@ if (!isset($content)) {
           <label class="form-label">Date de naissance</label>
           <div class="input-icon-wrapper">
             <i data-lucide="calendar" style="width:18px;height:18px;"></i>
-            <input type="date" name="date_naissance" class="input" value="<?php echo htmlspecialchars($profil['dateNaissance'] ?? ''); ?>">
+            <input type="text" name="date_naissance" class="input" value="<?php echo htmlspecialchars($profil['dateNaissance'] ?? ''); ?>" placeholder="AAAA-MM-JJ">
           </div>
         </div>
         <div class="form-group">

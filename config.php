@@ -2,14 +2,19 @@
 
 
 
+/**
+ * Classe Config : Gère la connexion à la base de données via PDO.
+ * Applique le pattern Singleton pour assurer une seule instance de connexion.
+ */
 class config
-
 {
-
+  // Instance PDO statique pour être partagée dans toute l'application
   private static $pdo = null;
 
-
-
+  /**
+   * getConnexion() : Retourne l'instance de connexion active.
+   * Crée la connexion si elle n'existe pas encore.
+   */
   public static function getConnexion()
 
   {

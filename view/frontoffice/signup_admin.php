@@ -102,13 +102,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
       <?php endif; ?>
 
-      <form class="auth-form" id="signup-admin-form" method="POST" action="">
+      <form class="auth-form" id="signup-admin-form" method="POST" action="" data-validate>
 
         <div class="form-group">
           <label class="form-label" for="admin-nom">Nom complet</label>
           <div class="input-icon-wrapper">
             <i data-lucide="user" style="width:18px;height:18px;"></i>
-            <input type="text" class="input" id="admin-nom" name="nom" placeholder="Nom complet">
+            <input type="text" class="input" id="admin-nom" name="nom" placeholder="Nom complet" data-required="true">
           </div>
         </div>
 
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="form-label" for="admin-email">Email Administrateur</label>
           <div class="input-icon-wrapper">
             <i data-lucide="mail" style="width:18px;height:18px;"></i>
-            <input type="email" class="input" id="admin-email" name="email" placeholder="admin@aptus.com">
+            <input type="text" class="input" id="admin-email" name="email" placeholder="admin@aptus.com" data-required="true" data-type="email">
           </div>
         </div>
 
@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="form-label" for="admin-password">Mot de passe</label>
           <div class="input-icon-wrapper">
             <i data-lucide="lock" style="width:18px;height:18px;"></i>
-            <input type="password" class="input" id="admin-password" name="password" placeholder="Min. 12 caractères">
+            <input type="password" class="input" id="admin-password" name="password" placeholder="Min. 12 caractères" data-required="true">
           </div>
         </div>
 
@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="form-label" for="admin-password2">Confirmer le mot de passe</label>
           <div class="input-icon-wrapper">
             <i data-lucide="lock" style="width:18px;height:18px;"></i>
-            <input type="password" class="input" id="admin-password2" name="password_confirm" placeholder="Confirmez">
+            <input type="password" class="input" id="admin-password2" name="password_confirm" placeholder="Confirmez" data-required="true" data-match="admin-password">
           </div>
         </div>
 
@@ -141,14 +141,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="admin-tel">Téléphone</label>
             <div class="input-icon-wrapper">
               <i data-lucide="phone" style="width:18px;height:18px;"></i>
-              <input type="tel" class="input" id="admin-tel" name="telephone" placeholder="+216 XX XXX XXX">
+              <input type="text" class="input" id="admin-tel" name="telephone" placeholder="+216 XX XXX XXX">
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="admin-linkedin">LinkedIn</label>
             <div class="input-icon-wrapper">
               <i data-lucide="linkedin" style="width:18px;height:18px;"></i>
-              <input type="url" class="input" id="admin-linkedin" name="linkedin" placeholder="https://linkedin.com/in/...">
+              <input type="text" class="input" id="admin-linkedin" name="linkedin" placeholder="https://linkedin.com/in/..." data-type="url">
             </div>
           </div>
         </div>
@@ -157,21 +157,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="form-label" for="admin-date">Date de naissance</label>
           <div class="input-icon-wrapper">
             <i data-lucide="calendar" style="width:18px;height:18px;"></i>
-            <input type="date" class="input" id="admin-date" name="date_naissance">
+              <input type="text" class="input" id="admin-date" name="date_naissance" placeholder="AAAA-MM-JJ">
           </div>
         </div>
         <div class="form-group">
           <label class="form-label" for="admin-pays">Pays</label>
           <div class="input-icon-wrapper">
             <i data-lucide="globe" style="width:18px;height:18px;"></i>
-            <input type="text" class="input" id="admin-pays" name="pays" placeholder="Ex: Tunisie" required>
+              <input type="text" class="input" id="admin-pays" name="pays" placeholder="Ex: Tunisie">
           </div>
         </div>
         <div class="form-group">
           <label class="form-label" for="admin-ville">Ville</label>
           <div class="input-icon-wrapper">
             <i data-lucide="map-pin" style="width:18px;height:18px;"></i>
-            <input type="text" class="input" id="admin-ville" name="ville" placeholder="Ex: Tunis" required>
+              <input type="text" class="input" id="admin-ville" name="ville" placeholder="Ex: Tunis">
           </div>
         </div>
         <div class="form-group">
@@ -183,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="form-label" for="admin-niveau">Niveau (ex: 1, 2, SuperAdmin)</label>
           <div class="input-icon-wrapper">
             <i data-lucide="award" style="width:18px;height:18px;"></i>
-            <input type="text" class="input" id="admin-niveau" name="niveau" placeholder="ex: SuperAdmin" required>
+              <input type="text" class="input" id="admin-niveau" name="niveau" placeholder="ex: SuperAdmin">
           </div>
         </div>
 
@@ -194,7 +194,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </form>
 
       <div class="auth-footer">
-        <a href="login.php">← Retour à la connexion</a>
+        <div style="margin-bottom: var(--space-2);">Compte déjà existant ? <a href="login.php">Se connecter</a></div>
+        <a href="landing.php" class="back-to-site">
+          <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
+          Retour au site
+        </a>
       </div>
 
       <div style="position:absolute;top:var(--space-4);right:var(--space-4);">

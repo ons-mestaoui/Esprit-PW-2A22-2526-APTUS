@@ -92,7 +92,9 @@ if ($action === 'edit' && $id_edit > 0) {
     }
 }
 
-// Fetch all users with profile data for the list
+// Récupération de tous les utilisateurs agrégés avec leurs données de profil.
+// On utilise un LEFT JOIN pour obtenir les informations des deux tables (utilisateur et profil)
+// même si l'entrée dans la table profil n'existe pas encore.
 try {
     $db = config::getConnexion();
     $usersListe = $db->query("SELECT u.*, p.linkedin, p.dateCreation, p.dateMiseAJour 
@@ -132,9 +134,10 @@ if (!isset($content)) {
 </div>
 
 <?php if ($action === 'add' || $action === 'edit'): ?>
-<!-- ═══ Form (Add / Edit) ═══ -->
+<!-- ═══ Formulaire (Ajout / Modification) ═══ -->
 <div class="card-flat" style="padding:var(--space-6); max-width:800px; margin:auto;">
     <h2><?php echo $action === 'edit' ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'; ?></h2>
+    <!-- Les erreurs de validation serveur (PHP) sont affichées ici -->
     
     <?php if (!empty($error)): ?>
         <div class="alert alert-danger" style="color:red; margin-top:15px; margin-bottom:15px; padding:10px; border:1px solid red; background:#ffeaea; border-radius:5px;">
@@ -142,7 +145,7 @@ if (!isset($content)) {
         </div>
     <?php endif; ?>
 
-    <form method="POST" action="users.php" class="mt-4">
+    <form method="POST" action="users.php" class="mt-4" data-validate>
         <input type="hidden" name="action" value="<?php echo $action; ?>">
         <?php if ($action === 'edit'): ?>
             <input type="hidden" name="id_utilisateur" value="<?php echo htmlspecialchars($userToEdit['id_utilisateur'] ?? ''); ?>">
@@ -151,27 +154,27 @@ if (!isset($content)) {
         <div class="grid grid-2 gap-4 mb-4">
             <div class="form-group">
                 <label class="form-label">Nom</label>
-                <input type="text" name="nom" class="input" required value="<?php echo htmlspecialchars($userToEdit['nom'] ?? ''); ?>">
+                <input type="text" name="nom" class="input" value="<?php echo htmlspecialchars($userToEdit['nom'] ?? ''); ?>" data-required="true">
             </div>
             <div class="form-group">
                 <label class="form-label">Prénom</label>
-                <input type="text" name="prenom" class="input" required value="<?php echo htmlspecialchars($userToEdit['prenom'] ?? ''); ?>">
+                <input type="text" name="prenom" class="input" value="<?php echo htmlspecialchars($userToEdit['prenom'] ?? ''); ?>" data-required="true">
             </div>
         </div>
 
         <div class="form-group mb-4">
             <label class="form-label">Email</label>
-            <input type="email" name="email" class="input" required value="<?php echo htmlspecialchars($userToEdit['email'] ?? ''); ?>">
+            <input type="text" name="email" class="input" value="<?php echo htmlspecialchars($userToEdit['email'] ?? ''); ?>" data-required="true" data-type="email">
         </div>
 
         <div class="grid grid-2 gap-4 mb-4">
             <div class="form-group">
                 <label class="form-label">Mot de passe <?php echo $action === 'edit' ? '(Laisser vide pour ne pas modifier)' : ''; ?></label>
-                <input type="password" name="motDePasse" class="input" <?php echo $action === 'add' ? 'required' : ''; ?>>
+                <input type="password" name="motDePasse" class="input">
             </div>
             <div class="form-group">
                 <label class="form-label">Rôle</label>
-                <select name="role" class="select" required>
+                <select name="role" class="select">
                     <option value="Candidat" <?php echo (isset($userToEdit['role']) && $userToEdit['role'] === 'Candidat') ? 'selected' : ''; ?>>Candidat</option>
                     <option value="Entreprise" <?php echo (isset($userToEdit['role']) && $userToEdit['role'] === 'Entreprise') ? 'selected' : ''; ?>>Entreprise</option>
                     <option value="Admin" <?php echo (isset($userToEdit['role']) && $userToEdit['role'] === 'Admin') ? 'selected' : ''; ?>>Admin</option>
@@ -186,7 +189,7 @@ if (!isset($content)) {
 
         <div class="form-group mb-4">
             <label class="form-label">LinkedIn (URL)</label>
-            <input type="url" name="linkedin" class="input" value="<?php echo htmlspecialchars($userToEdit['linkedin'] ?? ''); ?>" placeholder="https://linkedin.com/in/...">
+            <input type="text" name="linkedin" class="input" value="<?php echo htmlspecialchars($userToEdit['linkedin'] ?? ''); ?>" placeholder="https://linkedin.com/in/..." data-type="url">
         </div>
 
         <div class="mt-6 flex gap-3">

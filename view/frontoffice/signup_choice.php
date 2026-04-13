@@ -104,8 +104,12 @@
       </div>
 
       <!-- Footer -->
-      <div class="auth-footer" style="text-align: center;">
-        Vous avez déjà un compte ? <a href="login.php">Se connecter</a>
+      <div class="auth-footer">
+        <div style="margin-bottom: var(--space-2);">Vous avez déjà un compte ? <a href="login.php">Se connecter</a></div>
+        <a href="landing.php" class="back-to-site">
+          <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
+          Retour au site
+        </a>
       </div>
 
       <!-- Theme toggle -->

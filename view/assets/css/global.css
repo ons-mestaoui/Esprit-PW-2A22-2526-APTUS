@@ -265,7 +265,8 @@ p {
   transition: var(--transition-base);
 }
 .card:hover {
-  box-shadow: var(--shadow-card-hover);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-primary-light);
 }
 
 .card-flat {
@@ -468,15 +469,15 @@ p {
   border-collapse: collapse;
 }
 .data-table thead th {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--space-4);
   font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
-  color: var(--text-secondary);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
   text-align: left;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  letter-spacing: 0.08em;
+  border-bottom: 2px solid var(--border-color);
+  background: var(--bg-tertiary);
 }
 .data-table tbody td {
   padding: var(--space-3) var(--space-4);

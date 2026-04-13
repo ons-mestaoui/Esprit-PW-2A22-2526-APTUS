@@ -123,21 +123,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
       <?php endif; ?>
 
-      <form method="POST" action="" enctype="multipart/form-data" class="auth-form" id="signup-entreprise-form">
+      <form method="POST" action="" enctype="multipart/form-data" class="auth-form" id="signup-entreprise-form" data-validate>
 
         <div class="auth-form__row">
           <div class="form-group">
             <label class="form-label" for="ent-nom">Raison sociale</label>
             <div class="input-icon-wrapper">
               <i data-lucide="building-2" style="width:18px;height:18px;"></i>
-              <input type="text" class="input" id="ent-nom" name="raison_sociale" placeholder="Ex: TechSphere" required>
+              <input type="text" class="input" id="ent-nom" name="raison_sociale" placeholder="Ex: TechSphere" data-required="true">
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="ent-siret">N° SIRET</label>
             <div class="input-icon-wrapper">
               <i data-lucide="hash" style="width:18px;height:18px;"></i>
-              <input type="text" class="input" id="ent-siret" name="siret" placeholder="123 456 789 00012" required>
+              <input type="text" class="input" id="ent-siret" name="siret" placeholder="123 456 789 00012" data-required="true">
             </div>
           </div>
         </div>
@@ -175,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="ent-annee">Année de fondation</label>
             <div class="input-icon-wrapper">
               <i data-lucide="calendar" style="width:18px;height:18px;"></i>
-              <input type="number" class="input" id="ent-annee" name="annee_fondation" placeholder="Ex: 2012">
+              <input type="text" class="input" id="ent-annee" name="annee_fondation" placeholder="Ex: 2012">
             </div>
           </div>
           <!-- Le div vide pour balancer la grid ou alors l'email peut y aller. Je vais juste mettre un form-group vide pour aligner, ou je met l'année seule -->
@@ -207,14 +207,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="ent-email">Email Professionnel</label>
             <div class="input-icon-wrapper">
               <i data-lucide="mail" style="width:18px;height:18px;"></i>
-              <input type="email" class="input" id="ent-email" name="email" placeholder="contact@entreprise.com" required>
+              <input type="text" class="input" id="ent-email" name="email" placeholder="contact@entreprise.com" data-required="true" data-type="email">
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="ent-tel">Téléphone</label>
             <div class="input-icon-wrapper">
               <i data-lucide="phone" style="width:18px;height:18px;"></i>
-              <input type="tel" class="input" id="ent-tel" name="telephone" placeholder="+216 XX XXX XXX">
+              <input type="text" class="input" id="ent-tel" name="telephone" placeholder="+216 XX XXX XXX">
             </div>
           </div>
         </div>
@@ -224,14 +224,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="ent-site">Site Web</label>
             <div class="input-icon-wrapper">
               <i data-lucide="globe" style="width:18px;height:18px;"></i>
-              <input type="url" class="input" id="ent-site" name="site_web" placeholder="https://www.entreprise.com">
+              <input type="text" class="input" id="ent-site" name="site_web" placeholder="https://www.entreprise.com" data-type="url">
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="ent-linkedin">LinkedIn</label>
             <div class="input-icon-wrapper">
               <i data-lucide="linkedin" style="width:18px;height:18px;"></i>
-              <input type="url" class="input" id="ent-linkedin" name="linkedin" placeholder="https://linkedin.com/company/...">
+              <input type="text" class="input" id="ent-linkedin" name="linkedin" placeholder="https://linkedin.com/company/..." data-type="url">
             </div>
           </div>
         </div>
@@ -241,14 +241,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="ent-password">Mot de passe</label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
-              <input type="password" class="input" id="ent-password" name="password" placeholder="Min. 8 caractères">
+              <input type="password" class="input" id="ent-password" name="password" placeholder="Min. 8 caractères" data-required="true">
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="ent-password2">Confirmer</label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
-              <input type="password" class="input" id="ent-password2" name="password_confirm" placeholder="Confirmez">
+              <input type="password" class="input" id="ent-password2" name="password_confirm" placeholder="Confirmez" data-required="true" data-match="ent-password">
             </div>
           </div>
         </div>
@@ -278,7 +278,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </form>
 
       <div class="auth-footer">
-        Déjà inscrit ? <a href="login.php">Se connecter</a>
+        <div style="margin-bottom: var(--space-2);">Déjà inscrit ? <a href="login.php">Se connecter</a></div>
+        <a href="landing.php" class="back-to-site">
+          <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
+          Retour au site
+        </a>
       </div>
 
       <div style="position:absolute;top:var(--space-4);right:var(--space-4);">

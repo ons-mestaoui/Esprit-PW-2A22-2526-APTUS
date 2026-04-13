@@ -82,12 +82,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php echo $error; ?>
         </div>
       <?php endif; ?>
-      <form class="auth-form" id="login-form" method="POST" action="">
+      <form class="auth-form" id="login-form" method="POST" action="" data-validate>
         <div class="form-group">
           <label class="form-label" for="login-email">Adresse Email</label>
           <div class="input-icon-wrapper">
             <i data-lucide="mail" style="width:18px;height:18px;"></i>
-            <input type="email" class="input" id="login-email" name="email" placeholder="votre@email.com">
+            <input type="text" class="input" id="login-email" name="email" placeholder="votre@email.com" data-required="true" data-type="email">
           </div>
         </div>
 
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="form-label" for="login-password">Mot de passe</label>
           <div class="input-icon-wrapper">
             <i data-lucide="lock" style="width:18px;height:18px;"></i>
-            <input type="password" class="input" id="login-password" name="password" placeholder="••••••••">
+            <input type="password" class="input" id="login-password" name="password" placeholder="••••••••" data-required="true">
           </div>
         </div>
 
@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <!-- Footer -->
       <div class="auth-footer">
-        Pas de compte ? <a href="signup_choice.php">S'inscrire gratuitement</a>
+        <div style="margin-bottom: var(--space-2);">Pas de compte ? <a href="signup_choice.php">S'inscrire gratuitement</a></div>
         <a href="landing.php" class="back-to-site">
           <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
           Retour au site

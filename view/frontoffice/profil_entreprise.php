@@ -131,7 +131,7 @@ $fmtDate = date('d M. Y', strtotime($creationDate));
 <?php endif; ?>
 
 <!-- ═══ Profile Content ═══ -->
-<form method="POST" action="" enctype="multipart/form-data">
+<form method="POST" action="" enctype="multipart/form-data" data-validate>
 <div style="display:grid;grid-template-columns:1fr 2fr;gap:var(--space-6);align-items:start;">
 
   <!-- Left: Company Card -->
@@ -218,7 +218,7 @@ $fmtDate = date('d M. Y', strtotime($creationDate));
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
         <div class="form-group">
           <label class="form-label">Nom de l'entreprise</label>
-          <input type="text" name="raison_sociale" class="input" value="<?php echo $rs; ?>" required>
+          <input type="text" name="raison_sociale" class="input" value="<?php echo $rs; ?>" data-required="true">
         </div>
         <div class="form-group">
           <label class="form-label">Secteur d'activité</label>
@@ -251,7 +251,7 @@ $fmtDate = date('d M. Y', strtotime($creationDate));
         </div>
         <div class="form-group">
           <label class="form-label">Année de fondation</label>
-          <input type="number" name="annee_fondation" class="input" value="<?php echo htmlspecialchars($entreprise['anneeFondation'] ?? ''); ?>">
+          <input type="text" name="annee_fondation" class="input" value="<?php echo htmlspecialchars($entreprise['anneeFondation'] ?? ''); ?>">
         </div>
       </div>
     </div>
@@ -267,28 +267,28 @@ $fmtDate = date('d M. Y', strtotime($creationDate));
           <label class="form-label">Email professionnel</label>
           <div class="input-icon-wrapper">
             <i data-lucide="mail" style="width:18px;height:18px;"></i>
-            <input type="email" name="email" class="input" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+            <input type="text" name="email" class="input" value="<?php echo htmlspecialchars($user['email']); ?>" data-required="true" data-type="email">
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Téléphone</label>
           <div class="input-icon-wrapper">
             <i data-lucide="phone" style="width:18px;height:18px;"></i>
-            <input type="tel" name="telephone" class="input" value="<?php echo htmlspecialchars($user['telephone'] ?? ''); ?>">
+            <input type="text" name="telephone" class="input" value="<?php echo htmlspecialchars($user['telephone'] ?? ''); ?>">
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Site Web</label>
           <div class="input-icon-wrapper">
             <i data-lucide="globe" style="width:18px;height:18px;"></i>
-            <input type="url" name="site_web" class="input" value="<?php echo htmlspecialchars($profil['siteWeb'] ?? ''); ?>">
+            <input type="text" name="site_web" class="input" value="<?php echo htmlspecialchars($profil['siteWeb'] ?? ''); ?>" data-type="url">
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">LinkedIn</label>
           <div class="input-icon-wrapper">
             <i data-lucide="linkedin" style="width:18px;height:18px;"></i>
-            <input type="url" name="linkedin" class="input" value="<?php echo htmlspecialchars($profil['linkedin'] ?? ''); ?>">
+            <input type="text" name="linkedin" class="input" value="<?php echo htmlspecialchars($profil['linkedin'] ?? ''); ?>" data-type="url">
           </div>
         </div>
         <div class="form-group">
