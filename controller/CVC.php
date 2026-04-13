@@ -33,8 +33,14 @@ class CVC
     public function listCVByCandidat($id_candidat)
     {
         $db = config::getConnexion();
-        $query = $db->prepare('SELECT * FROM cv WHERE id_candidat = :id ORDER BY dateMiseAJour DESC');
-        $query->execute(['id' => $id_candidat]);
+        if ($id_candidat === null) {
+            // Mode dev: afficher tous les CVs
+            $query = $db->prepare('SELECT * FROM cv ORDER BY dateMiseAJour DESC');
+            $query->execute();
+        } else {
+            $query = $db->prepare('SELECT * FROM cv WHERE id_candidat = :id OR id_candidat IS NULL ORDER BY dateMiseAJour DESC');
+            $query->execute(['id' => $id_candidat]);
+        }
         return $query->fetchAll();
     }
 

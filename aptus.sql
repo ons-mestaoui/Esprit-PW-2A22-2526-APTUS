@@ -80,7 +80,7 @@ CREATE TABLE `cv` (
   `formation` longtext DEFAULT NULL,
   `competences` longtext DEFAULT NULL,
   `langues` longtext DEFAULT NULL,
-  `urlPhoto` varchar(512) DEFAULT NULL,
+  `urlPhoto` longtext DEFAULT NULL,
   `couleurTheme` varchar(50) DEFAULT NULL,
   `statut` varchar(50) DEFAULT NULL,
   `dateCreation` datetime DEFAULT NULL,
