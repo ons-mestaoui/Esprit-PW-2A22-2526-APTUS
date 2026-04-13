@@ -38,17 +38,7 @@ if (!isset($content)) {
   <h1 class="page-header__title">Mon Parcours d'Apprentissage</h1>
 </div>
 
-<?php if (isset($_SESSION['flash_success'])): ?>
-    <div style="background: #10b981; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center;">
-        <?php echo $_SESSION['flash_success']; unset($_SESSION['flash_success']); ?>
-    </div>
-<?php endif; ?>
 
-<?php if (isset($_SESSION['flash_error'])): ?>
-    <div style="background: #ef4444; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center;">
-        <?php echo $_SESSION['flash_error']; unset($_SESSION['flash_error']); ?>
-    </div>
-<?php endif; ?>
 
 <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
     <?php if (!empty($mesCours)): foreach($mesCours as $cours): ?>
@@ -103,8 +93,8 @@ if (!isset($content)) {
                 <?php else: ?>
                     <button class="btn" style="background: #e2e8f0; color: #94a3b8; cursor: not-allowed; width:100%; border:none; padding:0.5rem; border-radius:6px;" disabled>Disponible le <?php echo date('d/m', strtotime($cours['date_formation'])); ?></button>
                     
-                    <!-- Bouton pour se désinscrire -->
-                    <form action="formations_my.php" method="POST" style="margin: 0;" onsubmit="return confirm('Êtes-vous sûr de vouloir vous désinscrire de cette formation ?');">
+                    <!-- Bouton pour se désinscrire avec SweetAlert2 -->
+                    <form action="formations_my.php" method="POST" style="margin: 0;" onsubmit="return confirmDesinscription(this, event, '<?php echo addslashes(htmlspecialchars($cours['titre'])); ?>');">
                         <input type="hidden" name="id_formation" value="<?php echo $cours['id_formation']; ?>">
                         <button type="submit" class="btn" style="width: 100%; background: white; color: #ef4444; border: 1px solid #ef4444; padding: 0.5rem; border-radius: 6px;">Se désinscrire</button>
                     </form>
@@ -119,3 +109,25 @@ if (!isset($content)) {
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+    function confirmDesinscription(form, event, formationTitre) {
+        event.preventDefault(); // Empêcher l'envoi immédiat
+        Swal.fire({
+            title: 'Se désinscrire ?',
+            html: `Êtes-vous sûr de vouloir annuler votre inscription à la formation <br><b>"${formationTitre}"</b> ?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#e2e8f0',
+            confirmButtonText: 'Oui, me désinscrire',
+            cancelButtonText: '<span style="color:#0f172a">Annuler</span>',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit(); // Envoi du formulaire si on clique sur "Oui"
+            }
+        });
+        return false;
+    }
+</script>
