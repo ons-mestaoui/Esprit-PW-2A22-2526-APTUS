@@ -302,18 +302,25 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+var deleteUrl = '';
+
 function confirmDelete(id, titre) {
     var titleEl = document.getElementById('delete-offer-title');
     if(titleEl) titleEl.innerText = titre;
     
-    var btnEl = document.getElementById('confirm-delete-btn');
-    if(btnEl) btnEl.href = "offres_admin.php?action=delete&id=" + id;
+    deleteUrl = "offres_admin.php?action=delete&id=" + id;
     
     var overlay = document.getElementById('delete-confirm-modal');
     if (overlay) {
         overlay.classList.add('active');
         var modal = overlay.querySelector('.modal');
         if (modal) modal.classList.add('active');
+    }
+}
+
+function executeDelete() {
+    if(deleteUrl) {
+        window.location.href = deleteUrl;
     }
 }
 </script>
@@ -331,9 +338,9 @@ function confirmDelete(id, titre) {
       </p>
       <div class="flex gap-3 justify-center">
         <button type="button" class="btn btn-secondary modal-close" style="flex:1;">Annuler</button>
-        <a href="#" id="confirm-delete-btn" class="btn btn-primary" style="flex:1; background: #dc2626; border-color: #dc2626; display:flex; justify-content:center;">
+        <button type="button" onclick="executeDelete()" id="confirm-delete-btn" class="btn btn-primary" style="flex:1; background: #dc2626; border-color: #dc2626;">
           Oui, Supprimer
-        </a>
+        </button>
       </div>
     </div>
   </div>
