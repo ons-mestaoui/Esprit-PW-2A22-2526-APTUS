@@ -105,6 +105,9 @@ try {
     // Appel du Contrôleur MVC
     $cvc = new CVC();
 
+    $db = config::getConnexion();
+    $db->exec('SET FOREIGN_KEY_CHECKS = 0');
+
     if ($cv_id) {
         // UPDATE (Délégation au Contrôleur)
         $cvc->updateCV($cv_id, $cvModel);
@@ -113,6 +116,8 @@ try {
         // INSERT (Délégation au Contrôleur)
         $newId = $cvc->addCV($cvModel);
     }
+    
+    $db->exec('SET FOREIGN_KEY_CHECKS = 1');
 
     echo json_encode(['success' => true, 'id' => (int)$newId]);
 

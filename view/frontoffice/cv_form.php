@@ -100,29 +100,24 @@ if (!isset($content)) {
             <div class="form-group">
                 <label>Nom Complet</label>
                 <input type="text" id="input-name" class="form-control" placeholder="Jean Dupont">
-                <div class="error-msg" id="err-name" style="color:red; font-size:12px; display:none; margin-top:4px;"></div>
             </div>
             <div class="form-group">
                 <label>Titre du Poste</label>
                 <input type="text" id="input-title" class="form-control" placeholder="ex: Développeur Full-Stack">
-                <div class="error-msg" id="err-title" style="color:red; font-size:12px; display:none; margin-top:4px;"></div>
             </div>
             <div style="display:flex; gap:1rem;">
                 <div class="form-group" style="flex:1;">
                     <label>Email</label>
                     <input type="text" id="input-email" class="form-control" placeholder="nom@exemple.com">
-                    <div class="error-msg" id="err-email" style="color:red; font-size:12px; display:none; margin-top:4px;"></div>
                 </div>
                 <div class="form-group" style="flex:1;">
                     <label>Téléphone</label>
                     <input type="text" id="input-phone" class="form-control" placeholder="+216 ...">
-                    <div class="error-msg" id="err-phone" style="color:red; font-size:12px; display:none; margin-top:4px;"></div>
                 </div>
             </div>
             <div class="form-group">
                 <label>Localisation (Ville, Pays)</label>
                 <input type="text" id="input-location" class="form-control" placeholder="Tunis, Tunisie">
-                <div class="error-msg" id="err-location" style="color:red; font-size:12px; display:none; margin-top:4px;"></div>
             </div>
 
             <div class="wizard-footer">
@@ -137,7 +132,6 @@ if (!isset($content)) {
             <p class="help-text">Un résumé est un bref aperçu de 2-4 phrases de votre carrière, vos meilleures réalisations et compétences.</p>
             <div class="form-group">
                 <textarea id="input-summary" class="form-control" placeholder="Professionnel passionné avec une expertise en..."></textarea>
-                <div class="error-msg" id="err-summary" style="color:red; font-size:12px; display:none; margin-top:4px;"></div>
                 <button class="btn-ai" onclick="alert('IA: Cette fonctionnalité sera bientôt disponible !')">
                     ✨ AI Polish
                 </button>
@@ -588,72 +582,8 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', () => goToStep(parseInt(link.dataset.step)));
     });
 
-    // --- Fonctions de Validation ---
-    window.validateField = function(id, val) {
-        let errorMsg = null;
-        if (id === 'name') {
-            if (val.length < 3 || !/^[\p{L}\s.'-]+$/u.test(val)) errorMsg = 'Veuillez entrer un nom valide (min. 3 lettres, lettres/espaces).';
-        } else if (id === 'title') {
-            if (val.length < 3 || val.length > 100) errorMsg = 'Le titre du poste doit contenir entre 3 et 100 caractères.';
-        } else if (id === 'email') {
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) errorMsg = 'Veuillez entrer une adresse email valide.';
-        } else if (id === 'phone') {
-            if (!/^\+?[0-9\s.\-()]{8,20}$/.test(val)) errorMsg = 'Numéro de téléphone invalide (min. 8 chiffres).';
-        } else if (id === 'location') {
-            if (val.length < 3) errorMsg = 'Veuillez préciser votre localisation.';
-        } else if (id === 'summary') {
-            if (val.length > 1000) errorMsg = 'Votre résumé est trop long (max 1000 caractères).';
-        }
-
-        const errorEl = document.getElementById('err-' + id);
-        const inputEl = document.getElementById('input-' + id);
-        
-        if (errorMsg) {
-            if(errorEl) { errorEl.innerText = errorMsg; errorEl.style.display = 'block'; }
-            if(inputEl) { inputEl.style.borderColor = 'red'; }
-            return false;
-        } else {
-            if(errorEl) { errorEl.style.display = 'none'; }
-            if(inputEl) { inputEl.style.borderColor = 'var(--border-color)'; }
-            return true;
-        }
-    };
-
-    // --- Validation en temps réel (Blur) ---
-    ['name', 'title', 'email', 'phone', 'location', 'summary'].forEach(fieldId => {
-        const el = document.getElementById('input-' + fieldId);
-        if (el) {
-            el.addEventListener('blur', function() {
-                window.validateField(fieldId, this.value.trim());
-            });
-            // Pour ne pas rester bloqué en rouge si on corrige :
-            el.addEventListener('input', function() {
-                if (el.style.borderColor === 'red') {
-                    window.validateField(fieldId, this.value.trim());
-                }
-            });
-        }
-    });
-
     // Save
     document.getElementById('btn-save').addEventListener('click', async function() {
-        // Validation globale JS Manuelle
-        let hasError = false;
-
-        const fieldsToValidate = ['name', 'title', 'email', 'phone', 'location', 'summary'];
-        fieldsToValidate.forEach(f => {
-            const v = document.getElementById('input-' + f).value.trim();
-            if (!window.validateField(f, v)) {
-                hasError = true;
-            }
-        });
-
-        if (hasError) {
-            alert('Veuillez corriger les champs en rouge avant d\'enregistrer.');
-            return;
-        }
-        // --- Fin Validation JS ---
-
         const data = {
             cv_id: CV_ID, template_id: TEMPLATE_ID,
             name: document.getElementById('input-name').value.trim(),
@@ -721,35 +651,56 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 });
 
-function goToStep(idx) {
-    // Si on veut aller à une étape > 1 (depuis n'importe où), il faut que les champs de l'étape 1 soient valides
-    if (idx > 1) {
-        let isStep1Valid = true;
-        ['name', 'title', 'email', 'phone', 'location'].forEach(f => {
-            const val = document.getElementById('input-' + f).value.trim();
-            if (typeof window.validateField === 'function' && !window.validateField(f, val)) {
-                isStep1Valid = false;
-            }
-        });
-        if (!isStep1Valid) {
-            alert("Veuillez corriger les champs en rouge à l'étape 1 avant de continuer.");
-            idx = 1; // Force le retour à l'étape 1
+async function goToStep(idx) {
+    const currentStepEl = document.querySelector('.step-content.active');
+    if (!currentStepEl) return;
+    const currentIdx = parseInt(currentStepEl.id.replace('step-', ''));
+
+    // Si on essaie d'avancer (idx > currentIdx), on valide l'étape en cours via PHP
+    if (idx > currentIdx) {
+        let stepData = {};
+        if (currentIdx === 1) {
+            stepData = {
+                name: document.getElementById('input-name').value.trim(),
+                title: document.getElementById('input-title').value.trim(),
+                email: document.getElementById('input-email').value.trim(),
+                phone: document.getElementById('input-phone').value.trim(),
+                location: document.getElementById('input-location').value.trim()
+            };
+        } else if (currentIdx === 2) {
+            stepData = {
+                summary: document.getElementById('input-summary').value.trim()
+            };
         }
-    }
-    
-    // Si on veut dépasser l'étape 2, on vérifie la longueur du résumé
-    if (idx > 2) {
-        const val = document.getElementById('input-summary').value.trim();
-        if (typeof window.validateField === 'function' && !window.validateField('summary', val)) {
-            alert("Votre résumé est trop long. Veuillez le raccourcir avant de continuer.");
-            idx = 2; // Force le retour à l'étape 2
+
+        // Si on a des données à valider pour cette étape
+        if (Object.keys(stepData).length > 0) {
+            try {
+                const res = await fetch('cv_validate_step.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ step: currentIdx, data: stepData })
+                });
+                const result = await res.json();
+                
+                if (!result.success) {
+                    alert('Erreur validation (Serveur PHP): ' + result.message);
+                    return; // Bloque le passage à l'étape suivante
+                }
+            } catch (e) {
+                console.error('Validation error:', e);
+                alert('Erreur de communication avec le serveur de validation.');
+                return;
+            }
         }
     }
 
+    // Changement d'étape UI
     document.querySelectorAll('.step-content').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.wizard-step-link').forEach(l => l.classList.remove('active'));
     document.getElementById('step-' + idx).classList.add('active');
-    document.querySelector(`.wizard-step-link[data-step="${idx}"]`).classList.add('active');
+    const link = document.querySelector(`.wizard-step-link[data-step="${idx}"]`);
+    if (link) link.classList.add('active');
 }
 
 function syncContact() {

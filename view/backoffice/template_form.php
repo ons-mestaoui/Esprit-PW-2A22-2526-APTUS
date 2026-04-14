@@ -33,18 +33,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $structureHtml = trim($_POST['structureHtml'] ?? '');
     $estPremium = isset($_POST['estPremium']) ? 1 : 0;
     
-    // Backend Validation
+    // Backend Validation Strict (HTML/CSS Uniquement)
     if (mb_strlen($nom) < 3 || mb_strlen($nom) > 150) {
         $backend_error = "Le nom du template doit contenir entre 3 et 150 caractères.";
     } elseif (empty($structureHtml)) {
         $backend_error = "Le code HTML du template est obligatoire.";
     } elseif (!preg_match('/<[a-z][\s\S]*>/i', $structureHtml)) {
         $backend_error = "Le code doit contenir des balises HTML valides (ex: <div>, <span>).";
-    } elseif (stripos($structureHtml, '<?php') !== false) {
-        $backend_error = "L'insertion de code PHP est strictement interdite par sécurité.";
-    } elseif (preg_match('/<script\b/i', $structureHtml)) {
-        $backend_error = "L'insertion de scripts JavaScript (<script>) n'est pas autorisée.";
-    } else {
+    } 
+    // Blocage PHP complet (ouvertures et fermetures)
+    elseif (preg_match('/<\?php|<\?|\?>|<\s*script/i', $structureHtml)) {
+        $backend_error = "L'insertion de code PHP ou de balises <script> est strictement interdite.";
+    }
+    // Blocage des attributs JavaScript (onchange, onclick, etc.)
+    elseif (preg_match('/on[a-z]+\s*=/i', $structureHtml)) {
+        $backend_error = "Le code contient des attributs JavaScript interdits (événements 'on-'). Seul le HTML/CSS pur est autorisé.";
+    } 
+    else {
         $tplObj = new Template(null, $nom, $description, $urlMiniature, $structureHtml, $estPremium);
         
         if ($action === 'edit' && $id) {
@@ -109,7 +114,6 @@ $isPremium = $template ? $template['estPremium'] : 0;
             <div class="form-group">
                 <label class="form-label" for="tpl-name" style="font-size: 15px;">Nom du template</label>
                 <input type="text" class="input" id="tpl-name" name="nom" placeholder="Ex: Élégance Corporative" value="<?php echo $nomVal; ?>" style="padding: 12px; font-size:16px;">
-                <div class="error-msg" id="err-tpl-name" style="color:red; font-size:12px; display:none; margin-top:4px;"></div>
             </div>
 
             <div class="form-group">
@@ -173,7 +177,6 @@ $isPremium = $template ? $template['estPremium'] : 0;
                     <span class="text-xs" style="color:var(--text-tertiary);">Rendu en temps réel possible via le bouton à droite</span>
                 </div>
                 <textarea class="textarea" id="tpl-html" name="structureHtml" placeholder="Écrivez le code source HTML/CSS du CV ici..." style="font-family: 'Fira Code', monospace; line-height: 1.5; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); color: #cbd5e1; flex-grow: 1; min-height: 400px; padding:15px; font-size:13px; resize:vertical;"><?php echo $htmlVal; ?></textarea>
-                <div class="error-msg" id="err-tpl-html" style="color:red; font-size:12px; display:none; margin-top:4px;"></div>
             </div>
         </div>
 
@@ -340,66 +343,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     tagInput.value = '';
                 }
-            }
-        });
-    }
-
-    // Custom JS Validation
-    function validateTemplateField(id) {
-        const field = document.getElementById(id);
-        const val = field.value.trim();
-        const errEl = document.getElementById('err-' + id);
-        let errorMsg = null;
-
-        if (id === 'tpl-name') {
-            if (val.length < 3 || val.length > 150) errorMsg = "Le nom du template doit contenir entre 3 et 150 caractères.";
-        } else if (id === 'tpl-html') {
-            if (val.length === 0) {
-                errorMsg = "Le code HTML du template est obligatoire.";
-            } else if (!/<[a-z][\s\S]*>/i.test(val)) {
-                errorMsg = "Le code doit contenir des balises HTML valides (ex: <div>, <style>).";
-            } else if (/<\?php/i.test(val)) {
-                errorMsg = "L'insertion de code PHP est strictement interdite par sécurité.";
-            } else if (/<script\b/i.test(val)) {
-                errorMsg = "L'insertion de scripts JS (<script>) n'est pas autorisée pour les templates OpenCV.";
-            }
-        }
-
-        if (errorMsg) {
-            if (errEl) { errEl.innerText = errorMsg; errEl.style.display = 'block'; }
-            field.style.borderColor = 'red';
-            return false;
-        } else {
-            if (errEl) { errEl.style.display = 'none'; }
-            field.style.borderColor = id === 'tpl-html' ? 'rgba(255,255,255,0.08)' : 'var(--border-color)';
-            return true;
-        }
-    }
-
-    ['tpl-name', 'tpl-html'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('blur', function() {
-                validateTemplateField(id);
-            });
-            el.addEventListener('input', function() {
-                if (el.style.borderColor === 'red') {
-                    validateTemplateField(id);
-                }
-            });
-        }
-    });
-
-    const form = document.getElementById('full-template-form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            let hasError = false;
-            
-            if (!validateTemplateField('tpl-name')) hasError = true;
-            if (!validateTemplateField('tpl-html')) hasError = true;
-
-            if (hasError) {
-                e.preventDefault(); // Stop form submission
             }
         });
     }
