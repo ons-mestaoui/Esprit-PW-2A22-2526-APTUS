@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="form-label" for="login-password">Mot de passe</label>
           <div class="input-icon-wrapper">
             <i data-lucide="lock" style="width:18px;height:18px;"></i>
-            <input type="password" class="input" id="login-password" name="password" placeholder="••••••••" data-required="true">
+            <input type="password" class="input" id="login-password" name="password" placeholder="••••••••" data-required="true" data-minlength="8">
           </div>
         </div>
 

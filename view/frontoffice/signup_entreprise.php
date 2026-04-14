@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="ent-siret">N° SIRET</label>
             <div class="input-icon-wrapper">
               <i data-lucide="hash" style="width:18px;height:18px;"></i>
-              <input type="text" class="input" id="ent-siret" name="siret" placeholder="123 456 789 00012" data-required="true">
+              <input type="text" class="input" id="ent-siret" name="siret" placeholder="123 456 789 00012" data-required="true" data-type="tel">
             </div>
           </div>
         </div>
@@ -175,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="ent-annee">Année de fondation</label>
             <div class="input-icon-wrapper">
               <i data-lucide="calendar" style="width:18px;height:18px;"></i>
-              <input type="text" class="input" id="ent-annee" name="annee_fondation" placeholder="Ex: 2012">
+              <input type="text" class="input" id="ent-annee" name="annee_fondation" placeholder="Ex: 2012" data-type="tel" data-minlength="4">
             </div>
           </div>
           <!-- Le div vide pour balancer la grid ou alors l'email peut y aller. Je vais juste mettre un form-group vide pour aligner, ou je met l'année seule -->
@@ -214,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="ent-tel">Téléphone</label>
             <div class="input-icon-wrapper">
               <i data-lucide="phone" style="width:18px;height:18px;"></i>
-              <input type="text" class="input" id="ent-tel" name="telephone" placeholder="+216 XX XXX XXX">
+              <input type="text" class="input" id="ent-tel" name="telephone" placeholder="+216 XX XXX XXX" data-type="tel">
             </div>
           </div>
         </div>
@@ -241,14 +241,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="ent-password">Mot de passe</label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
-              <input type="password" class="input" id="ent-password" name="password" placeholder="Min. 8 caractères" data-required="true">
+              <input type="password" class="input" id="ent-password" name="password" placeholder="Min. 8 caractères" data-required="true" data-minlength="8">
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="ent-password2">Confirmer</label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
-              <input type="password" class="input" id="ent-password2" name="password_confirm" placeholder="Confirmez" data-required="true" data-match="ent-password">
+              <input type="password" class="input" id="ent-password2" name="password_confirm" placeholder="Confirmez" data-required="true" data-minlength="8" data-match="ent-password">
             </div>
           </div>
         </div>

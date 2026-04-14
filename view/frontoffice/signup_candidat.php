@@ -148,14 +148,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="candidat-password">Mot de passe</label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
-              <input type="password" class="input" id="candidat-password" name="password" placeholder="Min. 8 caractères" data-required="true">
+              <input type="password" class="input" id="candidat-password" name="password" placeholder="Min. 8 caractères" data-required="true" data-minlength="8">
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="candidat-password2">Confirmer</label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
-              <input type="password" class="input" id="candidat-password2" name="password_confirm" placeholder="Confirmez" data-required="true" data-match="candidat-password">
+              <input type="password" class="input" id="candidat-password2" name="password_confirm" placeholder="Confirmez" data-required="true" data-minlength="8" data-match="candidat-password">
             </div>
           </div>
         </div>
@@ -165,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="candidat-tel">Téléphone</label>
             <div class="input-icon-wrapper">
               <i data-lucide="phone" style="width:18px;height:18px;"></i>
-              <input type="text" class="input" id="candidat-tel" name="telephone" placeholder="+216 XX XXX XXX">
+              <input type="text" class="input" id="candidat-tel" name="telephone" placeholder="+216 XX XXX XXX" data-type="tel">
             </div>
           </div>
           <div class="form-group">
