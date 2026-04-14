@@ -10,39 +10,102 @@ require_once '../../model/offre.php';
 $offreC = new offreC();
 $action = $_GET['action'] ?? 'list';
 
-// --- LOGIQUE CRUD ---
+$errors = [];
+$form_data = [];
+
+// --- LOGIQUE CRUD AVEC VALIDATION PHP STRICTE ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Récupération sécurisée et nettoyage
+    $titre = trim($_POST['titre'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $domaine = trim($_POST['domaine'] ?? '');
+    $competences = trim($_POST['competences_requises'] ?? '');
+    $experience = trim($_POST['experience_requise'] ?? '');
+    $salaire = trim($_POST['salaire'] ?? '');
+    $question = trim($_POST['question'] ?? '');
+    
+    // Forçage de la date de publication selon l'action (Add = Aujourd'hui, Edit = On garde l'ancienne date)
     if (isset($_POST['submit_add'])) {
-        $offre = new offre(
-            $_POST['titre'], 
-            $_POST['description'], 
-            $_POST['domaine'], 
-            $_POST['competences_requises'], 
-            $_POST['experience_requise'], 
-            (float)$_POST['salaire'], 
-            $_POST['question'], 
-            $_POST['date_publication'], 
-            $_POST['date_expir']
-        );
-        $offreC->ajouterOffre($offre);
-        header("Location: hr_posts.php");
-        exit();
+        $date_pub = date('Y-m-d');
+    } else {
+        $date_pub = trim($_POST['date_publication'] ?? date('Y-m-d'));
     }
-    if (isset($_POST['submit_update']) && isset($_GET['id'])) {
+    
+    $date_exp = trim($_POST['date_expir'] ?? '');
+
+    // Sauvegarde des données pour réaffichage si erreur
+    $form_data = [
+        'titre' => $titre,
+        'description' => $description,
+        'domaine' => $domaine,
+        'competences_requises' => $competences,
+        'experience_requise' => $experience,
+        'salaire' => $salaire,
+        'question' => $question,
+        'date_publication' => $date_pub,
+        'date_expir' => $date_exp
+    ];
+
+    // ---- RULES PHP ----
+    if (strlen($titre) < 3) {
+        $errors['titre'] = "Le titre doit contenir au moins 3 caractères.";
+    }
+    if (empty($description)) {
+        $errors['description'] = "La description est obligatoire.";
+    }
+    if (empty($domaine)) {
+        $errors['domaine'] = "Le domaine est obligatoire.";
+    }
+    if (!is_numeric($salaire) || (float)$salaire <= 0) {
+        $errors['salaire'] = "Le salaire doit être un nombre positif.";
+    }
+    if (empty($competences)) {
+        $errors['competences_requises'] = "Ce champ est obligatoire.";
+    }
+    if (empty($experience)) {
+        $errors['experience_requise'] = "L'expérience requise est obligatoire.";
+    }
+    if (empty($question)) {
+        $errors['question'] = "Veuillez poser une question pour filtrer vos candidats.";
+    }
+    if (empty($date_pub)) {
+        $errors['date_publication'] = "La date de publication est obligatoire.";
+    }
+    if (empty($date_exp)) {
+        $errors['date_expir'] = "La date d'expiration est obligatoire.";
+    } elseif (!empty($date_pub) && strtotime($date_exp) < strtotime($date_pub)) {
+        $errors['date_expir'] = "La date d'expiration ne peut pas précéder la date de publication.";
+    }
+
+    // SI AUCUNE ERREUR: ON SAUVEGARDE EN BDD
+    if (empty($errors)) {
         $offre = new offre(
-            $_POST['titre'], 
-            $_POST['description'], 
-            $_POST['domaine'], 
-            $_POST['competences_requises'], 
-            $_POST['experience_requise'], 
-            (float)$_POST['salaire'], 
-            $_POST['question'], 
-            $_POST['date_publication'], 
-            $_POST['date_expir']
+            $titre, 
+            $description, 
+            $domaine, 
+            $competences, 
+            $experience, 
+            (float)$salaire, 
+            $question, 
+            $date_pub, 
+            $date_exp
         );
-        $offreC->modifierOffre($offre, $_GET['id']);
+        
+        if (isset($_POST['submit_add'])) {
+            $offreC->ajouterOffre($offre);
+        } elseif (isset($_POST['submit_update']) && isset($_GET['id'])) {
+            $offreC->modifierOffre($offre, $_GET['id']);
+        }
+        
         header("Location: hr_posts.php");
         exit();
+    } else {
+        // En cas d'erreur, on reste sur le formulaire (add ou edit)
+        if (isset($_POST['submit_add'])) {
+            $action = 'add';
+        } else if (isset($_POST['submit_update'])) {
+            $action = 'edit';
+        }
     }
 }
 
@@ -84,7 +147,11 @@ if (!isset($content)) {
         <?php foreach ($listeOffres as $offreItem): ?>
         <div class="hr-post-card animate-on-scroll">
           <div class="hr-post-card__header">
-            <span class="badge badge-success">Actif</span>
+            <?php if (isset($offreItem['statut']) && $offreItem['statut'] === 'Expiré'): ?>
+                <span class="badge badge-danger">Expiré</span>
+            <?php else: ?>
+                <span class="badge badge-success">Actif</span>
+            <?php endif; ?>
           </div>
           <h3 class="hr-post-card__title"><?php echo htmlspecialchars($offreItem['titre'] ?? ''); ?></h3>
           <p class="text-sm text-secondary mb-3" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"><?php echo htmlspecialchars($offreItem['description'] ?? ''); ?></p>
@@ -102,7 +169,7 @@ if (!isset($content)) {
           <div class="hr-post-card__actions" style="margin-top: 1rem;">
             <a href="hr_posts.php?action=edit&id=<?php echo $offreItem['id_offre']; ?>" class="btn btn-sm btn-secondary text-decoration-none d-flex align-items-center gap-1"><i data-lucide="pencil" style="width:14px;height:14px;"></i> Éditer</a>
             <button class="btn btn-sm btn-ghost d-flex align-items-center gap-1"><i data-lucide="users" style="width:14px;height:14px;"></i> Candidats</button>
-            <a href="hr_posts.php?action=delete&id=<?php echo $offreItem['id_offre']; ?>" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette offre ?');" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></a>
+            <button type="button" onclick="confirmDelete(<?php echo $offreItem['id_offre']; ?>, '<?php echo htmlspecialchars(addslashes($offreItem['titre'] ?? '')); ?>')" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
           </div>
         </div>
         <?php endforeach; ?>
@@ -117,8 +184,16 @@ if (!isset($content)) {
     <?php elseif ($action === 'add' || $action === 'edit'): ?>
       <?php 
         $offreEdit = null;
-        if ($action === 'edit' && isset($_GET['id'])) {
+        if ($action === 'edit' && isset($_GET['id']) && empty($form_data)) {
+            // Uniquement si form_data est vide (donc 1er chargement GET, pas un retour suite erreur POST)
             $offreEdit = $offreC->getOffreById($_GET['id']);
+        }
+        
+        // Helper pour afficher les valeurs
+        function val($field, $form_data, $offreEdit, $default = '') {
+            if (isset($form_data[$field])) return $form_data[$field];
+            if (isset($offreEdit[$field])) return $offreEdit[$field];
+            return $default;
         }
       ?>
       <div class="form-container" style="background:var(--surface-1); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);">
@@ -127,52 +202,88 @@ if (!isset($content)) {
             <?php echo $action === 'edit' ? 'Modifier l\'offre' : 'Nouvelle offre'; ?>
         </h2>
         
-        <form method="POST" action="hr_posts.php?<?php echo $action === 'edit' ? 'action=edit&id='.$_GET['id'] : 'action=add'; ?>">
+        <?php if (!empty($errors)): ?>
+        <div style="background: rgba(220, 38, 38, 0.1); border-left: 4px solid #dc2626; color: #dc2626; padding: 1rem; border-radius: 6px; margin-bottom: 2rem;">
+            <strong>Erreur !</strong> Veuillez corriger les erreurs dans le formulaire ci-dessous.
+        </div>
+        <?php endif; ?>
+
+        <!-- NOVALIDATE désactive la validation HTML5 -->
+        <form method="POST" novalidate action="hr_posts.php?<?php echo ($action === 'edit' && isset($_GET['id'])) ? 'action=edit&id='.$_GET['id'] : 'action=add'; ?>">
             
             <div class="form-group mb-3">
                 <label class="form-label" for="titre">Titre de l'offre</label>
-                <input type="text" class="input" name="titre" id="titre" required value="<?php echo $offreEdit ? htmlspecialchars($offreEdit['titre']) : ''; ?>">
+                <input type="text" class="input <?php echo isset($errors['titre']) ? 'has-error' : ''; ?>" name="titre" id="titre" value="<?php echo htmlspecialchars(val('titre', $form_data, $offreEdit)); ?>">
+                <?php if (isset($errors['titre'])): ?>
+                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['titre']; ?></span>
+                <?php endif; ?>
             </div>
 
             <div class="form-group mb-3">
                 <label class="form-label" for="description">Description</label>
-                <textarea class="input" name="description" id="description" rows="4" required><?php echo $offreEdit ? htmlspecialchars($offreEdit['description']) : ''; ?></textarea>
+                <textarea class="textarea <?php echo isset($errors['description']) ? 'has-error' : ''; ?>" name="description" id="description" rows="4"><?php echo htmlspecialchars(val('description', $form_data, $offreEdit)); ?></textarea>
+                <?php if (isset($errors['description'])): ?>
+                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['description']; ?></span>
+                <?php endif; ?>
             </div>
 
             <div style="display:flex; gap: 1rem;" class="mb-3">
                 <div class="form-group flex-1" style="flex:1;">
                     <label class="form-label" for="domaine">Domaine</label>
-                    <input type="text" class="input" name="domaine" id="domaine" required value="<?php echo $offreEdit ? htmlspecialchars($offreEdit['domaine']) : ''; ?>">
+                    <input type="text" class="input <?php echo isset($errors['domaine']) ? 'has-error' : ''; ?>" name="domaine" id="domaine" value="<?php echo htmlspecialchars(val('domaine', $form_data, $offreEdit)); ?>">
+                    <?php if (isset($errors['domaine'])): ?>
+                        <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['domaine']; ?></span>
+                    <?php endif; ?>
                 </div>
                 <div class="form-group flex-1" style="flex:1;">
-                    <label class="form-label" for="salaire">Salaire proposé</label>
-                    <input type="number" step="0.01" class="input" name="salaire" id="salaire" required value="<?php echo $offreEdit ? htmlspecialchars($offreEdit['salaire']) : ''; ?>">
+                    <label class="form-label" for="salaire">Salaire proposé (TND)</label>
+                    <!-- Garder type text autorise le JS/PHP à capturer des mauvaises saisies pour valider explicitement en PHP -->
+                    <input type="text" class="input <?php echo isset($errors['salaire']) ? 'has-error' : ''; ?>" name="salaire" id="salaire" value="<?php echo htmlspecialchars(val('salaire', $form_data, $offreEdit)); ?>">
+                    <?php if (isset($errors['salaire'])): ?>
+                        <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['salaire']; ?></span>
+                    <?php endif; ?>
                 </div>
             </div>
 
             <div class="form-group mb-3">
                 <label class="form-label" for="competences_requises">Compétences Requises</label>
-                <input type="text" class="input" name="competences_requises" id="competences_requises" required value="<?php echo $offreEdit ? htmlspecialchars($offreEdit['competences_requises']) : ''; ?>" placeholder="ex: PHP, HTML, CSS...">
+                <input type="text" class="input <?php echo isset($errors['competences_requises']) ? 'has-error' : ''; ?>" name="competences_requises" id="competences_requises" value="<?php echo htmlspecialchars(val('competences_requises', $form_data, $offreEdit)); ?>" placeholder="ex: PHP, HTML, CSS...">
+                <?php if (isset($errors['competences_requises'])): ?>
+                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['competences_requises']; ?></span>
+                <?php endif; ?>
             </div>
 
             <div class="form-group mb-3">
                 <label class="form-label" for="experience_requise">Expérience Requise</label>
-                <input type="text" class="input" name="experience_requise" id="experience_requise" required value="<?php echo $offreEdit ? htmlspecialchars($offreEdit['experience_requise']) : ''; ?>" placeholder="ex: 3 à 5 ans">
+                <input type="text" class="input <?php echo isset($errors['experience_requise']) ? 'has-error' : ''; ?>" name="experience_requise" id="experience_requise" value="<?php echo htmlspecialchars(val('experience_requise', $form_data, $offreEdit)); ?>" placeholder="ex: 3 à 5 ans">
+                <?php if (isset($errors['experience_requise'])): ?>
+                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['experience_requise']; ?></span>
+                <?php endif; ?>
             </div>
 
             <div class="form-group mb-3">
                 <label class="form-label" for="question">Question Personnalisée pour les candidats</label>
-                <input type="text" class="input" name="question" id="question" required value="<?php echo $offreEdit ? htmlspecialchars($offreEdit['question']) : ''; ?>">
+                <input type="text" class="input <?php echo isset($errors['question']) ? 'has-error' : ''; ?>" name="question" id="question" value="<?php echo htmlspecialchars(val('question', $form_data, $offreEdit)); ?>">
+                <?php if (isset($errors['question'])): ?>
+                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['question']; ?></span>
+                <?php endif; ?>
             </div>
 
             <div style="display:flex; gap: 1rem;" class="mb-3">
                 <div class="form-group flex-1" style="flex:1;">
-                    <label class="form-label" for="date_publication">Date de Publication</label>
-                    <input type="date" class="input" name="date_publication" id="date_publication" required value="<?php echo $offreEdit ? htmlspecialchars($offreEdit['date_publication']) : date('Y-m-d'); ?>">
+                    <label class="form-label" for="date_publication">Date de Publication (Automatique)</label>
+                    <?php 
+                        // Toujours figer à aujourd'hui si Add, ou l'ancienne date si Edit
+                        $default_date_pub = ($action === 'edit' && $offreEdit) ? $offreEdit['date_publication'] : date('Y-m-d'); 
+                    ?>
+                    <input type="date" class="input" name="date_publication" id="date_publication" value="<?php echo htmlspecialchars($default_date_pub); ?>" readonly style="background:var(--bg-body); cursor:not-allowed; color:var(--text-secondary); opacity:0.8;">
                 </div>
                 <div class="form-group flex-1" style="flex:1;">
                     <label class="form-label" for="date_expir">Date d'Expiration</label>
-                    <input type="date" class="input" name="date_expir" id="date_expir" required value="<?php echo $offreEdit ? htmlspecialchars($offreEdit['date_expir']) : ''; ?>">
+                    <input type="date" class="input <?php echo isset($errors['date_expir']) ? 'has-error' : ''; ?>" name="date_expir" id="date_expir" value="<?php echo htmlspecialchars(val('date_expir', $form_data, $offreEdit)); ?>">
+                    <?php if (isset($errors['date_expir'])): ?>
+                        <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['date_expir']; ?></span>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -223,4 +334,65 @@ if (!isset($content)) {
     </div>
     <?php endif; ?>
   </aside>
+</div>
+
+<!-- ═══ popup suppression ═══ -->
+<script>
+var deleteUrl = '';
+
+function confirmDelete(id, titre) {
+    var titleEl = document.getElementById('delete-offer-title');
+    if(titleEl) titleEl.innerText = titre;
+    
+    deleteUrl = "hr_posts.php?action=delete&id=" + id;
+    
+    var overlay = document.getElementById('delete-confirm-modal');
+    if (overlay) {
+        overlay.classList.add('active');
+        var modal = overlay.querySelector('.modal');
+        if (modal) modal.classList.add('active');
+    }
+}
+
+function executeDelete() {
+    if(deleteUrl) {
+        window.location.href = deleteUrl;
+    }
+}
+
+// Ensure the cancel button removes the classes (simulating the layout logic)
+document.addEventListener('DOMContentLoaded', function() {
+    var closeBtns = document.querySelectorAll('.modal-close');
+    closeBtns.forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var overlay = document.getElementById('delete-confirm-modal');
+            if (overlay) {
+                overlay.classList.remove('active');
+                var modal = overlay.querySelector('.modal');
+                if (modal) modal.classList.remove('active');
+            }
+        });
+    });
+});
+</script>
+
+<!-- ═══ Delete Confirmation Modal ═══ -->
+<div class="modal-overlay" id="delete-confirm-modal">
+  <div class="modal" style="max-width:400px; text-align:center;">
+    <div class="modal-body" style="padding: 2.5rem 1.5rem;">
+      <div style="background: rgba(220, 38, 38, 0.08); width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+        <i data-lucide="alert-triangle" style="width:34px;height:34px;color:#dc2626;"></i>
+      </div>
+      <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary);">Confirmation de suppression</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.5;">
+        Êtes-vous sûr de vouloir supprimer l'offre <br><strong id="delete-offer-title" style="color:var(--text-primary);"></strong> ?<br>Cette action est irréversible.
+      </p>
+      <div class="flex gap-3 justify-center">
+        <button type="button" class="btn btn-secondary modal-close" style="flex:1;">Annuler</button>
+        <button type="button" onclick="executeDelete()" class="btn btn-primary" style="flex:1; background: #dc2626; border-color: #dc2626;">
+          Oui, Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

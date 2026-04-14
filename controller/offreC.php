@@ -2,7 +2,7 @@
 include '../../config.php';
 class offreC{
     public function ajouterOffre($offre){
-        $sql="INSERT INTO offreemploi (id_entreprise, titre, description, domaine, competences_requises, experience_requise, salaire, question, date_publication, date_expir) VALUES (1, :titre, :description, :domaine, :competences_requises, :experience_requise, :salaire, :question, :date_publication, :date_expir)";
+        $sql="INSERT INTO offreemploi (id_entreprise, titre, description, domaine, competences_requises, experience_requise, salaire, question, date_publication, date_expir, statut) VALUES (1, :titre, :description, :domaine, :competences_requises, :experience_requise, :salaire, :question, :date_publication, :date_expir, 'Actif')";
         $db = config::getConnexion();
         try{
             $query = $db->prepare($sql);
@@ -21,10 +21,19 @@ class offreC{
             echo 'Erreur: '.$e->getMessage();
         }
     }
-    public function afficherOffres(){
-        $sql="SELECT * FROM offreemploi";
+    public function afficherOffres($onlyActive = false){
         $db = config::getConnexion();
         try{
+            // Auto-update du statut basé sur la date d'expiration pour simuler un CRON
+            $db->exec("UPDATE offreemploi SET statut = 'Expiré' WHERE date_expir < CURDATE()");
+            $db->exec("UPDATE offreemploi SET statut = 'Actif' WHERE date_expir >= CURDATE()");
+
+            $sql = "SELECT * FROM offreemploi";
+            if ($onlyActive) {
+                $sql .= " WHERE statut = 'Actif'";
+            }
+            $sql .= " ORDER BY date_publication DESC, id_offre DESC";
+            
             $liste = $db->query($sql);
             return $liste;
         }catch (Exception $e){

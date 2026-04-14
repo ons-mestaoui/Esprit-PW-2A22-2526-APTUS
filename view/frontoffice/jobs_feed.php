@@ -4,7 +4,7 @@ $pageCSS = "feeds.css";
 
 require_once '../../controller/offreC.php';
 $offreC = new offreC();
-$listeOffres = $offreC->afficherOffres();
+$listeOffres = $offreC->afficherOffres(true);
 $count = $listeOffres->rowCount();
 ?><?php
 if (!isset($content)) {
