@@ -157,7 +157,7 @@ if (!isset($content)) {
         </div>
 
         <div class="form-group">
-            <label class="form-label">Modalité</label>
+            <label class="form-label">Format</label>
             <select class="select" name="is_online" id="lieu-select-edit">
                 <option value="0" <?php if ($formation['is_online'] == 0)
                     echo 'selected'; ?>>📍 Présentiel</option>

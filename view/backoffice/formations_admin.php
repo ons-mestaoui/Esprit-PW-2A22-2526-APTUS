@@ -233,7 +233,7 @@ if (!isset($content)) {
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Tuteur (Optionnel)</label>
+                    <label class="form-label">Tuteur</label>
                     <select class="select" name="id_tuteur">
                         <option value="">Sélectionnez un tuteur...</option>
                         <?php foreach ($tuteurs as $t): ?>
@@ -248,7 +248,7 @@ if (!isset($content)) {
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Modalité</label>
+                    <label class="form-label">Format</label>
                     <select class="select" name="is_online" id="lieu-select">
                         <option value="0">📍 Présentiel</option>
                         <option value="1">🌐 En ligne</option>

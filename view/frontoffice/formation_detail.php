@@ -112,7 +112,7 @@ if (!isset($content)) {
                 <div>
 
 
-                    <label style="opacity: 0.6; font-size: 0.75rem; text-transform: uppercase;">Modalité</label>
+                    <label style="opacity: 0.6; font-size: 0.75rem; text-transform: uppercase;">Format</label>
                     <div style="font-weight: 600;">
                         <?php echo ($formation['is_online']) ? '🌐 En ligne' : '📍 Présentiel'; ?>
                     </div>
