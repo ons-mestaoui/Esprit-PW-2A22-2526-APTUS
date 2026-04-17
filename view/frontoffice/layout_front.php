@@ -93,6 +93,10 @@
             <i data-lucide="user" style="width:16px;height:16px;"></i>
             Mon Profil
           </a>
+          <a href="skill_tree.php" class="dropdown-item" id="dropdown-skilltree">
+            <i data-lucide="git-branch" style="width:16px;height:16px;"></i>
+            Arbre de Compétences
+          </a>
           <?php endif; ?>
           <a href="settings.php<?php echo ($currentRole === 'Entreprise') ? '?role=entreprise' : ''; ?>" class="dropdown-item" id="dropdown-settings">
             <i data-lucide="settings" style="width:16px;height:16px;"></i>
@@ -123,6 +127,7 @@
       <a href="veille_feed.php" class="nav-anchor"><i data-lucide="line-chart"></i> Veille Marché</a>
       <a href="cv_my.php" class="nav-anchor"><i data-lucide="file-text"></i> Mes CVs</a>
       <a href="profil_candidat.php" class="nav-anchor"><i data-lucide="user"></i> Mon Profil</a>
+      <a href="skill_tree.php" class="nav-anchor"><i data-lucide="git-branch"></i> Skill Tree</a>
       <a href="settings.php" class="nav-anchor"><i data-lucide="settings"></i> Paramètres</a>
     <?php endif; ?>
   </div>

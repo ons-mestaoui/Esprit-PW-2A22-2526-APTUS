@@ -42,7 +42,7 @@ class FormationController
             'certificats' => 0,
             'taux_completion' => 0
         ];
-        
+
         try {
             // Formations
             $resF = $db->query("SELECT COUNT(*) as c FROM Formation");
@@ -65,7 +65,7 @@ class FormationController
             try {
                 $resI = $db->query("SELECT COUNT(*) as c FROM Inscription");
                 $stats['total_inscrits'] = $resI->fetch()['c'];
-                
+
                 $resC = $db->query("SELECT COUNT(*) as c FROM Inscription WHERE statut = 'Terminée' OR progression >= 100");
                 $stats['certificats'] = $resC->fetch()['c'];
 
@@ -76,7 +76,7 @@ class FormationController
                 // Ignore if tables don't exist yet
             }
         }
-        
+
         return $stats;
     }
 
@@ -84,11 +84,12 @@ class FormationController
     {
         $db = config::getConnexion();
         try {
-            $query = $db->query("SELECT * FROM utilisateur WHERE role = 'Tuteur'");
+            // Utiliser LIKE '%tuteur%' pour correspondre à "Tuteur", "tuteur", "tuteurs", "Tuteurs"
+            $query = $db->query("SELECT * FROM utilisateur WHERE LOWER(role) LIKE '%tuteur%'");
             return $query->fetchAll();
         } catch (Exception $e) {
             try {
-                $query = $db->query("SELECT * FROM User WHERE role = 'Tuteur'");
+                $query = $db->query("SELECT * FROM User WHERE LOWER(role) LIKE '%tuteur%'");
                 return $query->fetchAll();
             } catch (Exception $e2) {
                 return [];
@@ -96,10 +97,79 @@ class FormationController
         }
     }
 
+    // Récupère les formations au format JSON pour FullCalendar
+    public function getFormationsForCalendar()
+    {
+        $db = config::getConnexion();
+        $events = [];
+        
+        try {
+            $liste = $db->query("
+                SELECT f.id_formation, f.titre, f.date_formation, f.is_online,
+                       f.domaine, f.niveau, f.id_tuteur,
+                       COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                FROM Formation f 
+                LEFT JOIN utilisateur u ON f.id_tuteur = u.id
+            ");
+            $formations = $liste->fetchAll();
+        } catch (Exception $e) {
+            try {
+                $liste = $db->query("
+                    SELECT f.id_formation, f.titre, f.date_formation, f.is_online,
+                           f.domaine, f.niveau, f.id_tuteur,
+                           COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                    FROM Formation f 
+                    LEFT JOIN User u ON f.id_tuteur = u.id
+                ");
+                $formations = $liste->fetchAll();
+            } catch (Exception $e2) {
+                return [];
+            }
+        }
+
+        // Same palette as the admin sidebar so colors match
+        $palette = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ec4899','#8b5cf6','#14b8a6','#ef4444'];
+        // Build a deterministic tuteur→color map from the fetched data
+        $tuteurColorMap = [];
+        $paletteIdx = 0;
+        foreach ($formations as $f) {
+            $tid = $f['id_tuteur'];
+            if ($tid && !isset($tuteurColorMap[$tid])) {
+                $tuteurColorMap[$tid] = $palette[$paletteIdx % count($palette)];
+                $paletteIdx++;
+            }
+        }
+
+        foreach ($formations as $f) {
+            $tid       = $f['id_tuteur'];
+            $color     = isset($tuteurColorMap[$tid]) ? $tuteurColorMap[$tid] : '#6366f1';
+            $dateBase  = substr($f['date_formation'], 0, 10); // YYYY-MM-DD
+
+            $events[] = [
+                'id'              => 'f_' . $f['id_formation'],
+                'title'           => $f['tuteur_nom'] . ' — ' . $f['titre'],
+                'start'           => $dateBase . 'T09:00:00',
+                'end'             => $dateBase . 'T10:00:00',
+                'backgroundColor' => $color,
+                'borderColor'     => $color,
+                'extendedProps'   => [
+                    'id_tuteur'   => $tid,
+                    'tuteur_nom'  => $f['tuteur_nom'],
+                    'titre'       => $f['titre'],
+                    'type'        => 'formation',
+                    'lieu'        => $f['is_online'] ? 'En ligne' : 'Présentiel',
+                    'domaine'     => $f['domaine'],
+                    'niveau'      => $f['niveau'],
+                ]
+            ];
+        }
+
+        return $events;
+    }
+
     // ============================================
     // CONTRÔLES DE SAISIE (validation côté serveur)
     // ============================================
-    // On fait tout ici en PHP, pas en HTML (pas de 'required' dans les inputs)
     // Si un champ est invalide -> on lance une Exception que la vue va attraper
     private function validateFormation($formation)
     {
@@ -181,9 +251,9 @@ class FormationController
         try {
             $query = $db->prepare("
                 INSERT INTO Formation 
-                (titre, description, domaine, niveau, duree, date_formation, image_base64, id_tuteur, is_online, lien_api_room) 
+                (titre, description, domaine, niveau, duree, date_formation, image_base64, id_tuteur, is_online, lien_api_room, prerequis_id) 
                 VALUES 
-                (:titre, :description, :domaine, :niveau, :duree, :date_formation, :image_base64, :id_tuteur, :is_online, :lien_api_room)
+                (:titre, :description, :domaine, :niveau, :duree, :date_formation, :image_base64, :id_tuteur, :is_online, :lien_api_room, :prerequis_id)
             ");
             $query->execute([
                 'titre' => $formation->getTitre(),
@@ -195,7 +265,8 @@ class FormationController
                 'image_base64' => $formation->getImageBase64(),
                 'id_tuteur' => $formation->getIdTuteur(),
                 'is_online' => $formation->getIsOnline(),
-                'lien_api_room' => $lien
+                'lien_api_room' => $lien,
+                'prerequis_id' => $formation->getPrerequisId()
             ]);
             return $db->lastInsertId();
         } catch (Exception $e) {
@@ -251,7 +322,7 @@ class FormationController
                 UPDATE Formation SET 
                 titre=:titre, description=:description, domaine=:domaine, niveau=:niveau, 
                 duree=:duree, date_formation=:date_formation, image_base64=:image_base64, 
-                id_tuteur=:id_tuteur, is_online=:is_online, lien_api_room=:lien_api_room 
+                id_tuteur=:id_tuteur, is_online=:is_online, lien_api_room=:lien_api_room, prerequis_id=:prerequis_id 
                 WHERE id_formation=:id
             ");
             $query->execute([
@@ -265,7 +336,8 @@ class FormationController
                 'image_base64' => $formation->getImageBase64(),
                 'id_tuteur' => $formation->getIdTuteur(),
                 'is_online' => $formation->getIsOnline(),
-                'lien_api_room' => $lien
+                'lien_api_room' => $lien,
+                'prerequis_id' => $formation->getPrerequisId()
             ]);
         } catch (Exception $e) {
             throw new Exception('Erreur SQL: ' . $e->getMessage());
@@ -314,7 +386,8 @@ class FormationController
     }
 
     // 1. Pour la liste à droite du calendrier
-    public function getFormationsByTuteur($id_tuteur) {
+    public function getFormationsByTuteur($id_tuteur)
+    {
         $db = config::getConnexion();
         try {
             $query = $db->prepare("
@@ -332,16 +405,17 @@ class FormationController
     }
 
     // 2. Pour le flux JSON du calendrier (FullCalendar)
-    public function getCalendarEventsJSON($id_tuteur) {
+    public function getCalendarEventsJSON($id_tuteur)
+    {
         $formations = $this->getFormationsByTuteur($id_tuteur);
         $events = [];
-        foreach($formations as $f) {
+        foreach ($formations as $f) {
             $events[] = [
                 'title' => $f['titre'],
                 'start' => $f['date_formation'],
                 'backgroundColor' => ($f['is_online']) ? '#3498db' : '#2ecc71',
                 'extendedProps' => [
-                    'is_online' => (bool)$f['is_online'],
+                    'is_online' => (bool) $f['is_online'],
                     'nb_inscrits' => $f['nb_inscrits'],
                     'description' => $f['description'],
                     'lien_room' => $f['lien_api_room']
@@ -350,6 +424,193 @@ class FormationController
         }
         header('Content-Type: application/json');
         echo json_encode($events);
+    }
+
+    // ============================================================
+    // CONCEPT 2 : Cartographe de Skill Tree
+    // ============================================================
+
+    /**
+     * Récupère une formation avec ses infos + sa progression pour un étudiant.
+     * Inclut le champ 'prerequis_id' ajouté par la migration SQL.
+     *
+     * @param int      $id_formation  ID de la formation cible.
+     * @param int|null $id_user       ID étudiant (pour calculer si débloquée).
+     * @return array|null
+     */
+    public function getFormationWithPrerequisite(int $id_formation, ?int $id_user = null): ?array
+    {
+        $db = config::getConnexion();
+        try {
+            // Récupération de la formation + progression de l'étudiant si connecté
+            $sql = "
+                SELECT f.*,
+                       COALESCE(u.nom, 'Aptus') AS tuteur_nom,
+                       COALESCE(i.progression, 0) AS ma_progression,
+                       COALESCE(i.statut, '') AS mon_statut
+                FROM Formation f
+                LEFT JOIN utilisateur u ON f.id_tuteur = u.id
+                LEFT JOIN inscription i ON i.id_formation = f.id_formation
+                    AND i.id_user = :id_user
+                WHERE f.id_formation = :id
+            ";
+            $stmt = $db->prepare($sql);
+            $stmt->execute(['id' => $id_formation, 'id_user' => $id_user ?? 0]);
+            return $stmt->fetch() ?: null;
+        } catch (\Exception $e) {
+            // Fallback table User / Inscription (casse alternative)
+            try {
+                $sqlFb = "
+                    SELECT f.*,
+                           COALESCE(u.nom, 'Aptus') AS tuteur_nom,
+                           COALESCE(i.progression, 0) AS ma_progression,
+                           COALESCE(i.statut, '') AS mon_statut
+                    FROM Formation f
+                    LEFT JOIN User u ON f.id_tuteur = u.id
+                    LEFT JOIN Inscription i ON i.id_formation = f.id_formation
+                        AND i.id_user = :id_user
+                    WHERE f.id_formation = :id
+                ";
+                $stmt = $db->prepare($sqlFb);
+                $stmt->execute(['id' => $id_formation, 'id_user' => $id_user ?? 0]);
+                return $stmt->fetch() ?: null;
+            } catch (\Exception $e2) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Construit récursivement la chaîne de prérequis d'une formation.
+     * Retourne un tableau ordonné du plus ancien prérequis jusqu'à la formation finale.
+     *
+     * Exemple : Dev Web → HTML/CSS → Algorithmique
+     * Résultat : [Algorithmique, HTML/CSS, Dev Web]
+     *
+     * @param int      $id_formation_finale  ID de la formation cible.
+     * @param int|null $id_user              ID étudiant pour savoir ce qui est débloqué.
+     * @param int      $depth                Profondeur max (sécurité anti-boucles).
+     * @return array  Tableau de formations ordonnées (du prérequis au final).
+     */
+    public function getSkillTree(int $id_formation_finale, ?int $id_user = null, int $depth = 0): array
+    {
+        // Sécurité : on limite à 10 niveaux de récursivité pour éviter les boucles infinies
+        if ($depth >= 10) {
+            return [];
+        }
+
+        // Récupération de la formation finale avec ses infos
+        $formation = $this->getFormationWithPrerequisite($id_formation_finale, $id_user);
+
+        if (!$formation) {
+            return [];
+        }
+
+        $chain = [];
+
+        // Si cette formation a un prérequis, on remonte la chaîne récursivement
+        if (!empty($formation['prerequis_id'])) {
+            $prerequisChain = $this->getSkillTree(
+                (int)$formation['prerequis_id'],
+                $id_user,
+                $depth + 1
+            );
+            // On ajoute les prérequis en PREMIER (ordre logique du parcours)
+            $chain = array_merge($chain, $prerequisChain);
+        }
+
+        // Calcul de l'état de débloquage pour l'UI
+        // Une formation est débloquée si son prérequis direct est complété (100%)
+        if (!empty($formation['prerequis_id'])) {
+            $prereq = $this->getFormationWithPrerequisite((int)$formation['prerequis_id'], $id_user);
+            $formation['is_unlocked'] = ($prereq && $prereq['ma_progression'] >= 100);
+        } else {
+            // Pas de prérequis = toujours accessible
+            $formation['is_unlocked'] = true;
+        }
+
+        // Ajout de la formation actuelle à la fin de la chaîne
+        $chain[] = $formation;
+
+        return $chain;
+    }
+
+    /**
+     * Récupère toutes les formations avec leur prérequis pour construire
+     * le catalogue complet du Skill Tree (vue catalogue).
+     *
+     * @param int|null $id_user  Pour calculer la progression de chaque étape.
+     * @return array
+     */
+    public function getAllFormationsWithSkillTree(?int $id_user = null): array
+    {
+        $db = config::getConnexion();
+        try {
+            // On récupère d'abord toutes les formations "racines" (sans prérequis)
+            // Ce sont les points de départ des parcours de compétences
+            $sql = "
+                SELECT id_formation
+                FROM Formation
+                WHERE prerequis_id IS NULL OR prerequis_id = 0
+                ORDER BY domaine, titre
+            ";
+            $stmt = $db->query($sql);
+            $roots = $stmt->fetchAll();
+
+            $trees = [];
+            foreach ($roots as $root) {
+                // Pour chaque racine, on cherche les formations qui en dépendent (direct)
+                $children = $this->getChildrenOf((int)$root['id_formation'], $id_user);
+                if (!empty($children)) {
+                    // On construit un arbre simple : racine + ses enfants
+                    $rootFormation = $this->getFormationWithPrerequisite((int)$root['id_formation'], $id_user);
+                    if ($rootFormation) {
+                        $rootFormation['is_unlocked'] = true;
+                        $trees[] = [
+                            'root'     => $rootFormation,
+                            'children' => $children
+                        ];
+                    }
+                }
+            }
+            return $trees;
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Récupère les formations directement dépendantes d'une formation donnée.
+     *
+     * @param int      $parent_id  ID de la formation parente.
+     * @param int|null $id_user    Pour calculer la progression.
+     * @return array
+     */
+    private function getChildrenOf(int $parent_id, ?int $id_user = null): array
+    {
+        $db = config::getConnexion();
+        try {
+            $stmt = $db->prepare("
+                SELECT id_formation FROM Formation WHERE prerequis_id = :pid
+            ");
+            $stmt->execute(['pid' => $parent_id]);
+            $childIds = $stmt->fetchAll();
+
+            // Récupérer les formations parentes pour vérifier le débloquage
+            $parentFormation = $this->getFormationWithPrerequisite($parent_id, $id_user);
+
+            $children = [];
+            foreach ($childIds as $row) {
+                $child = $this->getFormationWithPrerequisite((int)$row['id_formation'], $id_user);
+                if ($child) {
+                    $child['is_unlocked'] = ($parentFormation && $parentFormation['ma_progression'] >= 100);
+                    $children[] = $child;
+                }
+            }
+            return $children;
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     // Annulation d'une formation par l'admin
@@ -404,4 +665,4 @@ class FormationController
         header('Location: formations_admin.php');
         exit();
     }
-}
+}

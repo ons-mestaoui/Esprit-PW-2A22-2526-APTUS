@@ -16,36 +16,55 @@ $cours_fini = [
 ];
 
 try {
-    // We try to fetch real data
     $stmt = $db->prepare("
-        SELECT f.titre, COALESCE(u.nom, 'Aptus AI') as tuteur_nom, 
-               (SELECT nom FROM utilisateur WHERE id = ?) as etudiant_nom
+        SELECT f.titre, COALESCE(u.nom, 'Aptus AI') as tuteur_nom
         FROM Formation f
         LEFT JOIN utilisateur u ON f.id_tuteur = u.id
         WHERE f.id_formation = ?
     ");
-    $stmt->execute([$id_user, $id_formation]);
+    $stmt->execute([$id_formation]);
     $data = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($data) {
-        if (!empty($data['etudiant_nom'])) $user['nom'] = $data['etudiant_nom'];
         $cours_fini['titre'] = $data['titre'];
         $cours_fini['tuteur_nom'] = $data['tuteur_nom'];
+    }
+    
+    $q = $db->prepare("SELECT * FROM utilisateur WHERE id = ?");
+    $q->execute([$id_user]);
+    $uData = $q->fetch(PDO::FETCH_ASSOC);
+    if ($uData) {
+        if (isset($uData['prenom'])) {
+            $user['nom'] = trim($uData['prenom'] . ' ' . ($uData['nom'] ?? ''));
+        } elseif (isset($uData['nom'])) {
+            $user['nom'] = $uData['nom'];
+        } elseif (isset($uData['username'])) {
+            $user['nom'] = $uData['username'];
+        }
     }
 } catch (Exception $e) {
     try {
         $stmt = $db->prepare("
-            SELECT f.titre, COALESCE(u.nom, 'Aptus AI') as tuteur_nom, 
-                   (SELECT nom FROM User WHERE id = ?) as etudiant_nom
+            SELECT f.titre, COALESCE(u.nom, 'Aptus AI') as tuteur_nom
             FROM Formation f
             LEFT JOIN User u ON f.id_tuteur = u.id
             WHERE f.id_formation = ?
         ");
-        $stmt->execute([$id_user, $id_formation]);
+        $stmt->execute([$id_formation]);
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($data) {
-            if (!empty($data['etudiant_nom'])) $user['nom'] = $data['etudiant_nom'];
             $cours_fini['titre'] = $data['titre'];
             $cours_fini['tuteur_nom'] = $data['tuteur_nom'];
+        }
+        
+        $q = $db->prepare("SELECT * FROM User WHERE id = ?");
+        $q->execute([$id_user]);
+        $uData = $q->fetch(PDO::FETCH_ASSOC);
+        if ($uData) {
+            if (isset($uData['prenom'])) {
+                $user['nom'] = trim($uData['prenom'] . ' ' . ($uData['nom'] ?? ''));
+            } elseif (isset($uData['nom'])) {
+                $user['nom'] = $uData['nom'];
+            }
         }
     } catch(Exception $e2) {}
 }
@@ -55,6 +74,8 @@ try {
 <head>
     <meta charset="UTF-8">
     <title>Certificat de Réussite - Aptus AI</title>
+    <!-- Inclure HTML2PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&family=Playfair+Display:ital,wght@1,700&display=swap');
         
@@ -140,9 +161,11 @@ try {
     </style>
 </head>
 <body>
-    <button class="no-print" onclick="window.print()">📥 Enregistrer le Certificat (PDF)</button>
+    <button class="no-print" id="downloadBtn" style="right: 170px; background: #6B34A3;">📥 Télécharger en PDF</button>
+    <button class="no-print" onclick="window.print()" style="right: 20px;">🖨️ Imprimer</button>
 
-    <div class="certificate-wrapper">
+    <!-- id=certificate-content added for html2pdf target -->
+    <div class="certificate-wrapper" id="certificate-content">
         <div class="certificate-inner">
             <div class="header">
                 <div class="logo">APTUS<span>AI</span></div>
@@ -183,5 +206,19 @@ try {
             </div>
         </div>
     </div>
+
+    <script>
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            var element = document.getElementById('certificate-content');
+            var opt = {
+                margin:       0,
+                filename:     'Certificat_Aptus_AI.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+            html2pdf().set(opt).from(element).save();
+        });
+    </script>
 </body>
 </html>

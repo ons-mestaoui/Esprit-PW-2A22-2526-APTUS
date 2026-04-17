@@ -1,4 +1,4 @@
-<?php 
+<?php
 $pageTitle = "Dashboard Tuteur — Aptus";
 
 require_once __DIR__ . '/../../config.php';
@@ -16,7 +16,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'getCalendarEvents') {
 }
 
 // Simuler la session (À remplacer par $_SESSION['user_id'] plus tard)
-$id_tuteur = 1; 
+// Vous pouvez tester d'autres tuteurs en ajoutant ?tuteur_id=X dans l'URL
+$id_tuteur = isset($_GET['tuteur_id']) ? intval($_GET['tuteur_id']) : 1;
 
 $tuteur = $userC->getUserById($id_tuteur);
 $formations = $formationC->getFormationsByTuteur($id_tuteur);
@@ -49,15 +50,16 @@ if (!isset($content)) {
     }
 
     .calendar-container {
-        background: white;
+        background: var(--bg-card);
         padding: 2rem;
         border-radius: 16px;
         border: 1px solid var(--border-color);
         box-shadow: var(--shadow-sm);
     }
 
-    .fc-theme-standard td, .fc-theme-standard th {
-        border: 1px solid #f1f5f9;
+    .fc-theme-standard td,
+    .fc-theme-standard th {
+        border-color: var(--border-color);
     }
 
     .fc-header-toolbar {
@@ -86,7 +88,7 @@ if (!isset($content)) {
     }
 
     .side-card {
-        background: white;
+        background: var(--bg-card);
         padding: 1.25rem;
         border-radius: 12px;
         border: 1px solid var(--border-color);
@@ -155,20 +157,36 @@ if (!isset($content)) {
         border-radius: 12px;
         padding: 0.5rem;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255,255,255,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    .tooltip-content { padding: 8px; }
-    .tooltip-header { 
-        display: flex; 
-        align-items: center; 
-        gap: 8px; 
+
+    .tooltip-content {
+        padding: 8px;
+    }
+
+    .tooltip-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         margin-bottom: 8px;
         font-size: 0.7rem;
         font-weight: 700;
         text-transform: uppercase;
     }
-    .tooltip-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
-    .tooltip-stats { font-size: 0.8rem; opacity: 0.8; display: flex; align-items: center; gap: 4px; }
+
+    .tooltip-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .tooltip-stats {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
 
     /* Color Bar for Sidebar Cards */
     .side-card {
@@ -176,6 +194,7 @@ if (!isset($content)) {
         overflow: hidden;
         padding-left: 1.5rem;
     }
+
     .side-card::before {
         content: '';
         position: absolute;
@@ -184,8 +203,14 @@ if (!isset($content)) {
         bottom: 0;
         width: 5px;
     }
-    .side-card.online::before { background: #3498db; }
-    .side-card.offline::before { background: #2ecc71; }
+
+    .side-card.online::before {
+        background: #3498db;
+    }
+
+    .side-card.offline::before {
+        background: #2ecc71;
+    }
 
     .status-badge {
         padding: 4px 10px;
@@ -193,13 +218,22 @@ if (!isset($content)) {
         font-size: 0.75rem;
         font-weight: 600;
     }
-    .status-badge.urgent { background: #fee2e2; color: #ef4444; }
-    .status-badge.upcoming { background: #f3e8ff; color: #a855f7; }
+
+    .status-badge.urgent {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+
+    .status-badge.upcoming {
+        background: #f3e8ff;
+        color: #a855f7;
+    }
 </style>
 
 <div class="tuteur-dashboard-header">
     <div class="welcome-section" style="margin-bottom: 2.5rem;">
-        <h1 class="gradient-text" style="font-size: 2.5rem; margin-bottom: 0.5rem;">Bienvenue, <?php echo htmlspecialchars($tuteur['nom'] ?? 'Mme Dupont'); ?> 👋</h1>
+        <h1 class="gradient-text" style="font-size: 2.5rem; margin-bottom: 0.5rem;">Bienvenue,
+            <?php echo htmlspecialchars($tuteur['nom'] ?? 'Mme Dupont'); ?> 👋</h1>
         <p class="text-secondary">Voici l'aperçu de vos formations et de votre calendrier d'enseignement.</p>
     </div>
 
@@ -210,9 +244,10 @@ if (!isset($content)) {
         </div>
         <div class="mini-stat">
             <div class="mini-stat__value">
-                <?php 
+                <?php
                 $totalInscrits = 0;
-                foreach($formations as $f) $totalInscrits += $f['nb_inscrits'];
+                foreach ($formations as $f)
+                    $totalInscrits += $f['nb_inscrits'];
                 echo $totalInscrits;
                 ?>
             </div>
@@ -220,9 +255,11 @@ if (!isset($content)) {
         </div>
         <div class="mini-stat">
             <div class="mini-stat__value">
-                <?php 
+                <?php
                 $onlineCount = 0;
-                foreach($formations as $f) if($f['is_online']) $onlineCount++;
+                foreach ($formations as $f)
+                    if ($f['is_online'])
+                        $onlineCount++;
                 echo $onlineCount;
                 ?>
             </div>
@@ -247,21 +284,30 @@ if (!isset($content)) {
             <i data-lucide="list-checks" style="color:var(--accent-primary);"></i>
             Mes Assignations
         </h3>
-        
+
         <?php if (empty($formations)): ?>
             <div class="side-card" style="text-align: center; opacity: 0.6;">
                 <p>Aucune formation assignée.</p>
             </div>
         <?php else: ?>
-            <?php foreach($formations as $f): 
+            <?php foreach ($formations as $f):
                 $dateDiff = (strtotime($f['date_formation']) - strtotime(date('Y-m-d'))) / 86400;
                 $statusText = "";
                 $statusClass = "";
-                if ($dateDiff == 0) { $statusText = "Aujourd'hui"; $statusClass = "urgent"; }
-                elseif ($dateDiff == 1) { $statusText = "Demain !"; $statusClass = "urgent"; }
-                elseif ($dateDiff > 0) { $statusText = "Dans ".round($dateDiff)."j"; $statusClass = "upcoming"; }
-                else { $statusText = "Passé"; $statusClass = ""; }
-            ?>
+                if ($dateDiff == 0) {
+                    $statusText = "Aujourd'hui";
+                    $statusClass = "urgent";
+                } elseif ($dateDiff == 1) {
+                    $statusText = "Demain !";
+                    $statusClass = "urgent";
+                } elseif ($dateDiff > 0) {
+                    $statusText = "Dans " . round($dateDiff) . "j";
+                    $statusClass = "upcoming";
+                } else {
+                    $statusText = "Passé";
+                    $statusClass = "";
+                }
+                ?>
                 <div class="side-card <?php echo $f['is_online'] ? 'online' : 'offline'; ?>">
                     <div class="side-card__header">
                         <div>
@@ -271,7 +317,7 @@ if (!isset($content)) {
                                 <?php echo date('H:i', strtotime($f['date_formation'])); ?> (7 jours)
                             </div>
                         </div>
-                        <?php if($statusText): ?>
+                        <?php if ($statusText): ?>
                             <span class="status-badge <?php echo $statusClass; ?>"><?php echo $statusText; ?></span>
                         <?php endif; ?>
                     </div>
@@ -281,26 +327,31 @@ if (!isset($content)) {
                             <?php echo date('d M Y', strtotime($f['date_formation'])); ?>
                         </div>
                     </div>
-                    <div class="side-card__footer" style="display:flex; justify-content: space-between; align-items: center; margin-top: 1rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1rem;">
+                    <div class="side-card__footer"
+                        style="display:flex; justify-content: space-between; align-items: center; margin-top: 1rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1rem;">
                         <span style="font-size: 0.8rem; font-weight: 500; opacity: 0.7;">
                             <i data-lucide="users" style="width:14px;height:14px; vertical-align:middle; margin-right:4px;"></i>
                             <?php echo $f['nb_inscrits']; ?> inscrit(s)
                         </span>
-                        
+
                         <div style="display: flex; gap: 8px;">
-                            <?php if($f['is_online']): ?>
-                                <a href="<?php echo htmlspecialchars($f['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn btn-sm" style="background: #3498db; color: white; display: flex; align-items: center; gap: 4px; padding: 4px 12px; font-size: 0.75rem; border-radius: 6px; text-decoration: none;">
+                            <?php if ($f['is_online']): ?>
+                                <a href="<?php echo htmlspecialchars($f['lien_api_room'] ?? '#'); ?>" target="_blank"
+                                    class="btn btn-sm"
+                                    style="background: #3498db; color: white; display: flex; align-items: center; gap: 4px; padding: 4px 12px; font-size: 0.75rem; border-radius: 6px; text-decoration: none;">
                                     <i data-lucide="video" style="width:14px;height:14px;"></i>
                                     Room
                                 </a>
                             <?php endif; ?>
-                            <a href="formation_detail.php?id=<?php echo $f['id_formation']; ?>&role=tuteur" class="text-sm fw-medium" style="color:var(--text-primary); text-decoration:none; display: flex; align-items: center; gap: 2px;">
+                            <a href="formation_detail.php?id=<?php echo $f['id_formation']; ?>&role=tuteur"
+                                class="text-sm fw-medium"
+                                style="color:var(--text-primary); text-decoration:none; display: flex; align-items: center; gap: 2px;">
                                 Détails &rarr;
                             </a>
                         </div>
                     </div>
                 </div>
-<?php endforeach; ?>
+            <?php endforeach; ?>
         <?php endif; ?>
     </div>
 </div>
@@ -309,31 +360,31 @@ if (!isset($content)) {
 <script src="https://unpkg.com/@popperjs/core@2"></script>
 <script src="https://unpkg.com/tippy.js@6"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('calendar');
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'fr',
-        firstDay: 1, // Commencer par Lundi
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek'
-        },
-        buttonText: {
-            today: "Aujourd'hui",
-            month: 'Mois',
-            week: 'Semaine'
-        },
-        events: 'tuteur_dashboard.php?action=getCalendarEvents&id_tuteur=<?php echo $id_tuteur; ?>',
-        
-        eventDidMount: function(info) {
-            const props = info.event.extendedProps;
-            const typeLabel = props.is_online ? '🌐 EN LIGNE' : '📍 PRÉSENTIEL';
-            const badgeColor = props.is_online ? '#3498db' : '#2ecc71';
-            
-            tippy(info.el, {
-                content: `
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'fr',
+            firstDay: 1, // Commencer par Lundi
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            buttonText: {
+                today: "Aujourd'hui",
+                month: 'Mois',
+                week: 'Semaine'
+            },
+            events: 'tuteur_dashboard.php?action=getCalendarEvents&id_tuteur=<?php echo $id_tuteur; ?>',
+
+            eventDidMount: function (info) {
+                const props = info.event.extendedProps;
+                const typeLabel = props.is_online ? '🌐 EN LIGNE' : '📍 PRÉSENTIEL';
+                const badgeColor = props.is_online ? '#3498db' : '#2ecc71';
+
+                tippy(info.el, {
+                    content: `
                     <div class="tooltip-content">
                         <div class="tooltip-header" style="color:${badgeColor}">
                             ${typeLabel}
@@ -348,18 +399,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                 `,
-                allowHTML: true,
-                theme: 'aptus-dark',
-                placement: 'top',
-                animation: 'shift-away',
-                onShown() { lucide.createIcons(); }
-            });
-        },
-        
-        eventClick: function(info) {
-            // Optionnel : redirection vers détails
-        }
+                    allowHTML: true,
+                    theme: 'aptus-dark',
+                    placement: 'top',
+                    animation: 'shift-away',
+                    onShown() { lucide.createIcons(); }
+                });
+            },
+
+            eventClick: function (info) {
+                // Optionnel : redirection vers détails
+            }
+        });
+        calendar.render();
     });
-    calendar.render();
-});
 </script>

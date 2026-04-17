@@ -238,6 +238,20 @@
   --chart-5: #F87171;
   --chart-6: #C4B5FD;
   --chart-bar-bg: #2D3148;
+
+  /* ── FullCalendar overrides ── */
+  --fc-page-bg-color: var(--bg-body);
+  --fc-neutral-bg-color: var(--bg-card);
+  --fc-neutral-text-color: var(--text-primary);
+  --fc-border-color: var(--border-color);
+  --fc-button-text-color: var(--text-primary);
+  --fc-button-bg-color: var(--bg-card);
+  --fc-button-border-color: var(--border-color);
+  --fc-button-hover-bg-color: var(--bg-card-hover);
+  --fc-button-hover-border-color: var(--border-color-focus);
+  --fc-button-active-bg-color: var(--bg-tertiary);
+  --fc-button-active-border-color: var(--border-color-focus);
+  --fc-list-event-hover-bg-color: var(--bg-card-hover);
 }
 
 /* ── Theme Transition ─────────────────────────── */

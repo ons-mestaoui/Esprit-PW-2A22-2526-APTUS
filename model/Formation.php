@@ -15,6 +15,7 @@ class Formation
     private ?int $id_tuteur;
     private int $is_online;
     private string $lien_api_room;
+    private ?int $prerequis_id;
 
     public function __construct(
         string $titre,
@@ -26,7 +27,8 @@ class Formation
         string $image_base64,
         ?int $id_tuteur,
         int $is_online,
-        string $lien_api_room
+        string $lien_api_room,
+        ?int $prerequis_id = null
     ) {
         $this->titre = $titre;
         $this->description = $description;
@@ -38,6 +40,7 @@ class Formation
         $this->id_tuteur = $id_tuteur;
         $this->is_online = $is_online;
         $this->lien_api_room = $lien_api_room;
+        $this->prerequis_id = $prerequis_id;
     }
 
     // Getters
@@ -84,6 +87,10 @@ class Formation
     public function getLienApiRoom()
     {
         return $this->lien_api_room;
+    }
+    public function getPrerequisId()
+    {
+        return $this->prerequis_id;
     }
 
     // Setters

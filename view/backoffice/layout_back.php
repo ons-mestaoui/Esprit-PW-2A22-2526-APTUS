@@ -23,6 +23,10 @@
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
+  <!-- FullCalendar -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
 </head>
@@ -65,6 +69,7 @@
           <i data-lucide="graduation-cap"></i>
           <span>Formations</span>
         </a>
+    
         <a href="offres_admin.php" class="sidebar-link<?php echo ($currentPage==='offres_admin.php')?' active':''; ?>" id="sidebar-offres">
           <i data-lucide="briefcase"></i>
           <span>Offres Disponibles</span>

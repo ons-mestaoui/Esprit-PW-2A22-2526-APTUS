@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../model/Formation.php';
 
 $formationC = new FormationController();
 $tuteurs = $formationC->getTuteurs();
+$listeFormations = $formationC->listerFormations()->fetchAll();
 
 if (isset($_GET['id'])) {
     $formation = $formationC->getFormationById($_GET['id']);
@@ -48,7 +49,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $image_base64,
             !empty($_POST['id_tuteur']) ? (int) $_POST['id_tuteur'] : null,
             $is_online,
-            $lien_room
+            $lien_room,
+            !empty($_POST['prerequis_id']) ? (int)$_POST['prerequis_id'] : null
         );
 
         $formationC->updateFormation($f, $_GET['id']);
@@ -87,12 +89,12 @@ if (!isset($content)) {
     <form action="" method="POST" enctype="multipart/form-data" class="auth-form" style="max-width: 600px;">
 
         <div class="form-group">
-            <label class="form-label">Titre de la formation</label>
+            <label class="form-label">Titre de la formation <span class="required-star">*</span></label>
             <input type="text" class="input" name="titre" value="<?php echo htmlspecialchars($formation['titre']); ?>">
         </div>
 
         <div class="form-group" style="padding-bottom: 25px;">
-            <label class="form-label">Description (Contenu Riche)</label>
+            <label class="form-label">Description (Contenu Riche) <span class="required-star">*</span></label>
             <textarea class="textarea" name="description" id="hidden-description-edit" style="display:none;"><?php echo htmlspecialchars($formation['description']); ?></textarea>
             <div id="quill-editor-edit" style="height: 150px; background: var(--bg-surface);">
                 <?php echo $formation['description']; ?>
@@ -101,12 +103,12 @@ if (!isset($content)) {
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
             <div class="form-group">
-                <label class="form-label">Domaine</label>
+                <label class="form-label">Domaine <span class="required-star">*</span></label>
                 <input type="text" class="input" name="domaine"
                     value="<?php echo htmlspecialchars($formation['domaine']); ?>">
             </div>
             <div class="form-group">
-                <label class="form-label">Niveau</label>
+                <label class="form-label">Niveau <span class="required-star">*</span></label>
                 <select class="select" name="niveau">
                     <option <?php if ($formation['niveau'] == 'Débutant')
                         echo 'selected'; ?>>Débutant</option>
@@ -122,7 +124,7 @@ if (!isset($content)) {
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
             <div class="form-group">
-                <label class="form-label">Date de début</label>
+                <label class="form-label">Date de début <span class="required-star">*</span></label>
                 <input type="date" class="input" name="date_formation"
                     value="<?php echo date('Y-m-d', strtotime($formation['date_formation'])); ?>">
             </div>
@@ -134,13 +136,27 @@ if (!isset($content)) {
         </div>
 
         <div class="form-group">
-            <label class="form-label">Tuteur</label>
+            <label class="form-label">Tuteur <span class="required-star">*</span></label>
             <select class="select" name="id_tuteur">
                 <option value="">Sélectionnez un tuteur...</option>
                 <?php foreach ($tuteurs as $t): ?>
                     <option value="<?php echo $t['id']; ?>" <?php if ($formation['id_tuteur'] == $t['id'])
                            echo 'selected'; ?>>
                         <?php echo htmlspecialchars($t['nom']); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Prérequis (Optionnel)</label>
+            <select class="select" name="prerequis_id">
+                <option value="">Aucun prérequis</option>
+                <?php foreach ($listeFormations as $f_pre): ?>
+                    <?php if ($f_pre['id_formation'] != $formation['id_formation']): ?>
+                        <option value="<?php echo $f_pre['id_formation']; ?>" <?php echo ($formation['prerequis_id'] ?? null) == $f_pre['id_formation'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($f_pre['titre']); ?>
+                        </option>
+                    <?php endif; ?>
                 <?php endforeach; ?>
             </select>
         </div>

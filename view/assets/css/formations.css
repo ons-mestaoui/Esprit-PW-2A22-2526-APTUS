@@ -488,3 +488,229 @@
     padding: 24px;
   }
 }
+
+/* ═══════════════════════════════════════════════
+   FORMATIONS ADMIN - VIEW TABS (Glassmorphism)
+   ═══════════════════════════════════════════════ */
+
+.view-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  width: fit-content;
+}
+
+.view-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.view-tab:hover {
+  color: var(--text-primary);
+}
+
+.view-tab.active {
+  background: var(--bg-primary);
+  color: var(--accent-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .view-tabs {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .view-tab {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] .view-tab:hover {
+  color: #fff;
+}
+
+[data-theme="dark"] .view-tab.active {
+  background: var(--accent-primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(162, 117, 211, 0.4);
+}
+
+/* ═══════════════════════════════════════════════
+   VIEW CONTAINERS
+   ═══════════════════════════════════════════════ */
+
+#view-list {
+  display: block;
+}
+
+#view-calendar {
+  display: none;
+}
+
+#view-calendar.active {
+  display: block;
+}
+
+/* ═══════════════════════════════════════════════
+   CALENDAR CONTAINER
+   ═══════════════════════════════════════════════ */
+
+.calendar-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.calendar-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.calendar-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  height: fit-content;
+}
+
+.calendar-legend__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.legend-item__color {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.legend-item__color--online {
+  background: #3b82f6;
+}
+
+.legend-item__color--presentiel {
+  background: #10b981;
+}
+
+/* ═══════════════════════════════════════════════
+   FULLCALENDAR CUSTOMIZATION
+   ═══════════════════════════════════════════════ */
+
+.fc {
+  font-family: inherit;
+}
+
+.fc .fc-button-primary {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.fc .fc-button-primary:hover {
+  background-color: var(--accent-primary-dark);
+  border-color: var(--accent-primary-dark);
+}
+
+.fc .fc-button-primary.fc-button-active {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.fc .fc-col-header-cell {
+  background-color: var(--bg-surface);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.fc .fc-daygrid-day {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+.fc .fc-daygrid-day:hover {
+  background-color: var(--bg-surface);
+}
+
+.fc .fc-timegrid-slot {
+  border-color: var(--border-color);
+}
+
+.fc .fc-event {
+  border: none;
+}
+
+.fc .fc-event-title {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.fc-event-online {
+  background-color: #3b82f6;
+}
+
+.fc-event-presentiel {
+  background-color: #10b981;
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .view-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .calendar-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-legend {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    height: auto;
+    gap: 12px;
+  }
+}
+
+/* Dark mode table header improvements */
+[data-theme="dark"] table thead th {
+  color: rgba(255, 255, 255, 0.85) !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Dark mode table body text improvements */
+[data-theme="dark"] table tbody td {
+  color: rgba(255, 255, 255, 0.8) !important;
+}

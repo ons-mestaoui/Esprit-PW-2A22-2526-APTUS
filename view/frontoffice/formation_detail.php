@@ -59,7 +59,7 @@ if (!isset($content)) {
         Retour au catalogue</a>
 
     <div class="card-flat"
-        style="padding: 0; overflow: hidden; display: grid; grid-template-columns: 1fr 1.2fr; border-radius:12px; background:white; border: 1px solid var(--border-color);">
+        style="padding: 0; overflow: hidden; display: grid; grid-template-columns: 1fr 1.2fr; border-radius:12px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary);">
         <?php if (!empty($formation['image_base64'])): ?>
             <div
                 style="background: url('<?php echo $formation['image_base64']; ?>') center/cover; height: 100%; min-height: 300px;">
@@ -129,7 +129,7 @@ if (!isset($content)) {
                     <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">👨‍🏫 Vue Tuteur</div>
                     <p style="font-size: 0.9rem; margin-bottom: 1.5rem;">Vous êtes le formateur assigné à ce module.</p>
                     <div style="display: flex; gap: 1rem;">
-                        <a href="tuteur_dashboard.php" class="btn" style="flex:1; background: white; border: 1px solid #3498db; color: #3498db; text-decoration: none; padding: 0.75rem; border-radius: 8px; font-weight: 600;">Mon Dashboard</a>
+                        <a href="tuteur_dashboard.php" class="btn" style="flex:1; background: var(--bg-card); border: 1px solid #3498db; color: #3498db; text-decoration: none; padding: 0.75rem; border-radius: 8px; font-weight: 600;">Mon Dashboard</a>
                         <?php if($formation['is_online']): ?>
                             <a href="<?php echo htmlspecialchars($formation['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn" style="flex:1; background: #3498db; color: white; text-decoration: none; padding: 0.75rem; border-radius: 8px; font-weight: 600;">Lancer la Room</a>
                         <?php endif; ?>

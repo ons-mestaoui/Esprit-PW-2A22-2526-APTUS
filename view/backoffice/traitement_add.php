@@ -22,6 +22,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     try {
+        $prereq_val = !empty($_POST['prerequis_id']) ? (int)$_POST['prerequis_id'] : null;
+
         $f = new Formation(
             $_POST['titre'],
             $_POST['description'],
@@ -32,7 +34,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $image_base64,
             !empty($_POST['id_tuteur']) ? (int)$_POST['id_tuteur'] : null,
             $is_online,
-            $lien_room
+            $lien_room,
+            $prereq_val
         );
         
         $formationC->addFormation($f);

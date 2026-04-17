@@ -29,15 +29,55 @@ if (!isset($content)) {
             $formations[] = $f;
         }
     }
+    $sort = $_GET['sort'] ?? 'date_desc';
+    usort($formations, function($a, $b) use ($sort) {
+        if ($sort === 'date_asc') {
+            return $a['id_formation'] <=> $b['id_formation'];
+        } elseif ($sort === 'titre_asc') {
+            return strcasecmp($a['titre'], $b['titre']);
+        } else {
+            // date_desc: Plus récent (nouvellement ajouté)
+            return $b['id_formation'] <=> $a['id_formation'];
+        }
+    });
+
     $domaines = array_keys($domainesMap);
     
+    // Pagination for infinite scroll
+    $totalFormations = count($formations);
+    $perPage = 6;
+    $page = (int)($_GET['page'] ?? 1);
+    $totalPages = ceil($totalFormations / $perPage);
+    $offset = ($page - 1) * $perPage;
+    
+    $formationsPage = array_slice($formations, $offset, $perPage);
+
+    // If AJAX request, return only the HTML for the new cards
+    if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
+        foreach($formationsPage as $f) {
+            // Include card HTML
+            include 'catalog_card_partial.php'; // We'll create this file to keep it clean, OR output inline
+        }
+        exit();
+    }
+
     $content = __FILE__;
     include 'layout_front.php';
     exit();
 }
 ?>
 
-<div class="catalogue-layout" style="display: flex; gap: 2rem; margin-top: 1rem;">
+<div style="margin-top: 1rem; margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(0, 163, 218, 0.1), rgba(154, 50, 147, 0.1)); border: 1px solid var(--primary-cyan); border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2 style="font-size: 1.3rem; margin-bottom: 0.3rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="git-branch" style="color: var(--primary-cyan);"></i> Découvrez les Parcours de Compétences
+        </h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Ne choisissez plus vos cours au hasard. Suivez un cheminement logique pour atteindre vos objectifs d'apprentissage.</p>
+    </div>
+    <a href="skill_tree.php" class="btn btn-primary" style="white-space: nowrap;">Voir l'Arbre (Skill Tree) <i data-lucide="arrow-right" style="width: 16px; height: 16px; margin-left: 5px;"></i></a>
+</div>
+
+<div class="catalogue-layout" style="display: flex; gap: 2rem;">
     <!-- SIDEBAR -->
     <form id="filterForm" action="formations_catalog.php" method="get" class="sidebar" style="width: 250px; flex-shrink: 0;">
         <input type="hidden" name="q" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
@@ -45,8 +85,8 @@ if (!isset($content)) {
         <input type="hidden" name="domaine" id="hiddenDomaine" value="<?php echo htmlspecialchars($_GET['domaine'] ?? ''); ?>">
         <input type="hidden" name="niveau" id="hiddenNiveau" value="<?php echo htmlspecialchars($_GET['niveau'] ?? ''); ?>">
 
-        <div class="filter-section" style="margin-bottom: 2rem; background: white; padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
-            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-light); margin-bottom: 1rem;">Domaines</h3>
+        <div class="filter-section" style="margin-bottom: 2rem; background: var(--bg-card); padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">Domaines</h3>
             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                 <span class="filter-link <?php echo empty($_GET['domaine']) ? 'active' : ''; ?>" onclick="setFilter('domaine', '')" style="cursor: pointer; padding: 0.5rem; border-radius: 6px; font-size: 0.9rem;">Tous</span>
                 <?php foreach($domaines as $d): ?>
@@ -57,8 +97,8 @@ if (!isset($content)) {
             </div>
         </div>
 
-        <div class="filter-section" style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
-            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-light); margin-bottom: 1rem;">Niveau</h3>
+        <div class="filter-section" style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">Niveau</h3>
             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                 <span class="filter-link <?php echo empty($_GET['niveau']) ? 'active' : ''; ?>" onclick="setFilter('niveau', '')" style="cursor: pointer; padding: 0.5rem; border-radius: 6px; font-size: 0.9rem;">Tous</span>
                 <?php foreach(['Débutant', 'Intermédiaire', 'Avancé', 'Expert'] as $n): ?>
@@ -72,58 +112,69 @@ if (!isset($content)) {
 
     <!-- CONTENT -->
     <div class="main-content" style="flex: 1;">
-        <form id="topBarForm" action="formations_catalog.php" method="get" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem; background: white; padding: 1rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                <span style="background: var(--bg-card); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+                    <span style="color: var(--primary-cyan); font-size: 1.2rem;"><?php echo $totalFormations; ?></span> formation(s) trouvée(s)
+                </span>
+            </div>
+            <?php if (!empty($_GET['q']) || !empty($_GET['domaine']) || !empty($_GET['niveau'])): ?>
+                <a href="formations_catalog.php" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+                    <i data-lucide="x" style="width: 14px; height: 14px;"></i> Tout effacer les filtres
+                </a>
+            <?php endif; ?>
+        </div>
+
+        <form id="topBarForm" action="formations_catalog.php" method="get" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem; background: var(--bg-card); padding: 1rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
             <input type="hidden" name="domaine" value="<?php echo htmlspecialchars($_GET['domaine'] ?? ''); ?>">
             <input type="hidden" name="niveau" value="<?php echo htmlspecialchars($_GET['niveau'] ?? ''); ?>">
             
             <div style="flex: 1; position: relative;">
-                <input type="text" name="q" placeholder="Rechercher une formation..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" oninput="debounceSubmit()" style="width: 100%; border: thin solid #eee; background: transparent; padding: 0.5rem 0.5rem 0.5rem 2rem; border-radius:6px;">
-                <span style="position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%); opacity: 0.4;">🔍</span>
+                <input type="text" name="q" placeholder="Rechercher une formation..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" oninput="debounceSubmit()" style="width: 100%; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-primary); padding: 0.5rem 0.5rem 0.5rem 2.5rem; border-radius:6px; outline:none;">
+                <span style="position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.4;">
+                    <i data-lucide="search" style="width:16px;height:16px;color:var(--text-primary);"></i>
+                </span>
             </div>
 
-            <select name="sort" onchange="this.form.submit()" class="select" style="max-width: 200px; background: #f8fafc; border:none;">
+            <select name="sort" onchange="this.form.submit()" class="select" style="max-width: 200px; background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color);">
                 <option value="date_desc" <?php echo (($_GET['sort'] ?? '') == 'date_desc') ? 'selected' : ''; ?>>Plus récent</option>
                 <option value="date_asc" <?php echo (($_GET['sort'] ?? '') == 'date_asc') ? 'selected' : ''; ?>>Plus ancien</option>
                 <option value="titre_asc" <?php echo (($_GET['sort'] ?? '') == 'titre_asc') ? 'selected' : ''; ?>>Titre A-Z</option>
             </select>
         </form>
 
-        <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); display: grid; gap: 1.5rem;">
-            <?php if (!empty($formations)): foreach($formations as $f): ?>
-                <div class="card-flat" style="padding: 1.25rem; background: white; border-radius: 12px; border: 1px solid var(--border-color); display:flex; flex-direction:column;">
-                    <?php if (!empty($f['image_base64'])): ?>
-                        <div style="width:100%; height:150px; background: url('<?php echo $f['image_base64']; ?>') center/cover; border-radius:8px; margin-bottom:1rem;"></div>
-                    <?php else: ?>
-                        <div style="width:100%; height:150px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-primary)); opacity: 0.1; border-radius:8px; margin-bottom:1rem;"></div>
-                    <?php endif; ?>
-                    
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
-                        <span class="badge badge-info" style="font-size: 0.7rem;"><?php echo htmlspecialchars($f['domaine'] ?? 'Général'); ?></span>
-                        <span class="badge badge-primary" style="font-size: 0.7rem;"><?php echo htmlspecialchars($f['niveau']); ?></span>
-                    </div>
-
-                    <h2 style="font-size: 1.1rem; margin-bottom: 0.5rem;"><?php echo htmlspecialchars($f['titre']); ?></h2>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); height: 3.2rem; overflow: hidden; margin-bottom: 1.5rem; flex:1;">
-                        <?php echo htmlspecialchars(substr(strip_tags($f['description']), 0, 120)); ?>
-                    </p>
-
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: auto;">
-                        <span style="font-size: 0.8rem; color: var(--text-secondary);">
-                            <i data-lucide="<?php echo $f['is_online'] ? 'video' : 'map-pin'; ?>" style="width:14px;height:14px;vertical-align:middle;"></i>
-                            <?php echo $f['is_online'] ? 'Ligne' : 'Présentiel'; ?>
-                        </span>
-                        <a href="formation_detail.php?id=<?php echo $f['id_formation']; ?>" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Détails</a>
-                    </div>
-                </div>
+        <div class="grid" id="catalog-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); display: grid; gap: 1.5rem;">
+            <?php if (!empty($formationsPage)): foreach($formationsPage as $f): ?>
+                <?php include 'catalog_card_partial.php'; // Inclusion de la carte ?>
             <?php endforeach; else: ?>
-                <div style="grid-column: 1/-1; text-align: center; padding: 4rem; opacity: 0.4;">
-                    <span style="font-size: 3rem;">🔍</span>
-                    <p>Aucune formation trouvée.</p>
+                <div style="grid-column: 1/-1;" class="empty-state">
+                    <div class="empty-state__icon">
+                        <i data-lucide="search-x" style="width: 40px; height: 40px;"></i>
+                    </div>
+                    <h3 class="empty-state__title">Aucune formation trouvée</h3>
+                    <p class="empty-state__text">Nous n'avons trouvé aucune formation correspondant à vos critères de recherche. Essayez de modifier ou d'effacer vos filtres.</p>
+                    <a href="formations_catalog.php" class="btn btn-primary" style="margin-top: 1rem;">Effacer tous les filtres</a>
                 </div>
             <?php endif; ?>
         </div>
+        
+        <?php if ($totalPages > 1): ?>
+            <div id="infinite-scroll-trigger" data-page="1" data-total="<?php echo $totalPages; ?>" style="height: 40px; margin-top: 2rem; display: flex; justify-content: center; align-items: center;">
+                <div class="loading-spinner" style="display: none; align-items: center; gap: 0.5rem; color: var(--text-secondary);">
+                    <i data-lucide="loader-2" style="animation: spin 1s linear infinite;"></i> Chargement...
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
+
+<style>
+    /* Responsive grid adjust */
+    @media (max-width: 1024px) {
+        .catalogue-layout { flex-direction: column; }
+        form.sidebar { width: 100% !important; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    }
+</style>
 
 <script>
     function setFilter(name, value) {
@@ -138,4 +189,62 @@ if (!isset($content)) {
             document.getElementById('topBarForm').submit();
         }, 600);
     }
+    
+    // Infinite Scroll Logic
+    document.addEventListener("DOMContentLoaded", function() {
+        const trigger = document.getElementById("infinite-scroll-trigger");
+        if (!trigger) return;
+        
+        let isLoading = false;
+        const spinner = trigger.querySelector('.loading-spinner');
+        
+        const observer = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && !isLoading) {
+                let currentPage = parseInt(trigger.getAttribute('data-page'));
+                let totalPages = parseInt(trigger.getAttribute('data-total'));
+                
+                if (currentPage < totalPages) {
+                    isLoading = true;
+                    spinner.style.display = 'flex';
+                    
+                    let nextPage = currentPage + 1;
+                    
+                    // Build URL with current parameters
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('page', nextPage);
+                    url.searchParams.set('ajax', '1');
+                    
+                    fetch(url.toString())
+                        .then(response => response.text())
+                        .then(html => {
+                            if (html.trim() !== '') {
+                                const grid = document.getElementById('catalog-grid');
+                                grid.insertAdjacentHTML('beforeend', html);
+                                trigger.setAttribute('data-page', nextPage);
+                                
+                                // Re-initialize Lucide icons if present
+                                if (typeof lucide !== 'undefined') {
+                                    lucide.createIcons();
+                                }
+                            }
+                        })
+                        .catch(err => console.error("Erreur Infinite Scroll:", err))
+                        .finally(() => {
+                            isLoading = false;
+                            spinner.style.display = 'none';
+                            
+                            // If we reached the last page, stop observing and hide observer element
+                            if (nextPage >= totalPages) {
+                                observer.disconnect();
+                                trigger.style.display = 'none';
+                            }
+                        });
+                }
+            }
+        }, {
+            rootMargin: '100px'
+        });
+        
+        observer.observe(trigger);
+    });
 </script>
