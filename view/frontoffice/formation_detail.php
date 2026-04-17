@@ -15,10 +15,23 @@ if (!isset($content)) {
     $id_user = (isset($_GET['role']) && $_GET['role'] == 'tuteur') ? 1 : 10;
     $userRole = ($id_user == 1) ? 'Tuteur' : 'Candidat';
 
+    // === CONTRAINTE: VERIFICATION DU PREREQUIS ===
+    $is_unlocked = true;
+    $prereq_titre = "";
+    if (!empty($formation['prerequis_id'])) {
+        $prereq = $formationC->getFormationWithPrerequisite($formation['prerequis_id'], $id_user);
+        if ($prereq && $prereq['ma_progression'] < 100) {
+            $is_unlocked = false;
+            $prereq_titre = $prereq['titre'];
+        }
+    }
+
     // Handle inscription
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_formation'])) {
         $db = config::getConnexion();
-        if (strtotime($formation['date_formation']) < strtotime(date('Y-m-d'))) {
+        if (!$is_unlocked) {
+            $errorMsg = "Prérequis manquant: complétez d'abord « " . htmlspecialchars($prereq_titre) . " ».";
+        } elseif (strtotime($formation['date_formation']) < strtotime(date('Y-m-d'))) {
             $errorMsg = "Les inscriptions sont closes: la date de formation est dépassée.";
         } else {
             try {
@@ -149,6 +162,15 @@ if (!isset($content)) {
                     style="background: rgba(156, 163, 175, 0.1); color: #6b7280; padding: 1.5rem; border-radius: 12px; text-align: center; border: 1px solid rgba(156, 163, 175, 0.3);">
                     <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Inscriptions Closes</div>
                     <p style="font-size: 0.9rem;">Cette formation a déjà commencé ou est terminée.</p>
+                </div>
+            <?php elseif (!$is_unlocked): ?>
+                <div style="background: var(--bg-tertiary); color: var(--text-tertiary); padding: 1.5rem; border-radius: 12px; text-align: center; border: 1px dashed var(--border-color); margin-bottom: 1rem;">
+                    <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);"><i data-lucide="lock" style="width: 18px; height: 18px; display: inline-block; vertical-align: middle;"></i> Formation verrouillée</div>
+                    <p style="font-size: 0.9rem; margin-bottom: 1.25rem;">Cette étape est soumise à condition. Vous devez d'abord compléter à 100% le prérequis suivant pour y accéder :</p>
+                    <div style="background: var(--bg-card); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; color: var(--primary-cyan); border: 1px solid var(--border-color); margin-bottom: 1rem;">
+                        <?php echo htmlspecialchars($prereq_titre); ?>
+                    </div>
+                    <a href="skill_tree.php" class="btn btn-secondary" style="font-size: 0.85rem;"><i data-lucide="git-branch" style="width: 14px; height: 14px;"></i> Voir mon Skill Tree</a>
                 </div>
             <?php else: ?>
                 <form action="formation_detail.php?id=<?php echo $formation['id_formation']; ?>" method="post">
