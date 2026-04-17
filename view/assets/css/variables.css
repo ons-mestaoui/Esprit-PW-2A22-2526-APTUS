@@ -118,6 +118,9 @@
   --gradient-card:     linear-gradient(145deg, #f0f1f7 0%, #ffffff 100%);
   --gradient-warm:     linear-gradient(135deg, #8D2587 0%, #F5576C 100%);
 
+  /* ── Brand Cyan ─────────────────────────────── */
+  --primary-cyan:      #00A3DA;
+
   /* ── Borders ────────────────────────────────── */
   --border-color:      #E5E7EB;
   --border-color-light:#F3F4F6;
@@ -202,6 +205,9 @@
   --gradient-hero:     linear-gradient(135deg, #29BFFF 0%, #A947A3 100%);
   --gradient-card:     linear-gradient(145deg, #1A1D2E 0%, #1E2235 100%);
   --gradient-warm:     linear-gradient(135deg, #A947A3 0%, #DB2777 100%);
+
+  /* ── Brand Cyan ─────────────────────────────── */
+  --primary-cyan:      #29BFFF;
 
   /* ── Borders ────────────────────────────────── */
   --border-color:      #2D3148;

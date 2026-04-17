@@ -112,17 +112,28 @@ if (!isset($content)) {
 
     <!-- CONTENT -->
     <div class="main-content" style="flex: 1;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <div style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+            <div style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.75rem;">
                 <span style="background: var(--bg-card); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
                     <span style="color: var(--primary-cyan); font-size: 1.2rem;"><?php echo $totalFormations; ?></span> formation(s) trouvée(s)
                 </span>
             </div>
-            <?php if (!empty($_GET['q']) || !empty($_GET['domaine']) || !empty($_GET['niveau'])): ?>
-                <a href="formations_catalog.php" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
-                    <i data-lucide="x" style="width: 14px; height: 14px;"></i> Tout effacer les filtres
-                </a>
-            <?php endif; ?>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <?php if (!empty($_GET['q']) || !empty($_GET['domaine']) || !empty($_GET['niveau'])): ?>
+                    <a href="formations_catalog.php" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+                        <i data-lucide="x" style="width: 14px; height: 14px;"></i> Effacer filtres
+                    </a>
+                <?php endif; ?>
+                <!-- View Toggle -->
+                <div style="display: flex; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                    <button class="view-toggle-btn active" id="gridViewBtn" onclick="setViewMode('grid')" title="Vue grille" style="padding: 0.5rem 0.65rem; border: none; background: none; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; transition: all 0.2s;">
+                        <i data-lucide="grid-3x3" style="width: 18px; height: 18px;"></i>
+                    </button>
+                    <button class="view-toggle-btn" id="listViewBtn" onclick="setViewMode('list')" title="Vue liste" style="padding: 0.5rem 0.65rem; border: none; border-left: 1px solid var(--border-color); background: none; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; transition: all 0.2s;">
+                        <i data-lucide="list" style="width: 18px; height: 18px;"></i>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <form id="topBarForm" action="formations_catalog.php" method="get" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem; background: var(--bg-card); padding: 1rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
@@ -174,6 +185,33 @@ if (!isset($content)) {
         .catalogue-layout { flex-direction: column; }
         form.sidebar { width: 100% !important; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
     }
+    /* View toggle states */
+    .view-toggle-btn.active {
+        background: var(--gradient-primary) !important;
+        color: #fff !important;
+    }
+    /* List view mode */
+    #catalog-grid.list-view {
+        grid-template-columns: 1fr !important;
+    }
+    #catalog-grid.list-view .card-flat.card-formation-hover {
+        display: grid !important;
+        grid-template-columns: 200px 1fr auto;
+        gap: 1.25rem;
+        align-items: center;
+        padding: 1rem 1.5rem;
+    }
+    #catalog-grid.list-view .card-flat.card-formation-hover > div:first-child {
+        height: 80px !important;
+        width: 100% !important;
+        margin-bottom: 0 !important;
+        border-radius: 8px;
+    }
+    @media (max-width: 768px) {
+        #catalog-grid.list-view .card-flat.card-formation-hover {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 <script>
@@ -189,6 +227,31 @@ if (!isset($content)) {
             document.getElementById('topBarForm').submit();
         }, 600);
     }
+
+    // View Mode Toggle
+    function setViewMode(mode) {
+        const grid = document.getElementById('catalog-grid');
+        const gridBtn = document.getElementById('gridViewBtn');
+        const listBtn = document.getElementById('listViewBtn');
+        
+        if (mode === 'list') {
+            grid.classList.add('list-view');
+            listBtn.classList.add('active');
+            gridBtn.classList.remove('active');
+        } else {
+            grid.classList.remove('list-view');
+            gridBtn.classList.add('active');
+            listBtn.classList.remove('active');
+        }
+        // Persist preference
+        localStorage.setItem('catalog_view', mode);
+    }
+    
+    // Restore saved view preference on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedView = localStorage.getItem('catalog_view');
+        if (savedView === 'list') setViewMode('list');
+    });
     
     // Infinite Scroll Logic
     document.addEventListener("DOMContentLoaded", function() {
