@@ -638,25 +638,234 @@
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
 }
 
-/* ── Responsive ───────────────────────────────── */
+
+/* ── Sliding Auth Panel (Instagram Style) ───────────────── */
+.auth-container {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2xl);
+  position: relative;
+  overflow: hidden;
+  width: 1000px;
+  max-width: 100%;
+  min-height: 600px;
+  animation: scaleUp 0.5s var(--transition-bounce);
+}
+
+.form-container {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transition: all 0.6s ease-in-out;
+}
+
+.sign-in-container {
+  left: 0;
+  width: 50%;
+  z-index: 2;
+}
+
+.auth-container.right-panel-active .sign-in-container {
+  transform: translateX(100%);
+}
+
+.sign-up-container {
+  left: 0;
+  width: 50%;
+  opacity: 0;
+  z-index: 1;
+}
+
+.auth-container.right-panel-active .sign-up-container {
+  transform: translateX(100%);
+  opacity: 1;
+  z-index: 5;
+  animation: show 0.6s;
+}
+
+@keyframes show {
+  0%, 49.99% { opacity: 0; z-index: 1; }
+  50%, 100% { opacity: 1; z-index: 5; }
+}
+
+.overlay-container {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  transition: transform 0.6s ease-in-out;
+  z-index: 100;
+}
+
+.auth-container.right-panel-active .overlay-container {
+  transform: translateX(-100%);
+}
+
+.overlay {
+  background: var(--gradient-primary);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: 0 0;
+  color: #FFFFFF;
+  position: relative;
+  left: -100%;
+  height: 100%;
+  width: 200%;
+  transform: translateX(0);
+  transition: transform 0.6s ease-in-out;
+}
+
+.auth-container.right-panel-active .overlay {
+  transform: translateX(50%);
+}
+
+.overlay-panel {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 40px;
+  text-align: center;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  transform: translateX(0);
+  transition: transform 0.6s ease-in-out;
+}
+
+.overlay-left {
+  transform: translateX(-20%);
+}
+
+.auth-container.right-panel-active .overlay-left {
+  transform: translateX(0);
+}
+
+.overlay-right {
+  right: 0;
+  transform: translateX(0);
+}
+
+.auth-container.right-panel-active .overlay-right {
+  transform: translateX(20%);
+}
+
+.overlay h1 {
+  color: white;
+  margin-bottom: var(--space-4);
+}
+
+.overlay p {
+  font-size: var(--fs-sm);
+  font-weight: 300;
+  line-height: 20px;
+  letter-spacing: 0.5px;
+  margin: 20px 0 30px;
+}
+
+.btn-outline-white {
+  background-color: transparent;
+  border: 1px solid #FFFFFF;
+  color: #FFFFFF;
+}
+
+.btn-outline-white:hover {
+  background-color: #FFFFFF;
+  color: var(--accent-primary);
+}
+
+/* Internal form alignment in the split view */
+.auth-split-form {
+  background-color: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 40px;
+  height: 100%;
+  text-align: center;
+  gap: var(--space-5);
+}
+
+/* Animations */
+@keyframes scaleUp {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Role Grid specifically for the signup panel */
+.role-grid-mini {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.role-card-mini {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition-fast);
+  text-align: left;
+}
+
+.role-card-mini:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-hover);
+  transform: translateX(5px);
+}
+
+.role-card-mini .role-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.role-card-mini .role-info h4 {
+  font-size: var(--fs-sm);
+  margin: 0;
+}
+
+.role-card-mini .role-info p {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Mobile adjustments */
 @media (max-width: 768px) {
-  .hero__stats {
+  .auth-container {
+    min-height: auto;
+    width: 100%;
+    display: flex;
     flex-direction: column;
-    gap: var(--space-4);
   }
-  .features__grid {
-    grid-template-columns: 1fr;
+  .form-container {
+    position: relative;
+    width: 100%;
+    height: auto;
+    transform: none !important;
   }
-  .auth-form__row {
-    grid-template-columns: 1fr;
+  .overlay-container {
+    display: none;
   }
-  .signup-types {
-    grid-template-columns: 1fr;
+  .sign-up-container {
+    display: none; /* In mobile we might just use separate pages or simple toggle */
   }
-  .landing-nav {
-    padding: 0 var(--space-4);
+  .auth-container.right-panel-active .sign-up-container {
+    display: block;
+    width: 100%;
+    position: relative;
+    transform: none;
   }
-  .auth-card {
-    padding: var(--space-6);
+  .auth-container.right-panel-active .sign-in-container {
+    display: none;
   }
 }
