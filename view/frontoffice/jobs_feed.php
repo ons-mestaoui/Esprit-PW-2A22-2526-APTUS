@@ -87,7 +87,7 @@ if (!isset($content)) {
       </div>
       <div class="job-card__title-group">
         <h3 class="job-card__title"><?php echo htmlspecialchars($offreItem['titre'] ?? ''); ?></h3>
-        <span class="job-card__company">Domaine: <?php echo htmlspecialchars($offreItem['domaine'] ?? ''); ?></span>
+        <span class="job-card__company"><?php echo htmlspecialchars($offreItem['nom_entreprise'] ?? 'Entreprise Inconnue'); ?> • • <?php echo htmlspecialchars($offreItem['domaine'] ?? ''); ?></span>
       </div>
       <span class="badge badge-info job-card__type-badge">Job</span>
     </div>

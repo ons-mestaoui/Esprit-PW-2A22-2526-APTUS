@@ -28,11 +28,13 @@ class offreC{
             $db->exec("UPDATE offreemploi SET statut = 'Expiré' WHERE date_expir < CURDATE()");
             $db->exec("UPDATE offreemploi SET statut = 'Actif' WHERE date_expir >= CURDATE()");
 
-            $sql = "SELECT * FROM offreemploi";
+            $sql = "SELECT o.*, u.nom as nom_entreprise 
+                    FROM offreemploi o 
+                    LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur";
             if ($onlyActive) {
-                $sql .= " WHERE statut = 'Actif'";
+                $sql .= " WHERE o.statut = 'Actif'";
             }
-            $sql .= " ORDER BY date_publication DESC, id_offre DESC";
+            $sql .= " ORDER BY o.date_publication DESC, o.id_offre DESC";
             
             $liste = $db->query($sql);
             return $liste;
