@@ -46,7 +46,7 @@ if ($userId) {
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css?v=<?php echo time(); ?>">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_front.css">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/landing_dynamic.css">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/auth.css">
@@ -245,5 +245,29 @@ if ($userId) {
     <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
   <script>lucide.createIcons();</script>
+
+  <!-- ═══════════════════════════════════════════
+       ACCESSIBILITY GESTURE CONTROL (MediaPipe)
+       ═══════════════════════════════════════════ -->
+  
+  <!-- Virtual Cursor -->
+  <div class="a11y-cursor" id="a11y-cursor"></div>
+  
+  <!-- Video Preview Container (PIP) -->
+  <div class="a11y-video-container" id="a11y-video-container">
+    <video id="a11y-webcam" autoplay playsinline></video>
+    <canvas id="a11y-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+  </div>
+  
+  <!-- Toggle Button (Floating) -->
+  <button class="a11y-toggle" id="a11y-toggle" aria-label="Activer la navigation gestuelle" title="Navigation Hand Tracking">
+    <i data-lucide="hand"></i>
+  </button>
+
+  <!-- Load MediaPipe Tasks Vision & Our Custom A11Y Script -->
+  <!-- Note: We use type="module" for our custom script because MediaPipe Tasks Vision uses ES Modules -->
+  <script type="module" src="/aptus_first_official_version/view/assets/js/a11y-hand-control.js"></script>
+
 </body>
+
 </html>

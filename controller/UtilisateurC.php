@@ -132,5 +132,70 @@ class UtilisateurC {
             die('Erreur: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Générer un token de réinitialisation si l'email existe.
+     */
+    public function createPasswordResetToken($email) {
+        $db = config::getConnexion();
+        try {
+            $query = $db->prepare("SELECT id_utilisateur FROM utilisateur WHERE email = :email");
+            $query->execute(['email' => $email]);
+            $user = $query->fetch();
+
+            if ($user) {
+                $token = bin2hex(random_bytes(32));
+                $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+                $update = $db->prepare("UPDATE utilisateur SET reset_token = :token, token_expires = :expires WHERE email = :email");
+                $update->execute([
+                    'token' => $token,
+                    'expires' => $expires,
+                    'email' => $email
+                ]);
+
+                return $token;
+            }
+            return false;
+        } catch (Exception $e) {
+            die('Erreur: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Valider si un token est valide et non expiré.
+     */
+    public function validateResetToken($token) {
+        $db = config::getConnexion();
+        try {
+            $now = date('Y-m-d H:i:s');
+            $query = $db->prepare("SELECT id_utilisateur FROM utilisateur WHERE reset_token = :token AND token_expires > :now");
+            $query->execute([
+                'token' => $token,
+                'now' => $now
+            ]);
+            $user = $query->fetch();
+            return $user ? $user['id_utilisateur'] : false;
+        } catch (Exception $e) {
+            die('Erreur: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Mettre à jour le mot de passe et annuler le token.
+     */
+    public function resetPassword($id_utilisateur, $newPassword) {
+        $db = config::getConnexion();
+        try {
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $query = $db->prepare("UPDATE utilisateur SET motDePasse = :motDePasse, reset_token = NULL, token_expires = NULL WHERE id_utilisateur = :id");
+            return $query->execute([
+                'motDePasse' => $hashedPassword,
+                'id' => $id_utilisateur
+            ]);
+        } catch (Exception $e) {
+            die('Erreur: ' . $e->getMessage());
+        }
+    }
 }
 ?>

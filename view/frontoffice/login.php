@@ -29,38 +29,44 @@ $error = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
+    $captchaInput = trim($_POST['captcha'] ?? '');
+    $captchaSession = $_SESSION['captcha'] ?? '';
 
-    if (!empty($email) && !empty($password)) {
-        $db = config::getConnexion();
-        try {
-            $query = $db->prepare("SELECT * FROM utilisateur WHERE email = :email");
-            $query->execute(['email' => $email]);
-            $user = $query->fetch();
+    if (!empty($email) && !empty($password) && !empty($captchaInput)) {
+        if (strtolower($captchaInput) !== strtolower($captchaSession) || empty($captchaSession)) {
+            $error = "Code de sécurité (Captcha) incorrect.";
+        } else {
+            $db = config::getConnexion();
+            try {
+                $query = $db->prepare("SELECT * FROM utilisateur WHERE email = :email");
+                $query->execute(['email' => $email]);
+                $user = $query->fetch();
 
-            if ($user && password_verify($password, $user['motDePasse'])) {
-                $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
-                $_SESSION['nom'] = $user['nom'];
-                $_SESSION['prenom'] = $user['prenom'] ?? '';
-                $_SESSION['role'] = $user['role'];
+                if ($user && password_verify($password, $user['motDePasse'])) {
+                    $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
+                    $_SESSION['nom'] = $user['nom'];
+                    $_SESSION['prenom'] = $user['prenom'] ?? '';
+                    $_SESSION['role'] = $user['role'];
 
-                // Redirection basée sur le rôle (insensible à la casse par sécurité)
-                $role = strtolower($user['role']);
-                if ($role === 'admin') {
-                    header("Location: ../backoffice/dashboard.php");
-                } elseif ($role === 'candidat') {
-                    header("Location: jobs_feed.php");
-                } elseif ($role === 'entreprise') {
-                    header("Location: hr_posts.php");
+                    // Redirection basée sur le rôle (insensible à la casse par sécurité)
+                    $role = strtolower($user['role']);
+                    if ($role === 'admin') {
+                        header("Location: ../backoffice/dashboard.php");
+                    } elseif ($role === 'candidat') {
+                        header("Location: jobs_feed.php");
+                    } elseif ($role === 'entreprise') {
+                        header("Location: hr_posts.php");
+                    } else {
+                        // Par défaut si rôle inconnu
+                        header("Location: landing.php");
+                    }
+                    exit();
                 } else {
-                    // Par défaut si rôle inconnu
-                    header("Location: landing.php");
+                    $error = "Email ou mot de passe incorrect.";
                 }
-                exit();
-            } else {
-                $error = "Email ou mot de passe incorrect.";
+            } catch (Exception $e) {
+                $error = "Erreur de connexion : " . $e->getMessage();
             }
-        } catch (Exception $e) {
-            $error = "Erreur de connexion : " . $e->getMessage();
         }
     } else {
         $error = "Veuillez remplir tous les champs.";
@@ -379,7 +385,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
           </div>
 
-          <a href="#" class="text-xs text-secondary" style="margin: 10px 0;">Mot de passe oublié ?</a>
+          <div class="form-group w-full" style="display: flex; gap: 10px; align-items: center;">
+            <div class="input-icon-wrapper" style="flex: 1;">
+              <i data-lucide="shield-check" style="width:18px;height:18px;"></i>
+              <input type="text" class="input" name="captcha" placeholder="Code de sécurité" data-required="true" autocomplete="off" maxlength="5">
+            </div>
+            <div style="flex-shrink: 0; background: white; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color); cursor: pointer;" onclick="document.getElementById('captcha-img').src='captcha.php?'+Math.random();" title="Cliquez pour rafraîchir">
+              <img src="captcha.php" id="captcha-img" alt="CAPTCHA" style="display: block; height: 42px;">
+            </div>
+          </div>
+
+          <a href="forgot_password.php" class="text-xs text-secondary" style="margin: 10px 0;">Mot de passe oublié ?</a>
           
           <button type="submit" class="btn btn-primary btn-lg w-full" style="margin-top:var(--space-2);">Se connecter</button>
           
