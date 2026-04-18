@@ -33,6 +33,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $date_exp = trim($_POST['date_expir'] ?? '');
 
+    // Traitement de l'image (si envoyée)
+    $img_post_base64 = null;
+    if (isset($_FILES['img_post']) && $_FILES['img_post']['error'] === UPLOAD_ERR_OK) {
+        $max_size = 1 * 1024 * 1024; // 1 MB
+        if ($_FILES['img_post']['size'] > $max_size) {
+            $errors['img_post'] = "L'image ne doit pas dépasser 1 Mo.";
+        } else {
+            $file_tmp = $_FILES['img_post']['tmp_name'];
+            $file_type = mime_content_type($file_tmp);
+            if (strpos($file_type, 'image/') !== 0) {
+                $errors['img_post'] = "Le fichier doit être une image valide.";
+            } else {
+                $img_data = file_get_contents($file_tmp);
+                $img_post_base64 = 'data:' . $file_type . ';base64,' . base64_encode($img_data);
+            }
+        }
+    }
+
     // Sauvegarde des données pour réaffichage si erreur
     $form_data = [
         'titre' => $titre,
@@ -88,7 +106,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             (float)$salaire, 
             $question, 
             $date_pub, 
-            $date_exp
+            $date_exp,
+            $img_post_base64
         );
         
         if (isset($_POST['submit_add'])) {
@@ -145,32 +164,42 @@ if (!isset($content)) {
 
       <div class="hr-posts-grid stagger">
         <?php foreach ($listeOffres as $offreItem): ?>
-        <div class="hr-post-card animate-on-scroll">
-          <div class="hr-post-card__header">
-            <?php if (isset($offreItem['statut']) && $offreItem['statut'] === 'Expiré'): ?>
-                <span class="badge badge-danger">Expiré</span>
-            <?php else: ?>
-                <span class="badge badge-success">Actif</span>
-            <?php endif; ?>
-          </div>
-          <h3 class="hr-post-card__title"><?php echo htmlspecialchars($offreItem['titre'] ?? ''); ?></h3>
-          <p class="text-sm text-secondary mb-3" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"><?php echo htmlspecialchars($offreItem['description'] ?? ''); ?></p>
-          <div class="hr-post-card__stats">
-            <span class="hr-post-card__stat" title="Domaine">
-              <i data-lucide="folder" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['domaine'] ?? ''); ?>
-            </span>
-            <span class="hr-post-card__stat" title="Date de Publication">
-              <i data-lucide="calendar" style="width:14px;height:14px;"></i> Publié: <?php echo htmlspecialchars($offreItem['date_publication'] ?? ''); ?>
-            </span>
-            <span class="hr-post-card__stat" title="Salaire">
-              <i data-lucide="coins" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['salaire'] ?? ''); ?> TND
-            </span>
-          </div>
-          <div class="hr-post-card__actions" style="margin-top: 1rem;">
-            <a href="hr_posts.php?action=edit&id=<?php echo $offreItem['id_offre']; ?>" class="btn btn-sm btn-secondary text-decoration-none d-flex align-items-center gap-1"><i data-lucide="pencil" style="width:14px;height:14px;"></i> Éditer</a>
-            <button class="btn btn-sm btn-ghost d-flex align-items-center gap-1"><i data-lucide="users" style="width:14px;height:14px;"></i> Candidats</button>
-            <button type="button" onclick="confirmDelete(<?php echo $offreItem['id_offre']; ?>, '<?php echo htmlspecialchars(addslashes($offreItem['titre'] ?? '')); ?>')" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
-          </div>
+        <div class="hr-post-card animate-on-scroll" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+          <?php if (!empty($offreItem['img_post'])): ?>
+            <div style="height: 140px; background-image: url('<?php echo htmlspecialchars($offreItem['img_post']); ?>'); background-size: cover; background-position: center; position: relative;">
+          <?php else: ?>
+            <div style="height: 80px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+               <i data-lucide="image" style="width: 32px; height: 32px; color: var(--text-secondary); opacity: 0.5;"></i>
+          <?php endif; ?>
+               <div style="position: absolute; top: 12px; right: 12px;">
+                    <?php if (isset($offreItem['statut']) && $offreItem['statut'] === 'Expiré'): ?>
+                        <span class="badge badge-danger" style="box-shadow: 0 4px 12px rgba(0,0,0,0.1);">Expiré</span>
+                    <?php else: ?>
+                        <span class="badge badge-success" style="box-shadow: 0 4px 12px rgba(0,0,0,0.1);">Actif</span>
+                    <?php endif; ?>
+               </div>
+            </div>
+            
+            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+                <h3 class="hr-post-card__title" style="margin-top: 0;"><?php echo htmlspecialchars($offreItem['titre'] ?? ''); ?></h3>
+                <p class="text-sm text-secondary mb-3" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"><?php echo htmlspecialchars($offreItem['description'] ?? ''); ?></p>
+                <div class="hr-post-card__stats">
+                    <span class="hr-post-card__stat" title="Domaine">
+                    <i data-lucide="folder" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['domaine'] ?? ''); ?>
+                    </span>
+                    <span class="hr-post-card__stat" title="Date de Publication">
+                    <i data-lucide="calendar" style="width:14px;height:14px;"></i> Publié: <?php echo htmlspecialchars($offreItem['date_publication'] ?? ''); ?>
+                    </span>
+                    <span class="hr-post-card__stat" title="Salaire">
+                    <i data-lucide="coins" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['salaire'] ?? ''); ?> TND
+                    </span>
+                </div>
+                <div class="hr-post-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                    <a href="hr_posts.php?action=edit&id=<?php echo $offreItem['id_offre']; ?>" class="btn btn-sm btn-secondary text-decoration-none d-flex align-items-center gap-1"><i data-lucide="pencil" style="width:14px;height:14px;"></i> Éditer</a>
+                    <button class="btn btn-sm btn-ghost d-flex align-items-center gap-1"><i data-lucide="users" style="width:14px;height:14px;"></i> Candidats</button>
+                    <button type="button" onclick="confirmDelete(<?php echo $offreItem['id_offre']; ?>, '<?php echo htmlspecialchars(addslashes($offreItem['titre'] ?? '')); ?>')" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary); margin-left: auto;"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+                </div>
+            </div>
         </div>
         <?php endforeach; ?>
         
@@ -208,14 +237,26 @@ if (!isset($content)) {
         </div>
         <?php endif; ?>
 
-        <!-- NOVALIDATE désactive la validation HTML5 -->
-        <form method="POST" novalidate action="hr_posts.php?<?php echo ($action === 'edit' && isset($_GET['id'])) ? 'action=edit&id='.$_GET['id'] : 'action=add'; ?>">
+        <!-- Validation HTML5 désactivée via la suppression des attributs required -->
+        <form method="POST" enctype="multipart/form-data" action="hr_posts.php?<?php echo ($action === 'edit' && isset($_GET['id'])) ? 'action=edit&id='.$_GET['id'] : 'action=add'; ?>">
             
             <div class="form-group mb-3">
                 <label class="form-label" for="titre">Titre de l'offre</label>
                 <input type="text" class="input <?php echo isset($errors['titre']) ? 'has-error' : ''; ?>" name="titre" id="titre" value="<?php echo htmlspecialchars(val('titre', $form_data, $offreEdit)); ?>">
                 <?php if (isset($errors['titre'])): ?>
                     <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['titre']; ?></span>
+                <?php endif; ?>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="form-label" for="img_post">Image de couverture de l'offre (Optionnelle, Max 1Mo)</label>
+                <!-- Le champ accepte uniquement des images -->
+                <input type="file" class="input <?php echo isset($errors['img_post']) ? 'has-error' : ''; ?>" name="img_post" id="img_post" accept="image/*" style="padding: 10px;">
+                <?php if ($action === 'edit' && !empty($offreEdit['img_post'])): ?>
+                    <p class="text-sm text-secondary mt-1">Laissez vide pour conserver l'image actuelle.</p>
+                <?php endif; ?>
+                <?php if (isset($errors['img_post'])): ?>
+                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['img_post']; ?></span>
                 <?php endif; ?>
             </div>
 

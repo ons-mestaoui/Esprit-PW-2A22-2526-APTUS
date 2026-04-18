@@ -74,9 +74,15 @@ if (!isset($content)) {
 <!-- ═══ JOB CARDS GRID ═══ -->
 <div class="job-cards-grid stagger">
   <?php foreach ($listeOffres as $offreItem): ?>
-  <div class="job-card animate-on-scroll">
-    <div class="job-card__header">
-      <div class="job-card__company-logo">
+    <div class="job-card animate-on-scroll" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+      <?php if (!empty($offreItem['img_post'])): ?>
+        <div style="height: 160px; background-image: url('<?php echo htmlspecialchars($offreItem['img_post']); ?>'); background-size: cover; background-position: center; border-bottom: 1px solid var(--border-color);"></div>
+      <?php else: ?>
+        <div style="height: 6px; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));"></div>
+      <?php endif; ?>
+      <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+      <div class="job-card__header">
+        <div class="job-card__company-logo">
         <i data-lucide="building" style="width:20px;height:20px;color:var(--accent-primary);"></i>
       </div>
       <div class="job-card__title-group">
@@ -98,6 +104,7 @@ if (!isset($content)) {
       <button class="btn btn-sm btn-primary">
         <i data-lucide="send" style="width:14px;height:14px;"></i> Postuler
       </button>
+    </div>
     </div>
   </div>
   <?php endforeach; ?>

@@ -2,10 +2,9 @@
 include '../../config.php';
 class offreC{
     public function ajouterOffre($offre){
-        $sql="INSERT INTO offreemploi (id_entreprise, titre, description, domaine, competences_requises, experience_requise, salaire, question, date_publication, date_expir, statut) VALUES (1, :titre, :description, :domaine, :competences_requises, :experience_requise, :salaire, :question, :date_publication, :date_expir, 'Actif')";
         $db = config::getConnexion();
         try{
-            $query = $db->prepare($sql);
+            $query = $db->prepare("INSERT INTO offreemploi (id_entreprise, titre, description, domaine, competences_requises, experience_requise, salaire, question, date_publication, date_expir, statut, img_post) VALUES (1, :titre, :description, :domaine, :competences_requises, :experience_requise, :salaire, :question, :date_publication, :date_expir, 'Actif', :img_post)");
             $query->execute([
                 'titre' => $offre->getTitre(),
                 'description' => $offre->getDescription(),
@@ -15,8 +14,9 @@ class offreC{
                 'salaire' => $offre->getSalaire(),
                 'question' => $offre->getQuestion(),
                 'date_publication' => $offre->getDatePublication(),
-                'date_expir' => $offre->getDateExpir()
-            ]);
+                'date_expir' => $offre->getDateExpir(),
+                'img_post' => $offre->getImgPost()
+            ]); 
         }catch (Exception $e){
             echo 'Erreur: '.$e->getMessage();
         }
@@ -55,8 +55,14 @@ class offreC{
     public function modifierOffre($offre, $id_offre){
         $db = config::getConnexion();
         try{
-            $query = $db->prepare("UPDATE offreemploi SET titre=:titre, description=:description, domaine=:domaine, competences_requises=:competences_requises, experience_requise=:experience_requise, salaire=:salaire, question=:question, date_publication=:date_publication, date_expir=:date_expir WHERE id_offre=:id_offre");
-            $query->execute([
+            // img_post est inclus s'il n'est pas null, sinon on garde l'ancien (à gérer côté vue ou ici, plus propre ici)
+            if ($offre->getImgPost() !== null) {
+                $query = $db->prepare("UPDATE offreemploi SET titre=:titre, description=:description, domaine=:domaine, competences_requises=:competences_requises, experience_requise=:experience_requise, salaire=:salaire, question=:question, date_publication=:date_publication, date_expir=:date_expir, img_post=:img_post WHERE id_offre=:id_offre");
+            } else {
+                $query = $db->prepare("UPDATE offreemploi SET titre=:titre, description=:description, domaine=:domaine, competences_requises=:competences_requises, experience_requise=:experience_requise, salaire=:salaire, question=:question, date_publication=:date_publication, date_expir=:date_expir WHERE id_offre=:id_offre");
+            }
+            
+            $params = [
                 'id_offre' => $id_offre,
                 'titre' => $offre->getTitre(),
                 'description' => $offre->getDescription(),
@@ -67,7 +73,13 @@ class offreC{
                 'question' => $offre->getQuestion(),
                 'date_publication' => $offre->getDatePublication(),
                 'date_expir' => $offre->getDateExpir()
-            ]);
+            ];
+
+            if ($offre->getImgPost() !== null) {
+                $params['img_post'] = $offre->getImgPost();
+            }
+
+            $query->execute($params);
         }catch (Exception $e){
             echo 'Erreur: '.$e->getMessage();
         }

@@ -31,6 +31,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $date_exp = trim($_POST['date_expir'] ?? '');
 
+    // Traitement de l'image (si envoyée)
+    $img_post_base64 = null;
+    if (isset($_FILES['img_post']) && $_FILES['img_post']['error'] === UPLOAD_ERR_OK) {
+        $max_size = 1 * 1024 * 1024; // 1 MB
+        if ($_FILES['img_post']['size'] > $max_size) {
+            $errors['img_post'] = "L'image ne doit pas dépasser 1 Mo.";
+        } else {
+            $file_tmp = $_FILES['img_post']['tmp_name'];
+            $file_type = mime_content_type($file_tmp);
+            if (strpos($file_type, 'image/') !== 0) {
+                $errors['img_post'] = "Le fichier doit être une image valide.";
+            } else {
+                $img_data = file_get_contents($file_tmp);
+                $img_post_base64 = 'data:' . $file_type . ';base64,' . base64_encode($img_data);
+            }
+        }
+    }
+
     // Sauvegarde des données pour réaffichage si erreur
     $form_data = [
         'titre' => $titre,
@@ -86,7 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             (float)$salaire, 
             $question, 
             $date_pub, 
-            $date_exp
+            $date_exp,
+            $img_post_base64
         );
         
         if (isset($_POST['submit_add'])) {
@@ -224,6 +243,7 @@ if (!isset($content)) {
           <th>Domaine</th>
           <th>Salaire</th>
           <th>Candidats</th>
+          <th>Statut</th>
           <th>Date Expir.</th>
           <th>Date Publ.</th>
           <th>Actions</th>
@@ -238,6 +258,13 @@ if (!isset($content)) {
           <td class="text-secondary"><?php echo htmlspecialchars($o['domaine'] ?? ''); ?></td>
           <td><span class="badge badge-neutral"><?php echo htmlspecialchars($o['salaire'] ?? ''); ?> TND</span></td>
           <td class="fw-medium text-secondary">N/A</td>
+          <td>
+            <?php if(isset($o['statut']) && $o['statut'] === 'Expiré'): ?>
+               <span class="badge badge-danger">Expiré 🔴</span>
+            <?php else: ?>
+               <span class="badge badge-success">Actif 🟢</span>
+            <?php endif; ?>
+          </td>
           <td><span class="badge badge-warning"><?php echo htmlspecialchars($o['date_expir'] ?? ''); ?></span></td>
           <td class="text-sm text-secondary"><?php echo htmlspecialchars($o['date_publication'] ?? ''); ?></td>
           <td>
@@ -283,7 +310,7 @@ if (!isset($content)) {
     </div>
     <?php endif; ?>
 
-    <form method="POST" novalidate action="offres_admin.php?<?php echo ($action === 'edit' && isset($_GET['id'])) ? 'action=edit&id='.$_GET['id'] : 'action=add'; ?>" class="auth-form">
+        <form method="POST" enctype="multipart/form-data" action="offres_admin.php?<?php echo ($action === 'edit' && isset($_GET['id'])) ? 'action=edit&id='.$_GET['id'] : 'action=add'; ?>" class="auth-form">
         <?php if ($action === 'edit'): ?>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);" class="mb-4">
             <div class="form-group">
@@ -302,6 +329,17 @@ if (!isset($content)) {
             <input type="text" class="input <?php echo isset($errors['titre']) ? 'has-error' : ''; ?>" name="titre" id="titre" value="<?php echo htmlspecialchars(val('titre', $form_data, $offreEdit)); ?>">
             <?php if (isset($errors['titre'])): ?>
                 <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['titre']; ?></span>
+            <?php endif; ?>
+        </div>
+
+        <div class="form-group mb-4">
+            <label class="form-label" for="img_post">Image de couverture (Optionnelle, Max 1Mo)</label>
+            <input type="file" class="input <?php echo isset($errors['img_post']) ? 'has-error' : ''; ?>" name="img_post" id="img_post" accept="image/*" style="padding: 10px;">
+            <?php if ($action === 'edit' && !empty($offreEdit['img_post'])): ?>
+                <p class="text-sm text-secondary mt-1">Laissez vide pour conserver l'image actuelle.</p>
+            <?php endif; ?>
+            <?php if (isset($errors['img_post'])): ?>
+                <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['img_post']; ?></span>
             <?php endif; ?>
         </div>
 
