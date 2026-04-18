@@ -264,7 +264,7 @@
             var minLength = parseInt(field.getAttribute('data-minlength') || (field.type === 'password' ? 8 : 0));
             
             if (minLength > 0 && val.length < minLength) {
-                isValid = false;
+                isValid = false;  
                 field.classList.add('input-error');
                 var errorEl = getOrCreateErrorEl(field);
                 if (errorEl) {

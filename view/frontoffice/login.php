@@ -1,20 +1,26 @@
-<!DOCTYPE html>
-<html lang="fr" data-theme="light">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connexion — Aptus</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/auth.css">
-  <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
-</head>
-<body>
 <?php
 if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Security: Prevent browser caching of the login page itself
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+
+// Security: If a user is already logged in and returns to the login page (e.g. via back button),
+// we destroy the session to satisfy the requirement that 'Back = End Session'.
+if (isset($_SESSION['id_utilisateur'])) {
+    session_unset();
+    session_destroy();
+    
+    // Explicitly clear the session cookie from the browser
+    if (isset($_COOKIE[session_name()])) {
+        setcookie(session_name(), '', time() - 3600, '/');
+    }
+
+    // Restart session for the login page processing
     session_start();
 }
 include_once __DIR__ . '/../../controller/UtilisateurC.php';
@@ -61,6 +67,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion — Aptus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/auth.css">
+  <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+
+  <script>
+    /**
+     * Security: Force reload if page is loaded from cache (Back/Forward button fix)
+     * This ensures the PHP session revalidation logic is executed on every navigation.
+     */
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        window.location.reload();
+      }
+    });
+  </script>
+</head>
+<body>
 
   <div class="auth-page">
     <div class="auth-card">

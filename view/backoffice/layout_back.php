@@ -3,6 +3,13 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Security: Prevent browser caching of protected pages
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+include_once __DIR__ . '/../../controller/ProfilC.php';
+
 // Access Control: Only Admins can access backoffice
 if (!isset($_SESSION['role']) || strtolower($_SESSION['role']) !== 'admin') {
     header("Location: ../frontoffice/login.php");
@@ -10,6 +17,16 @@ if (!isset($_SESSION['role']) || strtolower($_SESSION['role']) !== 'admin') {
 }
 
 $adminName = $_SESSION['nom'] ?? 'Administrateur';
+$userId = $_SESSION['id_utilisateur'] ?? null;
+
+$userPhoto = null;
+if ($userId) {
+    $profilC = new ProfilC();
+    $userProfil = $profilC->getProfilByIdUtilisateur($userId);
+    if ($userProfil && !empty($userProfil['photo'])) {
+        $userPhoto = $userProfil['photo'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
@@ -34,6 +51,18 @@ $adminName = $_SESSION['nom'] ?? 'Administrateur';
 
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+
+  <script>
+    /**
+     * Security: Force reload if page is loaded from cache (Back/Forward button fix)
+     * This ensures the admin session check is executed on every navigation.
+     */
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        window.location.reload();
+      }
+    });
+  </script>
 </head>
 <body>
 
@@ -129,8 +158,14 @@ $adminName = $_SESSION['nom'] ?? 'Administrateur';
               <span class="back-topbar__admin-name"><?php echo isset($adminName) ? $adminName : 'Administrateur'; ?></span>
               <span class="back-topbar__admin-role">Super Admin</span>
             </div>
-            <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;">
-              <?php echo isset($adminName) ? strtoupper(substr($adminName, 0, 2)) : 'AD'; ?>
+            <div class="avatar" style="width:36px;height:36px;font-size:13px;overflow:hidden;background:var(--bg-glass);display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--border-color);">
+              <?php if ($userPhoto): ?>
+                <img src="<?php echo $userPhoto; ?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
+              <?php else: ?>
+                <span class="avatar-initials">
+                  <?php echo isset($adminName) ? strtoupper(substr($adminName, 0, 2)) : 'AD'; ?>
+                </span>
+              <?php endif; ?>
             </div>
           </div>
           <div class="dropdown-menu">

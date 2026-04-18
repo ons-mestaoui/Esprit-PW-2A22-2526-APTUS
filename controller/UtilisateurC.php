@@ -67,6 +67,7 @@ class UtilisateurC {
             // Supprimer d'abord les entrées dépendantes pour éviter les erreurs de contrainte de clé étrangère
             $db->prepare("DELETE FROM candidat WHERE id_candidat = :id")->execute(['id' => $id]);
             $db->prepare("DELETE FROM entreprise WHERE id_entreprise = :id")->execute(['id' => $id]);
+            $db->prepare("DELETE FROM administrateur WHERE id_admin = :id")->execute(['id' => $id]);
             
             // Puis supprimer l'utilisateur lui-même
             $query = $db->prepare("DELETE FROM utilisateur WHERE id_utilisateur = :id");
