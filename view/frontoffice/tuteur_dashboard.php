@@ -15,9 +15,11 @@ if (isset($_GET['action']) && $_GET['action'] == 'getCalendarEvents') {
     exit();
 }
 
-// Simuler la session (À remplacer par $_SESSION['user_id'] plus tard)
-// Vous pouvez tester d'autres tuteurs en ajoutant ?tuteur_id=X dans l'URL
 $id_tuteur = isset($_GET['tuteur_id']) ? intval($_GET['tuteur_id']) : 1;
+
+require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
+$dashC = new TuteurDashboardController();
+$stats = $dashC->getGlobalStats($id_tuteur);
 
 $tuteur = $userC->getUserById($id_tuteur);
 $formations = $formationC->getFormationsByTuteur($id_tuteur);
@@ -239,31 +241,18 @@ if (!isset($content)) {
 
     <div class="stats-summary">
         <div class="mini-stat">
-            <div class="mini-stat__value"><?php echo count($formations); ?></div>
-            <div class="mini-stat__label">Formations</div>
-        </div>
-        <div class="mini-stat">
-            <div class="mini-stat__value">
-                <?php
-                $totalInscrits = 0;
-                foreach ($formations as $f)
-                    $totalInscrits += $f['nb_inscrits'];
-                echo $totalInscrits;
-                ?>
-            </div>
+            <div class="mini-stat__value"><?php echo $stats['total_students']; ?></div>
             <div class="mini-stat__label">Étudiants Total</div>
         </div>
         <div class="mini-stat">
+            <div class="mini-stat__value"><?php echo $stats['completed']; ?></div>
+            <div class="mini-stat__label">Terminés</div>
+        </div>
+        <div class="mini-stat">
             <div class="mini-stat__value">
-                <?php
-                $onlineCount = 0;
-                foreach ($formations as $f)
-                    if ($f['is_online'])
-                        $onlineCount++;
-                echo $onlineCount;
-                ?>
+                <?php echo $stats['taux']; ?>%
             </div>
-            <div class="mini-stat__label">Sessions Online</div>
+            <div class="mini-stat__label">Taux de Complétion</div>
         </div>
     </div>
 </div>
@@ -343,10 +332,10 @@ if (!isset($content)) {
                                     Room
                                 </a>
                             <?php endif; ?>
-                            <a href="formation_detail.php?id=<?php echo $f['id_formation']; ?>&role=tuteur"
+                            <a href="tuteur_formation_manage.php?id=<?php echo $f['id_formation']; ?>"
                                 class="text-sm fw-medium"
                                 style="color:var(--text-primary); text-decoration:none; display: flex; align-items: center; gap: 2px;">
-                                Détails &rarr;
+                                Gérer &rarr;
                             </a>
                         </div>
                     </div>

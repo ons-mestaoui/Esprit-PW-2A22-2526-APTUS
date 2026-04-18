@@ -384,9 +384,9 @@ if (!isset($content)) {
                     <a href="<?php echo htmlspecialchars($cours['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn" style="background: var(--accent-info); color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:8px;">📹 Rejoindre la Room</a>
                 <?php endif; ?>
                 
-                <!-- Contrainte : le bouton "Terminer" n'apparaît que si la date est passée -->
+                <!-- Contrainte : l'accès au cours n'apparaît que si la date est passée -->
                 <?php if ($cours['date_formation'] <= date('Y-m-d')): ?>
-                    <a href="formations_my.php?finish_id=<?php echo $cours['id_formation']; ?>" class="btn btn-primary" style="text-align:center;">Terminer la formation</a>
+                    <a href="formation_viewer.php?id=<?php echo $cours['id_formation']; ?>" class="btn btn-primary" style="text-align:center;">📖 Accéder au cours</a>
                 <?php else: ?>
                     <button class="btn" style="background: var(--bg-tertiary); color: var(--text-tertiary); cursor: not-allowed; width:100%; border:none; padding:0.5rem; border-radius:8px;" disabled>Disponible le <?php echo date('d/m', strtotime($cours['date_formation'])); ?></button>
                     
