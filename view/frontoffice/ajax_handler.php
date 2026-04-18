@@ -102,6 +102,47 @@ switch ($action) {
         echo json_encode(['success' => $success, 'message' => $message]);
         break;
 
+    case 'generate_ai_syllabus':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
+        $titre = $_POST['titre'] ?? '';
+        $domaine = $_POST['domaine'] ?? '';
+        $niveau = $_POST['niveau'] ?? '';
+        echo $controller->generateSyllabus($titre, $domaine, $niveau);
+        break;
+
+    case 'append_ai_syllabus':
+        require_once __DIR__ . '/../../config.php';
+        $db = config::getConnexion();
+        $id_formation = $_POST['id_formation'] ?? 0;
+        $html_content = "<!-- AI_SYLLABUS_START -->" . $_POST['html_content'] . "<!-- AI_SYLLABUS_END -->";
+        
+        $stmt = $db->prepare("SELECT description FROM formation WHERE id_formation = :id");
+        $stmt->execute(['id' => $id_formation]);
+        $row = $stmt->fetch();
+        if ($row) {
+            $desc = $row['description'];
+            
+            // Si un syllabus existe déjà, on le remplace
+            if (strpos($desc, '<!-- AI_SYLLABUS_START -->') !== false) {
+                $desc = preg_replace('/<!-- AI_SYLLABUS_START -->.*?<!-- AI_SYLLABUS_END -->/s', $html_content, $desc);
+            } else {
+                // Sinon on l'insère avant les ressources ou à la fin
+                if (strpos($desc, '<!-- APTUS_RESOURCES:') !== false) {
+                    $desc = str_replace('<!-- APTUS_RESOURCES:', $html_content . '<!-- APTUS_RESOURCES:', $desc);
+                } else {
+                    $desc .= $html_content;
+                }
+            }
+            
+            $stmtU = $db->prepare("UPDATE formation SET description = :desc WHERE id_formation = :id");
+            $success = $stmtU->execute(['desc' => $desc, 'id' => $id_formation]);
+            echo json_encode(['success' => $success]);
+        } else {
+            echo json_encode(['success' => false]);
+        }
+        break;
+
     case 'delete_resource':
         require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
         $controller = new TuteurDashboardController();

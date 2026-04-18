@@ -25,6 +25,21 @@ if (!isset($content)) {
 }
 ?>
 
+<style>
+    .swal-ai-custom {
+        border-radius: 20px !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+        border: 1px solid #e5e7eb !important;
+    }
+    .badge-info {
+        background: #ebf5ff;
+        color: #3b82f6;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+</style>
+
 <div style="background: var(--bg-card); border-radius: 16px; padding: 2.5rem; margin-top: 2rem; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem;">
         <div>
@@ -97,7 +112,10 @@ if (!isset($content)) {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
             <!-- Ajouter Form -->
             <div style="background: var(--bg-surface); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
-                <h3 style="margin-bottom: 1.5rem; color: var(--text-primary);">Ajouter une ressource</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0; color: var(--text-primary);">Ajouter une ressource</h3>
+                    <button onclick="generateSyllabusIA()" id="ai-btn" class="btn" style="background: var(--gradient-primary); color: white; border: none; font-size: 0.85rem; padding: 0.5rem 1rem;"><i data-lucide="sparkles" style="width:14px; height:14px; margin-right: 5px;"></i> Assistant IA</button>
+                </div>
                 <form id="addResourceForm" onsubmit="addResource(event)">
                     <div style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Type</label>
@@ -217,6 +235,129 @@ if (!isset($content)) {
             alert('Erreur réseau / serveur.');
             console.error(err);
         });
+    }
+
+    function generateSyllabusIA() {
+        const btn = document.getElementById('ai-btn');
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '✨ Génération...';
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('action', 'generate_ai_syllabus');
+        formData.append('titre', '<?php echo addslashes($formation['titre']); ?>');
+        formData.append('domaine', '<?php echo addslashes($formation['domaine']); ?>');
+        formData.append('niveau', '<?php echo addslashes($formation['niveau']); ?>');
+
+        fetch('ajax_handler.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+            
+            if (data.success) {
+                const syllabus = data.data.syllabus;
+                const resume = data.data.resume_global;
+                
+                let html = `<p style="color:var(--text-secondary); margin-bottom:1.5rem;">${resume}</p>`;
+                html += `<div style="display:flex; flex-direction:column; gap:0.75rem; max-height:400px; overflow-y:auto; text-align:left;">`;
+                
+                syllabus.forEach((chap, idx) => {
+                    html += `
+                        <label style="display:block; background:var(--bg-card); padding:1rem; border-radius:8px; border:1px solid var(--border-color); cursor:pointer;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:5px;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <input type="checkbox" class="ai-chap-checkbox" value="${idx}" checked style="width:18px; height:18px; accent-color:var(--accent-primary);">
+                                    <strong style="color:var(--accent-primary);">#${idx+1} ${chap.chapitre}</strong>
+                                </div>
+                                <span class="badge badge-info" style="font-size:0.7rem;">${chap.duree}</span>
+                            </div>
+                            <p style="font-size:0.85rem; margin:0; margin-left:28px; opacity:0.8;">${chap.description}</p>
+                        </label>
+                    `;
+                });
+                html += `</div>`;
+                
+                Swal.fire({
+                    title: 'Syllabus Généré par IA',
+                    html: html,
+                    width: '700px',
+                    showCancelButton: true,
+                    confirmButtonText: '🪄 Ajouter ces chapitres',
+                    cancelButtonText: 'Annuler',
+                    background: '#ffffff',
+                    color: '#1f2937',
+                    customClass: {
+                        popup: 'swal-ai-custom'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const checkboxes = document.querySelectorAll('.ai-chap-checkbox');
+                        const selectedChapters = [];
+                        checkboxes.forEach(cb => {
+                            if(cb.checked) {
+                                selectedChapters.push(syllabus[parseInt(cb.value)]);
+                            }
+                        });
+                        if(selectedChapters.length > 0) {
+                            applySyllabus(resume, selectedChapters);
+                        } else {
+                            alert('Aucun chapitre sélectionné.');
+                        }
+                    }
+                });
+            } else {
+                alert('Erreur IA: ' + data.message);
+            }
+        })
+        .catch(err => {
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+            alert('Erreur de connexion à l\'IA.');
+        });
+    }
+
+    async function applySyllabus(resume, chapters) {
+        Swal.fire({ title: 'Application...', didOpen: () => { Swal.showLoading(); } });
+        
+        let htmlSyllabus = `<hr style="margin: 2rem 0; border: none; border-top: 1px dashed var(--border-color);"><h4 style="color:var(--accent-primary);">Syllabus Proposé</h4><p style="margin-bottom:1rem;">${resume}</p><ul style="list-style-type:none; padding:0; margin:0;">`;
+        for (const chap of chapters) {
+            htmlSyllabus += `
+                <li style="margin-bottom: 1rem; background: var(--bg-card); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-primary);">
+                    <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">${chap.chapitre} <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-secondary); float: right;">⏳ ${chap.duree}</span></div>
+                    <div style="font-size: 0.95rem; color: var(--text-secondary);">${chap.description}</div>
+                </li>
+            `;
+        }
+        htmlSyllabus += `</ul>`;
+
+        const formData = new FormData();
+        formData.append('action', 'append_ai_syllabus');
+        formData.append('id_formation', <?php echo $id_formation; ?>);
+        formData.append('html_content', htmlSyllabus);
+        
+        try {
+            const response = await fetch('ajax_handler.php', { method: 'POST', body: formData });
+            const resultText = await response.text();
+            console.log("Raw response:", resultText);
+            const data = JSON.parse(resultText);
+            
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Syllabus ajouté !',
+                    text: 'Le syllabus a été inséré dans la description de la formation.',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                alert("Erreur lors de l'enregistrement du syllabus : " + resultText);
+            }
+        } catch(e) {
+            alert("Erreur JS / Serveur : " + e.message);
+        }
     }
 
     function deleteResource(resId) {
