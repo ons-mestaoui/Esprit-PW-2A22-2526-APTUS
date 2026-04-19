@@ -326,8 +326,16 @@ function generatePDF(cvId) {
     };
 }
 
-function deleteCV(cvId) {
-    if(confirm('Voulez-vous vraiment supprimer ce CV ?')) {
+async function deleteCV(cvId) {
+    const card = document.querySelector(`#resume-${cvId}`);
+    const name = card ? card.querySelector('h3').textContent : 'ce CV';
+    
+    const ok = await aptusConfirm(
+        'Supprimer le CV ?', 
+        `Êtes-vous sûr de vouloir supprimer le CV de "${name}" ? Cette action est irréversible.`
+    );
+    
+    if(ok) {
         window.location.href = 'cv_delete.php?id=' + cvId;
     }
 }

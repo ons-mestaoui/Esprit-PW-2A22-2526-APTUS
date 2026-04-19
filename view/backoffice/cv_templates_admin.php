@@ -156,9 +156,9 @@ if (!isset($content)) {
                  <i data-lucide="pencil" style="width:14px;height:14px;"></i>
               </a>
               
-              <a href="cv_templates_admin.php?action=delete&id=<?php echo $t['id_template']; ?>" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer" onclick="return confirm('Voulez-vous vraiment supprimer ce template ?');">
+              <button class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer" onclick="deleteTemplate(<?php echo $t['id_template']; ?>, '<?php echo addslashes($t['nom']); ?>')">
                  <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
-              </a>
+              </button>
             </div>
           </td>
         </tr>
@@ -234,4 +234,14 @@ document.addEventListener('DOMContentLoaded', function() {
       ], { barColor: 'var(--chart-1)', height: 220 });
   }
 });
+
+async function deleteTemplate(id, name) {
+    const ok = await aptusConfirm(
+        'Supprimer le Template ?',
+        `Êtes-vous sûr de vouloir supprimer le template "${name}" ? Cette action est irréversible.`
+    );
+    if (ok) {
+        window.location.href = `cv_templates_admin.php?action=delete&id=${id}`;
+    }
+}
 </script>

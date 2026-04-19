@@ -172,8 +172,9 @@ if (!isset($content)) {
         <?php foreach ($dbTemplates as $t): 
           $tags = array_filter(array_map('trim', explode(',', $t['description'])));
           $mainTag = !empty($tags) ? $tags[0] : 'Général';
+          $tagsString = strtolower($t['description']);
         ?>
-        <div class="template-card animate-on-scroll" data-category="<?php echo htmlspecialchars($mainTag); ?>" id="template-<?php echo $t['id_template']; ?>">
+        <div class="template-card animate-on-scroll" data-tags="<?php echo htmlspecialchars($tagsString); ?>" data-name="<?php echo htmlspecialchars(strtolower($t['nom'])); ?>" data-id="<?php echo $t['id_template']; ?>" id="template-<?php echo $t['id_template']; ?>">
           <div class="template-card__preview">
             <?php if(!empty($t['urlMiniature'])): ?>
               <img src="<?php echo htmlspecialchars($t['urlMiniature']); ?>" alt="<?php echo htmlspecialchars($t['nom']); ?>" style="width:100%; height:100%; object-fit: cover; position:absolute; inset:0;">
@@ -211,13 +212,11 @@ if (!isset($content)) {
         </div>
         <?php endforeach; ?>
         
-        <?php if($totalAvailable === 0): ?>
-          <div style="grid-column: 1 / -1; text-align:center; padding: 40px; color: var(--text-tertiary);">
-              <i data-lucide="layout-template" style="width:48px;height:48px;margin-bottom:16px;opacity:0.5;"></i>
-              <h3>Aucun template disponible</h3>
-              <p>Revenez plus tard pour découvrir nos nouveaux modèles.</p>
-          </div>
-        <?php endif; ?>
+        <div id="no-template-msg" style="grid-column: 1 / -1; text-align:center; padding: 40px; color: var(--text-tertiary); display: <?php echo ($totalAvailable === 0) ? 'block' : 'none'; ?>;">
+            <i data-lucide="layout-template" style="width:48px;height:48px;margin-bottom:16px;opacity:0.5;"></i>
+            <h3>Aucun template disponible</h3>
+            <p>Essayez de modifier vos critères de recherche.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -436,49 +435,98 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const searchInput = document.getElementById('template-search');
-    const templateCards = document.querySelectorAll('.template-card');
+    const templateCards = Array.from(document.querySelectorAll('.template-card'));
     const categoryCheckboxes = document.querySelectorAll('.cv-sidebar__section:nth-child(1) input[type="checkbox"]');
     const styleRadios = document.querySelectorAll('.cv-sidebar__section:nth-child(2) input[type="radio"]');
-    
+    const sortRadios = document.querySelectorAll('.cv-sidebar__section:nth-child(3) input[type="radio"]');
+    const grid = document.querySelector('.cv-templates-grid');
+    const noTemplateMsg = document.getElementById('no-template-msg');
+
+    // Handle "Tous" logic for categories
+    const chkTous = categoryCheckboxes[0];
+    categoryCheckboxes.forEach((cb, idx) => {
+        cb.addEventListener('change', function() {
+            if (idx === 0 && this.checked) {
+                categoryCheckboxes.forEach((c, i) => { if (i !== 0) c.checked = false; });
+            } else if (idx !== 0 && this.checked) {
+                chkTous.checked = false;
+            } else if (idx !== 0 && !this.checked) {
+                let anyChecked = false;
+                categoryCheckboxes.forEach((c, i) => { if (i !== 0 && c.checked) anyChecked = true; });
+                if (!anyChecked) chkTous.checked = true;
+            }
+            filterTemplates();
+        });
+    });
+
     function filterTemplates() {
-        const query = searchInput.value.toLowerCase();
+        const query = searchInput ? searchInput.value.toLowerCase() : '';
         
         const activeCategories = [];
-        categoryCheckboxes.forEach((cb, idx) => {
-            if (cb.checked) {
-                if (idx === 0) activeCategories.push('tous');
-                else {
-                    const label = cb.closest('.cv-sidebar__option').textContent.trim().toLowerCase();
-                    activeCategories.push(label);
+        if (!chkTous.checked) {
+            categoryCheckboxes.forEach((cb, idx) => {
+                if (cb.checked && idx > 0) {
+                    activeCategories.push(cb.closest('label').textContent.trim().toLowerCase());
                 }
-            }
-        });
+            });
+        }
 
         let activeStyle = 'tous les styles';
         styleRadios.forEach(radio => {
             if (radio.checked) {
-                activeStyle = radio.closest('.cv-sidebar__option').textContent.trim().toLowerCase();
+                activeStyle = radio.closest('label').textContent.trim().toLowerCase();
             }
         });
 
-        templateCards.forEach(card => {
-            const name = card.querySelector('.template-card__name').textContent.toLowerCase();
-            const category = card.getAttribute('data-category').toLowerCase();
-            
-            const matchesSearch = name.includes(query);
-            const matchesCategory = activeCategories.includes('tous') || activeCategories.includes(category);
+        let activeSort = 'plus populaires';
+        sortRadios.forEach(radio => {
+            if (radio.checked) {
+                activeSort = radio.closest('label').textContent.trim().toLowerCase();
+            }
+        });
 
-            if (matchesSearch && matchesCategory) {
+        let visibleCount = 0;
+
+        templateCards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            const tags = card.getAttribute('data-tags');
+            
+            const matchesSearch = query === '' || name.includes(query) || tags.includes(query);
+            
+            let matchesCategory = chkTous.checked || activeCategories.length === 0;
+            if (!matchesCategory) {
+                matchesCategory = activeCategories.some(cat => tags.includes(cat));
+            }
+
+            let matchesStyle = activeStyle === 'tous les styles' || tags.includes(activeStyle);
+
+            if (matchesSearch && matchesCategory && matchesStyle) {
                 card.style.display = 'block';
                 card.style.animation = 'fadeIn 0.3s ease forwards';
+                visibleCount++;
             } else {
                 card.style.display = 'none';
             }
         });
+
+        // Sorting
+        const visibleCards = templateCards.filter(card => card.style.display === 'block');
+        visibleCards.sort((a, b) => {
+            if (activeSort === 'nom (a-z)') {
+                return a.getAttribute('data-name').localeCompare(b.getAttribute('data-name'));
+            } else {
+                // Plus récents / Plus populaires (Use ID descending by default)
+                return parseInt(b.getAttribute('data-id')) - parseInt(a.getAttribute('data-id'));
+            }
+        });
+
+        // Reorder DOM
+        visibleCards.forEach(card => grid.appendChild(card));
+        if(noTemplateMsg) noTemplateMsg.style.display = visibleCount === 0 ? 'block' : 'none';
     }
 
     if(searchInput) searchInput.addEventListener('input', filterTemplates);
-    categoryCheckboxes.forEach(cb => cb.addEventListener('change', filterTemplates));
     styleRadios.forEach(rd => rd.addEventListener('change', filterTemplates));
+    sortRadios.forEach(rd => rd.addEventListener('change', filterTemplates));
 });
 </script>

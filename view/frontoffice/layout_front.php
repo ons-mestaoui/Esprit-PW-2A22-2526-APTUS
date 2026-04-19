@@ -195,5 +195,47 @@
     <script src="../assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
   <script>lucide.createIcons();</script>
+  <div class="aptus-modal-overlay" id="confirm-modal">
+    <div class="aptus-modal-content">
+      <div class="modal-icon-circle">
+        <i data-lucide="trash-2" style="width:40px;height:40px;"></i>
+      </div>
+      <h3 class="aptus-modal-title" id="confirm-title">Supprimer ?</h3>
+      <p class="aptus-modal-text" id="confirm-text">Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.</p>
+      <div class="aptus-modal-footer">
+        <button class="btn-modal-cancel" id="confirm-cancel">Annuler</button>
+        <button class="btn-modal-confirm" id="confirm-ok">Oui, Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.aptusConfirm = function(title, text) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('confirm-modal');
+            const titleEl = document.getElementById('confirm-title');
+            const textEl = document.getElementById('confirm-text');
+            const okBtn = document.getElementById('confirm-ok');
+            const cancelBtn = document.getElementById('confirm-cancel');
+
+            if(title) titleEl.textContent = title;
+            if(text) textEl.textContent = text;
+            
+            modal.classList.add('active');
+            if(window.lucide) lucide.createIcons();
+
+            const cleanup = (val) => {
+                modal.classList.remove('active');
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+                resolve(val);
+            };
+
+            okBtn.onclick = () => cleanup(true);
+            cancelBtn.onclick = () => cleanup(false);
+            modal.onclick = (e) => { if(e.target === modal) cleanup(false); };
+        });
+    };
+  </script>
 </body>
 </html>

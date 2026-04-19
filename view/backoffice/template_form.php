@@ -41,14 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!preg_match('/<[a-z][\s\S]*>/i', $structureHtml)) {
         $backend_error = "Le code doit contenir des balises HTML valides (ex: <div>, <span>).";
     } 
-    // Blocage PHP complet (ouvertures et fermetures)
-    elseif (preg_match('/<\?php|<\?|\?>|<\s*script/i', $structureHtml)) {
-        $backend_error = "L'insertion de code PHP ou de balises <script> est strictement interdite.";
-    }
-    // Blocage des attributs JavaScript (onchange, onclick, etc.)
-    elseif (preg_match('/on[a-z]+\s*=/i', $structureHtml)) {
-        $backend_error = "Le code contient des attributs JavaScript interdits (événements 'on-'). Seul le HTML/CSS pur est autorisé.";
-    } 
     else {
         $tplObj = new Template(null, $nom, $description, $urlMiniature, $structureHtml, $estPremium);
         

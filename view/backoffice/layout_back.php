@@ -12,15 +12,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_back.css">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/layout_back.css">
   <?php if (isset($pageCSS)): ?>
-    <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/<?php echo $pageCSS; ?>">
+    <link rel="stylesheet" href="../assets/css/<?php echo $pageCSS; ?>">
   <?php endif; ?>
+  <link rel="stylesheet" href="../assets/css/cv_premium.css">
 
   <!-- Theme Toggle (load early to avoid flash) -->
-  <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+  <script src="../assets/js/theme-toggle.js"></script>
 </head>
 <body>
 
@@ -32,7 +33,7 @@
     <aside class="sidebar" id="sidebar">
       <!-- Logo -->
       <div class="sidebar__header">
-        <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="sidebar__logo-icon" style="background:none;padding:2px;">
+        <img src="../assets/img/logo.png" alt="Aptus" class="sidebar__logo-icon" style="background:none;padding:2px;">
         <span class="sidebar__logo-text">Aptus</span>
       </div>
 
@@ -156,12 +157,54 @@
 
   <!-- Scripts -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="/aptus_first_official_version/view/assets/js/nav.js"></script>
-  <script src="/aptus_first_official_version/view/assets/js/forms.js"></script>
-  <script src="/aptus_first_official_version/view/assets/js/charts.js"></script>
+  <script src="../assets/js/nav.js"></script>
+  <script src="../assets/js/forms.js"></script>
+  <script src="../assets/js/charts.js"></script>
   <?php if (isset($pageJS)): ?>
-    <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
+    <script src="../assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
   <script>lucide.createIcons();</script>
+  <div class="aptus-modal-overlay" id="confirm-modal">
+    <div class="aptus-modal-content">
+      <div class="modal-icon-circle">
+        <i data-lucide="trash-2" style="width:40px;height:40px;"></i>
+      </div>
+      <h3 class="aptus-modal-title" id="confirm-title">Supprimer ?</h3>
+      <p class="aptus-modal-text" id="confirm-text">Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.</p>
+      <div class="aptus-modal-footer">
+        <button class="btn-modal-cancel" id="confirm-cancel">Annuler</button>
+        <button class="btn-modal-confirm" id="confirm-ok">Oui, Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.aptusConfirm = function(title, text) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('confirm-modal');
+            const titleEl = document.getElementById('confirm-title');
+            const textEl = document.getElementById('confirm-text');
+            const okBtn = document.getElementById('confirm-ok');
+            const cancelBtn = document.getElementById('confirm-cancel');
+
+            if(title) titleEl.textContent = title;
+            if(text) textEl.textContent = text;
+            
+            modal.classList.add('active');
+            if(window.lucide) lucide.createIcons();
+
+            const cleanup = (val) => {
+                modal.classList.remove('active');
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+                resolve(val);
+            };
+
+            okBtn.onclick = () => cleanup(true);
+            cancelBtn.onclick = () => cleanup(false);
+            modal.onclick = (e) => { if(e.target === modal) cleanup(false); };
+        });
+    };
+  </script>
 </body>
 </html>
