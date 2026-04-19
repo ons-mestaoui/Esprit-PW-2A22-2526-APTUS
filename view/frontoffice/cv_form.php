@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * cv_form.php — CV Builder (Aptus Edition)
  * Fixed version with real-time sync, blocking validation, and sidebar checks.
@@ -426,6 +426,16 @@ function initIframe() {
     if(!iframe) return;
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     const receiver = `
+    <style>
+        .highlight-active {
+            outline: 2px solid #6B34A3 !important;
+            outline-offset: 4px;
+            background: rgba(107, 52, 163, 0.05) !important;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 10;
+        }
+    </style>
     <script>
         window.addEventListener('message', function(e) {
             if (e.data.type === 'cv-update') {
@@ -445,7 +455,6 @@ function initIframe() {
                 else if (d.field === 'langues') setVal('#preview-langues, .cv-languages, .languages-list, .cv-langues', d.value, true);
                 else if (d.field === 'formation') setVal('#preview-formation, .cv-edu, .education-list, .cv-formation', d.value, true);
                 else if (d.field === 'infoContact') {
-                    // Fix literal <br> bug by using innerHTML for contact only
                     const clean = d.value.split('|').map(s => s.trim()).join('<br>');
                     setVal('.contact-info, #preview-infoContact, .cv-contact, .contact-details', clean, true);
                 }
@@ -453,21 +462,66 @@ function initIframe() {
                 return;
             }
             if (e.data.type === 'highlight-section') {
-                document.querySelectorAll('.highlight-active').forEach(el => el.classList.remove('highlight-active'));
+                document.querySelectorAll('.highlight-active').forEach(el => {
+                    el.classList.remove('highlight-active');
+                    el.style.outline = 'none';
+                    el.style.background = 'none';
+                });
                 const step = e.data.step;
-                const kMap = { 2:['résumé','profil','summary'], 3:['expérience','experience'], 4:['compétence','skills'], 5:['formation','education'], 6:['langue','language'] };
+                const kMap = { 
+                    2:['résumé','summary','propos','profil'], 
+                    3:['expérience','experience','parcours','stages','work','emploi'], 
+                    4:['compétence','skills','aptitudes','technique','outils','expert'], 
+                    5:['formation','education','scolaire','academic','études','diplômes'], 
+                    6:['langue','language','linguistique','linguistiques'] 
+                };
                 let target = null;
-                if (step === 1) target = document.querySelector('.cv-header, .header-info, .sidebar');
-                else if (kMap[step]) {
-                    const titles = document.querySelectorAll('h1,h2,h3,h4,.section-title,.main-title');
-                    for (const t of titles) { if(kMap[step].some(k => t.textContent.toLowerCase().includes(k))) { target = t.closest('.cv-section') || t.parentElement; break; } }
+                if (step === 1) {
+                    target = document.querySelector('.cv-header, .header-info, h1, .sidebar-header');
+                } else if (kMap[step]) {
+                    // Search all elements that might be headers
+                    const possibleTitles = document.querySelectorAll('h1,h2,h3,h4,h5,p,div,span');
+                    for (const t of possibleTitles) { 
+                        const txt = t.textContent.trim().toLowerCase();
+                        if (txt.length < 30 && kMap[step].some(k => txt.includes(k))) { 
+                            // Climb to find the logical section
+                            let current = t;
+                            let best = t;
+                            while(current && current.tagName !== 'BODY' && current.tagName !== 'HTML') {
+                                if (current.classList.contains('cv-section') || current.classList.contains('section')) {
+                                    best = current;
+                                    break;
+                                }
+                                // If we find a div that seems to be a container (has siblings and siblings have titles)
+                                if (current.tagName === 'DIV' && current.offsetHeight < document.body.offsetHeight * 0.8) {
+                                    best = current;
+                                }
+                                current = current.parentElement;
+                            }
+                            target = best;
+                            break; 
+                        } 
+                    }
                 }
-                if (target) { target.classList.add('highlight-active'); target.scrollIntoView({ behavior:'smooth', block:'center' }); }
+                if (target) { 
+                    target.classList.add('highlight-active');
+                    // Force styles to ensure visibility (sometimes classes aren't enough in iframes)
+                    target.style.outline = '3px solid #6B34A3';
+                    target.style.outlineOffset = '4px';
+                    target.style.borderRadius = '4px';
+                    target.style.backgroundColor = 'rgba(107, 52, 163, 0.05)';
+                    target.scrollIntoView({ behavior:'smooth', block:'center' }); 
+                }
             }
         });
     <\/script>`;
     doc.open(); doc.write(TEMPLATE_HTML.replace('</body>', receiver + '</body>')); doc.close();
-    setTimeout(scaleIframe, 350);
+    
+    // Initial sync of all data once iframe is alive
+    setTimeout(() => {
+        syncAllData();
+        scaleIframe();
+    }, 500);
 }
 
 function scaleIframe() {
@@ -496,9 +550,34 @@ function syncField(el) {
     if(ifrm && ifrm.contentWindow) {
         if(field) ifrm.contentWindow.postMessage({ type: 'cv-update', field, value: el.value || '---' }, '*');
         if(['input-email','input-phone','input-location'].includes(el.id)) {
-            const contact = [document.getElementById('input-email').value, document.getElementById('input-phone').value, document.getElementById('input-location').value].filter(x=>x).join(' | ');
+            const email = document.getElementById('input-email').value;
+            const phone = document.getElementById('input-phone').value;
+            const loc   = document.getElementById('input-location').value;
+            const contact = [email, phone, loc].filter(x => x.trim()).join(' | ');
             ifrm.contentWindow.postMessage({ type: 'cv-update', field: 'infoContact', value: contact }, '*');
         }
+    }
+}
+
+function syncAllData() {
+    const fields = ['input-name','input-title','input-email','input-phone','input-location','input-summary','input-experience','input-education'];
+    fields.forEach(id => { const el = document.getElementById(id); if(el) syncField(el); });
+    
+    // Sync Skills & Languages
+    renderTags(); 
+    syncLangs();
+    
+    // Sync Photo
+    const photo = document.getElementById('photo-b64').value;
+    const ifrm = document.getElementById('template-preview-frame');
+    if (ifrm && ifrm.contentWindow && photo) {
+        ifrm.contentWindow.postMessage({ type: 'cv-update', field: 'photo', value: photo }, '*');
+    }
+    
+    // Sync Color
+    const color = document.getElementById('color-picker').value;
+    if (ifrm && ifrm.contentDocument) {
+        ifrm.contentDocument.documentElement.style.setProperty('--cv-accent', color);
     }
 }
 
