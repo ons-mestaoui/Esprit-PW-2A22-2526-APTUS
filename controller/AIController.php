@@ -3,7 +3,8 @@
 class AIController {
     
     private string $ollamaEndpoint = 'http://127.0.0.1:11434/api/generate';
-    private string $model = 'mistral';
+    // Le modèle de polish est changé pour llama3.2:3b comme demandé
+    private string $model = 'llama3.2:3b';
 
     public function polishText(string $text, string $context): string {
         if (empty(trim($text))) {
@@ -65,5 +66,57 @@ class AIController {
         $response = preg_replace('/^(Voici.*?:|Texte final :|Texte révisé :|Texte corrigé :|Texte .*?:)\s*/im', '', $response);
         $response = trim($response, "\"\'\n\r");
         return $response;
+    }
+
+    public function analyzeCV(string $cvText): string {
+        if (empty(trim($cvText))) {
+            return json_encode(['error' => 'Texte du CV vide.']);
+        }
+
+        $prompt = "Tu es un auditeur ATS impitoyable et un expert en recrutement. Fais une analyse EXTRÊMEMENT DÉTAILLÉE du CV suivant. " .
+                  "Traque particulièrement les erreurs de logique (ex: la même langue répétée avec des niveaux différents), les manques de précision, et l'absence de résultats chiffrés. " .
+                  "Tu DOIS retourner EXCLUSIVEMENT un objet JSON valide (sans aucun texte avant ou après), et il doit respecter ce schéma exact : " .
+                  "{" .
+                  "\"score_ats\": 85, " .
+                  "\"points_forts\": [\"Argument détaillé 1\", \"Argument détaillé 2\", \"Argument détaillé 3\"], " .
+                  "\"points_faibles\": [\"Critique détaillée 1 expliquant comment corriger\", \"Critique détaillée 2 signalant une erreur de logique\", \"Critique détaillée 3\", \"Critique détaillée 4\"]" .
+                  "}. Le score_ats est un entier entre 0 et 100. Trouve au moins 4 points faibles très spécifiques. " .
+                  "Voici le CV à auditer :\n\n" . $cvText;
+
+        $payload = json_encode([
+            "model" => "mistral", // L'analyse d'audit utilise explicitement le modèle plus puissant "mistral"
+            "prompt" => $prompt,
+            "stream" => false,
+            "format" => "json"
+        ]);
+
+        $ch = curl_init($this->ollamaEndpoint);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 300); 
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode !== 200 || $response === false) {
+            error_log("Ollama AI Analysis Error: " . $error);
+            return json_encode(["score_ats" => 0, "points_forts" => [], "points_faibles" => ["Erreur de connexion à Mistral. Vérifiez qu'Ollama est actif."]]);
+        }
+
+        $responseData = json_decode($response, true);
+        $rawText = $responseData['response'] ?? '{}';
+        
+        // Ensure mistral returned valid JSON (sometimes it still prefixes something)
+        $jsonStart = strpos($rawText, '{');
+        $jsonEnd = strrpos($rawText, '}');
+        if ($jsonStart !== false && $jsonEnd !== false) {
+            $rawText = substr($rawText, $jsonStart, $jsonEnd - $jsonStart + 1);
+        }
+        
+        return $rawText;
     }
 }

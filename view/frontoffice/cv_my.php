@@ -88,13 +88,24 @@ if (!isset($content)) {
       $phone = $parts[1] ?? '';
       $location = $parts[2] ?? '';
       $contactStr = implode(' | ', array_filter([$email, $phone, $location]));
+
+      $aiData = null;
+      if (!empty($cv['ai_analysis'])) {
+          $aiData = json_decode($cv['ai_analysis'], true);
+      }
   ?>
   
   <div class="dashboard-card" id="resume-<?php echo $cv['id_cv']; ?>">
     
     <!-- Scaled CV Preview (exact same technique as cv-builder-v2) -->
-    <div class="dashboard-preview-wrapper" style="--cv-accent: <?php echo htmlspecialchars($theme); ?>;">
+    <div class="dashboard-preview-wrapper" style="--cv-accent: <?php echo htmlspecialchars($theme); ?>; position: relative;">
       
+      <?php if($aiData && isset($aiData['score_ats'])): ?>
+      <div style="position:absolute; top:10px; left:10px; z-index:10; background:rgba(0,0,0,0.8); color:#fff; padding:6px 14px; border-radius:20px; font-weight:bold; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 10px rgba(0,0,0,0.2); transition:transform 0.2s;" onclick="showAIAudit(<?php echo htmlspecialchars(json_encode($aiData), ENT_QUOTES, 'UTF-8'); ?>)" class="ats-badge-hover">
+          <i data-lucide="bar-chart-2" style="width:14px;"></i> Score ATS : <?php echo $aiData['score_ats']; ?>%
+      </div>
+      <?php endif; ?>
+
       <!-- Eye overlay on hover -->
       <div class="overlay-eye" onclick="window.location.href='cv_form.php?cv_id=<?php echo $cv['id_cv']; ?>'">
         <i class="fa-solid fa-eye"></i>
@@ -144,10 +155,16 @@ if (!isset($content)) {
         Modifié le <?php echo date('d M Y', strtotime($cv['dateMiseAJour'])); ?>
       </p>
       <div class="dashboard-actions">
-        <div>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
           <a href="cv_form.php?cv_id=<?php echo $cv['id_cv']; ?>" class="btn-primary-cv" style="text-decoration:none; font-size:0.8rem; padding:0.5rem 1rem;">
             <i data-lucide="edit-3" style="width:14px;height:14px;display:inline;vertical-align:-2px;"></i> Éditer
           </a>
+          
+          <?php if($aiData && isset($aiData['score_ats'])): ?>
+            <button class="btn-ai-premium" style="font-size:0.75rem; padding:0.4rem 0.8rem; border-radius:8px;" onclick="showAIAudit(<?php echo htmlspecialchars(json_encode($aiData), ENT_QUOTES, 'UTF-8'); ?>)">
+              <i data-lucide="bar-chart-2" style="width:14px;height:14px;"></i> Audit IA
+            </button>
+          <?php endif; ?>
         </div>
         <div style="display:flex; gap:0.5rem;">
           <button class="btn-secondary-cv" style="font-size:0.8rem; padding:0.5rem 1rem;" onclick="generatePDF(<?php echo $cv['id_cv']; ?>)">
@@ -179,6 +196,40 @@ if (!isset($content)) {
 
 <!-- Hidden Print Frame -->
 <iframe id="print-frame" style="display:none;"></iframe>
+
+<!-- VIEW IA AUDIT MODAL -->
+<div id="view-audit-modal" class="aptus-modal-overlay" onclick="if(event.target===this) this.classList.remove('active');">
+    <div class="aptus-modal-content" style="max-width: 600px; text-align:left;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <div>
+                <h2 style="font-size:1.6rem; display:flex; align-items:center; gap:8px; margin-bottom:5px;"><i data-lucide="bar-chart-2" style="color:var(--accent-primary);"></i> Audit IA du CV</h2>
+                <p style="color:var(--text-secondary); margin:0;">Note générée par Mistral (Optimisation ATS)</p>
+            </div>
+            <div class="ats-score-circle" id="view-score-circle">
+                <span id="view-score-value">0</span>%
+            </div>
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-height:400px; overflow-y:auto; padding-right:5px;">
+            <div class="audit-card strengths">
+                <h4 style="color:#10b981; display:flex; align-items:center; gap:6px; margin-bottom:10px;"><i data-lucide="check-circle" style="width:16px;"></i> Points Forts</h4>
+                <ul id="view-strengths" style="margin:0; padding-left:20px; color:var(--text-secondary); font-size:0.9rem; line-height:1.5;"></ul>
+            </div>
+            <div class="audit-card weaknesses">
+                <h4 style="color:#f59e0b; display:flex; align-items:center; gap:6px; margin-bottom:10px;"><i data-lucide="alert-circle" style="width:16px;"></i> À Améliorer</h4>
+                <ul id="view-weaknesses" style="margin:0; padding-left:20px; color:var(--text-secondary); font-size:0.9rem; line-height:1.5;"></ul>
+            </div>
+        </div>
+
+        <div style="text-align:right; margin-top:20px;">
+            <button class="btn-modal-cancel" onclick="document.getElementById('view-audit-modal').classList.remove('active');" style="padding:10px 24px;">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.ats-badge-hover:hover { transform: scale(1.05); background: var(--accent-primary) !important; }
+</style>
 
 <script>
 // Set active nav
@@ -338,5 +389,52 @@ async function deleteCV(cvId) {
     if(ok) {
         window.location.href = 'cv_delete.php?id=' + cvId;
     }
+}
+
+function animateATSScore(targetScore, elementId) {
+    let currentScore = 0;
+    const duration = 1500; 
+    const fps = 60;
+    const increment = targetScore / (duration / (1000/fps));
+    const el = document.getElementById(elementId);
+    
+    if (targetScore <= 0) { el.textContent = 0; return; }
+
+    const interval = setInterval(() => {
+        currentScore += increment;
+        if (currentScore >= targetScore) {
+            currentScore = targetScore;
+            clearInterval(interval);
+        }
+        el.textContent = Math.floor(currentScore);
+    }, 1000/fps);
+}
+
+function showAIAudit(r) {
+    const modal = document.getElementById('view-audit-modal');
+    modal.classList.add('active');
+    
+    const circle = document.getElementById('view-score-circle');
+    
+    // Animation dynamique du score à chaque ouverture
+    document.getElementById('view-score-value').textContent = "0";
+    animateATSScore(r.score_ats || 0, 'view-score-value');
+            
+    circle.className = 'ats-score-circle'; // reset
+    if (r.score_ats >= 80) circle.classList.add('green');
+    else if (r.score_ats >= 50) circle.classList.add('orange');
+    else circle.classList.add('red');
+
+    const sList = document.getElementById('view-strengths');
+    sList.innerHTML = '';
+    (r.points_forts || []).forEach(pt => {
+        const li = document.createElement('li'); li.textContent = pt; sList.appendChild(li);
+    });
+
+    const wList = document.getElementById('view-weaknesses');
+    wList.innerHTML = '';
+    (r.points_faibles || []).forEach(pt => {
+        const li = document.createElement('li'); li.textContent = pt; wList.appendChild(li);
+    });
 }
 </script>

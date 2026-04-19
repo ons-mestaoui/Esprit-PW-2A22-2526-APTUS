@@ -8,8 +8,8 @@ class CVC
     {
         $db = config::getConnexion();
         $query = $db->prepare(
-            'INSERT INTO cv (id_candidat, id_template, nomDocument, nomComplet, titrePoste, resume, infoContact, experience, formation, competences, langues, urlPhoto, couleurTheme, statut, dateCreation, dateMiseAJour) 
-            VALUES (:id_candidat, :id_template, :nomDocument, :nomComplet, :titrePoste, :resume, :infoContact, :experience, :formation, :competences, :langues, :urlPhoto, :couleurTheme, :statut, NOW(), NOW())'
+            'INSERT INTO cv (id_candidat, id_template, nomDocument, nomComplet, titrePoste, resume, infoContact, experience, formation, competences, langues, urlPhoto, couleurTheme, statut, dateCreation, dateMiseAJour, ai_analysis) 
+            VALUES (:id_candidat, :id_template, :nomDocument, :nomComplet, :titrePoste, :resume, :infoContact, :experience, :formation, :competences, :langues, :urlPhoto, :couleurTheme, :statut, NOW(), NOW(), :ai_analysis)'
         );
         $query->execute([
             'id_candidat' => $cv->getIdCandidat(),
@@ -25,7 +25,8 @@ class CVC
             'langues'     => $cv->getLangues(),
             'urlPhoto'    => $cv->getUrlPhoto(),
             'couleurTheme'=> $cv->getCouleurTheme(),
-            'statut'      => $cv->getStatut()
+            'statut'      => $cv->getStatut(),
+            'ai_analysis' => $cv->getAiAnalysis()
         ]);
         return $db->lastInsertId();
     }
@@ -68,6 +69,7 @@ class CVC
                 langues       = :langues,
                 urlPhoto      = :urlPhoto,
                 couleurTheme  = :couleurTheme,
+                ai_analysis   = :ai_analysis,
                 dateMiseAJour = NOW()
             WHERE id_cv = :id'
         );
@@ -83,6 +85,7 @@ class CVC
             'langues'     => $cv->getLangues(),
             'urlPhoto'    => $cv->getUrlPhoto(),
             'couleurTheme'=> $cv->getCouleurTheme(),
+            'ai_analysis' => $cv->getAiAnalysis(),
             'id'          => $id
         ]);
     }

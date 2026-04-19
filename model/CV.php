@@ -19,6 +19,7 @@ class CV
     private ?string $statut;
     private ?string $dateCreation;
     private ?string $dateMiseAJour;
+    private ?string $ai_analysis;
 
     public function __construct(
         ?int $id_cv = null,
@@ -37,7 +38,8 @@ class CV
         ?string $couleurTheme = "#2563eb",
         ?string $statut = "en_attente",
         ?string $dateCreation = null,
-        ?string $dateMiseAJour = null
+        ?string $dateMiseAJour = null,
+        ?string $ai_analysis = null
     ) {
         $this->id_cv = $id_cv;
         $this->id_candidat = $id_candidat;
@@ -56,6 +58,7 @@ class CV
         $this->statut = $statut;
         $this->dateCreation = $dateCreation;
         $this->dateMiseAJour = $dateMiseAJour;
+        $this->ai_analysis = $ai_analysis;
     }
 
     // Getters
@@ -76,6 +79,7 @@ class CV
     public function getStatut(): ?string { return $this->statut; }
     public function getDateCreation(): ?string { return $this->dateCreation; }
     public function getDateMiseAJour(): ?string { return $this->dateMiseAJour; }
+    public function getAiAnalysis(): ?string { return $this->ai_analysis; }
 
     // Setters
     public function setNomDocument(?string $nom): void { $this->nomDocument = $nom; }
@@ -90,4 +94,5 @@ class CV
     public function setUrlPhoto(?string $url): void { $this->urlPhoto = $url; }
     public function setCouleurTheme(?string $color): void { $this->couleurTheme = $color; }
     public function setStatut(?string $statut): void { $this->statut = $statut; }
+    public function setAiAnalysis(?string $analysis): void { $this->ai_analysis = $analysis; }
 }

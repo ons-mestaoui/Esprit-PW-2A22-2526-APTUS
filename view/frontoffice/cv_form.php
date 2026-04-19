@@ -248,6 +248,61 @@ if (!isset($content)) {
     </aside>
 </div>
 
+<!-- SYSTEME IA AUDIT ATS -->
+<div id="ai-audit-overlay" class="aptus-modal-overlay">
+    <!-- Étape 1 : Le Choix -->
+    <div id="ai-audit-prompt" class="aptus-modal-content">
+        <div class="modal-icon-circle" style="background: rgba(107, 52, 163, 0.1); color: var(--accent-primary); margin: 0 auto 1.5rem auto; display:flex; align-items:center; justify-content:center;">
+            <i data-lucide="sparkles" style="width: 40px; height: 40px;"></i>
+        </div>
+        <h2 style="font-size:1.5rem; margin-bottom:1rem;">CV Enregistré ! 🎉</h2>
+        <p style="color:var(--text-secondary); margin-bottom:1.5rem; line-height:1.6;">
+            Souhaitez-vous que notre IA experte analyse ce CV (Audit ATS, Score, et Conseils) avant de quitter ?
+        </p>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <button class="btn-modal-confirm" onclick="startAIAudit()">✨ Analyser mon CV (Gratuit)</button>
+            <button class="btn-secondary-cv" style="border:none;" onclick="window.location.href='cv_my.php'">Non merci, aller à Mes CVs</button>
+        </div>
+    </div>
+
+    <!-- Étape 2 : Le Scanner -->
+    <div id="ai-audit-scanner" class="aptus-modal-content" style="display:none; text-align:center;">
+        <div style="margin: 2rem 0;">
+            <i data-lucide="scan-line" style="width: 70px; height: 70px; color: var(--accent-primary); animation: scanPulse 1.5s infinite;"></i>
+        </div>
+        <h3 style="margin-bottom:0.5rem;">Audit par Mistral IA en cours...</h3>
+        <p id="audit-status-text" style="color:var(--text-tertiary); font-family:monospace; margin-bottom: 2rem;">Lecture du contenu du CV...</p>
+        <div style="background:var(--bg-secondary); height:6px; border-radius:3px; overflow:hidden;">
+            <div id="audit-progress" style="width:10%; height:100%; background:linear-gradient(90deg, #10b981, #3b82f6); transition:width 0.4s ease;"></div>
+        </div>
+    </div>
+
+    <!-- Étape 3 : Le Dashboard -->
+    <div id="ai-audit-dashboard" class="aptus-modal-content" style="display:none; max-width: 600px; text-align:left;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <div>
+                <h2 style="font-size:1.6rem; display:flex; align-items:center; gap:8px;"><i data-lucide="bar-chart-2" style="color:var(--accent-primary);"></i> Rapport d'Audit ATS</h2>
+            </div>
+            <div class="ats-score-circle" id="ats-score-circle">
+                <span id="ats-score-value">0</span>%
+            </div>
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-height:400px; overflow-y:auto; padding-right:5px;">
+            <div class="audit-card strengths">
+                <h4 style="color:#10b981; display:flex; align-items:center; gap:6px; margin-bottom:10px;"><i data-lucide="check-circle" style="width:16px;"></i> Points Forts</h4>
+                <ul id="ats-strengths" style="margin:0; padding-left:20px; color:var(--text-secondary); font-size:0.9rem; line-height:1.5;"></ul>
+            </div>
+            <div class="audit-card weaknesses">
+                <h4 style="color:#f59e0b; display:flex; align-items:center; gap:6px; margin-bottom:10px;"><i data-lucide="alert-circle" style="width:16px;"></i> À Améliorer</h4>
+                <ul id="ats-weaknesses" style="margin:0; padding-left:20px; color:var(--text-secondary); font-size:0.9rem; line-height:1.5;"></ul>
+            </div>
+        </div>
+
+        <button class="btn-modal-confirm" style="width:100%; margin-top: 2rem;" onclick="window.location.href='cv_my.php'">Terminer et aller à Mes CVs</button>
+    </div>
+</div>
+
 <?php
 $templateHtml = $template['structureHtml'] ?? '';
 $isFullHtml = stripos($templateHtml, '<html') !== false;
@@ -673,14 +728,115 @@ function setupSmartAutocomplete(inp, db, isSkill = false) {
     });
 }
 
+let AUDIT_CV_ID = null;
+
+function animateATSScore(targetScore, elementId) {
+    let currentScore = 0;
+    const duration = 1500; 
+    const fps = 60;
+    const increment = targetScore / (duration / (1000/fps));
+    const el = document.getElementById(elementId);
+    
+    if (targetScore <= 0) { el.textContent = 0; return; }
+
+    const interval = setInterval(() => {
+        currentScore += increment;
+        if (currentScore >= targetScore) {
+            currentScore = targetScore;
+            clearInterval(interval);
+        }
+        el.textContent = Math.floor(currentScore);
+    }, 1000/fps);
+}
+
 async function saveCV() {
     const b = document.getElementById('btn-save'); b.disabled = true; b.textContent = 'Enregistrement...';
     const d = { cv_id: CV_ID, template_id: TEMPLATE_ID, name: document.getElementById('input-name').value.trim(), title: document.getElementById('input-title').value.trim(), email: document.getElementById('input-email').value.trim(), phone: document.getElementById('input-phone').value.trim(), location: document.getElementById('input-location').value.trim(), summary: document.getElementById('input-summary').value.trim(), experience: document.getElementById('input-experience').value, skills: document.getElementById('input-skills').value, education: document.getElementById('input-education').value, languages: document.getElementById('input-languages').value, photo: document.getElementById('photo-b64').value, color_theme: document.getElementById('color-picker').value };
     try {
         const rs = await fetch('cv_save.php', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) });
-        const rj = await rs.json(); if(rj.success) window.location.href = 'cv_my.php'; else alert('Erreur: ' + rj.message);
+        const rj = await rs.json(); 
+        if(rj.success) {
+            AUDIT_CV_ID = rj.id;
+            // Ne pas rediriger, afficher la modale d'analyse IA
+            document.getElementById('ai-audit-overlay').classList.add('active');
+        } else {
+            alert('Erreur: ' + rj.message);
+        }
     } catch(e) { alert('Erreur de connexion.'); } finally { b.disabled = false; b.textContent = 'Enregistrer le CV'; }
 }
+
+async function startAIAudit() {
+    document.getElementById('ai-audit-prompt').style.display = 'none';
+    document.getElementById('ai-audit-scanner').style.display = 'block';
+    
+    // Fake progress text
+    const progText = document.getElementById('audit-status-text');
+    const progBar = document.getElementById('audit-progress');
+    const steps = ['Lecture du contenu du CV...', 'Analyse du score ATS...', 'Vérification des mots-clés...', 'Compilation du rapport final...'];
+    let stepIndex = 0;
+    const interval = setInterval(() => {
+        stepIndex++;
+        if(stepIndex < steps.length) progText.textContent = steps[stepIndex];
+        progBar.style.width = (20 + (stepIndex * 20)) + '%';
+    }, 2000);
+
+    // Build massive string
+    const cvTextData = `
+Titre visé: ${document.getElementById('input-title').value.trim()}
+Résumé: ${document.getElementById('input-summary').value.trim()}
+Expériences: ${document.getElementById('input-experience').value}
+Formation: ${document.getElementById('input-education').value}
+Compétences: ${document.getElementById('input-skills').value}
+    `.trim();
+
+    try {
+        const response = await fetch('ajax_ai_analyze_cv.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_cv: AUDIT_CV_ID, cvText: cvTextData })
+        });
+        const data = await response.json();
+        clearInterval(interval);
+        
+        if (data.success && data.report) {
+            document.getElementById('ai-audit-scanner').style.display = 'none';
+            document.getElementById('ai-audit-dashboard').style.display = 'block';
+            
+            const r = data.report;
+            const circle = document.getElementById('ats-score-circle');
+            
+            // Lancer l'animation dynamique du score
+            animateATSScore(r.score_ats || 0, 'ats-score-value');
+            
+            circle.className = 'ats-score-circle'; // reset
+            if (r.score_ats >= 80) circle.classList.add('green');
+            else if (r.score_ats >= 50) circle.classList.add('orange');
+            else circle.classList.add('red');
+
+            const sList = document.getElementById('ats-strengths');
+            sList.innerHTML = '';
+            (r.points_forts || []).forEach(pt => {
+                const li = document.createElement('li'); li.textContent = pt; sList.appendChild(li);
+            });
+
+            const wList = document.getElementById('ats-weaknesses');
+            wList.innerHTML = '';
+            (r.points_faibles || []).forEach(pt => {
+                const li = document.createElement('li'); li.textContent = pt; wList.appendChild(li);
+            });
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        } else {
+            alert("Erreur lors de l'analyse : " + (data.error || "Inconnue"));
+            window.location.href = 'cv_my.php';
+        }
+    } catch(err) {
+        clearInterval(interval);
+        alert("Erreur réseau (Ollama local injoignable).");
+        window.location.href = 'cv_my.php';
+    }
+}
+
     // ==========================================
     // IA Polish Integration (Ollama Local)
     // ==========================================
