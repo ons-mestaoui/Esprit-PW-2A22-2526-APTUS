@@ -85,16 +85,14 @@ class offreC{
             $sql = "SELECT o.*, u.nom as nom_entreprise 
                     FROM offreemploi o 
                     LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur
-                    WHERE (o.titre LIKE :kw 
-                       OR o.domaine LIKE :kw2
-                       OR u.nom LIKE :kw3)";
+                    WHERE o.titre LIKE :kw";
             if ($onlyActive) {
                 $sql .= " AND o.statut = 'Actif'";
             }
             $sql .= " ORDER BY o.date_publication DESC";
             $like = '%' . $keyword . '%';
             $req = $db->prepare($sql);
-            $req->execute(['kw' => $like, 'kw2' => $like, 'kw3' => $like]);
+            $req->execute(['kw' => $like]);
             return $req;
         } catch (Exception $e) {
             die('Erreur: ' . $e->getMessage());
