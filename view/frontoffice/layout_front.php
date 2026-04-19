@@ -12,17 +12,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_front.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/landing_dynamic.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/auth.css">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/layout_front.css">
+  <link rel="stylesheet" href="../assets/css/landing_dynamic.css">
+  <link rel="stylesheet" href="../assets/css/auth.css">
   <?php if (isset($pageCSS)): ?>
-    <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/<?php echo $pageCSS; ?>">
+    <link rel="stylesheet" href="../assets/css/<?php echo $pageCSS; ?>">
   <?php endif; ?>
 
   <!-- Theme Toggle (load early to avoid flash) -->
-  <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+  <script src="../assets/js/theme-toggle.js"></script>
 </head>
 <body>
 
@@ -43,7 +43,7 @@
     <?php $currentRole = isset($userRole) ? $userRole : 'Candidat'; ?>
     <!-- Logo -->
     <a href="<?php echo ($currentRole === 'Entreprise') ? 'hr_posts.php' : 'jobs_feed.php'; ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
-      <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="landing-nav__logo-icon" style="background:none;">
+      <img src="../assets/img/logo.png" alt="Aptus" class="landing-nav__logo-icon" style="background:none;">
       <span class="gradient-text accent-font h4 m-0">Aptus</span>
     </a>
 
@@ -147,7 +147,7 @@
     <div class="front-footer__grid">
       <div class="front-footer__brand">
         <a href="/" class="topnav__logo">
-          <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="topnav__logo-icon" style="background:none;">
+          <img src="../assets/img/logo.png" alt="Aptus" class="topnav__logo-icon" style="background:none;">
           <span>Aptus</span>
         </a>
         <p>Plateforme intelligente de recrutement et d'apprentissage propulsée par l'intelligence artificielle.</p>
@@ -188,11 +188,11 @@
   <!-- Scripts -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
-  <script src="/aptus_first_official_version/view/assets/js/nav.js"></script>
-  <script src="/aptus_first_official_version/view/assets/js/forms.js"></script>
-  <script src="/aptus_first_official_version/view/assets/js/landing-animations.js"></script>
+  <script src="../assets/js/nav.js"></script>
+  <script src="../assets/js/forms.js"></script>
+  <script src="../assets/js/landing-animations.js"></script>
   <?php if (isset($pageJS)): ?>
-    <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
+    <script src="../assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
   <script>lucide.createIcons();</script>
 </body>

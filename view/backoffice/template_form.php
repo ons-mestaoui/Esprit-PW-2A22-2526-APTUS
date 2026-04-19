@@ -111,8 +111,8 @@ $isPremium = $template ? $template['estPremium'] : 0;
         
         <!-- Left Side: Form Details -->
         <div class="card-flat" style="padding: 30px; display:flex; flex-direction:column; gap:24px;">
-            <div class="form-group">
-                <label class="form-label" for="tpl-name" style="font-size: 15px;">Nom du template</label>
+            <div class="form-group" style="position:relative;">
+                <label class="form-label" for="tpl-name" style="font-size: 15px;">Nom du template *</label>
                 <input type="text" class="input" id="tpl-name" name="nom" placeholder="Ex: Élégance Corporative" value="<?php echo $nomVal; ?>" style="padding: 12px; font-size:16px;">
             </div>
 
@@ -171,9 +171,9 @@ $isPremium = $template ? $template['estPremium'] : 0;
                 </div>
             </div>
 
-            <div class="form-group" style="flex-grow: 1; display:flex; flex-direction:column;">
+            <div class="form-group" style="flex-grow: 1; display:flex; flex-direction:column; position:relative;">
                 <div class="flex justify-between items-end mb-2">
-                    <label class="form-label" for="tpl-html" style="font-size: 15px; margin:0;">Code Structure (HTML/CSS)</label>
+                    <label class="form-label" for="tpl-html" style="font-size: 15px; margin:0;">Code Structure (HTML/CSS) *</label>
                     <span class="text-xs" style="color:var(--text-tertiary);">Rendu en temps réel possible via le bouton à droite</span>
                 </div>
                 <textarea class="textarea" id="tpl-html" name="structureHtml" placeholder="Écrivez le code source HTML/CSS du CV ici..." style="font-family: 'Fira Code', monospace; line-height: 1.5; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); color: #cbd5e1; flex-grow: 1; min-height: 400px; padding:15px; font-size:13px; resize:vertical;"><?php echo $htmlVal; ?></textarea>
@@ -238,6 +238,41 @@ $isPremium = $template ? $template['estPremium'] : 0;
 #lightbox-close:hover { background: rgba(255,255,255,0.2); }
 
 #btn-page-generate:hover { background: rgba(56, 189, 248, 0.15) !important; text-shadow: 0 0 8px rgba(56, 189, 248, 0.5); }
+
+/* Validation Styles for Backoffice */
+.input.is-invalid, .textarea.is-invalid {
+    border-color: #dc2626 !important;
+    background-color: #1e293b !important;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23dc2626"><circle cx="12" cy="12" r="10"/><path fill="%23fff" d="M11 7h2v7h-2zm0 8h2v2h-2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    padding-right: 40px;
+}
+.input.is-invalid:focus, .textarea.is-invalid:focus {
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+    border-color: #dc2626 !important;
+}
+.input.is-valid, .textarea.is-valid {
+    border-color: #059669 !important;
+    background-color: #1e293b !important;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23059669"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 24px;
+    padding-right: 40px;
+}
+.input.is-valid:focus, .textarea.is-valid:focus {
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15) !important;
+    border-color: #059669 !important;
+}
+.error-message {
+    color: #dc2626;
+    font-size: 0.75rem;
+    margin-top: 6px;
+    display: none;
+    font-weight: 500;
+}
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -322,7 +357,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const newTag = tagInput.value.trim();
                 
                 if (newTag) {
-                    // Create new label wrapper
                     const label = document.createElement('label');
                     label.className = 'page-tag-wrapper';
                     
@@ -330,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     input.type = 'checkbox';
                     input.name = 'description[]';
                     input.value = newTag;
-                    input.checked = true; // Auto-check it
+                    input.checked = true;
                     
                     const span = document.createElement('span');
                     span.textContent = newTag;
@@ -338,13 +372,65 @@ document.addEventListener('DOMContentLoaded', function() {
                     label.appendChild(input);
                     label.appendChild(span);
                     
-                    // Insert before the input box
                     tagsWrapper.insertBefore(label, addBox);
-                    
                     tagInput.value = '';
                 }
             }
         });
     }
+
+    // --- FORM VALIDATION ---
+    const nameInput = document.getElementById('tpl-name');
+    const htmlInput = document.getElementById('tpl-html');
+    const theForm = document.getElementById('full-template-form');
+
+    function createErrorMsg(el) {
+        const msg = document.createElement('div');
+        msg.className = 'error-message';
+        el.parentNode.insertBefore(msg, el.nextSibling);
+        return msg;
+    }
+    const nameMsg = createErrorMsg(nameInput);
+    const htmlMsg = createErrorMsg(htmlInput);
+
+    function validateField(input, msgBox) {
+        let isVal = true;
+        let err = '';
+        const v = input.value.trim();
+        if (input.id === 'tpl-name') {
+            if (v.length < 3) { isVal = false; err = 'Le nom doit contenir au moins 3 caractères.'; }
+        } else if (input.id === 'tpl-html') {
+            if (v.length < 10) { isVal = false; err = 'Le code HTML est obligatoire.'; }
+        }
+        
+        if (isVal && v !== '') {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            msgBox.style.display = 'none';
+        } else if (!isVal) {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            msgBox.textContent = err;
+            msgBox.style.display = 'block';
+        } else {
+            input.classList.remove('is-valid', 'is-invalid');
+            msgBox.style.display = 'none';
+        }
+        return isVal;
+    }
+    
+    nameInput.addEventListener('input', () => validateField(nameInput, nameMsg));
+    nameInput.addEventListener('blur', () => validateField(nameInput, nameMsg));
+    htmlInput.addEventListener('input', () => validateField(htmlInput, htmlMsg));
+    htmlInput.addEventListener('blur', () => validateField(htmlInput, htmlMsg));
+
+    theForm.addEventListener('submit', function(e) {
+        let ok1 = validateField(nameInput, nameMsg);
+        let ok2 = validateField(htmlInput, htmlMsg);
+        if (!ok1 || !ok2) {
+            e.preventDefault();
+        }
+    });
+
 });
 </script>

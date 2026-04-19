@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 /**
  * cv_form.php — CV Builder (Aptus Edition)
- * Uses the actual template's structureHtml for live preview via iframe.
+ * Fixed version with real-time sync, blocking validation, and sidebar checks.
  */
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../model/Template.php';
@@ -53,9 +53,10 @@ if (!$template && !$cv_id) {
 }
 
 $pageTitle = "CV Builder";
-$pageCSS   = "cv_premium.css";
+$pageCSS   = "cv_premium.css?v=" . time();
 
 if (!isset($content)) {
+    header('Content-Type: text/html; charset=utf-8');
     $content = __FILE__;
     include 'layout_front.php';
     exit();
@@ -68,17 +69,53 @@ if (!isset($content)) {
     const TEMPLATE_ID = <?php echo (int)$template_id; ?>;
 </script>
 
-<!-- ═══ 3-Column Builder Layout ═══ -->
 <div class="builder-layout">
 
     <!-- LEFT: Step Sidebar -->
     <aside class="wizard-sidebar">
-        <div class="wizard-step-link active" data-step="1"><div class="step-num">1</div> Infos</div>
-        <div class="wizard-step-link" data-step="2"><div class="step-num">2</div> Résumé</div>
-        <div class="wizard-step-link" data-step="3"><div class="step-num">3</div> Expérience</div>
-        <div class="wizard-step-link" data-step="4"><div class="step-num">4</div> Compétences</div>
-        <div class="wizard-step-link" data-step="5"><div class="step-num">5</div> Formation</div>
-        <div class="wizard-step-link" data-step="6"><div class="step-num">6</div> Langues</div>
+        <div class="stepper-container">
+            <div class="wizard-step-link active" data-step="1">
+                <div class="step-line"></div>
+                <div class="step-num"><span class="check-icon" style="display:none;"><i data-lucide="check" style="width:16px;height:16px;"></i></span><span class="step-txt">1</span></div>
+                <div class="step-name">Infos</div>
+            </div>
+            <div class="wizard-step-link" data-step="2">
+                <div class="step-line"></div>
+                <div class="step-num"><span class="check-icon" style="display:none;"><i data-lucide="check" style="width:16px;height:16px;"></i></span><span class="step-txt">2</span></div>
+                <div class="step-name">Résumé</div>
+            </div>
+            <div class="wizard-step-link" data-step="3">
+                <div class="step-line"></div>
+                <div class="step-num"><span class="check-icon" style="display:none;"><i data-lucide="check" style="width:16px;height:16px;"></i></span><span class="step-txt">3</span></div>
+                <div class="step-name">Expérience</div>
+            </div>
+            <div class="wizard-step-link" data-step="4">
+                <div class="step-line"></div>
+                <div class="step-num"><span class="check-icon" style="display:none;"><i data-lucide="check" style="width:16px;height:16px;"></i></span><span class="step-txt">4</span></div>
+                <div class="step-name">Compétences</div>
+            </div>
+            <div class="wizard-step-link" data-step="5">
+                <div class="step-line"></div>
+                <div class="step-num"><span class="check-icon" style="display:none;"><i data-lucide="check" style="width:16px;height:16px;"></i></span><span class="step-txt">5</span></div>
+                <div class="step-name">Formation</div>
+            </div>
+            <div class="wizard-step-link" data-step="6">
+                <div class="step-num"><span class="check-icon" style="display:none;"><i data-lucide="check" style="width:16px;height:16px;"></i></span><span class="step-txt">6</span></div>
+                <div class="step-name">Langues</div>
+            </div>
+        </div>
+        <div class="progress-section" style="margin-top:auto; padding-top:30px; border-top:1px solid var(--border-color);">
+            <div class="progress-info" style="margin-bottom:12px;">
+                <span style="font-weight:500; font-size:0.85rem; letter-spacing:0.5px; color:var(--text-primary)">CV Progression:</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="progress-track" style="flex:1; height:12px; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:100px; overflow:hidden; position:relative;">
+                    <div id="progress-bar-fill" style="width:0%; height:100%; background:linear-gradient(90deg, #6B34A3 0%, #3B82F6 50%, #00d2ff 100%); border-radius:100px; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 20px rgba(107, 52, 163, 0.4);"></div>
+                </div>
+                <span id="progress-text" style="font-weight:800; color:var(--text-primary); font-size:1.1rem; min-width:50px;">0%</span>
+            </div>
+            <p style="font-size:0.7rem; color:var(--text-tertiary); margin-top:15px; text-align:left; font-style:italic;">Suivez votre progression en complétant chaque étape.</p>
+        </div>
     </aside>
 
     <!-- CENTER: Form Area -->
@@ -87,680 +124,474 @@ if (!isset($content)) {
         <!-- STEP 1: Personal Info -->
         <div class="step-content active" id="step-1">
             <div class="step-header"><h2>Informations Personnelles</h2></div>
-            <p class="help-text">Les recruteurs ont besoin de savoir qui vous êtes et comment vous contacter.</p>
-
+            
             <div class="image-upload-wrapper" id="photo-upload-wrapper">
-                <i class="fa-solid fa-camera fa-2x" style="color: var(--text-tertiary); margin-bottom:0.5rem;"></i>
-                <p>Cliquez pour ajouter votre photo</p>
+                <i class="fa-solid fa-camera fa-2x" style="color:var(--text-tertiary);"></i>
+                <p>Ajouter une photo</p>
                 <img id="photo-preview-img" class="photo-preview" src="" alt="" style="display:none;">
                 <input type="file" id="input-photo" accept="image/*" style="display:none;">
                 <input type="hidden" id="photo-b64" value="">
             </div>
 
             <div class="form-group">
-                <label>Nom Complet</label>
-                <input type="text" id="input-name" class="form-control" placeholder="Jean Dupont">
+                <label>Nom Complet *</label>
+                <div class="input-icon-group">
+                    <i data-lucide="user"></i>
+                    <input type="text" id="input-name" class="form-control" placeholder="Jean Dupont" required>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Titre du Poste</label>
-                <input type="text" id="input-title" class="form-control" placeholder="ex: Développeur Full-Stack">
+            <div class="form-group" style="position:relative;">
+                <label>Titre du Poste *</label>
+                <div class="input-icon-group">
+                    <i data-lucide="briefcase"></i>
+                    <input type="text" id="input-title" class="form-control" placeholder="ex: Développeur Full-Stack" onfocus="setupSmartAutocomplete(this, TITLES_DB)" required>
+                </div>
+                <div class="tag-suggestions" id="title-suggestions"></div>
             </div>
             <div style="display:flex; gap:1rem;">
                 <div class="form-group" style="flex:1;">
-                    <label>Email</label>
-                    <input type="text" id="input-email" class="form-control" placeholder="nom@exemple.com">
+                    <label>Email *</label>
+                    <div class="input-icon-group">
+                        <i data-lucide="mail"></i>
+                        <input type="email" id="input-email" class="form-control" placeholder="nom@exemple.com" required>
+                    </div>
                 </div>
                 <div class="form-group" style="flex:1;">
-                    <label>Téléphone</label>
-                    <input type="text" id="input-phone" class="form-control" placeholder="+216 ...">
+                    <label>Téléphone *</label>
+                    <div class="input-icon-group">
+                        <i data-lucide="phone"></i>
+                        <input type="text" id="input-phone" class="form-control" placeholder="+216 ..." required>
+                    </div>
                 </div>
             </div>
-            <div class="form-group">
-                <label>Localisation (Ville, Pays)</label>
-                <input type="text" id="input-location" class="form-control" placeholder="Tunis, Tunisie">
+            <div class="form-group" style="position:relative;">
+                <label>Localisation *</label>
+                <div class="input-icon-group">
+                    <i data-lucide="map-pin"></i>
+                    <input type="text" id="input-location" class="form-control" placeholder="Tunis, Tunisie" onfocus="setupSmartAutocomplete(this, LOCATIONS_DB)" required>
+                </div>
+                <div class="tag-suggestions" id="location-suggestions"></div>
             </div>
-
-            <div class="wizard-footer">
-                <div></div>
-                <button class="btn-primary-cv" onclick="goToStep(2)">Suivant: Résumé</button>
-            </div>
+            <div class="wizard-footer"><div></div><button class="btn-primary-cv" onclick="goToStep(2)">Suivant: Résumé</button></div>
         </div>
 
         <!-- STEP 2: Summary -->
         <div class="step-content" id="step-2">
             <div class="step-header"><h2>Résumé Professionnel</h2></div>
-            <p class="help-text">Un résumé est un bref aperçu de 2-4 phrases de votre carrière, vos meilleures réalisations et compétences.</p>
             <div class="form-group">
-                <textarea id="input-summary" class="form-control" placeholder="Professionnel passionné avec une expertise en..."></textarea>
-                <button class="btn-ai" onclick="alert('IA: Cette fonctionnalité sera bientôt disponible !')">
-                    ✨ AI Polish
-                </button>
+                <label>Votre Profil *</label>
+                <textarea id="input-summary" class="form-control" placeholder="Professionnel passionné..." required></textarea>
+                <button class="btn-ai" onclick="alert('IA: Bientôt disponible')"><i data-lucide="sparkles"></i> AI Polish</button>
             </div>
-            <div class="wizard-footer">
-                <button class="btn-secondary-cv" onclick="goToStep(1)">Retour</button>
-                <button class="btn-primary-cv" onclick="goToStep(3)">Suivant: Expérience</button>
-            </div>
+            <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(1)">Retour</button><button class="btn-primary-cv" onclick="goToStep(3)">Suivant: Expérience</button></div>
         </div>
 
         <!-- STEP 3: Experience -->
         <div class="step-content" id="step-3">
             <div class="step-header"><h2>Expérience Professionnelle</h2></div>
-            <p class="help-text">Listez vos postes en mettant en avant les réalisations avec des verbes d'action.</p>
             <div class="form-group">
-                <textarea id="input-experience" class="form-control" placeholder="Poste — Entreprise&#10;Dates&#10;• Mission principale..."></textarea>
-                <button class="btn-ai" onclick="alert('IA: Optimisation du contenu bientôt disponible !')">
-                    ✨ AI Content Optimizer
-                </button>
+                <textarea id="input-experience" class="form-control" style="height:220px" placeholder="Poste — Entreprise&#10;Dates&#10;• Mission..."></textarea>
             </div>
-            <div class="wizard-footer">
-                <button class="btn-secondary-cv" onclick="goToStep(2)">Retour</button>
-                <button class="btn-primary-cv" onclick="goToStep(4)">Suivant: Compétences</button>
-            </div>
+            <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(2)">Retour</button><button class="btn-primary-cv" onclick="goToStep(4)">Suivant: Compétences</button></div>
         </div>
 
         <!-- STEP 4: Skills -->
         <div class="step-content" id="step-4">
-            <div class="step-header"><h2>Compétences (Tags)</h2></div>
-            <p class="help-text">Ajoutez vos compétences techniques et soft skills. Tapez et appuyez sur Entrée.</p>
+            <div class="step-header"><h2>Compétences</h2></div>
             <div class="form-group">
                 <div class="tags-container" id="skills-tags-container">
-                    <input type="text" id="input-skill-search" class="tag-input" placeholder="Tapez: PHP, React, Leadership..." autocomplete="off">
+                    <input type="text" id="input-skill-search" class="tag-input" placeholder="Ajouter une compétence..." autocomplete="off">
                 </div>
-                <div class="tag-suggestions" id="skill-suggestions"></div>
                 <input type="hidden" id="input-skills" value="">
             </div>
-            <div class="wizard-footer">
-                <button class="btn-secondary-cv" onclick="goToStep(3)">Retour</button>
-                <button class="btn-primary-cv" onclick="goToStep(5)">Suivant: Formation</button>
-            </div>
+            <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(3)">Retour</button><button class="btn-primary-cv" onclick="goToStep(5)">Suivant: Formation</button></div>
         </div>
 
         <!-- STEP 5: Education -->
         <div class="step-content" id="step-5">
             <div class="step-header"><h2>Formation</h2></div>
-            <p class="help-text">Où avez-vous étudié ? Incluez le nom de l'établissement, le diplôme et l'année.</p>
             <div class="form-group">
-                <textarea id="input-education" class="form-control" placeholder="Diplôme — Université&#10;Année"></textarea>
+                <textarea id="input-education" class="form-control" style="height:180px" placeholder="Diplôme — Université"></textarea>
             </div>
-            <div class="wizard-footer">
-                <button class="btn-secondary-cv" onclick="goToStep(4)">Retour</button>
-                <button class="btn-primary-cv" onclick="goToStep(6)">Suivant: Langues</button>
-            </div>
+            <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(4)">Retour</button><button class="btn-primary-cv" onclick="goToStep(6)">Suivant: Langues</button></div>
         </div>
 
         <!-- STEP 6: Languages -->
         <div class="step-content" id="step-6">
             <div class="step-header"><h2>Langues</h2></div>
-            <p class="help-text">Listez les langues parlées et votre niveau (ex: Français — Maternel, Anglais — B2).</p>
-            <div class="form-group">
-                <textarea id="input-languages" class="form-control" placeholder="Français — Maternel&#10;Anglais — Courant"></textarea>
-            </div>
+            <div id="dynamic-languages-container"></div>
+            <button class="btn-secondary-cv" style="width:100%; border-style:dashed;" onclick="addLanguage()"><i data-lucide="plus-circle"></i> Ajouter une langue</button>
+            <textarea id="input-languages" style="display:none;"></textarea>
 
-            <div class="form-group">
+            <div class="form-group" style="margin-top:30px; border-top:1px solid var(--border-color); padding-top:20px;">
                 <label>Couleur du thème</label>
-                <div style="display:flex; align-items:center; gap:1rem; margin-top:0.5rem;">
-                    <input type="color" id="color-picker" class="color-picker" value="<?php echo htmlspecialchars($cv['couleurTheme']); ?>" title="Changer la couleur du thème">
-                    <span style="font-size:0.85rem; color:var(--text-tertiary);">Personnalisez l'accent de votre CV</span>
+                <div style="display:flex; align-items:center; gap:1rem; margin-top:10px;">
+                    <input type="color" id="color-picker" class="color-picker" value="<?php echo htmlspecialchars($cv['couleurTheme']); ?>">
+                    <span style="font-size:0.8rem; color:var(--text-tertiary);">Personnalisez l'accent de votre CV</span>
                 </div>
             </div>
-
-            <div class="wizard-footer">
-                <button class="btn-secondary-cv" onclick="goToStep(5)">Retour</button>
-                <button class="btn-primary-cv" id="btn-save">Enregistrer le CV</button>
-            </div>
+            <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(5)">Retour</button><button class="btn-primary-cv" id="btn-save">Enregistrer le CV</button></div>
         </div>
-
     </main>
 
-    <!-- RIGHT: Live Preview via iframe (uses actual template HTML from DB) -->
+    <!-- RIGHT: Live Preview -->
     <aside class="builder-preview-area" id="cv-wrapper">
-        <iframe id="template-preview-frame" style="
-            width: 210mm;
-            height: 297mm;
-            transform-origin: top left;
-            border: none;
-            background: #fff;
-        "></iframe>
+        <iframe id="template-preview-frame"></iframe>
     </aside>
 </div>
 
 <?php
-// Prepare the template HTML for the iframe
-// Extract just body content + styles, or use full HTML if it's a complete page
 $templateHtml = $template['structureHtml'] ?? '';
-
-// Check if it's a full HTML document
-$isFullHtml = stripos($templateHtml, '<!DOCTYPE') !== false || stripos($templateHtml, '<html') !== false;
-
+$isFullHtml = stripos($templateHtml, '<html') !== false;
 if (!$isFullHtml) {
-    // Wrap partial HTML in a basic document
-    $templateHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"></head><body style="margin:0;padding:0;">' . $templateHtml . '</body></html>';
+    $templateHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"></head><body style="margin:0;padding:0;">' . $templateHtml . '</body></html>';
 }
-
-// Inject CSS to hide scrollbars inside the iframe
-$hideScrollbarCSS = '<style>html,body{overflow:hidden!important;scrollbar-width:none!important;-ms-overflow-style:none!important;}::-webkit-scrollbar{display:none!important;}</style>';
-if (stripos($templateHtml, '</head>') !== false) {
-    $templateHtml = str_ireplace('</head>', $hideScrollbarCSS . '</head>', $templateHtml);
-} elseif (stripos($templateHtml, '<body') !== false) {
-    $templateHtml = preg_replace('/<body/i', $hideScrollbarCSS . '<body', $templateHtml, 1);
-} else {
-    $templateHtml = $hideScrollbarCSS . $templateHtml;
-}
-
-// Inject a receiver script into the template HTML for live updates
-$liveUpdateScript = <<<'SCRIPT'
-<script>
-window.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'cv-update') {
-        const d = e.data;
-        
-        // Try multiple selectors for each field
-        function setText(selectors, value) {
-            for (const sel of selectors) {
-                const el = document.querySelector(sel);
-                if (el) {
-                    el.innerText = value;
-                    return true;
-                }
-            }
-            return false;
-        }
-        
-        if (d.field === 'nomComplet') {
-            setText([
-                '#preview-nomComplet',
-                '.sidebar h1',
-                '.header-info h1', 
-                '.header-text h1',
-                '.cv-name',
-                'h1[contenteditable]'
-            ], d.value);
-        }
-        else if (d.field === 'titrePoste') {
-            setText([
-                '#preview-titrePoste',
-                '.sidebar h2',
-                '.header-info h2',
-                '.header-text h2',
-                '.cv-title',
-                'h2[contenteditable]'
-            ], d.value);
-        }
-        else if (d.field === 'resume') {
-            setText([
-                '#preview-resume',
-                '.summary-text',
-                '.summary',
-                '.cv-content:first-of-type'
-            ], d.value);
-        }
-        else if (d.field === 'experience') {
-            // For experience, find the section after resume
-            let found = setText([
-                '#preview-experience'
-            ], d.value);
-            if (!found) {
-                // Try to find experience section by title
-                const titles = document.querySelectorAll('.main-title, .section-title, h3');
-                for (const t of titles) {
-                    if (t.textContent.toLowerCase().includes('expérience') || t.textContent.toLowerCase().includes('experience')) {
-                        // Get the next sibling or content area
-                        let next = t.nextElementSibling;
-                        while (next && (next.classList.contains('main-title') || next.classList.contains('section-title') || next.tagName === 'H3')) {
-                            next = next.nextElementSibling;
-                        }
-                        if (next) {
-                            next.innerText = d.value;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        else if (d.field === 'competences') {
-            let found = setText([
-                '#preview-competences'
-            ], d.value);
-            if (!found) {
-                // Find competences section
-                const titles = document.querySelectorAll('.side-title, .section-title, .main-title, h3');
-                for (const t of titles) {
-                    const txt = t.textContent.toLowerCase();
-                    if (txt.includes('compétence') || txt.includes('competence') || txt.includes('skills')) {
-                        let next = t.nextElementSibling;
-                        if (next) {
-                            next.innerText = d.value;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        else if (d.field === 'langues') {
-            let found = setText([
-                '#preview-langues'
-            ], d.value);
-            if (!found) {
-                const titles = document.querySelectorAll('.side-title, .section-title, .main-title, h3');
-                for (const t of titles) {
-                    const txt = t.textContent.toLowerCase();
-                    if (txt.includes('langue') || txt.includes('language')) {
-                        let next = t.nextElementSibling;
-                        if (next) {
-                            next.innerText = d.value;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        else if (d.field === 'formation') {
-            let found = setText([
-                '#preview-formation'
-            ], d.value);
-            if (!found) {
-                const titles = document.querySelectorAll('.side-title, .section-title, .main-title, h3');
-                for (const t of titles) {
-                    const txt = t.textContent.toLowerCase();
-                    if (txt.includes('formation') || txt.includes('education') || txt.includes('études')) {
-                        let next = t.nextElementSibling;
-                        if (next) {
-                            next.innerText = d.value;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        else if (d.field === 'infoContact') {
-            let found = setText([
-                '#preview-infoContact',
-                '.contact-info',
-                '.cv-contact'
-            ], d.value);
-            if (!found) {
-                // Update individual contact items in sidebar templates
-                const items = document.querySelectorAll('.contact-item');
-                if (items.length > 0 && d.parts) {
-                    if (d.parts.location && items[0]) items[0].innerText = '📍 ' + d.parts.location;
-                    if (d.parts.phone && items[1]) items[1].innerText = '📞 ' + d.parts.phone;
-                    if (d.parts.email && items[2]) items[2].innerText = '✉️ ' + d.parts.email;
-                }
-            }
-        }
-        else if (d.field === 'photo') {
-            const photos = document.querySelectorAll('#preview-photo, #profile-pic, .cv-photo, .header-photo img');
-            photos.forEach(img => {
-                if (img.tagName === 'IMG') {
-                    img.src = d.value;
-                    img.style.display = 'block';
-                }
-            });
-            // Hide photo text in sidebar templates
-            const photoText = document.querySelector('#photo-text, .photo-text');
-            if (photoText) photoText.style.display = 'none';
-            // For Le Classique style
-            const headerPhoto = document.querySelector('.header-photo');
-            if (headerPhoto && !headerPhoto.querySelector('img')) {
-                headerPhoto.innerHTML = '<img src="' + d.value + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">';
-            }
-        }
-    }
-});
-
-// Signal parent that iframe is ready
-window.parent.postMessage({type: 'iframe-ready'}, '*');
-</script>
-SCRIPT;
-
-// Inject the script before </body> or at the end
-if (stripos($templateHtml, '</body>') !== false) {
-    $templateHtml = str_ireplace('</body>', $liveUpdateScript . '</body>', $templateHtml);
-} else {
-    $templateHtml .= $liveUpdateScript;
-}
+$overlayCSS = '<style>html,body{overflow:hidden!important;} ::-webkit-scrollbar{display:none;} .highlight-active{outline:3px solid var(--cv-accent, #6B34A3)!important; outline-offset:5px; background-color:rgba(107,52,163,0.06)!important; border-radius:4px; transition:all 0.4s ease;}</style>';
+$templateHtml = str_ireplace('</head>', $overlayCSS . '</head>', $templateHtml);
 ?>
 
 <script>
-/* ── CV Builder JS ── */
+/* ── CV BUILDER ENGINE V3 ────────────────────────────────── */
 let currentSkills = [];
-const SKILL_DB = ['PHP','MySQL','JavaScript','Python','Java','React','Vue.js','Node.js','Angular','TypeScript','Leadership','Management','Communication','Agile','Docker','Cloud','AWS','Git','Linux','CSS','HTML','SQL','MongoDB','C++','Figma','UX Design','Marketing','SEO','Data Analysis','Machine Learning'];
+let currentLangs = [];
+const TITLES_DB = ['Développeur Full-Stack', 'Data Scientist', 'Chef de Projet IT', 'UX Designer', 'Commercial', 'Ingénieur', 'Designer Graphique', 'Marketing Manager', 'Content Creator', 'Social Media Manager'];
+const LOCATIONS_DB = ['Paris, France', 'Tunis, Tunisie', 'Lyon, France', 'Remote', 'Casablanca, Maroc', 'Sousse, Tunisie', 'Sfax, Tunisie'];
+const LANGUAGES_DB = ['Français', 'Anglais', 'Arabe', 'Allemand', 'Espagnol', 'Italien', 'Portugais'];
+const SKILL_DB = ['PHP', 'JavaScript', 'HTML/CSS', 'React', 'Vue.js', 'Node.js', 'Python', 'SQL', 'Git', 'Agile', 'Gestion de projet', 'Communication', 'Leadership', 'Design Graphique', 'Figma', 'SEO', 'Marketing'];
 
-// Template HTML to inject into iframe
 const TEMPLATE_HTML = <?php echo json_encode($templateHtml); ?>;
-let iframeReady = false;
 
-function initIframe() {
-    const iframe = document.getElementById('template-preview-frame');
-    if (!iframe) return;
-    
-    // Write the template HTML into the iframe
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    doc.open();
-    doc.write(TEMPLATE_HTML);
-    doc.close();
-    
-    // Scale the iframe to fit the preview area
-    setTimeout(scaleIframe, 200);
-    window.addEventListener('resize', scaleIframe);
-}
-
-function scaleIframe() {
-    const iframe = document.getElementById('template-preview-frame');
-    const container = document.getElementById('cv-wrapper');
-    if (!iframe || !container) return;
-    
-    const containerWidth = container.clientWidth;
-    
-    // The iframe is 210mm (≈794px) wide, 297mm (≈1123px) tall
-    const iframeW = 794;
-    const iframeH = 1123;
-    
-    // Scale to fill the container width exactly
-    const scale = containerWidth / iframeW;
-    
-    iframe.style.transform = `scale(${scale})`;
-    iframe.style.width = iframeW + 'px';
-    iframe.style.height = iframeH + 'px';
-}
-
-// Send a field update to the iframe
-function updatePreview(field, value, parts) {
-    const iframe = document.getElementById('template-preview-frame');
-    if (!iframe || !iframe.contentWindow) return;
-    
-    const msg = { type: 'cv-update', field: field, value: value };
-    if (parts) msg.parts = parts;
-    iframe.contentWindow.postMessage(msg, '*');
-}
-
+/* ── Initialization ── */
 document.addEventListener('DOMContentLoaded', () => {
-    // Active nav link
-    const navCV = document.getElementById('nav-cv');
-    if(navCV) {
-        document.querySelectorAll('.nav-anchor').forEach(a => a.classList.remove('active'));
-        navCV.classList.add('active');
+    initIframe();
+    window.addEventListener('resize', scaleIframe);
+
+    // Initial Fill
+    if (INITIAL_DATA) {
+        Object.entries({ 'nomComplet':'input-name', 'titrePoste':'input-title', 'email':'input-email', 'telephone':'input-phone', 'adresse':'input-location', 'resume':'input-summary', 'experience':'input-experience', 'formation':'input-education' })
+            .forEach(([k, id]) => { const el = document.getElementById(id); if(el && INITIAL_DATA[k]) el.value = INITIAL_DATA[k]; });
+        if (INITIAL_DATA.langues) {
+            currentLangs = INITIAL_DATA.langues.split('\n').filter(x=>x.trim()).map(line => {
+                const p = line.split(/[—–-]/);
+                return { lang: p[0]?.trim() || '', level: p[1]?.trim() || 'B1' };
+            });
+        } else { addLanguage(); }
+        renderLanguages();
+        if (INITIAL_DATA.competences) { currentSkills = INITIAL_DATA.competences.split(',').filter(x=>x.trim()); renderTags(); }
+        if (INITIAL_DATA.urlPhoto) { document.getElementById('photo-b64').value = INITIAL_DATA.urlPhoto; const pi = document.getElementById('photo-preview-img'); if(pi) { pi.src=INITIAL_DATA.urlPhoto; pi.style.display='block'; }}
     }
 
-    // Initialize iframe with template
-    initIframe();
+    // Real-time Event Listeners
+    document.querySelectorAll('.form-control').forEach(el => {
+        el.addEventListener('input', () => { 
+            validateInput(el); 
+            syncField(el); 
+            updateProgress(); 
+        });
+        el.addEventListener('blur', () => validateInput(el));
+    });
+
+    document.querySelectorAll('.wizard-step-link').forEach(l => l.addEventListener('click', () => goToStep(parseInt(l.dataset.step))));
+    document.getElementById('btn-save').addEventListener('click', saveCV);
+    document.getElementById('color-picker').addEventListener('input', (e) => {
+        const ifrm = document.getElementById('template-preview-frame');
+        if(ifrm && ifrm.contentDocument) ifrm.contentDocument.documentElement.style.setProperty('--cv-accent', e.target.value);
+    });
 
     // Photo Upload
     const photoWrap = document.getElementById('photo-upload-wrapper');
     const photoInput = document.getElementById('input-photo');
-    const photoPreview = document.getElementById('photo-preview-img');
-
     photoWrap.addEventListener('click', () => photoInput.click());
     photoInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const b64 = e.target.result;
-                document.getElementById('photo-b64').value = b64;
-                if (photoPreview) {
-                    photoPreview.src = b64;
-                    photoPreview.style.display = 'block';
-                }
-                updatePreview('photo', b64);
+        if (this.files[0]) {
+            const rd = new FileReader();
+            rd.onload = (e) => {
+                document.getElementById('photo-b64').value = e.target.result;
+                const pi = document.getElementById('photo-preview-img'); pi.src = e.target.result; pi.style.display = 'block';
+                const ifrm = document.getElementById('template-preview-frame');
+                if(ifrm && ifrm.contentWindow) ifrm.contentWindow.postMessage({ type: 'cv-update', field: 'photo', value: e.target.result }, '*');
             };
-            reader.readAsDataURL(file);
+            rd.readAsDataURL(this.files[0]);
         }
     });
 
-    // Pre-fill form from INITIAL_DATA
-    if (INITIAL_DATA) {
-        const map = {
-            'nomComplet': 'input-name', 'titrePoste': 'input-title',
-            'email': 'input-email', 'telephone': 'input-phone',
-            'adresse': 'input-location', 'resume': 'input-summary',
-            'experience': 'input-experience', 'formation': 'input-education',
-            'langues': 'input-languages'
-        };
-        Object.keys(map).forEach(key => {
-            const el = document.getElementById(map[key]);
-            if (el && INITIAL_DATA[key]) el.value = INITIAL_DATA[key];
-        });
-
-        if (INITIAL_DATA.urlPhoto) {
-            document.getElementById('photo-b64').value = INITIAL_DATA.urlPhoto;
-            if (photoPreview) { photoPreview.src = INITIAL_DATA.urlPhoto; photoPreview.style.display = 'block'; }
-        }
-
-        if (INITIAL_DATA.competences) {
-            currentSkills = INITIAL_DATA.competences.split(',').filter(x => x.trim());
-            renderTags();
-        }
-
-        if (INITIAL_DATA.couleurTheme) {
-            document.getElementById('color-picker').value = INITIAL_DATA.couleurTheme;
-        }
-
-        // Sync all previews after iframe loads
-        setTimeout(() => {
-            syncAllPreviews();
-            if (INITIAL_DATA.urlPhoto) {
-                updatePreview('photo', INITIAL_DATA.urlPhoto);
-            }
-        }, 500);
-    }
-
-    // Live preview listeners
-    const fieldBindings = {
-        'input-name': 'nomComplet',
-        'input-title': 'titrePoste',
-        'input-summary': 'resume',
-        'input-experience': 'experience',
-        'input-education': 'formation',
-        'input-languages': 'langues'
-    };
+    updateProgress();
     
-    Object.entries(fieldBindings).forEach(([inputId, field]) => {
-        const input = document.getElementById(inputId);
-        if (input) {
-            input.addEventListener('input', () => {
-                updatePreview(field, input.value || '---');
-            });
-        }
-    });
-
-    ['email','phone','location'].forEach(f => {
-        const el = document.getElementById('input-' + f);
-        if (el) el.addEventListener('input', syncContact);
-    });
-
-    document.getElementById('color-picker').addEventListener('input', (e) => {
-        // Color theme changes are complex — just update the CSS variable
-        const iframe = document.getElementById('template-preview-frame');
-        if (iframe && iframe.contentDocument) {
-            iframe.contentDocument.documentElement.style.setProperty('--cv-accent', e.target.value);
-        }
-    });
-
-    // Sidebar step clicks
-    document.querySelectorAll('.wizard-step-link').forEach(link => {
-        link.addEventListener('click', () => goToStep(parseInt(link.dataset.step)));
-    });
-
-    // Save
-    document.getElementById('btn-save').addEventListener('click', async function() {
-        const data = {
-            cv_id: CV_ID, template_id: TEMPLATE_ID,
-            name: document.getElementById('input-name').value.trim(),
-            title: document.getElementById('input-title').value.trim(),
-            email: document.getElementById('input-email').value.trim(),
-            phone: document.getElementById('input-phone').value.trim(),
-            location: document.getElementById('input-location').value.trim(),
-            summary: document.getElementById('input-summary').value.trim(),
-            experience: document.getElementById('input-experience').value,
-            skills: document.getElementById('input-skills').value,
-            education: document.getElementById('input-education').value,
-            languages: document.getElementById('input-languages').value,
-            photo: document.getElementById('photo-b64').value,
-            color_theme: document.getElementById('color-picker').value
-        };
-
-        this.disabled = true;
-        this.textContent = 'Enregistrement...';
-
-        try {
-            const res = await fetch('cv_save.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await res.json();
-            if (result.success) {
-                window.location.href = 'cv_my.php';
-            } else {
-                alert('Erreur: ' + result.message);
-                this.textContent = 'Enregistrer le CV';
-                this.disabled = false;
-            }
-        } catch (e) {
-            console.error(e);
-            alert('Erreur de connexion.');
-            this.textContent = 'Enregistrer le CV';
-            this.disabled = false;
-        }
-    });
-
-    // Skills tag system
-    const skillInput = document.getElementById('input-skill-search');
-    const suggestBox = document.getElementById('skill-suggestions');
-
-    skillInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && skillInput.value.trim()) {
-            e.preventDefault();
-            addSkill(skillInput.value.trim());
-        }
-    });
-
-    skillInput.addEventListener('input', () => {
-        const val = skillInput.value.toLowerCase();
-        if (!val) { suggestBox.style.display = 'none'; return; }
-        const matches = SKILL_DB.filter(s => s.toLowerCase().startsWith(val) && !currentSkills.includes(s));
-        if (matches.length === 0) { suggestBox.style.display = 'none'; return; }
-        suggestBox.innerHTML = matches.map(s => `<div class="tag-suggest-item">${s}</div>`).join('');
-        suggestBox.style.display = 'block';
-        suggestBox.querySelectorAll('.tag-suggest-item').forEach(item => {
-            item.addEventListener('click', () => { addSkill(item.textContent); suggestBox.style.display = 'none'; });
-        });
-    });
+    // Attach smart autocomplete to existing fields
+    setupSmartAutocomplete(document.getElementById('input-skill-search'), SKILL_DB, true);
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
 });
 
-async function goToStep(idx) {
+/* ── Verification & Steps ── */
+function validateInput(inp) {
+    if (!inp) return true;
+    const val = inp.value.trim();
+    let isOk = true;
+    let msg = "";
+
+    if (inp.required && val === "") { isOk = false; msg = "Obligatoire"; }
+    else if (inp.type === "email" && val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) { isOk = false; msg = "Format invalide"; }
+    else if (inp.id === "input-name" && val.length < 3) { isOk = false; msg = "Trop court"; }
+
+    const gp = inp.closest('.form-group');
+    if (!isOk) {
+        inp.classList.add('is-invalid'); inp.classList.remove('is-valid');
+        if (gp) {
+            let em = gp.querySelector('.error-msg');
+            if(!em) { em = document.createElement('div'); em.className='error-msg'; em.style.cssText="color:#dc2626; font-size:0.75rem; margin-top:4px;"; gp.appendChild(em); }
+            em.textContent = msg;
+        }
+    } else {
+        inp.classList.remove('is-invalid'); if(val!=="") inp.classList.add('is-valid');
+        if (gp && gp.querySelector('.error-msg')) gp.querySelector('.error-msg').remove();
+    }
+    return isOk;
+}
+
+function validateStep(idx) {
+    const stepEl = document.getElementById('step-' + idx);
+    let allOk = true;
+    stepEl.querySelectorAll('.form-control[required]').forEach(i => { if(!validateInput(i)) allOk = false; });
+    return allOk;
+}
+
+function goToStep(idx) {
     const currentStepEl = document.querySelector('.step-content.active');
-    if (!currentStepEl) return;
     const currentIdx = parseInt(currentStepEl.id.replace('step-', ''));
 
-    // Si on essaie d'avancer (idx > currentIdx), on valide l'étape en cours via PHP
-    if (idx > currentIdx) {
-        let stepData = {};
-        if (currentIdx === 1) {
-            stepData = {
-                name: document.getElementById('input-name').value.trim(),
-                title: document.getElementById('input-title').value.trim(),
-                email: document.getElementById('input-email').value.trim(),
-                phone: document.getElementById('input-phone').value.trim(),
-                location: document.getElementById('input-location').value.trim()
-            };
-        } else if (currentIdx === 2) {
-            stepData = {
-                summary: document.getElementById('input-summary').value.trim()
-            };
-        }
-
-        // Si on a des données à valider pour cette étape
-        if (Object.keys(stepData).length > 0) {
-            try {
-                const res = await fetch('cv_validate_step.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ step: currentIdx, data: stepData })
-                });
-                const result = await res.json();
-                
-                if (!result.success) {
-                    alert('Erreur validation (Serveur PHP): ' + result.message);
-                    return; // Bloque le passage à l'étape suivante
-                }
-            } catch (e) {
-                console.error('Validation error:', e);
-                alert('Erreur de communication avec le serveur de validation.');
-                return;
-            }
-        }
+    // Block navigation if current step is invalid
+    if (idx > currentIdx && !validateStep(currentIdx)) {
+        const firstErr = currentStepEl.querySelector('.is-invalid');
+        if(firstErr) firstErr.focus();
+        return;
     }
 
-    // Changement d'étape UI
+    // Switch UI
     document.querySelectorAll('.step-content').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.wizard-step-link').forEach(l => l.classList.remove('active'));
     document.getElementById('step-' + idx).classList.add('active');
     const link = document.querySelector(`.wizard-step-link[data-step="${idx}"]`);
-    if (link) link.classList.add('active');
+    if(link) link.classList.add('active');
+
+    // Sync Highlighting
+    const ifrm = document.getElementById('template-preview-frame');
+    if(ifrm && ifrm.contentWindow) ifrm.contentWindow.postMessage({ type: 'highlight-section', step: idx }, '*');
 }
 
-function syncContact() {
-    const e = document.getElementById('input-email').value;
-    const p = document.getElementById('input-phone').value;
-    const l = document.getElementById('input-location').value;
-    const contactStr = [e, p, l].filter(x => x).join(' | ');
+function updateProgress() {
+    let completedSteps = 0;
+    const stepsCount = 6;
     
-    updatePreview('infoContact', contactStr, {
-        email: e,
-        phone: p,
-        location: l
-    });
+    for (let i = 1; i <= stepsCount; i++) {
+        let done = false;
+        if (i === 1) {
+            done = ['input-name','input-title','input-email','input-phone','input-location'].every(id => {
+                const el = document.getElementById(id);
+                return el && el.value.trim().length >= 2;
+            });
+        }
+        else if (i === 2) done = document.getElementById('input-summary').value.trim().length > 10;
+        else if (i === 3) done = document.getElementById('input-experience').value.trim().length > 10;
+        else if (i === 4) done = currentSkills.length > 0;
+        else if (i === 5) done = document.getElementById('input-education').value.trim().length > 10;
+        else if (i === 6) done = currentLangs.some(l => l.lang.trim().length > 0);
+        
+        markStep(i, done);
+        if (done) completedSteps++;
+    }
+    
+    // Mathematical Formula: (Steps / Total) * 100
+    const percentage = Math.round((completedSteps / stepsCount) * 100);
+    
+    const bar = document.getElementById('progress-bar-fill');
+    const text = document.getElementById('progress-text');
+    
+    if (bar) bar.style.width = percentage + '%';
+    if (text) text.textContent = percentage + '%';
 }
 
-function syncAllPreviews() {
-    const fields = {
-        'input-name': 'nomComplet',
-        'input-title': 'titrePoste',
-        'input-summary': 'resume',
-        'input-experience': 'experience',
-        'input-education': 'formation',
-        'input-languages': 'langues'
-    };
-    Object.entries(fields).forEach(([inputId, field]) => {
-        const inp = document.getElementById(inputId);
-        if (inp && inp.value) updatePreview(field, inp.value);
-    });
-    syncContact();
+function markStep(idx, done) {
+    const link = document.querySelector(`.wizard-step-link[data-step="${idx}"]`);
+    if(!link) return;
+    const check = link.querySelector('.check-icon');
+    const txt = link.querySelector('.step-txt');
+    if(done) { link.classList.add('completed'); check.style.display='block'; txt.style.display='none'; }
+    else { link.classList.remove('completed'); check.style.display='none'; txt.style.display='block'; }
+}
+
+/* ── Template Sync Engine ── */
+function initIframe() {
+    const iframe = document.getElementById('template-preview-frame');
+    if(!iframe) return;
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    const receiver = `
+    <script>
+        window.addEventListener('message', function(e) {
+            if (e.data.type === 'cv-update') {
+                const d = e.data;
+                const setVal = (sel, val, isHtml = false) => { 
+                    const el = document.querySelectorAll(sel); 
+                    el.forEach(e => {
+                        if (isHtml) e.innerHTML = val;
+                        else e.innerText = val;
+                    });
+                };
+                if (d.field === 'nomComplet') setVal('.cv-name, #preview-nomComplet, h1', d.value);
+                else if (d.field === 'titrePoste') setVal('.cv-title, #preview-titrePoste, h2', d.value);
+                else if (d.field === 'resume') setVal('.summary-text, #preview-resume, .summary, .cv-summary', d.value);
+                else if (d.field === 'experience') setVal('#preview-experience, .cv-exp, .experience-list, .cv-experience', d.value, true);
+                else if (d.field === 'competences') setVal('#preview-competences, .cv-skills, .skills-list, .cv-competences', d.value);
+                else if (d.field === 'langues') setVal('#preview-langues, .cv-languages, .languages-list, .cv-langues', d.value, true);
+                else if (d.field === 'formation') setVal('#preview-formation, .cv-edu, .education-list, .cv-formation', d.value, true);
+                else if (d.field === 'infoContact') {
+                    // Fix literal <br> bug by using innerHTML for contact only
+                    const clean = d.value.split('|').map(s => s.trim()).join('<br>');
+                    setVal('.contact-info, #preview-infoContact, .cv-contact, .contact-details', clean, true);
+                }
+                else if (d.field === 'photo') { const pi = document.querySelectorAll('#preview-photo, .cv-photo img, .profile-img'); pi.forEach(i => i.src = d.value); }
+                return;
+            }
+            if (e.data.type === 'highlight-section') {
+                document.querySelectorAll('.highlight-active').forEach(el => el.classList.remove('highlight-active'));
+                const step = e.data.step;
+                const kMap = { 2:['résumé','profil','summary'], 3:['expérience','experience'], 4:['compétence','skills'], 5:['formation','education'], 6:['langue','language'] };
+                let target = null;
+                if (step === 1) target = document.querySelector('.cv-header, .header-info, .sidebar');
+                else if (kMap[step]) {
+                    const titles = document.querySelectorAll('h1,h2,h3,h4,.section-title,.main-title');
+                    for (const t of titles) { if(kMap[step].some(k => t.textContent.toLowerCase().includes(k))) { target = t.closest('.cv-section') || t.parentElement; break; } }
+                }
+                if (target) { target.classList.add('highlight-active'); target.scrollIntoView({ behavior:'smooth', block:'center' }); }
+            }
+        });
+    <\/script>`;
+    doc.open(); doc.write(TEMPLATE_HTML.replace('</body>', receiver + '</body>')); doc.close();
+    setTimeout(scaleIframe, 350);
+}
+
+function scaleIframe() {
+    const ifrm = document.getElementById('template-preview-frame');
+    const wrap = document.getElementById('cv-wrapper');
+    if(!ifrm || !wrap) return;
     
-    // Skills
-    if (currentSkills.length > 0) {
-        updatePreview('competences', currentSkills.join(' • '));
+    // Stable width-based scaling
+    const containerWidth = wrap.clientWidth - 40;
+    const targetWidth = 794;
+    let scale = containerWidth / targetWidth;
+    if (scale > 1) scale = 1;
+
+    ifrm.style.transform = `scale(${scale})`;
+    ifrm.style.width = '794px';
+    ifrm.style.height = '1123px';
+    
+    // Adjust wrap height to avoid cutting off
+    wrap.style.height = (1123 * scale + 40) + 'px';
+}
+
+function syncField(el) {
+    const map = { 'input-name':'nomComplet', 'input-title':'titrePoste', 'input-summary':'resume', 'input-experience':'experience', 'input-education':'formation', 'input-languages':'langues' };
+    const field = map[el.id];
+    const ifrm = document.getElementById('template-preview-frame');
+    if(ifrm && ifrm.contentWindow) {
+        if(field) ifrm.contentWindow.postMessage({ type: 'cv-update', field, value: el.value || '---' }, '*');
+        if(['input-email','input-phone','input-location'].includes(el.id)) {
+            const contact = [document.getElementById('input-email').value, document.getElementById('input-phone').value, document.getElementById('input-location').value].filter(x=>x).join(' | ');
+            ifrm.contentWindow.postMessage({ type: 'cv-update', field: 'infoContact', value: contact }, '*');
+        }
     }
 }
 
-function addSkill(skill) {
-    if (!currentSkills.includes(skill)) {
-        currentSkills.push(skill);
-        renderTags();
-    }
-    document.getElementById('input-skill-search').value = '';
+/* ── Specific Systems ── */
+function addLanguage() { currentLangs.push({ lang: '', level: 'B1' }); renderLanguages(); }
+function removeLanguage(i) { currentLangs.splice(i, 1); renderLanguages(); syncLangs(); }
+function renderLanguages() {
+    const c = document.getElementById('dynamic-languages-container'); c.innerHTML = '';
+    currentLangs.forEach((l, i) => {
+        const d = document.createElement('div'); d.className = 'language-card';
+        d.innerHTML = `
+            <div class="language-card-header"><span class="language-card-title"><i data-lucide="languages" style="width:14px;"></i> Langue #${i+1}</span><button type="button" class="text-danger" style="background:none;border:none;cursor:pointer;" onclick="removeLanguage(${i})">&times;</button></div>
+            <div class="input-icon-group" style="margin-bottom:0.8rem;"><i data-lucide="book-open"></i><input type="text" class="form-control" placeholder="Anglais..." value="${l.lang}" oninput="currentLangs[${i}].lang=this.value; syncLangs();" onfocus="setupSmartAutocomplete(this, LANGUAGES_DB)"></div>
+            <div class="level-selector">${['A1','A2','B1','B2','C1','C2'].map(lvl => `<div class="level-pill ${l.level===lvl?'active':''}" onclick="currentLangs[${i}].level='${lvl}'; renderLanguages(); syncLangs();">${lvl}</div>`).join('')}</div>`;
+        c.appendChild(d);
+    });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
-
-function removeSkill(skill) {
-    currentSkills = currentSkills.filter(s => s !== skill);
-    renderTags();
+function syncLangs() {
+    const val = currentLangs.filter(l=>l.lang.trim()).map(l=>`${l.lang.trim()} - ${l.level}`).join('\n');
+    document.getElementById('input-languages').value = val;
+    const ifrm = document.getElementById('template-preview-frame');
+    if(ifrm && ifrm.contentWindow) ifrm.contentWindow.postMessage({ type: 'cv-update', field: 'langues', value: val }, '*');
+    updateProgress();
 }
 
 function renderTags() {
-    const container = document.getElementById('skills-tags-container');
-    const input = document.getElementById('input-skill-search');
-    container.querySelectorAll('.tag-item').forEach(t => t.remove());
+    const c = document.getElementById('skills-tags-container'); const i = document.getElementById('input-skill-search');
+    c.querySelectorAll('.tag-item').forEach(t => t.remove());
     currentSkills.forEach(s => {
-        const div = document.createElement('div');
-        div.className = 'tag-item';
-        div.innerHTML = `${s} <i class="fa-solid fa-times" onclick="removeSkill('${s}')"></i>`;
-        container.insertBefore(div, input);
+        const t = document.createElement('div'); t.className = 'tag-item';
+        t.innerHTML = `<span>${s}</span><button type="button" onclick="removeSkill('${s}')" style="background:none;border:none;color:inherit;cursor:pointer;margin-left:4px;">&times;</button>`;
+        c.insertBefore(t, i);
     });
     document.getElementById('input-skills').value = currentSkills.join(',');
-    updatePreview('competences', currentSkills.join(' • '));
+    const ifrm = document.getElementById('template-preview-frame');
+    if(ifrm && ifrm.contentWindow) ifrm.contentWindow.postMessage({ type: 'cv-update', field: 'competences', value: currentSkills.join(' • ') }, '*');
+    updateProgress();
+}
+function removeSkill(s) { currentSkills = currentSkills.filter(x=>x!==s); renderTags(); }
+document.getElementById('input-skill-search')?.addEventListener('keydown', (e) => { if(e.key==='Enter' && e.target.value.trim()){ e.preventDefault(); const v=e.target.value.trim(); if(!currentSkills.includes(v)){ currentSkills.push(v); renderTags(); e.target.value=''; } } });
+
+function setupSmartAutocomplete(inp, db, isSkill = false) {
+    if (!inp) return;
+    let sD = inp.parentElement.querySelector('.tag-suggestions');
+    if (!sD) {
+        sD = document.createElement('div');
+        sD.className = 'tag-suggestions';
+        inp.parentElement.style.position = 'relative';
+        inp.parentElement.appendChild(sD);
+    }
+
+    inp.addEventListener('input', () => {
+        const v = inp.value.toLowerCase().trim();
+        sD.innerHTML = '';
+        if (v.length < 1) { sD.style.display = 'none'; return; }
+        
+        const m = db.filter(x => x.toLowerCase().includes(v)).slice(0, 5);
+        if (m.length > 0) {
+            m.forEach(match => {
+                const d = document.createElement('div');
+                d.className = 'tag-suggest-item';
+                d.innerHTML = match;
+                d.onclick = () => {
+                    if (isSkill) {
+                        if (!currentSkills.includes(match)) { currentSkills.push(match); renderTags(); }
+                        inp.value = '';
+                    } else {
+                        inp.value = match;
+                        inp.dispatchEvent(new Event('input')); // Trigger sync
+                    }
+                    sD.style.display = 'none';
+                };
+                sD.appendChild(d);
+            });
+            sD.style.display = 'block';
+        } else {
+            sD.style.display = 'none';
+        }
+    });
+
+    // Hide suggestion box when clicking outside
+    document.addEventListener('click', (e) => {
+        if (e.target !== inp && e.target !== sD) sD.style.display = 'none';
+    });
+}
+
+async function saveCV() {
+    const b = document.getElementById('btn-save'); b.disabled = true; b.textContent = 'Enregistrement...';
+    const d = { cv_id: CV_ID, template_id: TEMPLATE_ID, name: document.getElementById('input-name').value.trim(), title: document.getElementById('input-title').value.trim(), email: document.getElementById('input-email').value.trim(), phone: document.getElementById('input-phone').value.trim(), location: document.getElementById('input-location').value.trim(), summary: document.getElementById('input-summary').value.trim(), experience: document.getElementById('input-experience').value, skills: document.getElementById('input-skills').value, education: document.getElementById('input-education').value, languages: document.getElementById('input-languages').value, photo: document.getElementById('photo-b64').value, color_theme: document.getElementById('color-picker').value };
+    try {
+        const rs = await fetch('cv_save.php', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) });
+        const rj = await rs.json(); if(rj.success) window.location.href = 'cv_my.php'; else alert('Erreur: ' + rj.message);
+    } catch(e) { alert('Erreur de connexion.'); } finally { b.disabled = false; b.textContent = 'Enregistrer le CV'; }
 }
 </script>
