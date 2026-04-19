@@ -157,7 +157,12 @@ if (!isset($content)) {
 
 <?php if ($action === 'list'): ?>
   <?php 
-    $listeOffres = $offreC->afficherOffres();
+    $filter_status = $_GET['filter_status'] ?? '';
+    if (!empty($filter_status) && $filter_status !== 'Tous statuts') {
+        $listeOffres = $offreC->filtrerOffres(['statut' => $filter_status]);
+    } else {
+        $listeOffres = $offreC->afficherOffres();
+    }
     $count = $listeOffres->rowCount();
   ?>
   <!-- ═══ Engagement Stats (from posts_stats) ═══ -->
@@ -221,11 +226,13 @@ if (!isset($content)) {
       <option>Design</option>
       <option>Marketing</option>
     </select>
-    <select class="select" style="max-width:140px;" id="admin-offers-status">
-      <option value="">Tous statuts</option>
-      <option>Actif</option>
-      <option>En pause</option>
-    </select>
+    <form method="GET" action="offres_admin.php" id="status-filter-form" style="display:inline-block; margin-bottom:0;">
+      <select class="select" style="max-width:140px;" id="admin-offers-status" name="filter_status" onchange="document.getElementById('status-filter-form').submit()">
+        <option value="">Tous statuts</option>
+        <option value="Actif" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'selected' : ''; ?>>Actif</option>
+        <option value="Expiré" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'selected' : ''; ?>>Expiré</option>
+      </select>
+    </form>
     <select class="select" style="max-width:140px;" id="admin-offers-sort">
       <option>Plus récent</option>
       <option>Plus ancien</option>

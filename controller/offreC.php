@@ -42,6 +42,40 @@ class offreC{
             die('Erreur: '.$e->getMessage());
         }
     }
+    public function filtrerOffres($criteres = []){
+        $db = config::getConnexion();
+        try {
+            // Mise à jour automatique des expirations
+            $db->exec("UPDATE offreemploi SET statut = 'Expiré' WHERE date_expir < CURDATE()");
+            $db->exec("UPDATE offreemploi SET statut = 'Actif' WHERE date_expir >= CURDATE()");
+
+            $sql = "SELECT o.*, u.nom as nom_entreprise 
+                    FROM offreemploi o 
+                    LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur
+                    WHERE 1=1";
+            $params = [];
+
+            if (!empty($criteres['statut']) && $criteres['statut'] !== 'Tous statuts') {
+                $sql .= " AND o.statut = :statut";
+                $params['statut'] = $criteres['statut'];
+            }
+
+            // Gestion du tri
+            if (!empty($criteres['sort_salaire'])) {
+                $ord = strtoupper($criteres['sort_salaire']) === 'ASC' ? 'ASC' : 'DESC';
+                $sql .= " ORDER BY o.salaire $ord, o.date_publication DESC";
+            } else {
+                $sql .= " ORDER BY o.date_publication DESC, o.id_offre DESC";
+            }
+                    
+            $req = $db->prepare($sql);
+            $req->execute($params);
+            return $req;
+        } catch (Exception $e) {
+            die('Erreur: '.$e->getMessage());
+        }
+    }
+
     public function supprimerOffre($id_offre){
         $db = config::getConnexion();
         try{

@@ -155,9 +155,15 @@ if (!isset($content)) {
   <div>
     <?php if ($action === 'list'): ?>
       <?php 
-        $listeOffres = $offreC->afficherOffres();
+        $filter_status = $_GET['filter_status'] ?? '';
+        if (!empty($filter_status) && $filter_status !== 'Tous statuts') {
+            $listeOffres = $offreC->filtrerOffres(['statut' => $filter_status]);
+        } else {
+            $listeOffres = $offreC->afficherOffres();
+        }
         $count = $listeOffres->rowCount();
       ?>
+      
       <div class="results-info mb-4">
         <strong><?php echo $count; ?></strong> postes publiés
       </div>
@@ -287,8 +293,13 @@ if (!isset($content)) {
             </div>
 
             <div class="form-group mb-3">
-                <label class="form-label" for="competences_requises">Compétences Requises</label>
-                <input type="text" class="input <?php echo isset($errors['competences_requises']) ? 'has-error' : ''; ?>" name="competences_requises" id="competences_requises" value="<?php echo htmlspecialchars(val('competences_requises', $form_data, $offreEdit)); ?>" placeholder="ex: PHP, HTML, CSS...">
+                <label class="form-label" for="competences_requises_visual">Compétences Requises (Appuyez sur Entrée)</label>
+                <input type="hidden" name="competences_requises" id="competences_requises" value="<?php echo htmlspecialchars(val('competences_requises', $form_data, $offreEdit)); ?>">
+                
+                <div class="input <?php echo isset($errors['competences_requises']) ? 'has-error' : ''; ?>" id="tags-container" style="display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; min-height: 45px; align-items: center; cursor: text;">
+                    <!-- Les tags seront insérés ici dynamiquement -->
+                    <input type="text" id="competences_requises_visual" placeholder="ex: PHP, HTML, CSS..." style="border: none; outline: none; background: transparent; flex: 1; min-width: 120px; color: var(--text-primary);">
+                </div>
                 <?php if (isset($errors['competences_requises'])): ?>
                     <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['competences_requises']; ?></span>
                 <?php endif; ?>
@@ -355,13 +366,14 @@ if (!isset($content)) {
         <input type="text" class="input" placeholder="Rechercher..." id="hr-search">
       </div>
     </div>
-
+<!-- ═══ appel fonction filtre_statut ═══ -->
     <div class="hr-sidebar__section">
-      <h4 class="text-sm fw-semibold mb-3">Filtrer par statut</h4>
-      <label class="cv-sidebar__option"><input type="radio" name="status" checked> Tous</label>
-      <label class="cv-sidebar__option"><input type="radio" name="status"> Actif</label>
-      <label class="cv-sidebar__option"><input type="radio" name="status"> En pause</label>
-      <label class="cv-sidebar__option"><input type="radio" name="status"> Clôturé</label>
+      <form method="GET" action="hr_posts.php" style="margin: 0;">
+          <h4 class="text-sm fw-semibold mb-3">Filtrer par statut</h4>
+          <label class="cv-sidebar__option"><input type="radio" name="filter_status" value="" onchange="this.form.submit()" <?php echo (empty($_GET['filter_status']) || $_GET['filter_status'] === 'Tous statuts') ? 'checked' : ''; ?>> Tous</label>
+          <label class="cv-sidebar__option"><input type="radio" name="filter_status" value="Actif" onchange="this.form.submit()" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'checked' : ''; ?>> Actif</label>
+          <label class="cv-sidebar__option"><input type="radio" name="filter_status" value="Expiré" onchange="this.form.submit()" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'checked' : ''; ?>> Expiré</label>
+      </form>
     </div>
 
     <div class="hr-sidebar__section">
@@ -414,6 +426,74 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+});
+
+// Tags Logic for competences_requises
+document.addEventListener('DOMContentLoaded', function() {
+    const hiddenInput = document.getElementById('competences_requises');
+    const visualInput = document.getElementById('competences_requises_visual');
+    const tagsContainer = document.getElementById('tags-container');
+    
+    if (!hiddenInput || !visualInput || !tagsContainer) return;
+
+    let tags = hiddenInput.value ? hiddenInput.value.split(',').map(t => t.trim()).filter(t => t) : [];
+
+    function renderTags() {
+        // Clear all elements except the input
+        Array.from(tagsContainer.children).forEach(child => {
+            if (child !== visualInput) child.remove();
+        });
+        
+        tags.forEach((tag, index) => {
+            const tagEl = document.createElement('span');
+            tagEl.style.cssText = "background: #e6f2fd; color: #0d6efd; padding: 0.3rem 0.8rem; border-radius: 16px; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;";
+            tagEl.innerText = tag;
+            
+            const closeBtn = document.createElement('span');
+            closeBtn.innerHTML = "&times;";
+            closeBtn.style.cssText = "cursor: pointer; font-weight: bold; font-size: 1.1rem; line-height: 1;";
+            closeBtn.onclick = function() {
+                tags.splice(index, 1);
+                updateHidden();
+                renderTags();
+            };
+            
+            tagEl.appendChild(closeBtn);
+            tagsContainer.insertBefore(tagEl, visualInput);
+        });
+    }
+    
+    function updateHidden() {
+        hiddenInput.value = tags.join(', ').trim();
+    }
+    
+    tagsContainer.addEventListener('click', () => visualInput.focus());
+    
+    visualInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const val = this.value.trim().replace(/^,|,$/g, '');
+            if (val && !tags.includes(val)) {
+                tags.push(val);
+                updateHidden();
+                renderTags();
+            }
+            this.value = '';
+        } else if (e.key === 'Backspace' && this.value === '' && tags.length > 0) {
+            tags.pop();
+            updateHidden();
+            renderTags();
+        }
+    });
+
+    // Empêcher la soumission du formulaire complet lors de la validation d'un tag avec Entrée
+    visualInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
+    });
+
+    renderTags();
 });
 </script>
 
