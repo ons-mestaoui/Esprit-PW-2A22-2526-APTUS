@@ -178,10 +178,12 @@ if (!isset($content)) {
         <!-- STEP 2: Summary -->
         <div class="step-content" id="step-2">
             <div class="step-header"><h2>Résumé Professionnel</h2></div>
-            <div class="form-group">
+            <div class="form-group" style="position:relative;">
                 <label>Votre Profil *</label>
-                <textarea id="input-summary" class="form-control" placeholder="Professionnel passionné..." required></textarea>
-                <button class="btn-ai" onclick="alert('IA: Bientôt disponible')"><i data-lucide="sparkles"></i> AI Polish</button>
+                <textarea id="input-summary" class="form-control" placeholder="Professionnel passionné..." required style="padding-bottom:45px;"></textarea>
+                <button type="button" class="btn-ai-premium" onclick="optimizeWithAI('input-summary', 'summary', this)">
+                    <i data-lucide="sparkles" style="width:14px;height:14px;"></i> <span>Polish via IA</span>
+                </button>
             </div>
             <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(1)">Retour</button><button class="btn-primary-cv" onclick="goToStep(3)">Suivant: Expérience</button></div>
         </div>
@@ -189,8 +191,11 @@ if (!isset($content)) {
         <!-- STEP 3: Experience -->
         <div class="step-content" id="step-3">
             <div class="step-header"><h2>Expérience Professionnelle</h2></div>
-            <div class="form-group">
-                <textarea id="input-experience" class="form-control" style="height:220px" placeholder="Poste — Entreprise&#10;Dates&#10;• Mission..."></textarea>
+            <div class="form-group" style="position:relative;">
+                <textarea id="input-experience" class="form-control" style="height:220px; padding-bottom:45px;" placeholder="Poste — Entreprise&#10;Dates&#10;• Mission..."></textarea>
+                <button type="button" class="btn-ai-premium" onclick="optimizeWithAI('input-experience', 'experience', this)" style="bottom:12px; right:12px; position:absolute;">
+                    <i data-lucide="sparkles" style="width:14px;height:14px;"></i> <span>Polish via IA</span>
+                </button>
             </div>
             <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(2)">Retour</button><button class="btn-primary-cv" onclick="goToStep(4)">Suivant: Compétences</button></div>
         </div>
@@ -210,8 +215,11 @@ if (!isset($content)) {
         <!-- STEP 5: Education -->
         <div class="step-content" id="step-5">
             <div class="step-header"><h2>Formation</h2></div>
-            <div class="form-group">
-                <textarea id="input-education" class="form-control" style="height:180px" placeholder="Diplôme — Université"></textarea>
+            <div class="form-group" style="position:relative;">
+                <textarea id="input-education" class="form-control" style="height:180px; padding-bottom:45px;" placeholder="Diplôme — Université"></textarea>
+                <button type="button" class="btn-ai-premium" onclick="optimizeWithAI('input-education', 'education', this)" style="bottom:12px; right:12px; position:absolute;">
+                    <i data-lucide="sparkles" style="width:14px;height:14px;"></i> <span>Polish via IA</span>
+                </button>
             </div>
             <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(4)">Retour</button><button class="btn-primary-cv" onclick="goToStep(6)">Suivant: Langues</button></div>
         </div>
@@ -673,4 +681,60 @@ async function saveCV() {
         const rj = await rs.json(); if(rj.success) window.location.href = 'cv_my.php'; else alert('Erreur: ' + rj.message);
     } catch(e) { alert('Erreur de connexion.'); } finally { b.disabled = false; b.textContent = 'Enregistrer le CV'; }
 }
+    // ==========================================
+    // IA Polish Integration (Ollama Local)
+    // ==========================================
+    async function optimizeWithAI(inputId, context, btnElement) {
+        const inputField = document.getElementById(inputId);
+        const textRaw = inputField.value.trim();
+        
+        if (!textRaw) {
+            alert("Veuillez saisir un texte brouillon à améliorer d'abord.");
+            return;
+        }
+
+        const spanText = btnElement.querySelector('span');
+        const icon = btnElement.querySelector('i');
+        const originalText = spanText.textContent;
+
+        // UI Loading State
+        btnElement.classList.add('ai-loading');
+        spanText.textContent = "L'IA réfléchit...";
+        btnElement.disabled = true;
+
+        try {
+            const response = await fetch('ajax_ai_polish.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: textRaw, context: context })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Update textarea with AI polished text
+                inputField.value = data.polished_text;
+                // Force sync update to the template iframe
+                syncField(inputField);
+                // Trigger visual feedback on textarea
+                inputField.style.transition = 'box-shadow 0.3s ease, background 0.3s ease';
+                inputField.style.boxShadow = 'inset 0 0 0 2px rgba(107, 52, 163, 0.5)';
+                inputField.style.background = 'rgba(107, 52, 163, 0.03)';
+                setTimeout(() => {
+                    inputField.style.boxShadow = '';
+                    inputField.style.background = '';
+                }, 1500);
+            } else {
+                alert("Erreur de l'IA : " + (data.error || "Erreur inconnue."));
+            }
+        } catch (error) {
+            console.error("Erreur dans l'IA Polish:", error);
+            alert("Erreur côté client : l'application n'a pas pu traiter la réponse.");
+        } finally {
+            // Restore UI
+            btnElement.classList.remove('ai-loading');
+            spanText.textContent = originalText;
+            btnElement.disabled = false;
+        }
+    }
 </script>
