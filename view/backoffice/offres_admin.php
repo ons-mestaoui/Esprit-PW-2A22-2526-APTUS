@@ -157,12 +157,16 @@ if (!isset($content)) {
 
 <?php if ($action === 'list'): ?>
   <?php 
-    $filter_status = $_GET['filter_status'] ?? '';
-    if (!empty($filter_status) && $filter_status !== 'Tous statuts') {
-        $listeOffres = $offreC->filtrerOffres(['statut' => $filter_status]);
-    } else {
-        $listeOffres = $offreC->afficherOffres();
+    $criteres_admin = [];
+    if (!empty($_GET['filter_status']) && $_GET['filter_status'] !== 'Tous statuts') {
+        $criteres_admin['statut'] = $_GET['filter_status'];
     }
+    if (!empty($_GET['sort_date'])) {
+        $criteres_admin['sort_date'] = $_GET['sort_date'];
+    }
+    $listeOffres = !empty($criteres_admin)
+        ? $offreC->filtrerOffres($criteres_admin)
+        : $offreC->afficherOffres();
     $count = $listeOffres->rowCount();
   ?>
   <!-- ═══ Engagement Stats (from posts_stats) ═══ -->
@@ -226,17 +230,13 @@ if (!isset($content)) {
       <option>Design</option>
       <option>Marketing</option>
     </select>
-    <form method="GET" action="offres_admin.php" id="status-filter-form" style="display:inline-block; margin-bottom:0;">
-      <select class="select" style="max-width:140px;" id="admin-offers-status" name="filter_status" onchange="document.getElementById('status-filter-form').submit()">
+    <form method="GET" action="offres_admin.php" id="admin-filter-form" style="display:inline-flex; margin-bottom:0;">
+      <select class="select" style="max-width:140px;" id="admin-offers-status" name="filter_status" onchange="document.getElementById('admin-filter-form').submit()">
         <option value="">Tous statuts</option>
         <option value="Actif" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'selected' : ''; ?>>Actif</option>
         <option value="Expiré" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'selected' : ''; ?>>Expiré</option>
       </select>
     </form>
-    <select class="select" style="max-width:140px;" id="admin-offers-sort">
-      <option>Plus récent</option>
-      <option>Plus ancien</option>
-    </select>
   </div>
 
   <!-- ═══ Offers Data Table ═══ -->

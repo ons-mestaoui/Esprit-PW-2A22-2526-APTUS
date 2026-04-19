@@ -60,8 +60,11 @@ class offreC{
                 $params['statut'] = $criteres['statut'];
             }
 
-            // Gestion du tri
-            if (!empty($criteres['sort_salaire'])) {
+            // Gestion du tri (sort_date prioritaire sur sort_salaire)
+            if (!empty($criteres['sort_date'])) {
+                $ord = strtoupper($criteres['sort_date']) === 'ASC' ? 'ASC' : 'DESC';
+                $sql .= " ORDER BY o.date_publication $ord, o.id_offre $ord";
+            } elseif (!empty($criteres['sort_salaire'])) {
                 $ord = strtoupper($criteres['sort_salaire']) === 'ASC' ? 'ASC' : 'DESC';
                 $sql .= " ORDER BY o.salaire $ord, o.date_publication DESC";
             } else {

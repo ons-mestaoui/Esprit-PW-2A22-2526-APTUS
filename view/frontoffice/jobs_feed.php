@@ -7,11 +7,14 @@ $offreC = new offreC();
 
 $criteres = [];
 if (!empty($_GET['sort_salaire'])) {
-    $criteres['sort_salaire'] = $_GET['sort_salaire']; // 'ASC' ou 'DESC'
+    $criteres['sort_salaire'] = $_GET['sort_salaire'];
+}
+if (!empty($_GET['sort_date'])) {
+    $criteres['sort_date'] = $_GET['sort_date'];
 }
 
-// Active uniquement les offres actives pour les candidats
-$listeOffres = !empty($criteres) 
+// Toujours filtrer sur les offres actives pour les candidats
+$listeOffres = !empty($criteres)
     ? $offreC->filtrerOffres(array_merge($criteres, ['statut' => 'Actif']))
     : $offreC->afficherOffres(true);
 $count = $listeOffres->rowCount();
@@ -61,10 +64,10 @@ if (!isset($content)) {
 
   <!-- Group 3: Sorting Options -->
   <form method="GET" action="jobs_feed.php" style="display:flex; gap: 0.5rem; flex-shrink: 0;">
-    <select class="select" id="job-sort-date" style="width: 140px;">
-      <option value="" disabled selected>Date de pub.</option>
-      <option value="newest">Plus récent</option>
-      <option value="oldest">Plus ancien</option>
+    <select class="select" id="job-sort-date" name="sort_date" style="width: 140px;" onchange="this.form.submit()">
+      <option value="">Date de pub.</option>
+      <option value="DESC" <?php echo (isset($_GET['sort_date']) && $_GET['sort_date'] === 'DESC') ? 'selected' : ''; ?>>Plus récent ↓</option>
+      <option value="ASC" <?php echo (isset($_GET['sort_date']) && $_GET['sort_date'] === 'ASC') ? 'selected' : ''; ?>>Plus ancien ↑</option>
     </select>
     
     <select class="select" id="job-sort-salary" name="sort_salaire" style="width: 140px;" onchange="this.form.submit()">
