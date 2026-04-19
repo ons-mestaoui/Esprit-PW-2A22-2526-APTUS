@@ -155,8 +155,11 @@ if (!isset($content)) {
   <div>
     <?php if ($action === 'list'): ?>
       <?php 
+        $q_hr = trim($_GET['q'] ?? '');
         $filter_status = $_GET['filter_status'] ?? '';
-        if (!empty($filter_status) && $filter_status !== 'Tous statuts') {
+        if ($q_hr !== '') {
+            $listeOffres = $offreC->recherche_offre($q_hr);
+        } elseif (!empty($filter_status) && $filter_status !== 'Tous statuts') {
             $listeOffres = $offreC->filtrerOffres(['statut' => $filter_status]);
         } else {
             $listeOffres = $offreC->afficherOffres();
@@ -361,10 +364,13 @@ if (!isset($content)) {
     </div>
 
     <div class="hr-sidebar__section">
-      <div class="search-bar" style="max-width:100%;">
-        <i data-lucide="search" style="width:16px;height:16px;"></i>
-        <input type="text" class="input" placeholder="Rechercher..." id="hr-search">
-      </div>
+      <form method="GET" action="hr_posts.php" style="display:flex; gap:0.5rem; max-width:100%;">
+        <div class="search-bar" style="flex:1;">
+          <i data-lucide="search" style="width:16px;height:16px;"></i>
+          <input type="text" class="input" placeholder="Rechercher..." id="hr-search" name="q" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
+        </div>
+        <button type="submit" class="btn btn-primary" style="padding: 0.5rem 0.75rem;"><i data-lucide="search" style="width:14px;height:14px;"></i></button>
+      </form>
     </div>
 <!-- ═══ appel fonction filtre_statut ═══ -->
     <div class="hr-sidebar__section">
@@ -412,6 +418,7 @@ function executeDelete() {
         window.location.href = deleteUrl;
     }
 }
+
 
 // Ensure the cancel button removes the classes (simulating the layout logic)
 document.addEventListener('DOMContentLoaded', function() {

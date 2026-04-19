@@ -157,16 +157,19 @@ if (!isset($content)) {
 
 <?php if ($action === 'list'): ?>
   <?php 
+    $q = trim($_GET['q'] ?? '');
     $criteres_admin = [];
     if (!empty($_GET['filter_status']) && $_GET['filter_status'] !== 'Tous statuts') {
         $criteres_admin['statut'] = $_GET['filter_status'];
     }
-    if (!empty($_GET['sort_date'])) {
-        $criteres_admin['sort_date'] = $_GET['sort_date'];
+
+    if ($q !== '') {
+        $listeOffres = $offreC->recherche_offre($q);
+    } elseif (!empty($criteres_admin)) {
+        $listeOffres = $offreC->filtrerOffres($criteres_admin);
+    } else {
+        $listeOffres = $offreC->afficherOffres();
     }
-    $listeOffres = !empty($criteres_admin)
-        ? $offreC->filtrerOffres($criteres_admin)
-        : $offreC->afficherOffres();
     $count = $listeOffres->rowCount();
   ?>
   <!-- ═══ Engagement Stats (from posts_stats) ═══ -->
@@ -218,10 +221,10 @@ if (!isset($content)) {
   </div>
 
   <!-- ═══ Search & Sort Toolbar ═══ -->
-  <div class="filter-bar mb-6">
+  <form method="GET" action="offres_admin.php" class="filter-bar mb-6" id="admin-filter-form">
     <div class="search-bar" style="flex:1;max-width:350px;">
       <i data-lucide="search" style="width:16px;height:16px;"></i>
-      <input type="text" class="input" placeholder="Rechercher une offre..." id="admin-offers-search">
+      <input type="text" class="input" placeholder="Rechercher une offre..." id="admin-offers-search" name="q" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
     </div>
     <select class="select" style="max-width:160px;" id="admin-offers-category">
       <option value="">Toutes domaines</option>
@@ -230,13 +233,12 @@ if (!isset($content)) {
       <option>Design</option>
       <option>Marketing</option>
     </select>
-    <form method="GET" action="offres_admin.php" id="admin-filter-form" style="display:inline-flex; margin-bottom:0;">
-      <select class="select" style="max-width:140px;" id="admin-offers-status" name="filter_status" onchange="document.getElementById('admin-filter-form').submit()">
-        <option value="">Tous statuts</option>
-        <option value="Actif" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'selected' : ''; ?>>Actif</option>
-        <option value="Expiré" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'selected' : ''; ?>>Expiré</option>
-      </select>
-    </form>
+    <select class="select" style="max-width:140px;" id="admin-offers-status" name="filter_status" onchange="this.form.submit()">
+      <option value="">Tous statuts</option>
+      <option value="Actif" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'selected' : ''; ?>>Actif</option>
+      <option value="Expiré" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'selected' : ''; ?>>Expiré</option>
+    </select>
+  </form>
   </div>
 
   <!-- ═══ Offers Data Table ═══ -->
@@ -474,6 +476,51 @@ function executeDelete() {
         window.location.href = deleteUrl;
     }
 }
+
+function executeDelete() {
+    if(deleteUrl) {
+        window.location.href = deleteUrl;
+    }
+}
+
+// ═══ Recherche dynamique ═══
+(function() {
+    var searchInput = document.getElementById('admin-offers-search');
+    if (!searchInput) return;
+
+    var debounceTimer;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        var kw = this.value.trim();
+        debounceTimer = setTimeout(function() {
+            if (kw === '') {
+                // Restaurer toutes les lignes
+                document.querySelectorAll('.data-table tbody tr').forEach(function(r) {
+                    r.style.display = '';
+                });
+                return;
+            }
+            fetch('../../controller/search_offres_ajax.php?q=' + encodeURIComponent(kw))
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    var tbody = document.querySelector('.data-table tbody');
+                    if (!tbody) return;
+                    var rows = tbody.querySelectorAll('tr');
+                    // Cacher toutes les lignes
+                    rows.forEach(function(r) { r.style.display = 'none'; });
+                    // Afficher uniquement les lignes dont l'ID offre correspond
+                    var ids = data.map(function(o) { return String(o.id_offre); });
+                    rows.forEach(function(r) {
+                        var idCell = r.querySelector('td:first-child');
+                        if (idCell) {
+                            var rowId = idCell.textContent.replace('#', '').trim();
+                            if (ids.indexOf(rowId) > -1) r.style.display = '';
+                        }
+                    });
+                });
+        }, 300); // Attendre 300ms après la dernière frappe
+    });
+})();
 </script>
 
 <!-- ═══ Delete Confirmation Modal ═══ -->

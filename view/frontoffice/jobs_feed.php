@@ -5,6 +5,7 @@ $pageCSS = "feeds.css";
 require_once '../../controller/offreC.php';
 $offreC = new offreC();
 
+$q = trim($_GET['q'] ?? '');
 $criteres = [];
 if (!empty($_GET['sort_salaire'])) {
     $criteres['sort_salaire'] = $_GET['sort_salaire'];
@@ -14,9 +15,13 @@ if (!empty($_GET['sort_date'])) {
 }
 
 // Toujours filtrer sur les offres actives pour les candidats
-$listeOffres = !empty($criteres)
-    ? $offreC->filtrerOffres(array_merge($criteres, ['statut' => 'Actif']))
-    : $offreC->afficherOffres(true);
+if ($q !== '') {
+    $listeOffres = $offreC->recherche_offre($q, true); // true = actifs seulement
+} elseif (!empty($criteres)) {
+    $listeOffres = $offreC->filtrerOffres(array_merge($criteres, ['statut' => 'Actif']));
+} else {
+    $listeOffres = $offreC->afficherOffres(true);
+}
 $count = $listeOffres->rowCount();
 ?><?php
 if (!isset($content)) {
@@ -38,16 +43,16 @@ if (!isset($content)) {
 <!-- ═══ FILTER BAR ═══ -->
 <div class="job-filter-bar mb-6" id="job-filters" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
   <!-- Group 1: Search -->
-  <div style="display:flex; gap: 0.5rem; flex: 1; min-width: 300px;">
+  <form method="GET" action="jobs_feed.php" style="display:flex; gap: 0.5rem; flex: 1; min-width: 300px;">
     <div class="input-icon-wrapper search-input" style="flex:1;">
       <i data-lucide="search" style="width:16px;height:16px;"></i>
-      <input type="text" class="input" id="job-search" placeholder="Mot-clé, poste...">
+      <input type="text" class="input" id="job-search" name="q" placeholder="Mot-clé, poste..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
     </div>
-    <button class="btn btn-primary" id="job-search-btn">
+    <button type="submit" class="btn btn-primary" id="job-search-btn">
       <i data-lucide="search" style="width:16px;height:16px;"></i>
       Rechercher
     </button>
-  </div>
+  </form>
 
   <!-- Group 2: Location & Mode -->
   <div class="input-icon-wrapper" style="width: 180px;">
