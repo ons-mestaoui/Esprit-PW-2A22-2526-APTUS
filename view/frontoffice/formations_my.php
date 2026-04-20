@@ -304,6 +304,18 @@ if (!isset($content)) {
             padding: 0.5rem 0.75rem;
         }
     }
+
+    /* ── Feature 2 : Pulse Contextuel sur bouton Certificat ── */
+    @keyframes certifPulse {
+        0%   { box-shadow: 0 0 0 0   rgba(16,185,129,0.7); }
+        70%  { box-shadow: 0 0 0 14px rgba(16,185,129,0);  }
+        100% { box-shadow: 0 0 0 0   rgba(16,185,129,0);  }
+    }
+    .btn-certif-pulse {
+        animation: certifPulse 2s ease-out infinite;
+        background: linear-gradient(135deg, #059669, #10b981) !important;
+        border-color: #059669 !important;
+    }
 </style>
 
 <!-- ═══════════════════════════════════════════
@@ -439,9 +451,10 @@ if (!isset($content)) {
                             style="background: rgba(16, 185, 129, 0.1); color: #059669; padding: 0.75rem; border-radius: 10px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
                             <span style="font-size: 1.3rem;">🎓</span> Badge "Expert" Acquis !
                         </div>
-                        <a href="certificate.php?f_id=<?php echo $cours['id_formation']; ?>" target="_blank" class="btn btn-primary"
+                        <a href="certificate.php?f_id=<?php echo $cours['id_formation']; ?>" target="_blank" 
+                            class="btn btn-primary btn-certif-pulse"
                             style="text-align:center;">
-                            Générer mon Certificat
+                            🎓 Générer mon Certificat
                         </a>
                     </div>
                 <?php else: ?>

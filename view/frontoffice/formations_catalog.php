@@ -74,7 +74,11 @@ if (!isset($content)) {
         </h2>
         <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Ne choisissez plus vos cours au hasard. Suivez un cheminement logique pour atteindre vos objectifs d'apprentissage.</p>
     </div>
-    <a href="skill_tree.php" class="btn btn-primary" style="white-space: nowrap;">Voir l'Arbre (Skill Tree) <i data-lucide="arrow-right" style="width: 16px; height: 16px; margin-left: 5px;"></i></a>
+    <a href="skill_tree.php" class="btn btn-primary" style="white-space: nowrap;"
+       data-intro="Ne choisissez plus vos cours au hasard ! Suivez votre cheminement logique d'apprentissage ici." 
+       data-step="1">
+        Voir l'Arbre (Skill Tree) <i data-lucide="arrow-right" style="width: 16px; height: 16px; margin-left: 5px;"></i>
+    </a>
 </div>
 
 <div class="catalogue-layout" style="display: flex; gap: 2rem;">
@@ -140,7 +144,9 @@ if (!isset($content)) {
             <input type="hidden" name="domaine" value="<?php echo htmlspecialchars($_GET['domaine'] ?? ''); ?>">
             <input type="hidden" name="niveau" value="<?php echo htmlspecialchars($_GET['niveau'] ?? ''); ?>">
             
-            <div style="flex: 1; position: relative;">
+            <div style="flex: 1; position: relative;" 
+                 data-intro="Vous cherchez une compétence précise ? Tapez-la ici pour filtrer le catalogue instantanément." 
+                 data-step="2">
                 <input type="text" name="q" placeholder="Rechercher une formation..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" oninput="debounceSubmit()" style="width: 100%; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-primary); padding: 0.5rem 0.5rem 0.5rem 2.5rem; border-radius:6px; outline:none;">
                 <span style="position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.4;">
                     <i data-lucide="search" style="width:16px;height:16px;color:var(--text-primary);"></i>
@@ -180,37 +186,72 @@ if (!isset($content)) {
 </div>
 
 <style>
-    /* Responsive grid adjust */
+    /* ── Responsive grid ── */
     @media (max-width: 1024px) {
         .catalogue-layout { flex-direction: column; }
-        form.sidebar { width: 100% !important; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        form.sidebar { width: 100% !important; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
     }
-    /* View toggle states */
+
+    /* ── Catalog card hover ── */
+    .catalog-card .catalog-card__inner:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 32px rgba(99,102,241,0.15);
+        border-color: var(--accent-primary);
+    }
+
+    /* ── View toggle active ── */
     .view-toggle-btn.active {
         background: var(--gradient-primary) !important;
         color: #fff !important;
     }
-    /* List view mode */
+
+    /* ───────────────────────────────────────────
+       LIST VIEW — Premium Horizontal Row Layout
+    ─────────────────────────────────────────── */
     #catalog-grid.list-view {
         grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
     }
-    #catalog-grid.list-view .card-flat.card-formation-hover {
-        display: grid !important;
-        grid-template-columns: 200px 1fr auto;
-        gap: 1.25rem;
+    /* Force the inner card to horizontal */
+    #catalog-grid.list-view .catalog-card__inner {
+        flex-direction: row !important;
+        height: auto !important;
+        align-items: stretch;
+    }
+    /* Thumbnail: fixed left column */
+    #catalog-grid.list-view .catalog-card__thumb {
+        width: 180px !important;
+        min-width: 180px !important;
+        height: auto !important;
+        min-height: 120px;
+        border-radius: 14px 0 0 14px !important;
+        flex-shrink: 0;
+    }
+    /* Body fills remaining space */
+    #catalog-grid.list-view .catalog-card__inner > div:last-child {
+        flex-direction: row !important;
         align-items: center;
-        padding: 1rem 1.5rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding: 1rem 1.25rem;
     }
-    #catalog-grid.list-view .card-flat.card-formation-hover > div:first-child {
-        height: 80px !important;
-        width: 100% !important;
-        margin-bottom: 0 !important;
-        border-radius: 8px;
+    /* Description stays on one line in list mode */
+    #catalog-grid.list-view p {
+        -webkit-line-clamp: 1 !important;
+        flex: 1;
+        min-width: 180px;
     }
+    /* Footer row stays at end */
+    #catalog-grid.list-view .catalog-card__inner > div:last-child > div:last-child {
+        border-top: none !important;
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+        margin-left: auto;
+    }
+
     @media (max-width: 768px) {
-        #catalog-grid.list-view .card-flat.card-formation-hover {
-            grid-template-columns: 1fr;
-        }
+        #catalog-grid.list-view .catalog-card__inner { flex-direction: column !important; }
+        #catalog-grid.list-view .catalog-card__thumb { width: 100% !important; min-width: unset !important; height: 140px !important; border-radius: 14px 14px 0 0 !important; }
     }
 </style>
 
@@ -309,5 +350,27 @@ if (!isset($content)) {
         });
         
         observer.observe(trigger);
+    });
+
+    // Launch Intro.js Tour guided
+    document.addEventListener("DOMContentLoaded", function() {
+        // Optionnel: vérifier en session si c'est le 1er login
+        if (!localStorage.getItem('aptus_tour_completed')) {
+            setTimeout(() => {
+                introJs().setOptions({
+                    nextLabel: 'Suivant',
+                    prevLabel: 'Précédent',
+                    skipLabel: 'Passer',
+                    doneLabel: 'Compri !',
+                    showProgress: true,
+                    exitOnOverlayClick: false,
+                    scrollToElement: true
+                }).oncomplete(function() {
+                    localStorage.setItem('aptus_tour_completed', 'true');
+                }).onskip(function() {
+                    localStorage.setItem('aptus_tour_completed', 'true');
+                }).start();
+            }, 1000); // Petit délai pour laisser le layout charger
+        }
     });
 </script>

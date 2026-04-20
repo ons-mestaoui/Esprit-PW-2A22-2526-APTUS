@@ -114,7 +114,11 @@ if (!isset($content)) {
             <div style="background: var(--bg-surface); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h3 style="margin: 0; color: var(--text-primary);">Ajouter une ressource</h3>
-                    <button onclick="generateSyllabusIA()" id="ai-btn" class="btn" style="background: var(--gradient-primary); color: white; border: none; font-size: 0.85rem; padding: 0.5rem 1rem;"><i data-lucide="sparkles" style="width:14px; height:14px; margin-right: 5px;"></i> Assistant IA</button>
+                    <button onclick="generateSyllabusIA()" id="ai-btn" class="btn" 
+                            style="background: var(--gradient-primary); color: white; border: none; font-size: 0.85rem; padding: 0.5rem 1rem;"
+                            title="L'IA (Llama 3) analysera le titre du cours pour générer automatiquement un Syllabus détaillé que vous pourrez modifier.">
+                        <i data-lucide="sparkles" style="width:14px; height:14px; margin-right: 5px;"></i> Assistant IA
+                    </button>
                 </div>
                 <form id="addResourceForm" onsubmit="addResource(event)">
                     <div style="margin-bottom: 1rem;">
@@ -208,7 +212,20 @@ if (!isset($content)) {
             if (data.success) {
                 document.getElementById('prog-bar-' + idUser).style.width = prog + '%';
                 document.getElementById('prog-text-' + idUser).innerText = prog + '%';
-                // Optional: show a small toast
+                // Feature 3 : Confettis si 100% !
+                if (parseInt(prog) === 100) {
+                    if (typeof confetti !== 'undefined') {
+                        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 },
+                            colors: ['#6366f1','#8b5cf6','#10b981','#f59e0b','#ffffff'] });
+                    }
+                    // SweetAlert de félicitations
+                    setTimeout(() => {
+                        Swal.fire({ icon: 'success', title: '🎉 Formation Terminée !',
+                            text: `L'étudiant a validé 100% du cours. Un certificat est maintenant disponible.`,
+                            timer: 3500, showConfirmButton: false,
+                            background: 'var(--bg-card)', color: 'var(--text-primary)' });
+                    }, 600);
+                }
             } else {
                 alert('Erreur lors de la mise à jour.');
             }
@@ -237,11 +254,44 @@ if (!isset($content)) {
         });
     }
 
+    function showSkeletonLoader() {
+        const skeletonItem = (w1, w2) => `
+            <div style="background:var(--bg-card); padding:1rem; border-radius:8px; border:1px solid var(--border-color);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div style="height:16px; width:${w1}; background:linear-gradient(90deg,var(--bg-surface) 25%,var(--border-color) 50%,var(--bg-surface) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px;"></div>
+                    <div style="height:18px; width:60px; background:linear-gradient(90deg,var(--bg-surface) 25%,var(--border-color) 50%,var(--bg-surface) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:20px;"></div>
+                </div>
+                <div style="height:12px; width:${w2}; background:linear-gradient(90deg,var(--bg-surface) 25%,var(--border-color) 50%,var(--bg-surface) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px; margin-left:28px;"></div>
+            </div>`;
+        return `
+            <style>@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }</style>
+            <p style="color:var(--text-secondary); margin-bottom:1.5rem;">
+                <div style="height:14px; width:80%; background:linear-gradient(90deg,var(--bg-surface) 25%,var(--border-color) 50%,var(--bg-surface) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px;"></div>
+            </p>
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                ${skeletonItem('55%','75%')}
+                ${skeletonItem('45%','65%')}
+                ${skeletonItem('60%','80%')}
+                ${skeletonItem('50%','70%')}
+            </div>`;
+    }
+
     function generateSyllabusIA() {
         const btn = document.getElementById('ai-btn');
         const oldHtml = btn.innerHTML;
-        btn.innerHTML = '✨ Génération...';
+        btn.innerHTML = '<i data-lucide="loader-2" style="width:14px;height:14px;animation:spin 1s linear infinite;"></i> Collaboration IA...';
         btn.disabled = true;
+
+        // Show skeleton immediately in a SweetAlert modal
+        Swal.fire({
+            title: '✨ Génération en cours...',
+            html: showSkeletonLoader(),
+            width: '700px',
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+        });
 
         const formData = new FormData();
         formData.append('action', 'generate_ai_syllabus');
@@ -279,25 +329,21 @@ if (!isset($content)) {
                 html += `</div>`;
                 
                 Swal.fire({
-                    title: 'Syllabus Généré par IA',
+                    title: '✨ Syllabus Généré par IA',
                     html: html,
                     width: '700px',
                     showCancelButton: true,
                     confirmButtonText: '🪄 Ajouter ces chapitres',
                     cancelButtonText: 'Annuler',
-                    background: '#ffffff',
-                    color: '#1f2937',
-                    customClass: {
-                        popup: 'swal-ai-custom'
-                    }
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                    customClass: { popup: 'swal-ai-custom' }
                 }).then((result) => {
                     if (result.isConfirmed) {
                         const checkboxes = document.querySelectorAll('.ai-chap-checkbox');
                         const selectedChapters = [];
                         checkboxes.forEach(cb => {
-                            if(cb.checked) {
-                                selectedChapters.push(syllabus[parseInt(cb.value)]);
-                            }
+                            if(cb.checked) selectedChapters.push(syllabus[parseInt(cb.value)]);
                         });
                         if(selectedChapters.length > 0) {
                             applySyllabus(resume, selectedChapters);
@@ -307,17 +353,19 @@ if (!isset($content)) {
                     }
                 });
             } else {
-                alert('Erreur IA: ' + data.message);
+                Swal.fire({ icon: 'error', title: 'Erreur IA', text: data.message });
             }
         })
         .catch(err => {
             btn.innerHTML = oldHtml;
             btn.disabled = false;
-            alert('Erreur de connexion à l\'IA.');
+            Swal.fire({ icon: 'error', title: 'Connexion impossible', text: "Vérifiez votre clé API Groq." });
         });
     }
 
+
     async function applySyllabus(resume, chapters) {
+
         Swal.fire({ title: 'Application...', didOpen: () => { Swal.showLoading(); } });
         
         let htmlSyllabus = `<hr style="margin: 2rem 0; border: none; border-top: 1px dashed var(--border-color);"><h4 style="color:var(--accent-primary);">Syllabus Proposé</h4><p style="margin-bottom:1rem;">${resume}</p><ul style="list-style-type:none; padding:0; margin:0;">`;
@@ -379,3 +427,6 @@ if (!isset($content)) {
         });
     }
 </script>
+
+<!-- Feature 3 : Canvas Confetti (ultra-léger ~7kb) -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>

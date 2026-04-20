@@ -158,7 +158,7 @@ if (!isset($content)) {
 </style>
 
 <!-- Floating Chat Toggle Button -->
-<button class="chat-fab" id="chat-fab" onclick="toggleChat()" title="Poser une question à l'IA">
+<button class="chat-fab" id="chat-fab" onclick="toggleChat()" title="Posez une question sur le cours à notre Assistant IA (Llama 3)">
     💬
 </button>
 

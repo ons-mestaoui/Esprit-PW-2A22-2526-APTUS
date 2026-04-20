@@ -23,6 +23,10 @@
 
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+
+  <!-- UX Discoverability: Intro.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
 </head>
 <body>
 
@@ -77,16 +81,32 @@
         <i data-lucide="moon" class="icon-moon"></i>
       </button>
 
-      <!-- Notification Bell (Premium) -->
+      <!-- Notification Bell (Premium) + Intro.js Styles -->
       <style>
-        /* ─── Notification Panel ─── */
+        /* ─── Intro.js Custom Aptus Branding ─── */
+        .introjs-tooltip {
+            border-radius: 12px;
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border: 1px solid var(--accent-primary);
+        }
+        .introjs-button {
+            background: var(--gradient-primary) !important;
+            color: white !important;
+            text-shadow: none !important;
+            border: none !important;
+            border-radius: 8px !important;
+        }
+        /* ─── Notification Panel (override dropdown-menu defaults) ─── */
         #notification-dropdown .notif-panel {
-          width: 360px; padding: 0; overflow: hidden;
-          right: 0; left: auto;
-          border-radius: 16px;
-          box-shadow: 0 25px 60px rgba(0,0,0,0.18);
-          border: 1px solid var(--border-color);
-          background: var(--bg-card);
+          width: 360px !important;
+          min-width: 360px !important;
+          padding: 0 !important;
+          overflow: hidden;
+          border-radius: 16px !important;
+          box-shadow: 0 25px 60px rgba(0,0,0,0.18) !important;
+          /* DO NOT set display:none — the global .dropdown.open system handles show/hide via opacity/visibility */
         }
         .notif-panel__head {
           padding: 1rem 1.25rem;
@@ -110,11 +130,9 @@
         }
         .notif-panel__mark-btn:hover { background: rgba(255,255,255,0.3); }
         .notif-panel__body { max-height: 400px; overflow-y: auto; }
-        /* Custom scrollbar */
         .notif-panel__body::-webkit-scrollbar { width: 4px; }
         .notif-panel__body::-webkit-scrollbar-track { background: transparent; }
         .notif-panel__body::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-        /* Single notification item */
         .notif-item {
           display: flex; align-items: flex-start; gap: 12px;
           padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);
@@ -153,19 +171,16 @@
           font-size: 0.72rem; color: var(--text-secondary);
           margin-top: 4px; display: block;
         }
-        /* Empty state */
         .notif-empty {
           padding: 3rem 1.5rem; text-align: center; color: var(--text-secondary);
         }
         .notif-empty__icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.5; }
         .notif-empty p { font-size: 0.9rem; margin: 0; }
-        /* Panel footer */
         .notif-panel__foot {
           padding: 0.6rem 1.25rem; background: var(--bg-surface);
           border-top: 1px solid var(--border-color);
           text-align: center; font-size: 11px; color: var(--text-secondary);
         }
-        /* Bell animation when unread */
         @keyframes bellRing {
           0%,100% { transform: rotate(0); }
           15%      { transform: rotate(12deg); }
@@ -401,6 +416,24 @@
     let _prevCount = 0;
     let _bellRung  = false;
 
+    // ─── Tick Sound via Web Audio API (no CDN needed) ───
+    function playNotifTick() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);           // A5 note
+            osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.08);   // slight rise
+            gain.gain.setValueAtTime(0.18, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.25);
+        } catch(e) {} // silent fail if browser blocks audio
+    }
+
     function timeAgo(minutes) {
         if (minutes < 1)     return "À l'instant";
         if (minutes < 60)    return `il y a ${minutes} min`;
@@ -430,13 +463,15 @@
             badge.style.display   = 'block';
             headCount.textContent = count;
 
-            // Ring bell once when new notifs appear
+            // Ring bell + play tick sound when NEW notifs arrive
             if (!_bellRung || count > _prevCount) {
                 bellIcon.classList.remove('bell-has-notif');
                 void bellIcon.offsetWidth;
                 bellIcon.classList.add('bell-has-notif');
                 pulse.style.display = 'block';
                 _bellRung = true;
+                // Play tick only when count increases (new notification)
+                if (count > _prevCount && _prevCount !== 0) playNotifTick();
             }
         } else {
             badge.style.display   = 'none';
