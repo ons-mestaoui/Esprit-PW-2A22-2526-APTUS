@@ -1,133 +1,178 @@
 <?php
-/**
- * ============================================================
- * PeerLearningController — Concept 1 : Matchmaker de Peer-Learning
- * ============================================================
- * Objectif : connecter un étudiant en difficulté avec un étudiant
- * expert de la même formation (progression = 100%).
- *
- * Méthodes publiques :
- *   - trouverMentor($id_formation, $id_demandeur) → retourne un tableau
- *     avec les infos du mentor et un lien Jitsi généré, ou null si aucun.
- *   - handleAjax() → point d'entrée HTTP pour les requêtes AJAX POST.
- */
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/NotificationController.php';
 
 class PeerLearningController
 {
-    // ----------------------------------------------------------
-    // MÉTHODE PRINCIPALE : Trouver un mentor disponible
-    // ----------------------------------------------------------
+    private const MAX_REQUESTS_PER_DAY = 3;
+    private const SESSION_TIMEOUT_MIN  = 30;
 
-    /**
-     * Cherche dans la table 'inscription' un utilisateur ayant 100%
-     * de progression sur la formation demandée, en excluant le demandeur.
-     *
-     * @param int $id_formation  L'ID de la formation concernée.
-     * @param int $id_demandeur  L'ID de l'étudiant qui demande de l'aide.
-     * @return array|null  Tableau ['mentor' => [...], 'jitsi_link' => '...'] ou null.
-     */
+    // ──────────────────────────────────────────────────────────────
+    // Smart Matching
+    // ──────────────────────────────────────────────────────────────
     public function trouverMentor(int $id_formation, int $id_demandeur): ?array
     {
+        // 1. Vérifier la limite journalière du demandeur
+        if ($this->hasExceededDailyLimit($id_demandeur)) {
+            return ['error' => 'daily_limit', 'message' => "Vous avez atteint votre limite de " . self::MAX_REQUESTS_PER_DAY . " demandes par jour."];
+        }
+
+        // 2. Auto-annuler les sessions en attente depuis trop longtemps
+        $this->cancelStaleRequests();
+
         $db = config::getConnexion();
 
-        // Requête préparée PDO avec JOIN pour récupérer les infos du mentor
-        // On cherche un inscrit avec 100% de progression, différent du demandeur
-        // NOTE D'INTÉGRATION : Le module "Utilisateur" utilise la table 'candidat' pour les étudiants
+        // 3. Smart Matching :
+        //    - 100% de progression
+        //    - Trie par note moyenne DESC (meilleurs mentors en premier, les NULL en dernier)
+        //    - Secondairement, trie par charge de travail ASC (moins de sessions ouvertes)
+        //    - Évite ceux déjà en session pending
         $sql = "
             SELECT i.id_user,
                    COALESCE(c.nom, CONCAT('Étudiant #', i.id_user)) AS mentor_nom,
-                   COALESCE(c.email, '') AS mentor_email
+                   COALESCE(c.email, '') AS mentor_email,
+                   (SELECT AVG(pr.rating)
+                    FROM peer_reviews pr
+                    JOIN peer_sessions ps ON pr.session_id = ps.id
+                    WHERE ps.mentor_id = i.id_user) AS avg_rating,
+                   (SELECT COUNT(*) FROM peer_sessions WHERE mentor_id = i.id_user AND status = 'pending') AS active_sessions
             FROM inscription i
             LEFT JOIN candidat c ON i.id_user = c.id
             WHERE i.id_formation = :id_formation
               AND i.id_user != :id_demandeur
               AND i.progression >= 100
-            ORDER BY RAND()
+              AND i.id_user NOT IN (
+                    SELECT mentor_id FROM peer_sessions
+                    WHERE status = 'pending'
+                    AND TIMESTAMPDIFF(MINUTE, created_at, NOW()) < :timeout
+              )
+            ORDER BY avg_rating DESC,
+                     active_sessions ASC,
+                     RAND()
             LIMIT 1
         ";
 
         try {
             $stmt = $db->prepare($sql);
             $stmt->execute([
-                'id_formation'  => $id_formation,
-                'id_demandeur'  => $id_demandeur
+                'id_formation' => $id_formation,
+                'id_demandeur' => $id_demandeur,
+                'timeout'      => self::SESSION_TIMEOUT_MIN
             ]);
             $mentor = $stmt->fetch();
-        } catch (\Exception $e) {
-            // Fallback : essai avec la table 'Inscription' (casse alternative) et 'utilisateur' si 'candidat' n'est pas encore prêt
-            try {
-                $sqlFallback = "
+
+            // Fallback avec table utilisateur si candidat n'est pas disponible
+            if (!$mentor) {
+                $sqlFb = "
                     SELECT i.id_user,
                            COALESCE(u.nom, CONCAT('Étudiant #', i.id_user)) AS mentor_nom,
-                           COALESCE(u.email, '') AS mentor_email
-                    FROM Inscription i
+                           '' AS mentor_email, NULL AS avg_rating, 0 AS active_sessions
+                    FROM inscription i
                     LEFT JOIN utilisateur u ON i.id_user = u.id
                     WHERE i.id_formation = :id_formation
                       AND i.id_user != :id_demandeur
                       AND i.progression >= 100
-                    ORDER BY RAND()
-                    LIMIT 1
-                ";
-                $stmt = $db->prepare($sqlFallback);
-                $stmt->execute([
-                    'id_formation'  => $id_formation,
-                    'id_demandeur'  => $id_demandeur
-                ]);
-                $mentor = $stmt->fetch();
-            } catch (\Exception $e2) {
-                return null; // Impossible de chercher → on renvoie null
+                    ORDER BY RAND() LIMIT 1";
+                $stmtFb = $db->prepare($sqlFb);
+                $stmtFb->execute(['id_formation' => $id_formation, 'id_demandeur' => $id_demandeur]);
+                $mentor = $stmtFb->fetch();
             }
-        }
-
-        // Aucun mentor trouvé ? On retourne null
-        if (!$mentor) {
+        } catch (\Exception $e) {
+            error_log("[PeerLearning] Erreur SQL : " . $e->getMessage());
             return null;
         }
 
-        // On récupère aussi le nom de la formation pour le lien Jitsi
-        $titreFormation = $this->getTitreFormation($id_formation);
+        if (!$mentor) return null;
 
+        $titreFormation = $this->getTitreFormation($id_formation);
+        $jitsiLink      = $this->generateJitsiLink($titreFormation, $id_formation);
+
+        // 4. Enregistrer la session
+        $stmtS = $db->prepare("INSERT INTO peer_sessions (formation_id, requester_id, mentor_id, meeting_link, status, created_at)
+                                VALUES (:fid, :rid, :mid, :link, 'pending', NOW())");
+        $stmtS->execute([
+            'fid'  => $id_formation,
+            'rid'  => $id_demandeur,
+            'mid'  => $mentor['id_user'],
+            'link' => $jitsiLink
+        ]);
+        $sessionId = $db->lastInsertId();
+
+        // 5. Notifier le mentor
+        NotificationController::creerNotification(
+            $mentor['id_user'],
+            'peer_request',
+            "🎓 Vous avez été sélectionné comme mentor pour « $titreFormation » ! Un étudiant a besoin de vous.",
+            $jitsiLink,
+            'users'
+        );
+
+        // 6. Retourner les infos complètes
         return [
-            'mentor'      => $mentor,
-            'jitsi_link'  => $this->generateJitsiLink($titreFormation, $id_formation)
+            'mentor'     => [
+                'id'         => $mentor['id_user'],
+                'nom'        => $mentor['mentor_nom'],
+                'email'      => $mentor['mentor_email'],
+                'avg_rating' => $mentor['avg_rating'] ? round($mentor['avg_rating'], 1) : null,
+            ],
+            'jitsi_link' => $jitsiLink,
+            'session_id' => $sessionId
         ];
     }
 
-    // ----------------------------------------------------------
-    // MÉTHODE PRIVÉE : Génère un lien Jitsi unique et aléatoire
-    // ----------------------------------------------------------
+    // ──────────────────────────────────────────────────────────────
+    // Review d'une session terminée
+    // ──────────────────────────────────────────────────────────────
+    public function submitReview(int $session_id, int $rating, string $comment): bool
+    {
+        $rating = max(1, min(5, $rating));
+        $db = config::getConnexion();
 
-    /**
-     * Génère un lien Jitsi Meet reproductible sur la session mais unique
-     * par formation + timestamp, garantissant une room "fraîche" à chaque demande.
-     *
-     * Format : https://meet.jit.si/Aptus-PeerHelp-<slug>-<uniqid>
-     *
-     * @param string $titre       Titre de la formation (pour le slug lisible).
-     * @param int    $id_formation ID de la formation.
-     * @return string  URL Jitsi complète.
-     */
+        $stmt = $db->prepare("INSERT INTO peer_reviews (session_id, rating, comment, created_at)
+                              VALUES (:sid, :rat, :com, NOW())");
+        $ok = $stmt->execute(['sid' => $session_id, 'rat' => $rating, 'com' => $comment]);
+
+        if ($ok) {
+            $db->prepare("UPDATE peer_sessions SET status = 'completed' WHERE id = :sid")
+               ->execute(['sid' => $session_id]);
+        }
+        return $ok;
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Helpers privés
+    // ──────────────────────────────────────────────────────────────
+    private function hasExceededDailyLimit(int $user_id): bool
+    {
+        $db = config::getConnexion();
+        $stmt = $db->prepare("SELECT COUNT(*) FROM peer_sessions
+                               WHERE requester_id = :uid
+                               AND DATE(created_at) = CURDATE()");
+        $stmt->execute(['uid' => $user_id]);
+        return (int)$stmt->fetchColumn() >= self::MAX_REQUESTS_PER_DAY;
+    }
+
+    private function cancelStaleRequests(): void
+    {
+        $db = config::getConnexion();
+        $db->prepare("UPDATE peer_sessions SET status = 'cancelled'
+                      WHERE status = 'pending'
+                      AND TIMESTAMPDIFF(MINUTE, created_at, NOW()) > :timeout")
+           ->execute(['timeout' => self::SESSION_TIMEOUT_MIN]);
+    }
+
     private function generateJitsiLink(string $titre, int $id_formation): string
     {
-        // Nettoyage du titre pour créer un slug URL-safe
-        $slug = preg_replace('/[^a-zA-Z0-9]+/', '-', strtolower($titre));
-        $slug = trim($slug, '-');
-
-        // uniqid() garantit l'unicité même si deux demandes arrivent la même seconde
-        $roomId = 'Aptus-PeerHelp-' . $slug . '-' . $id_formation . '-' . uniqid();
-
+        $slug   = preg_replace('/[^a-zA-Z0-9]+/', '-', strtolower($titre));
+        $roomId = 'Aptus-Peer-' . trim($slug, '-') . '-' . $id_formation . '-' . uniqid();
         return 'https://meet.jit.si/' . $roomId;
     }
 
-    // ----------------------------------------------------------
-    // MÉTHODE PRIVÉE : Récupère le titre d'une formation
-    // ----------------------------------------------------------
     private function getTitreFormation(int $id_formation): string
     {
         $db = config::getConnexion();
         try {
-            $stmt = $db->prepare("SELECT titre FROM Formation WHERE id_formation = :id");
+            $stmt = $db->prepare("SELECT titre FROM formation WHERE id_formation = :id");
             $stmt->execute(['id' => $id_formation]);
             return $stmt->fetchColumn() ?: 'formation';
         } catch (\Exception $e) {
@@ -135,52 +180,37 @@ class PeerLearningController
         }
     }
 
-    // ----------------------------------------------------------
-    // POINT D'ENTRÉE AJAX : Gère les requêtes HTTP POST
-    // ----------------------------------------------------------
-
-    /**
-     * Handler AJAX : reçoit un POST avec 'id_formation' et renvoie du JSON.
-     * À inclure dans index.php via une route comme ?action=peer_help
-     *
-     * Réponse JSON succès  : { "success": true, "mentor": {...}, "jitsi_link": "..." }
-     * Réponse JSON échec   : { "success": false, "message": "..." }
-     */
+    // ──────────────────────────────────────────────────────────────
+    // Point d'entrée AJAX
+    // ──────────────────────────────────────────────────────────────
     public function handleAjax(): void
     {
-        // Sécurité : on accepte uniquement les requêtes POST
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Méthode non autorisée.']);
-            return;
-        }
-
-        // Validation des paramètres requis
-        $id_formation = isset($_POST['id_formation']) ? (int)$_POST['id_formation'] : 0;
-        // On utilise la session (ou fallback 10 pour demo)
-        $id_demandeur = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 10;
+        header('Content-Type: application/json');
+        $id_formation = (int)($_POST['id_formation'] ?? 0);
+        $id_demandeur = (int)($_POST['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10);
 
         if ($id_formation <= 0) {
-            echo json_encode(['success' => false, 'message' => 'Formation invalide.']);
+            echo json_encode(['success' => false, 'message' => 'Formation manquante.']);
             return;
         }
 
-        // Appel de la méthode principale
         $result = $this->trouverMentor($id_formation, $id_demandeur);
 
-        header('Content-Type: application/json');
-
-        if ($result) {
-            echo json_encode([
-                'success'    => true,
-                'mentor'     => $result['mentor'],
-                'jitsi_link' => $result['jitsi_link']
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Aucun expert disponible pour cette formation pour le moment. Réessayez plus tard !'
-            ]);
+        if (!$result) {
+            echo json_encode(['success' => false, 'message' => 'Aucun expert disponible pour le moment. Réessayez plus tard !']);
+            return;
         }
+
+        if (isset($result['error'])) {
+            echo json_encode(['success' => false, 'message' => $result['message']]);
+            return;
+        }
+
+        echo json_encode([
+            'success'    => true,
+            'mentor'     => $result['mentor'],
+            'jitsi_link' => $result['jitsi_link'],
+            'session_id' => $result['session_id']
+        ]);
     }
 }

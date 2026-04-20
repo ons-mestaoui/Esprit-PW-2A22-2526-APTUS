@@ -101,7 +101,7 @@ class TuteurController
     public function creerTuteur(array $data): array
     {
         // Validation côté serveur
-        $nom   = trim($data['nom']   ?? '');
+        $nom = trim($data['nom'] ?? '');
         $email = trim($data['email'] ?? '');
 
         if (empty($nom) || strlen($nom) < 2) {
@@ -112,7 +112,7 @@ class TuteurController
         }
 
         $specialite = trim($data['specialite'] ?? '');
-        $bio        = trim($data['bio']        ?? '');
+        $bio = trim($data['bio'] ?? '');
 
         $db = config::getConnexion();
 
@@ -158,11 +158,11 @@ class TuteurController
         try {
             $stmt = $db->prepare($insertSql);
             $stmt->execute([
-                'nom'        => $nom,
-                'email'      => $email,
-                'mdp'        => $tempPassword,
+                'nom' => $nom,
+                'email' => $email,
+                'mdp' => $tempPassword,
                 'specialite' => $specialite,
-                'bio'        => $bio,
+                'bio' => $bio,
             ]);
             $newId = $db->lastInsertId();
             return ['success' => true, 'message' => "Tuteur {$nom} créé avec succès !", 'id' => $newId];
@@ -284,9 +284,9 @@ class TuteurController
             // Fallback : table User
             try {
                 $sqlFb = str_replace('LEFT JOIN utilisateur', 'LEFT JOIN User', $sql);
-                $stmt  = $db->prepare($sqlFb);
+                $stmt = $db->prepare($sqlFb);
                 $stmt->execute($params);
-                $rows  = $stmt->fetchAll();
+                $rows = $stmt->fetchAll();
             } catch (\Exception $e2) {
                 return [];
             }
@@ -296,17 +296,17 @@ class TuteurController
         $events = [];
         foreach ($rows as $r) {
             $events[] = [
-                'id'              => $r['id'],
-                'title'           => $r['tuteur_nom'] . ' — ' . $r['titre'],
-                'start'           => $r['debut'],
-                'end'             => $r['fin'],
+                'id' => $r['id'],
+                'title' => $r['tuteur_nom'] . ' — ' . $r['titre'],
+                'start' => $r['debut'],
+                'end' => $r['fin'],
                 'backgroundColor' => $r['couleur'],
-                'borderColor'     => $r['couleur'],
-                'extendedProps'   => [
-                    'id_tuteur'   => $r['id_tuteur'],
-                    'tuteur_nom'  => $r['tuteur_nom'],
-                    'titre'       => $r['titre'],
-                    'recurrent'   => (bool)$r['recurrent'],
+                'borderColor' => $r['couleur'],
+                'extendedProps' => [
+                    'id_tuteur' => $r['id_tuteur'],
+                    'tuteur_nom' => $r['tuteur_nom'],
+                    'titre' => $r['titre'],
+                    'recurrent' => (bool) $r['recurrent'],
                 ]
             ];
         }
@@ -327,11 +327,11 @@ class TuteurController
      */
     public function addCreneau(array $data): array
     {
-        $id_tuteur = (int)($data['id_tuteur'] ?? 0);
-        $titre     = trim($data['titre'] ?? 'Disponible');
-        $debut     = trim($data['debut']     ?? '');
-        $fin       = trim($data['fin']       ?? '');
-        $couleur   = preg_match('/^#[0-9a-fA-F]{6}$/', $data['couleur'] ?? '') ? $data['couleur'] : '#6366f1';
+        $id_tuteur = (int) ($data['id_tuteur'] ?? 0);
+        $titre = trim($data['titre'] ?? 'Disponible');
+        $debut = trim($data['debut'] ?? '');
+        $fin = trim($data['fin'] ?? '');
+        $couleur = preg_match('/^#[0-9a-fA-F]{6}$/', $data['couleur'] ?? '') ? $data['couleur'] : '#6366f1';
         $recurrent = isset($data['recurrent']) ? 1 : 0;
 
         // Validations
@@ -354,10 +354,10 @@ class TuteurController
             ");
             $stmt->execute([
                 'id_tuteur' => $id_tuteur,
-                'titre'     => $titre,
-                'debut'     => $debut,
-                'fin'       => $fin,
-                'couleur'   => $couleur,
+                'titre' => $titre,
+                'debut' => $debut,
+                'fin' => $fin,
+                'couleur' => $couleur,
                 'recurrent' => $recurrent,
             ]);
             return ['success' => true, 'message' => 'Créneau ajouté.', 'id' => $db->lastInsertId()];
@@ -450,13 +450,13 @@ class TuteurController
                 break;
 
             case 'delete_tuteur':
-                $id = (int)($_POST['id'] ?? 0);
+                $id = (int) ($_POST['id'] ?? 0);
                 echo json_encode($this->supprimerTuteur($id));
                 break;
 
             // ── Planning ─────────────────────────────────────
             case 'get_planning':
-                $idT = (int)($_POST['id_tuteur'] ?? 0);
+                $idT = (int) ($_POST['id_tuteur'] ?? 0);
                 echo json_encode(['success' => true, 'events' => $this->getPlanning($idT)]);
                 break;
 
@@ -465,14 +465,14 @@ class TuteurController
                 break;
 
             case 'update_creneau':
-                $id    = (int)($_POST['id']    ?? 0);
+                $id = (int) ($_POST['id'] ?? 0);
                 $debut = $_POST['debut'] ?? '';
-                $fin   = $_POST['fin']   ?? '';
+                $fin = $_POST['fin'] ?? '';
                 echo json_encode($this->updateCreneau($id, $debut, $fin));
                 break;
 
             case 'delete_creneau':
-                $id = (int)($_POST['id'] ?? 0);
+                $id = (int) ($_POST['id'] ?? 0);
                 echo json_encode($this->deleteCreneau($id));
                 break;
 

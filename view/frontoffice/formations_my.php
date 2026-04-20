@@ -1,16 +1,20 @@
-<?php 
+<?php
 // Session nécessaire pour les messages flash (succès/erreur)
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 $pageTitle = "Mes Formations - Aptus AI";
 
 if (!isset($content)) {
     require_once __DIR__ . '/../../config.php';
     require_once __DIR__ . '/../../controller/InscriptionController.php';
-    
+
     $inscriptionC = new InscriptionController();
-    $id_user = 10; // Demo User
-    
-    // Si le candidat clique sur "Se désinscrire" -> traitement POST
+
+    // On prend l'ID dans l'URL (test), sinon en Session (inté), sinon 10 (fallback)
+    $id_user = $_GET['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+
+    // Le contrôleur appelle le Model qui vérifie les contraintes (date, statut)
     // Le contrôleur appelle le Model qui vérifie les contraintes (date, statut)
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_formation'])) {
         $inscriptionC->desinscrire();
@@ -19,7 +23,7 @@ if (!isset($content)) {
     // Terminer une formation : on vérifie en PHP que la date n'est pas dans le futur
     if (isset($_GET['finish_id'])) {
         try {
-            $inscriptionC->terminerFormation((int)$_GET['finish_id'], $id_user);
+            $inscriptionC->terminerFormation((int) $_GET['finish_id'], $id_user);
             $_SESSION['flash_success'] = "Bravo, formation terminée !";
         } catch (Exception $e) {
             $_SESSION['flash_error'] = $e->getMessage();
@@ -27,11 +31,11 @@ if (!isset($content)) {
         header("Location: formations_my.php");
         exit();
     }
-    
+
     $mesCours = $inscriptionC->listerMesFormations($id_user);
-    
+
     // Compute stats for the welcome banner
-    $totalCours  = count($mesCours);
+    $totalCours = count($mesCours);
     $completedCours = 0;
     $enCoursCours = 0;
     $annuleeCours = 0;
@@ -66,26 +70,33 @@ if (!isset($content)) {
         position: relative;
         overflow: hidden;
     }
+
     .welcome-banner::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 4px;
         background: var(--gradient-primary);
     }
+
     .welcome-banner__info h1 {
         font-size: 1.75rem;
         margin-bottom: 0.5rem;
     }
+
     .welcome-banner__info p {
         color: var(--text-secondary);
         margin: 0;
     }
+
     .welcome-banner__stats {
         display: flex;
         gap: 1.5rem;
         flex-shrink: 0;
     }
+
     .mini-stat-card {
         text-align: center;
         padding: 0.75rem 1.25rem;
@@ -94,14 +105,25 @@ if (!isset($content)) {
         border: 1px solid var(--border-color);
         min-width: 80px;
     }
+
     .mini-stat-card__value {
         font-size: 1.5rem;
         font-weight: 800;
         line-height: 1;
     }
-    .mini-stat-card__value.cyan { color: var(--primary-cyan); }
-    .mini-stat-card__value.green { color: #10b981; }
-    .mini-stat-card__value.purple { color: var(--accent-primary); }
+
+    .mini-stat-card__value.cyan {
+        color: var(--primary-cyan);
+    }
+
+    .mini-stat-card__value.green {
+        color: #10b981;
+    }
+
+    .mini-stat-card__value.purple {
+        color: var(--accent-primary);
+    }
+
     .mini-stat-card__label {
         font-size: 0.7rem;
         text-transform: uppercase;
@@ -110,7 +132,7 @@ if (!isset($content)) {
         margin-top: 0.25rem;
         font-weight: 600;
     }
-    
+
     /* ── Global Progress Ring ── */
     .global-progress {
         display: flex;
@@ -118,6 +140,7 @@ if (!isset($content)) {
         gap: 1rem;
         margin-top: 1rem;
     }
+
     .global-progress__bar {
         flex: 1;
         height: 10px;
@@ -125,6 +148,7 @@ if (!isset($content)) {
         border-radius: 999px;
         overflow: hidden;
     }
+
     .global-progress__fill {
         height: 100%;
         border-radius: 999px;
@@ -132,17 +156,25 @@ if (!isset($content)) {
         transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
     }
+
     .global-progress__fill::after {
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
         animation: shimmer 2s infinite;
     }
+
     @keyframes shimmer {
-        from { transform: translateX(-100%); }
-        to   { transform: translateX(100%); }
+        from {
+            transform: translateX(-100%);
+        }
+
+        to {
+            transform: translateX(100%);
+        }
     }
+
     .global-progress__text {
         font-size: 0.85rem;
         font-weight: 600;
@@ -161,6 +193,7 @@ if (!isset($content)) {
         margin-bottom: 2rem;
         width: fit-content;
     }
+
     .formations-tab {
         padding: 0.6rem 1.25rem;
         font-size: 0.85rem;
@@ -175,15 +208,18 @@ if (!isset($content)) {
         align-items: center;
         gap: 0.5rem;
     }
+
     .formations-tab:hover {
         color: var(--text-primary);
         background: var(--bg-secondary);
     }
+
     .formations-tab.active {
         background: var(--gradient-primary);
         color: #fff;
         box-shadow: 0 2px 8px rgba(107, 52, 163, 0.3);
     }
+
     .formations-tab__count {
         display: inline-flex;
         align-items: center;
@@ -195,10 +231,12 @@ if (!isset($content)) {
         font-weight: 700;
         padding: 0 6px;
     }
+
     .formations-tab.active .formations-tab__count {
-        background: rgba(255,255,255,0.25);
+        background: rgba(255, 255, 255, 0.25);
         color: #fff;
     }
+
     .formations-tab:not(.active) .formations-tab__count {
         background: var(--bg-tertiary);
         color: var(--text-secondary);
@@ -215,11 +253,13 @@ if (!isset($content)) {
         flex-direction: column;
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
+
     .formation-card:hover {
         transform: translateY(-6px);
         box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
         border-color: var(--primary-cyan);
     }
+
     .formation-card__image {
         width: 100%;
         height: 160px;
@@ -228,11 +268,14 @@ if (!isset($content)) {
         overflow: hidden;
         position: relative;
     }
-    .formation-card__image img, .formation-card__image-bg {
+
+    .formation-card__image img,
+    .formation-card__image-bg {
         width: 100%;
         height: 100%;
         object-fit: cover;
     }
+
     .formation-card__image-bg {
         background: var(--gradient-primary);
         opacity: 0.15;
@@ -244,13 +287,16 @@ if (!isset($content)) {
             flex-direction: column;
             text-align: center;
         }
+
         .welcome-banner__stats {
             justify-content: center;
         }
+
         .formations-tabs {
             width: 100%;
             justify-content: stretch;
         }
+
         .formations-tab {
             flex: 1;
             justify-content: center;
@@ -267,12 +313,18 @@ if (!isset($content)) {
     <div class="welcome-banner__info">
         <h1>Mon Parcours d'Apprentissage</h1>
         <?php if ($totalCours > 0): ?>
-            <p>Vous avez complété <strong><?php echo $completedCours; ?></strong> formation<?php echo $completedCours > 1 ? 's' : ''; ?> sur <strong><?php echo $totalCours; ?></strong>. <?php echo $completedCours == $totalCours && $totalCours > 0 ? '🎉 Bravo, parcours complet !' : 'Continuez comme ça !'; ?></p>
+            <p>Vous avez complété <strong><?php echo $completedCours; ?></strong>
+                formation<?php echo $completedCours > 1 ? 's' : ''; ?> sur <strong><?php echo $totalCours; ?></strong>.
+                <?php echo $completedCours == $totalCours && $totalCours > 0 ? '🎉 Bravo, parcours complet !' : 'Continuez comme ça !'; ?>
+            </p>
             <div class="global-progress">
                 <div class="global-progress__bar">
-                    <div class="global-progress__fill" style="width: <?php echo $totalCours > 0 ? round(($completedCours / $totalCours) * 100) : 0; ?>%;"></div>
+                    <div class="global-progress__fill"
+                        style="width: <?php echo $totalCours > 0 ? round(($completedCours / $totalCours) * 100) : 0; ?>%;">
+                    </div>
                 </div>
-                <span class="global-progress__text"><?php echo $totalCours > 0 ? round(($completedCours / $totalCours) * 100) : 0; ?>%</span>
+                <span
+                    class="global-progress__text"><?php echo $totalCours > 0 ? round(($completedCours / $totalCours) * 100) : 0; ?>%</span>
             </div>
         <?php else: ?>
             <p>Commencez votre parcours en explorant notre catalogue de formations.</p>
@@ -280,20 +332,20 @@ if (!isset($content)) {
     </div>
 
     <?php if ($totalCours > 0): ?>
-    <div class="welcome-banner__stats">
-        <div class="mini-stat-card">
-            <div class="mini-stat-card__value cyan"><?php echo $enCoursCours; ?></div>
-            <div class="mini-stat-card__label">En cours</div>
+        <div class="welcome-banner__stats">
+            <div class="mini-stat-card">
+                <div class="mini-stat-card__value cyan"><?php echo $enCoursCours; ?></div>
+                <div class="mini-stat-card__label">En cours</div>
+            </div>
+            <div class="mini-stat-card">
+                <div class="mini-stat-card__value green"><?php echo $completedCours; ?></div>
+                <div class="mini-stat-card__label">Terminées</div>
+            </div>
+            <div class="mini-stat-card">
+                <div class="mini-stat-card__value purple"><?php echo $totalCours; ?></div>
+                <div class="mini-stat-card__label">Total</div>
+            </div>
         </div>
-        <div class="mini-stat-card">
-            <div class="mini-stat-card__value green"><?php echo $completedCours; ?></div>
-            <div class="mini-stat-card__label">Terminées</div>
-        </div>
-        <div class="mini-stat-card">
-            <div class="mini-stat-card__value purple"><?php echo $totalCours; ?></div>
-            <div class="mini-stat-card__label">Total</div>
-        </div>
-    </div>
     <?php endif; ?>
 </div>
 
@@ -301,137 +353,159 @@ if (!isset($content)) {
      TABS
      ═══════════════════════════════════════════ -->
 <?php if ($totalCours > 0): ?>
-<div class="formations-tabs" id="formationsTabs">
-    <button class="formations-tab active" data-filter="all">
-        Toutes <span class="formations-tab__count"><?php echo $totalCours; ?></span>
-    </button>
-    <button class="formations-tab" data-filter="en-cours">
-        En cours <span class="formations-tab__count"><?php echo $enCoursCours; ?></span>
-    </button>
-    <button class="formations-tab" data-filter="terminee">
-        Terminées <span class="formations-tab__count"><?php echo $completedCours; ?></span>
-    </button>
-    <?php if ($annuleeCours > 0): ?>
-    <button class="formations-tab" data-filter="annulee">
-        Annulées <span class="formations-tab__count"><?php echo $annuleeCours; ?></span>
-    </button>
-    <?php endif; ?>
-</div>
+    <div class="formations-tabs" id="formationsTabs">
+        <button class="formations-tab active" data-filter="all">
+            Toutes <span class="formations-tab__count"><?php echo $totalCours; ?></span>
+        </button>
+        <button class="formations-tab" data-filter="en-cours">
+            En cours <span class="formations-tab__count"><?php echo $enCoursCours; ?></span>
+        </button>
+        <button class="formations-tab" data-filter="terminee">
+            Terminées <span class="formations-tab__count"><?php echo $completedCours; ?></span>
+        </button>
+        <?php if ($annuleeCours > 0): ?>
+            <button class="formations-tab" data-filter="annulee">
+                Annulées <span class="formations-tab__count"><?php echo $annuleeCours; ?></span>
+            </button>
+        <?php endif; ?>
+    </div>
 <?php endif; ?>
 
 <!-- ═══════════════════════════════════════════
      CARDS GRID
      ═══════════════════════════════════════════ -->
-<div class="grid" id="formationsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
-    <?php if (!empty($mesCours)): foreach($mesCours as $cours): 
-        // Determine filter category
-        $filterCat = 'en-cours';
-        if ($cours['progression'] == 100 || $cours['statut'] === 'Terminée') $filterCat = 'terminee';
-        if ($cours['statut'] === 'annulée') $filterCat = 'annulee';
-    ?>
-    <div class="formation-card" data-category="<?php echo $filterCat; ?>">
-        <!-- Image -->
-        <div class="formation-card__image">
-            <?php if (!empty($cours['image_base64'])): ?>
-                <div class="formation-card__image-bg" style="background: url('<?php echo $cours['image_base64']; ?>') center/cover; opacity: 1;"></div>
-            <?php else: ?>
-                <div class="formation-card__image-bg"></div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Badges -->
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-            <span class="badge badge-info" style="font-size: 0.7rem;"><?php echo ($cours['is_online']) ? '🌐 En ligne' : '📍 Présentiel'; ?></span>
-            <span class="badge <?php echo ($cours['statut'] == 'annulée') ? 'badge-danger' : ($filterCat === 'terminee' ? 'badge-success' : 'badge-neutral'); ?>" style="font-size: 0.7rem;">
-                <?php echo htmlspecialchars($cours['statut']); ?>
-            </span>
-        </div>
-
-        <!-- Title & Tutor -->
-        <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;"><?php echo htmlspecialchars($cours['titre']); ?></h2>
-        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
-            Tuteur : <b><?php echo htmlspecialchars($cours['tuteur_nom'] ?? 'Aptus'); ?></b>
-        </div>
-
-        <!-- Progress Bar -->
-        <div style="margin-bottom: 1.25rem;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 500;">
-                <label style="color: var(--text-secondary);">Progression</label>
-                <span style="color: var(--primary-cyan); font-weight: 700;"><?php echo $cours['progression']; ?>%</span>
-            </div>
-            <div class="global-progress__bar" style="height: 8px;">
-                <div class="global-progress__fill" style="width: <?php echo $cours['progression']; ?>%; <?php if ($cours['progression'] == 100) echo 'background: linear-gradient(135deg, #10b981, #059669);'; ?>"></div>
-            </div>
-        </div>
-
-        <!-- Actions based on status -->
-        <?php if ($cours['statut'] === 'annulée'): ?>
-            <div style="background: var(--accent-tertiary-light); color: var(--accent-tertiary); padding: 0.75rem; border-radius: 10px; text-align: center; font-weight: 600; font-size: 0.85rem;">
-                ⚠️ Formation annulée
-            </div>
-        <?php elseif ($cours['progression'] == 100 || $cours['statut'] === 'Terminée'): ?>
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <div style="background: rgba(16, 185, 129, 0.1); color: #059669; padding: 0.75rem; border-radius: 10px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
-                    <span style="font-size: 1.3rem;">🎓</span> Badge "Expert" Acquis !
+<div class="grid" id="formationsGrid"
+    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+    <?php if (!empty($mesCours)):
+        foreach ($mesCours as $cours):
+            // Determine filter category
+            $filterCat = 'en-cours';
+            if ($cours['progression'] == 100 || $cours['statut'] === 'Terminée')
+                $filterCat = 'terminee';
+            if ($cours['statut'] === 'annulée')
+                $filterCat = 'annulee';
+            ?>
+            <div class="formation-card" data-category="<?php echo $filterCat; ?>">
+                <!-- Image -->
+                <div class="formation-card__image">
+                    <?php if (!empty($cours['image_base64'])): ?>
+                        <div class="formation-card__image-bg"
+                            style="background: url('<?php echo $cours['image_base64']; ?>') center/cover; opacity: 1;"></div>
+                    <?php else: ?>
+                        <div class="formation-card__image-bg"></div>
+                    <?php endif; ?>
                 </div>
-                <a href="certificate.php?f_id=<?php echo $cours['id_formation']; ?>" target="_blank" class="btn btn-primary" style="text-align:center;">
-                    Générer mon Certificat
-                </a>
-            </div>
-        <?php else: ?>
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: auto;">
-                <?php if ($cours['is_online']): ?>
-                    <a href="<?php echo htmlspecialchars($cours['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn" style="background: var(--accent-info); color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:8px;">📹 Rejoindre la Room</a>
-                <?php endif; ?>
-                
-                <!-- Contrainte : l'accès au cours n'apparaît que si la date est passée -->
-                <?php if ($cours['date_formation'] <= date('Y-m-d')): ?>
-                    <a href="formation_viewer.php?id=<?php echo $cours['id_formation']; ?>" class="btn btn-primary" style="text-align:center;">📖 Accéder au cours</a>
+
+                <!-- Badges -->
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span class="badge badge-info"
+                        style="font-size: 0.7rem;"><?php echo ($cours['is_online']) ? '🌐 En ligne' : '📍 Présentiel'; ?></span>
+                    <span
+                        class="badge <?php echo ($cours['statut'] == 'annulée') ? 'badge-danger' : ($filterCat === 'terminee' ? 'badge-success' : 'badge-neutral'); ?>"
+                        style="font-size: 0.7rem;">
+                        <?php echo htmlspecialchars($cours['statut']); ?>
+                    </span>
+                </div>
+
+                <!-- Title & Tutor -->
+                <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;"><?php echo htmlspecialchars($cours['titre']); ?></h2>
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+                    Tuteur : <b><?php echo htmlspecialchars($cours['tuteur_nom'] ?? 'Aptus'); ?></b>
+                </div>
+
+                <!-- Progress Bar -->
+                <div style="margin-bottom: 1.25rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 500;">
+                        <label style="color: var(--text-secondary);">Progression</label>
+                        <span style="color: var(--primary-cyan); font-weight: 700;"><?php echo $cours['progression']; ?>%</span>
+                    </div>
+                    <div class="global-progress__bar" style="height: 8px;">
+                        <div class="global-progress__fill" style="width: <?php echo $cours['progression']; ?>%; <?php if ($cours['progression'] == 100)
+                               echo 'background: linear-gradient(135deg, #10b981, #059669);'; ?>">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions based on status -->
+                <?php if ($cours['statut'] === 'annulée'): ?>
+                    <div
+                        style="background: var(--accent-tertiary-light); color: var(--accent-tertiary); padding: 0.75rem; border-radius: 10px; text-align: center; font-weight: 600; font-size: 0.85rem;">
+                        ⚠️ Formation annulée
+                    </div>
+                <?php elseif ($cours['progression'] == 100 || $cours['statut'] === 'Terminée'): ?>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div
+                            style="background: rgba(16, 185, 129, 0.1); color: #059669; padding: 0.75rem; border-radius: 10px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
+                            <span style="font-size: 1.3rem;">🎓</span> Badge "Expert" Acquis !
+                        </div>
+                        <a href="certificate.php?f_id=<?php echo $cours['id_formation']; ?>" target="_blank" class="btn btn-primary"
+                            style="text-align:center;">
+                            Générer mon Certificat
+                        </a>
+                    </div>
                 <?php else: ?>
-                    <button class="btn" style="background: var(--bg-tertiary); color: var(--text-tertiary); cursor: not-allowed; width:100%; border:none; padding:0.5rem; border-radius:8px;" disabled>Disponible le <?php echo date('d/m', strtotime($cours['date_formation'])); ?></button>
-                    
-                    <!-- Bouton pour se désinscrire avec SweetAlert2 -->
-                    <form action="formations_my.php" method="POST" style="margin: 0;" onsubmit="return confirmDesinscription(this, event, '<?php echo addslashes(htmlspecialchars($cours['titre'])); ?>');">
-                        <input type="hidden" name="id_formation" value="<?php echo $cours['id_formation']; ?>">
-                        <button type="submit" class="btn" style="width: 100%; background: transparent; color: var(--accent-tertiary); border: 1px solid var(--accent-tertiary); padding: 0.5rem; border-radius: 8px;">Se désinscrire</button>
-                    </form>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: auto;">
+                        <?php if ($cours['is_online']): ?>
+                            <a href="<?php echo htmlspecialchars($cours['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn"
+                                style="background: var(--accent-info); color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:8px;">📹
+                                Rejoindre la Room</a>
+                        <?php endif; ?>
+
+                        <!-- Contrainte : accès si date_formation <= aujourd'hui (comparaison DATE sans heure) -->
+                        <?php
+                            $dateFormation = date('Y-m-d', strtotime($cours['date_formation']));
+                            $isAvailable = ($dateFormation <= date('Y-m-d'));
+                        ?>
+                        <?php if ($isAvailable): ?>
+                            <a href="formation_viewer.php?id=<?php echo $cours['id_formation']; ?>" class="btn btn-primary"
+                                style="text-align:center;">📖 Accéder au cours</a>
+                        <?php else: ?>
+                            <button class="btn"
+                                style="background: var(--bg-tertiary); color: var(--text-tertiary); cursor: not-allowed; width:100%; border:none; padding:0.5rem; border-radius:8px;"
+                                disabled>🔒 Disponible le <?php echo date('d/m/Y', strtotime($cours['date_formation'])); ?></button>
+                            <form action="formations_my.php" method="POST" style="margin: 0;"
+                                onsubmit="return confirmDesinscription(this, event, '<?php echo addslashes(htmlspecialchars($cours['titre'])); ?>');">
+                                <input type="hidden" name="id_formation" value="<?php echo $cours['id_formation']; ?>">
+                                <button type="submit" class="btn"
+                                    style="width: 100%; background: transparent; color: var(--accent-tertiary); border: 1px solid var(--accent-tertiary); padding: 0.5rem; border-radius: 8px;">Se désinscrire</button>
+                            </form>
+                        <?php endif; ?>
+
+                        <!-- CONCEPT 1 : Bouton "Demander de l'aide" — Peer Learning -->
+                        <!-- Visible uniquement si la progression est < 100% -->
+                        <button class="btn btn-primary btn-peer-help" id="peer-btn-<?php echo $cours['id_formation']; ?>"
+                            onclick="demanderAide(<?php echo $cours['id_formation']; ?>, this)"
+                            style="width:100%; border:none; padding:0.5rem; border-radius:8px; cursor:pointer; font-weight:600; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+                            🤝 Demander de l'aide
+                        </button>
+                    </div>
                 <?php endif; ?>
 
-                <!-- CONCEPT 1 : Bouton "Demander de l'aide" — Peer Learning -->
-                <!-- Visible uniquement si la progression est < 100% -->
-                <button
-                    class="btn btn-primary btn-peer-help"
-                    id="peer-btn-<?php echo $cours['id_formation']; ?>"
-                    onclick="demanderAide(<?php echo $cours['id_formation']; ?>, this)"
-                    style="width:100%; border:none; padding:0.5rem; border-radius:8px; cursor:pointer; font-weight:600; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
-                    🤝 Demander de l'aide
-                </button>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($cours['progression'] == 100 || $cours['statut'] === 'Terminée'): /* Déjà terminé : lien vers Soft-Skills */ ?>
-            <!-- CONCEPT 3 : Évaluateur Soft-Skills (accès depuis la carte terminée) -->
-            <div style="margin-top:0.75rem;">
-                <a href="softskills_evaluator.php?id=<?php echo $cours['id_formation']; ?>"
-                   class="btn btn-sm" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem;
+                <?php if ($cours['progression'] == 100 || $cours['statut'] === 'Terminée'): /* Déjà terminé : lien vers Soft-Skills */ ?>
+                    <!-- CONCEPT 3 : Évaluateur Soft-Skills (accès depuis la carte terminée) -->
+                    <div style="margin-top:0.75rem;">
+                        <a href="softskills_evaluator.php?id=<?php echo $cours['id_formation']; ?>" class="btn btn-sm" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem;
                           background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1));
                           color: var(--accent-primary); border:1px solid rgba(99,102,241,0.25); font-weight:600;
                           transition:all .2s; text-decoration:none;"
-                   onmouseover="this.style.background='var(--gradient-primary)';this.style.color='white';this.style.borderColor='transparent';"
-                   onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))';this.style.color='var(--accent-primary)';this.style.borderColor='rgba(99,102,241,0.25)';">
-                    🧠 Valider via Soft-Skills
-                </a>
+                            onmouseover="this.style.background='var(--gradient-primary)';this.style.color='white';this.style.borderColor='transparent';"
+                            onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))';this.style.color='var(--accent-primary)';this.style.borderColor='rgba(99,102,241,0.25)';">
+                            🧠 Valider via Soft-Skills
+                        </a>
+                    </div>
+                <?php endif; ?>
             </div>
-        <?php endif; ?>
-    </div>
-    <?php endforeach; else: ?>
+        <?php endforeach; else: ?>
         <!-- Beautiful Empty State -->
         <div style="grid-column: 1/-1;" class="empty-state">
-            <div class="empty-state__icon" style="width: 100px; height: 100px; background: var(--gradient-primary); opacity: 0.15; position: relative;">
+            <div class="empty-state__icon"
+                style="width: 100px; height: 100px; background: var(--gradient-primary); opacity: 0.15; position: relative;">
                 <i data-lucide="book-open" style="width: 44px; height: 44px; opacity: 1;"></i>
             </div>
             <h3 class="empty-state__title" style="font-size: 1.3rem;">Votre parcours commence ici</h3>
-            <p class="empty-state__text">Vous n'êtes inscrit à aucune formation pour le moment. Explorez notre catalogue pour trouver le programme parfait pour vos objectifs.</p>
+            <p class="empty-state__text">Vous n'êtes inscrit à aucune formation pour le moment. Explorez notre catalogue
+                pour trouver le programme parfait pour vos objectifs.</p>
             <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; justify-content: center;">
                 <a href="formations_catalog.php" class="btn btn-primary">
                     <i data-lucide="search" style="width: 16px; height: 16px;"></i>
@@ -450,18 +524,18 @@ if (!isset($content)) {
     // ================================================================
     // TABS FILTERING
     // ================================================================
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const tabs = document.querySelectorAll('.formations-tab');
         const cards = document.querySelectorAll('.formation-card');
-        
+
         tabs.forEach(tab => {
-            tab.addEventListener('click', function() {
+            tab.addEventListener('click', function () {
                 // Update active tab
                 tabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
-                
+
                 const filter = this.getAttribute('data-filter');
-                
+
                 // Filter cards with animation
                 cards.forEach(card => {
                     const cat = card.getAttribute('data-category');
@@ -520,23 +594,23 @@ if (!isset($content)) {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            // Vérification du Content-Type pour éviter les erreurs JSON sur erreurs PHP
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('Réponse serveur invalide (attendu JSON).');
-            }
-            return response.json();
-        })
-        .then(data => {
-            btn.disabled = false;
-            btn.innerHTML = originalHTML;
+            .then(response => {
+                // Vérification du Content-Type pour éviter les erreurs JSON sur erreurs PHP
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Réponse serveur invalide (attendu JSON).');
+                }
+                return response.json();
+            })
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
 
-            if (data.success) {
-                // ✅ Mentor trouvé → Modale de succès avec le lien Jitsi
-                Swal.fire({
-                    title: '🎉 Expert trouvé !',
-                    html: `
+                if (data.success) {
+                    // ✅ Mentor trouvé → Modale de succès avec le lien Jitsi
+                    Swal.fire({
+                        title: '🎉 Expert trouvé !',
+                        html: `
                         <div style="text-align:left; font-family:var(--font-family);">
                             <p style="margin-bottom:1.25rem; color:var(--text-primary); font-size:1rem;">
                                 <strong>${data.mentor.mentor_nom}</strong> est disponible pour vous aider sur cette formation !
@@ -556,45 +630,45 @@ if (!isset($content)) {
                             </p>
                         </div>
                     `,
-                    icon: 'success',
-                    iconColor: 'var(--accent-secondary)',
-                    showCancelButton: true,
-                    confirmButtonText: '📹 Rejoindre la salle',
-                    cancelButtonText: 'Copier le lien',
-                    buttonsStyling: false,
-                    customClass: {
-                        popup: 'card-flat animate-scale-in',
-                        confirmButton: 'btn btn-primary',
-                        cancelButton: 'btn btn-secondary',
-                        actions: 'gap-3 mt-4'
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Ouvrir Jitsi dans un nouvel onglet
-                        window.open(data.jitsi_link, '_blank', 'noopener');
-                    } else if (result.dismiss === Swal.DismissReason.cancel) {
-                        // Copier le lien dans le presse-papier
-                        navigator.clipboard.writeText(data.jitsi_link).then(() => {
-                            Toast.fire({ icon: 'success', title: 'Lien copié dans le presse-papier !' });
-                        });
-                    }
-                });
-            } else {
-                // ❌ Aucun mentor disponible → Toast informatif
+                        icon: 'success',
+                        iconColor: 'var(--accent-secondary)',
+                        showCancelButton: true,
+                        confirmButtonText: '📹 Rejoindre la salle',
+                        cancelButtonText: 'Copier le lien',
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'card-flat animate-scale-in',
+                            confirmButton: 'btn btn-primary',
+                            cancelButton: 'btn btn-secondary',
+                            actions: 'gap-3 mt-4'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Ouvrir Jitsi dans un nouvel onglet
+                            window.open(data.jitsi_link, '_blank', 'noopener');
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            // Copier le lien dans le presse-papier
+                            navigator.clipboard.writeText(data.jitsi_link).then(() => {
+                                Toast.fire({ icon: 'success', title: 'Lien copié dans le presse-papier !' });
+                            });
+                        }
+                    });
+                } else {
+                    // ❌ Aucun mentor disponible → Toast informatif
+                    Toast.fire({
+                        icon: 'info',
+                        title: data.message || 'Aucun expert disponible pour le moment.'
+                    });
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
                 Toast.fire({
-                    icon: 'info',
-                    title: data.message || 'Aucun expert disponible pour le moment.'
+                    icon: 'error',
+                    title: 'Erreur réseau : ' + err.message
                 });
-            }
-        })
-        .catch(err => {
-            btn.disabled = false;
-            btn.innerHTML = originalHTML;
-            Toast.fire({
-                icon: 'error',
-                title: 'Erreur réseau : ' + err.message
             });
-        });
     }
 
     // ================================================================

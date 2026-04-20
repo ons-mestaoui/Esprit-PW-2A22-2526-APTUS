@@ -153,6 +153,67 @@ switch ($action) {
         break;
 
     // --------------------------------------------------------
+    // NOTIFICATIONS
+    // --------------------------------------------------------
+    case 'get_notifications':
+        $uid = $_GET['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        require_once __DIR__ . '/../../controller/NotificationController.php';
+        $notifC = new NotificationController();
+        $notifs = $notifC->getUnreadNotifications((int)$uid);
+        echo json_encode(['success' => true, 'notifications' => $notifs]);
+        break;
+
+    case 'mark_notifications_read':
+        $uid = $_POST['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        require_once __DIR__ . '/../../controller/NotificationController.php';
+        $notifC = new NotificationController();
+        $success = $notifC->markAsRead((int)$uid);
+        echo json_encode(['success' => $success]);
+        break;
+
+    // --------------------------------------------------------
+    // CHAT HYBRIDE (Tuteur Augmenté)
+    // --------------------------------------------------------
+    case 'send_chat_message':
+        $sender_id = $_POST['sender_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        $receiver_id = $_POST['receiver_id'] ?? 0;
+        $formation_id = $_POST['formation_id'] ?? 0;
+        $content = $_POST['content'] ?? '';
+        if (empty($content) || $formation_id <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Message ou formation manquant.']);
+            exit;
+        }
+        require_once __DIR__ . '/../../controller/ChatController.php';
+        $chatC = new ChatController();
+        $reply = $chatC->sendMessage((int)$sender_id, (int)$receiver_id, (int)$formation_id, $content);
+        echo json_encode(['success' => true, 'ai_reply' => $reply]);
+        break;
+
+    case 'get_chat_history':
+        $user1 = $_GET['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        $user2 = $_GET['tutor_id'] ?? 0;
+        $formation_id = $_GET['formation_id'] ?? 0;
+        require_once __DIR__ . '/../../controller/ChatController.php';
+        $chatC = new ChatController();
+        $history = $chatC->getHistory((int)$user1, (int)$user2, (int)$formation_id);
+        echo json_encode(['success' => true, 'messages' => $history]);
+        break;
+
+    // --------------------------------------------------------
+    // PEER REVIEW (Noter un mentor)
+    // --------------------------------------------------------
+    case 'submit_peer_review':
+        $session_id = $_POST['session_id'] ?? 0;
+        $rating = $_POST['rating'] ?? 0;
+        $comment = $_POST['comment'] ?? '';
+        require_once __DIR__ . '/../../controller/PeerLearningController.php';
+        $peerC = new PeerLearningController();
+        $success = $peerC->submitReview((int)$session_id, (int)$rating, $comment);
+        echo json_encode(['success' => $success]);
+        break;
+
+
+    // --------------------------------------------------------
     // Action inconnue → erreur 400
     // --------------------------------------------------------
     default:

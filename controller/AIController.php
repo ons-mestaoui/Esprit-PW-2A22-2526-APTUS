@@ -1,22 +1,30 @@
 <?php
 require_once __DIR__ . '/../config.php';
 
+// En haut du fichier, on inclut le fichier des clés secrètes
+$keys_path = __DIR__ . '/../api_keys.php';
+if (file_exists($keys_path)) {
+    require_once $keys_path;
+} else {
+    die(json_encode(['success' => false, 'message' => 'Fichier de configuration API introuvable.']));
+}
+
 class AIController
 {
     private $apiKey;
 
     public function __construct()
     {
-        $this->apiKey = defined('GEMINI_API_KEY') ? GEMINI_API_KEY : '';
+        $this->apiKey = defined('GROQ_API_KEY') ? GROQ_API_KEY : '';
     }
 
     public function generateSyllabus($titre, $domaine, $niveau)
     {
         if (empty($this->apiKey)) {
-            return json_encode(['success' => false, 'message' => 'Clé API manquante.']);
+            return json_encode(['success' => false, 'message' => 'Clé API Groq manquante.']);
         }
 
-        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $this->apiKey;
+        $endpoint = "https://api.groq.com/openai/v1/chat/completions";
 
         $prompt = "Tu es un expert en pédagogie pour la plateforme Aptus AI. 
         Génère un syllabus détaillé pour une formation intitulée '$titre' dans le domaine '$domaine' pour un niveau '$niveau'. 
@@ -33,44 +41,37 @@ class AIController
         Ne rajoute aucune phrase avant ou après le JSON. Sois professionnel et précis.";
 
         $data = [
-            "contents" => [
+            "model" => "llama-3.3-70b-versatile",
+            "messages" => [
                 [
-                    "parts" => [
-                        ["text" => $prompt]
-                    ]
+                    "role" => "user",
+                    "content" => $prompt
                 ]
             ],
-            "generationConfig" => [
-                "temperature" => 0.7,
-                "topK" => 40,
-                "topP" => 0.95,
-                "maxOutputTokens" => 8192,
-                "responseMimeType" => "application/json"
-            ]
+            "temperature" => 0.7,
+            "response_format" => ["type" => "json_object"]
         ];
 
         $ch = curl_init($endpoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->apiKey
+        ]);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
         $response = curl_exec($ch);
         if (curl_errno($ch)) {
-            return json_encode(['success' => false, 'message' => curl_error($ch)]);
+            return json_encode(['success' => false, 'message' => 'Erreur de connexion : ' . curl_error($ch)]);
         }
         curl_close($ch);
 
         $result = json_decode($response, true);
         
-        if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
-            $aiText = $result['candidates'][0]['content']['parts'][0]['text'];
-            
-            // Nettoyage agressif des balises Markdown (```json ... ```) si l'IA en a mis
-            $aiText = preg_replace('/```json/i', '', $aiText);
-            $aiText = preg_replace('/```/i', '', $aiText);
-            $aiText = trim($aiText);
-
+        if (isset($result['choices'][0]['message']['content'])) {
+            $aiText = $result['choices'][0]['message']['content'];
             $decoded = json_decode($aiText, true);
 
             if ($decoded) {
@@ -79,8 +80,12 @@ class AIController
                     'data' => $decoded
                 ]);
             } else {
-                return json_encode(['success' => false, 'message' => 'L\'IA n\'a pas renvoyé un JSON valide.', 'raw' => $aiText, 'json_error' => json_last_error_msg()]);
+                return json_encode(['success' => false, 'message' => 'L\'IA n\'a pas renvoyé un JSON valide.', 'raw' => $aiText]);
             }
+        }
+
+        if (isset($result['error']['message'])) {
+            return json_encode(['success' => false, 'message' => 'Erreur API Groq : ' . $result['error']['message']]);
         }
 
         return json_encode(['success' => false, 'message' => 'Erreur de réponse de l\'IA.', 'raw' => $result]);

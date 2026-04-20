@@ -77,6 +77,154 @@
         <i data-lucide="moon" class="icon-moon"></i>
       </button>
 
+      <!-- Notification Bell (Premium) -->
+      <style>
+        /* ─── Notification Panel ─── */
+        #notification-dropdown .notif-panel {
+          width: 360px; padding: 0; overflow: hidden;
+          right: 0; left: auto;
+          border-radius: 16px;
+          box-shadow: 0 25px 60px rgba(0,0,0,0.18);
+          border: 1px solid var(--border-color);
+          background: var(--bg-card);
+        }
+        .notif-panel__head {
+          padding: 1rem 1.25rem;
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          display: flex; align-items: center; justify-content: space-between;
+        }
+        .notif-panel__head h5 {
+          margin: 0; color: #fff; font-size: 1rem; font-weight: 700;
+          display: flex; align-items: center; gap: 8px;
+        }
+        .notif-panel__head h5 .notif-count-pill {
+          background: rgba(255,255,255,0.25); color: #fff;
+          font-size: 11px; padding: 2px 8px; border-radius: 20px;
+          font-weight: 600;
+        }
+        .notif-panel__mark-btn {
+          background: rgba(255,255,255,0.15); border: none;
+          color: #fff; font-size: 11px; padding: 5px 10px;
+          border-radius: 8px; cursor: pointer; font-weight: 600;
+          transition: background 0.2s;
+        }
+        .notif-panel__mark-btn:hover { background: rgba(255,255,255,0.3); }
+        .notif-panel__body { max-height: 400px; overflow-y: auto; }
+        /* Custom scrollbar */
+        .notif-panel__body::-webkit-scrollbar { width: 4px; }
+        .notif-panel__body::-webkit-scrollbar-track { background: transparent; }
+        .notif-panel__body::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        /* Single notification item */
+        .notif-item {
+          display: flex; align-items: flex-start; gap: 12px;
+          padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);
+          text-decoration: none; color: inherit;
+          transition: background 0.15s, transform 0.15s;
+          position: relative;
+        }
+        .notif-item:hover { background: var(--bg-surface); transform: translateX(2px); }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item.unread::before {
+          content: ''; width: 7px; height: 7px; border-radius: 50%;
+          background: #6366f1; position: absolute; top: 1.1rem; right: 1rem;
+          flex-shrink: 0;
+        }
+        .notif-item__icon {
+          width: 38px; height: 38px; border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; margin-top: 2px;
+        }
+        .notif-item__icon.type-certif_ready  { background: rgba(16,185,129,0.12); color: #10b981; }
+        .notif-item__icon.type-peer_request  { background: rgba(139,92,246,0.12); color: #8b5cf6; }
+        .notif-item__icon.type-new_message   { background: rgba(59,130,246,0.12);  color: #3b82f6; }
+        .notif-item__icon.type-ai_reply      { background: rgba(99,102,241,0.12);  color: #6366f1; }
+        .notif-item__icon.type-default       { background: rgba(156,163,175,0.12); color: #9ca3af; }
+        .notif-item__body { flex: 1; min-width: 0; }
+        .notif-item__type {
+          font-size: 10px; font-weight: 700; text-transform: uppercase;
+          letter-spacing: 0.06em; margin-bottom: 3px;
+          color: var(--text-secondary);
+        }
+        .notif-item__msg {
+          font-size: 0.85rem; line-height: 1.45; color: var(--text-primary);
+          white-space: normal; font-weight: 500;
+        }
+        .notif-item__time {
+          font-size: 0.72rem; color: var(--text-secondary);
+          margin-top: 4px; display: block;
+        }
+        /* Empty state */
+        .notif-empty {
+          padding: 3rem 1.5rem; text-align: center; color: var(--text-secondary);
+        }
+        .notif-empty__icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.5; }
+        .notif-empty p { font-size: 0.9rem; margin: 0; }
+        /* Panel footer */
+        .notif-panel__foot {
+          padding: 0.6rem 1.25rem; background: var(--bg-surface);
+          border-top: 1px solid var(--border-color);
+          text-align: center; font-size: 11px; color: var(--text-secondary);
+        }
+        /* Bell animation when unread */
+        @keyframes bellRing {
+          0%,100% { transform: rotate(0); }
+          15%      { transform: rotate(12deg); }
+          30%      { transform: rotate(-10deg); }
+          45%      { transform: rotate(8deg); }
+          60%      { transform: rotate(-6deg); }
+          75%      { transform: rotate(4deg); }
+        }
+        @keyframes pulse-ring {
+          0%   { transform: scale(0.8); opacity: 0.7; }
+          100% { transform: scale(2);   opacity: 0; }
+        }
+        .bell-has-notif { animation: bellRing 1.5s ease 0.3s; }
+        .bell-pulse-ring {
+          position: absolute; top: 50%; left: 50%;
+          width: 20px; height: 20px; border-radius: 50%;
+          background: rgba(99,102,241,0.5);
+          transform: translate(-50%,-50%);
+          animation: pulse-ring 1.5s ease-out infinite;
+          pointer-events: none;
+        }
+      </style>
+
+      <div class="dropdown" id="notification-dropdown">
+        <button class="landing-nav__btn-icon dropdown-trigger"
+                id="notif-bell-btn"
+                style="position:relative; background:none; border:none; cursor:pointer; color:var(--text-primary); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+            <span class="bell-pulse-ring" id="bell-pulse" style="display:none;"></span>
+            <i data-lucide="bell" id="notif-bell-icon" style="width:20px; height:20px;"></i>
+            <span id="notif-badge" style="display:none; position:absolute; top:-4px; right:-4px;
+                  background: linear-gradient(135deg,#ef4444,#dc2626); color:white;
+                  font-size:10px; min-width:18px; height:18px; line-height:18px;
+                  text-align:center; border-radius:9px; border:2px solid var(--bg-card);
+                  font-weight:700; padding:0 4px;">0</span>
+        </button>
+        <div class="dropdown-menu notif-panel" id="notif-panel">
+            <div class="notif-panel__head">
+                <h5>
+                    <i data-lucide="bell" style="width:16px;height:16px;"></i>
+                    Notifications
+                    <span class="notif-count-pill" id="notif-head-count">0</span>
+                </h5>
+                <button class="notif-panel__mark-btn" onclick="markAllRead()">
+                    Tout marquer lu ✓
+                </button>
+            </div>
+            <div class="notif-panel__body" id="notif-items">
+                <div class="notif-empty">
+                    <div class="notif-empty__icon">🔔</div>
+                    <p>Chargement...</p>
+                </div>
+            </div>
+            <div class="notif-panel__foot">
+                ✨ Aptus Engagement Engine
+            </div>
+        </div>
+      </div>
+
+
       <!-- Profile Dropdown -->
       <div class="dropdown" id="profile-dropdown">
         <div class="dropdown-trigger topnav__profile">
@@ -233,6 +381,122 @@
       });
       <?php unset($_SESSION['flash_error']); ?>
     <?php endif; ?>
+
+    // --- NOTIFICATION SYSTEM (Premium) ---
+    const NOTIF_ICONS = {
+        certif_ready : 'award',
+        peer_request : 'users',
+        new_message  : 'message-circle',
+        ai_reply     : 'cpu',
+        default      : 'bell'
+    };
+    const NOTIF_LABELS = {
+        certif_ready : '🏆 Certificat',
+        peer_request : '🤝 Peer Learning',
+        new_message  : '💬 Message',
+        ai_reply     : '🤖 IA',
+        default      : '🔔 Notification'
+    };
+
+    let _prevCount = 0;
+    let _bellRung  = false;
+
+    function timeAgo(minutes) {
+        if (minutes < 1)     return "À l'instant";
+        if (minutes < 60)    return `il y a ${minutes} min`;
+        const h = Math.floor(minutes / 60);
+        if (h < 24)          return `il y a ${h}h`;
+        return `il y a ${Math.floor(h/24)}j`;
+    }
+
+    function fetchNotifications() {
+        fetch('/aptus_first_official_version/view/frontoffice/ajax_handler.php?action=get_notifications')
+        .then(r => r.json())
+        .then(data => { if (data.success) updateNotifUI(data.notifications); })
+        .catch(() => {}); // silent fail
+    }
+
+    function updateNotifUI(notifs) {
+        const badge     = document.getElementById('notif-badge');
+        const headCount = document.getElementById('notif-head-count');
+        const list      = document.getElementById('notif-items');
+        const bellIcon  = document.getElementById('notif-bell-icon');
+        const pulse     = document.getElementById('bell-pulse');
+        const count     = notifs.length;
+
+        // Update badge
+        if (count > 0) {
+            badge.textContent     = count > 99 ? '99+' : count;
+            badge.style.display   = 'block';
+            headCount.textContent = count;
+
+            // Ring bell once when new notifs appear
+            if (!_bellRung || count > _prevCount) {
+                bellIcon.classList.remove('bell-has-notif');
+                void bellIcon.offsetWidth;
+                bellIcon.classList.add('bell-has-notif');
+                pulse.style.display = 'block';
+                _bellRung = true;
+            }
+        } else {
+            badge.style.display   = 'none';
+            headCount.textContent = 0;
+            pulse.style.display   = 'none';
+            bellIcon.classList.remove('bell-has-notif');
+        }
+        _prevCount = count;
+
+        // Render items
+        if (count === 0) {
+            list.innerHTML = `
+                <div class="notif-empty">
+                    <div class="notif-empty__icon">✅</div>
+                    <p>Vous êtes à jour !<br>Aucune nouvelle notification.</p>
+                </div>`;
+            return;
+        }
+
+        let html = '';
+        notifs.forEach(n => {
+            const typeKey  = NOTIF_ICONS[n.type] ? n.type : 'default';
+            const icon     = NOTIF_ICONS[typeKey] || 'bell';
+            const label    = NOTIF_LABELS[typeKey] || 'Notification';
+            const time     = timeAgo(parseInt(n.age_minutes) || 0);
+            const href     = n.url_action ? n.url_action : '#';
+            html += `
+            <a href="${href}" class="notif-item unread" onclick="markOneRead(${n.id}, this)">
+                <div class="notif-item__icon type-${typeKey}">
+                    <i data-lucide="${icon}" style="width:18px;height:18px;"></i>
+                </div>
+                <div class="notif-item__body">
+                    <div class="notif-item__type">${label}</div>
+                    <div class="notif-item__msg">${n.message}</div>
+                    <span class="notif-item__time">🕐 ${time}</span>
+                </div>
+            </a>`;
+        });
+        list.innerHTML = html;
+        lucide.createIcons();
+    }
+
+    function markOneRead(id, el) {
+        el.classList.remove('unread');
+        const formData = new FormData();
+        formData.append('action', 'mark_notifications_read'); // marks all; individual endpoint optional
+        fetch('/aptus_first_official_version/view/frontoffice/ajax_handler.php', { method: 'POST', body: formData });
+    }
+
+    function markAllRead() {
+        const formData = new FormData();
+        formData.append('action', 'mark_notifications_read');
+        fetch('/aptus_first_official_version/view/frontoffice/ajax_handler.php', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => { if (data.success) updateNotifUI([]); });
+    }
+
+    // Initial load + poll every 30s
+    fetchNotifications();
+    setInterval(fetchNotifications, 30000);
   </script>
 </body>
 </html>

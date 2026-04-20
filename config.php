@@ -52,4 +52,5 @@ class config
 }
 
 // Configuration pour Aptus AI integration
-define('GEMINI_API_KEY', 'AIzaSyCk0VfvESPggLbCk9bV8bZimzCIbWEk3Pk');
+// Clé API gérée dans api_keys.php
+

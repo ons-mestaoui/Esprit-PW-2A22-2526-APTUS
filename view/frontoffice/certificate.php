@@ -3,22 +3,65 @@
 session_start();
 require_once __DIR__ . '/../../config.php';
 
-$id_user = 10; // For demo matching candidate test ID
-$id_formation = $_GET['f_id'] ?? 1;
+$id_user = $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+$id_formation = isset($_GET['f_id']) ? (int)$_GET['f_id'] : 0;
+
+if ($id_formation <= 0) {
+    die("Formation invalide.");
+}
 
 $db = config::getConnexion();
+
+// --- 🔐 LOGIQUE MÉTIER & SÉCURITÉ ---
+try {
+    // 1. Vérifier l'inscription, la progression et le rôle du candidat
+    $stmtCheck = $db->prepare("
+        SELECT i.progression, u.role, f.titre 
+        FROM inscription i
+        JOIN utilisateur u ON i.id_user = u.id
+        JOIN formation f ON i.id_formation = f.id_formation
+        WHERE i.id_user = :uid AND i.id_formation = :fid
+    ");
+    $stmtCheck->execute(['uid' => $id_user, 'fid' => $id_formation]);
+    $access = $stmtCheck->fetch();
+
+    if (!$access) {
+        die("<div style='text-align:center; padding:50px; font-family:sans-serif;'>
+                <h1 style='color:#ef4444;'>🚫 Accès Refusé</h1>
+                <p>Vous n'êtes pas inscrit à cette formation.</p>
+             </div>");
+    }
+
+    if ($access['role'] !== 'Candidat' && $access['role'] !== 'candidat') {
+        die("<div style='text-align:center; padding:50px; font-family:sans-serif;'>
+                <h1 style='color:#ef4444;'>❌ Rôle Invalide</h1>
+                <p>Seuls les candidats peuvent obtenir un certificat de réussite.</p>
+             </div>");
+    }
+
+    if ($access['progression'] < 100) {
+        die("<div style='text-align:center; padding:50px; font-family:sans-serif;'>
+                <h1 style='color:#f59e0b;'>⏳ Formation non terminée</h1>
+                <p>Vous devez atteindre 100% de progression pour débloquer votre certificat.</p>
+                <progress value='{$access['progression']}' max='100'></progress> {$access['progression']}%
+             </div>");
+    }
+
+} catch (Exception $e) {
+    die("Erreur système : " . $e->getMessage());
+}
 
 $user = ['id' => $id_user, 'nom' => 'Candidat Aptus'];
 $cours_fini = [
     'id_formation' => $id_formation,
-    'titre' => 'Formation',
+    'titre' => $access['titre'],
     'tuteur_nom' => 'Aptus AI'
 ];
 
 try {
     $stmt = $db->prepare("
         SELECT f.titre, COALESCE(u.nom, 'Aptus AI') as tuteur_nom
-        FROM Formation f
+        FROM formation f
         LEFT JOIN utilisateur u ON f.id_tuteur = u.id
         WHERE f.id_formation = ?
     ");
@@ -45,8 +88,8 @@ try {
     try {
         $stmt = $db->prepare("
             SELECT f.titre, COALESCE(u.nom, 'Aptus AI') as tuteur_nom
-            FROM Formation f
-            LEFT JOIN User u ON f.id_tuteur = u.id
+            FROM formation f
+            LEFT JOIN utilisateur u ON f.id_tuteur = u.id
             WHERE f.id_formation = ?
         ");
         $stmt->execute([$id_formation]);

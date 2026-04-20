@@ -15,7 +15,10 @@ if (isset($_GET['action']) && $_GET['action'] == 'getCalendarEvents') {
     exit();
 }
 
-$id_tuteur = isset($_GET['tuteur_id']) ? intval($_GET['tuteur_id']) : 1;
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+// Logique flexible : on prend l'ID dans l'URL (pour tester) OU l'ID en session (pour l'intégration finale)
+$id_tuteur = $_GET['tuteur_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 1;
 
 require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
 $dashC = new TuteurDashboardController();
