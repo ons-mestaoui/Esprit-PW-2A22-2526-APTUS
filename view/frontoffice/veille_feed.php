@@ -22,13 +22,52 @@ if (!isset($content)) {
   <p class="page-header__subtitle">Rapports, analyses et données du marché de l'emploi</p>
 </div>
 
+<?php
+// Collect unique sector tags from all reports
+$feedSecteurs = [];
+foreach ($dbReports as $r) {
+    if (!empty($r['secteur_principal'])) {
+        foreach (explode(',', $r['secteur_principal']) as $s) {
+            $s = trim($s);
+            if ($s && !in_array($s, $feedSecteurs)) $feedSecteurs[] = $s;
+        }
+    }
+}
+?>
+
+<style>
+.feed-filter-bar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; align-items:center; }
+.feed-filter-btn {
+    padding: 6px 16px; font-size: 13px; font-weight: 600; border-radius: 20px;
+    border: 1px solid var(--border-color); background: var(--bg-secondary);
+    color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;
+}
+.feed-filter-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.feed-filter-btn.active { background: var(--accent-primary); color: #fff; border-color: var(--accent-primary); box-shadow: 0 2px 12px rgba(99,102,241,0.3); }
+</style>
+
 <div class="veille-layout">
   <!-- ═══ MAIN FEED ═══ -->
   <div class="report-feed stagger">
 
+    <!-- Sector Filter Bar -->
+    <?php if (!empty($feedSecteurs)): ?>
+    <div class="feed-filter-bar" id="feed-filter-bar">
+        <span style="font-size:13px; font-weight:600; color:var(--text-secondary);">
+            <i data-lucide="tag" style="width:14px;height:14px;display:inline;vertical-align:-2px;"></i> Secteur :
+        </span>
+        <button class="feed-filter-btn active" onclick="filterFeed('all', this)">Tous</button>
+        <?php foreach ($feedSecteurs as $sec): ?>
+        <button class="feed-filter-btn" onclick="filterFeed('<?php echo htmlspecialchars(addslashes($sec)); ?>', this)"><?php echo htmlspecialchars($sec); ?></button>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
     <!-- Featured Report -->
-    <?php if (count($dbReports) > 0): $featured = $dbReports[0]; ?>
-    <article class="report-card report-card--featured animate-on-scroll" id="report-featured">
+    <?php if (count($dbReports) > 0): $featured = $dbReports[0];
+      $featuredSecteurs = htmlspecialchars($featured['secteur_principal'] ?? '');
+    ?>
+    <article class="report-card report-card--featured animate-on-scroll feed-card" id="report-featured" data-secteurs="<?php echo $featuredSecteurs; ?>">
       <div class="report-card__header">
         <div class="report-card__header-content">
           <h2 class="report-card__title"><?php echo htmlspecialchars($featured['titre']); ?></h2>
@@ -50,7 +89,9 @@ if (!isset($content)) {
         <span class="report-card__meta-item report-card__meta-item--views">
           <i data-lucide="eye" style="width:12px;height:12px;"></i> <?php echo $featured['vues']; ?> vues
         </span>
-        <span class="badge badge-info"><?php echo htmlspecialchars($featured['secteur_principal']); ?></span>
+        <?php if (!empty($featured['secteur_principal'])): foreach(explode(',', $featured['secteur_principal']) as $tag): $tag = trim($tag); if (!$tag) continue; ?>
+          <span class="badge badge-info"><?php echo htmlspecialchars($tag); ?></span>
+        <?php endforeach; endif; ?>
       </div>
       <div class="report-card__footer">
         <a href="veille_details.php?id=<?php echo $featured['id_rapport_marche']; ?>" class="btn btn-sm btn-primary">
@@ -68,14 +109,17 @@ if (!isset($content)) {
     <?php
     for ($i = 1; $i < count($dbReports); $i++):
       $r = $dbReports[$i];
+      $rSecteurs = htmlspecialchars($r['secteur_principal'] ?? '');
     ?>
-    <article class="report-card animate-on-scroll" id="report-<?php echo $i; ?>">
+    <article class="report-card animate-on-scroll feed-card" id="report-<?php echo $i; ?>" data-secteurs="<?php echo $rSecteurs; ?>">
       <div class="report-card__header">
         <div class="report-card__header-content">
           <h3 class="report-card__title"><?php echo htmlspecialchars($r['titre']); ?></h3>
           <p class="report-card__excerpt"><?php echo htmlspecialchars(substr($r['description'], 0, 150)) . '...'; ?></p>
         </div>
-        <span class="badge badge-primary report-card__category"><?php echo htmlspecialchars($r['secteur_principal']); ?></span>
+        <?php if (!empty($r['secteur_principal'])): $firstTag = trim(explode(',', $r['secteur_principal'])[0]); ?>
+        <span class="badge badge-primary report-card__category"><?php echo htmlspecialchars($firstTag); ?></span>
+        <?php endif; ?>
       </div>
       <?php if (!empty($r['image_couverture'])): ?>
         <img src="<?php echo $r['image_couverture']; ?>" alt="Cover" class="report-card__image">
@@ -103,6 +147,7 @@ if (!isset($content)) {
     </article>
     <?php endfor; ?>
   </div>
+
 
   <!-- ═══ SIDEBAR ═══ -->
   <aside class="veille-sidebar">
@@ -171,4 +216,20 @@ document.addEventListener('DOMContentLoaded', function() {
   AptusCharts.sparkline('sparkline-offres', [42, 55, 48, 62, 70, 65, 78, 85, 72, 90, 88, 95], 'var(--chart-2)');
   AptusCharts.sparkline('sparkline-salary', [28, 30, 29, 31, 32, 30, 33, 34, 32, 35, 33, 36], 'var(--chart-3)');
 });
+
+function filterFeed(sector, btnEl) {
+    document.querySelectorAll('.feed-filter-btn').forEach(b => b.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    const cards = document.querySelectorAll('.feed-card');
+    cards.forEach(card => {
+        if (sector === 'all') {
+            card.style.display = '';
+        } else {
+            const secteurs = (card.dataset.secteurs || '').split(',').map(s => s.trim().toLowerCase());
+            card.style.display = secteurs.includes(sector.toLowerCase()) ? '' : 'none';
+        }
+    });
+}
 </script>
+

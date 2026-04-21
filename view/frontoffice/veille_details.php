@@ -49,10 +49,40 @@ if (!$rapport) {
 .data-table-interactive tbody tr { transition: background 0.2s ease, transform 0.2s ease; }
 .data-table-interactive tbody tr:hover { background: rgba(99, 102, 241, 0.03); transform: translateX(4px); }
 .lead-text { font-size: 1.25rem; font-weight: 500; line-height: 1.8; color: var(--text-primary); border-left: 4px solid var(--accent-primary); padding-left: var(--space-4); margin-bottom: var(--space-6); background: linear-gradient(90deg, rgba(99,102,241,0.05) 0%, transparent 100%); padding: var(--space-4) var(--space-5); border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+/* PDF Export Button */
+.btn-pdf { display:inline-flex; align-items:center; gap:8px; padding:8px 18px; font-size:13px; font-weight:700;
+    background: linear-gradient(135deg, #ef4444, #dc2626); color:#fff; border:none; border-radius:20px; cursor:pointer;
+    box-shadow: 0 4px 12px rgba(239,68,68,0.35); transition: all 0.2s ease; text-decoration:none; }
+.btn-pdf:hover { transform:translateY(-2px); box-shadow: 0 6px 20px rgba(239,68,68,0.45); color:#fff; }
+/* @ Print / PDF Stylesheet */
+@media print {
+    .progress-container, nav, header, .tab-controls, footer, .btn, .btn-pdf,
+    [class*="sidebar"], [class*="back-to"], a[href="veille_feed.php"] { display: none !important; }
+    body, html { background: #fff !important; color: #111 !important; font-family: Georgia, serif; }
+    .report-hero { border: none; background: none !important; box-shadow: none; padding: 0; }
+    .report-hero::after { display: none; }
+    h1.page-header__title { font-size: 28px !important; }
+    .tab-content { display: block !important; opacity: 1 !important; transform: none !important; }
+    .salary-card { border: 1px solid #ddd; box-shadow: none; }
+    .data-table-interactive tbody tr:hover { background: none; transform: none; }
+    .veille-layout { grid-template-columns: 1fr !important; }
+    a::after { content: none !important; }
+    .pdf-header { display: block !important; }
+    @page { margin: 2cm; }
+}
+.pdf-header { display: none; text-align:center; border-bottom:2px solid #6366f1; padding-bottom:16px; margin-bottom:24px; }
+.pdf-header__logo { font-size:22px; font-weight:800; color:#6366f1; letter-spacing:-0.5px; }
+.pdf-header__meta { font-size:13px; color:#64748b; margin-top:6px; }
 </style>
 
 <div class="progress-container">
   <div class="progress-bar" id="reading-progress"></div>
+</div>
+
+<!-- PDF-only header (hidden on screen, visible in print) -->
+<div class="pdf-header">
+    <div class="pdf-header__logo">⚡ Aptus — Veille du Marché</div>
+    <div class="pdf-header__meta">Rapport généré le <?php echo date('d/m/Y'); ?> · <?php echo htmlspecialchars($rapport['secteur_principal']); ?> · <?php echo htmlspecialchars($rapport['region']); ?></div>
 </div>
 
 <div class="report-hero">
@@ -68,6 +98,13 @@ if (!$rapport) {
             <span style="display:flex;align-items:center;gap:8px;"><div class="avatar avatar-sm avatar-initials" style="width:24px;height:24px;font-size:10px;">A</div> <?php echo htmlspecialchars($rapport['auteur']); ?></span>
             <span style="display:flex;align-items:center;gap:6px;"><i data-lucide="calendar" style="width:16px;height:16px;"></i> <?php echo date('d M. Y', strtotime($rapport['date_publication'])); ?></span>
             <span style="display:flex;align-items:center;gap:6px;"><i data-lucide="eye" style="width:16px;height:16px;"></i> <?php echo $rapport['vues']; ?> lectures</span>
+        </div>
+        <!-- PDF Export Button -->
+        <div style="margin-top:20px;">
+            <button class="btn-pdf" onclick="exportToPDF()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Exporter en PDF
+            </button>
         </div>
       </div>
       <?php if (!empty($rapport['image_couverture'])): ?>
@@ -229,4 +266,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+function exportToPDF() {
+    // Ensure all tab content is visible for printing
+    document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.add('active');
+        el.style.display = 'block';
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+    });
+    window.print();
+    // Restore after print dialog closes
+    setTimeout(() => {
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(el => el.classList.remove('active'));
+        const firstContent = document.getElementById('tab-analyse');
+        if (firstContent) {
+            firstContent.classList.add('active');
+        }
+    }, 1000);
+}
+
 </script>

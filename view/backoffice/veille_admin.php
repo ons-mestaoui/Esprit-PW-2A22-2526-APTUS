@@ -202,11 +202,16 @@ if (!isset($content)) {
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
+<!-- ECharts for Maps -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+
 <!-- NoUiSlider for Interactive Range Inputs -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
 
 <style>
+*, *::before, *::after { box-sizing: border-box; }
+
 .tabs-container { margin-bottom: 24px; border-bottom: 2px solid var(--border-color); display: flex; gap: 16px; }
 .tab-btn { padding: 12px 24px; font-weight: 600; font-size: 14px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
 .tab-btn.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
@@ -234,7 +239,16 @@ if (!isset($content)) {
 .data-checkbox-card:hover { border-color: var(--accent-primary); background: rgba(99,102,241,0.03); }
 .data-checkbox-card.is-selected { border-color: var(--accent-primary); background: rgba(99,102,241,0.08); box-shadow: 0 0 0 1px var(--accent-primary); }
 .error-text { color: #ef4444; font-size: 12px; margin-top: 4px; display: block; font-weight: 500; }
-.input.is-invalid, .textarea.is-invalid { border-color: #ef4444 !important; background-color: rgba(239, 68, 68, 0.05) !important; }
+.input.is-invalid, .textarea.is-invalid, .tag-input-container.is-invalid-tags { border-color: #ef4444 !important; background-color: rgba(239, 68, 68, 0.05) !important; }
+/* Sector Filter Buttons */
+.sector-filter-btn {
+    padding: 5px 14px; font-size: 12px; font-weight: 600; border-radius: 20px;
+    border: 1px solid var(--border-color); background: var(--bg-main);
+    color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.sector-filter-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); background: rgba(99,102,241,0.05); }
+.sector-filter-btn.active { background: var(--accent-primary); color: #fff; border-color: var(--accent-primary); box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
 /* Quill Overrides */
 .ql-editor { min-height: 200px; color: var(--text-primary); font-size: 15px; }
 .ql-toolbar { background: #f8fafc; border-top-left-radius: 8px; border-top-right-radius: 8px; }
@@ -257,14 +271,22 @@ if (!isset($content)) {
 .stepper-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border-color); }
 
 /* Stepper Layout */
-#modal-rapport .modal-content { max-width: 1000px !important; display:flex; flex-direction:column; max-height: 90vh; padding: 0; overflow:hidden;}
+#modal-rapport .modal-content { width: 95vw; max-width: 1100px !important; display:flex; flex-direction:column; max-height: 95vh; padding: 0; overflow:hidden;}
 #modal-rapport .modal-close { position:absolute; top:24px; right:24px; z-index:100; }
 #rapport-modal-title { padding: 24px 32px 0; margin-bottom: 24px; }
 #rapport-stepper-header { padding: 0 32px; margin-bottom: 24px; }
 #form-rapport { display: flex; flex-direction: column; overflow: hidden; flex: 1; border-top: 1px solid var(--border-color); padding-top: 24px;}
 .stepper-layout { display: flex; gap: 32px; flex: 1; overflow-y: auto; padding: 0 32px 32px; }
 .stepper-left-panel { flex: 1.3; min-width: 0; }
-.stepper-right-panel { flex: 1; background: var(--bg-main); border-radius: 12px; border: 1px solid var(--border-color); padding: 16px; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; position: relative; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+.stepper-right-panel { flex: 1; min-width: 0; background: var(--bg-main); border-radius: 12px; border: 1px solid var(--border-color); padding: 16px; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; position: relative; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+
+/* Responsive Overrides for Opera GX / Narrow Windows */
+@media (max-width: 1024px) {
+    .stepper-layout { flex-direction: column; }
+    .stepper-left-panel, .stepper-right-panel { flex: none; width: 100%; }
+    .stepper-right-panel { min-height: 400px; }
+    #modal-rapport .modal-content { max-height: 98vh; width: 98vw; }
+}
 
 .stepper-footer { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; border-top: 1px solid var(--border-color); background: var(--bg-main); z-index: 10; margin-top: 0; }
 
@@ -272,7 +294,7 @@ if (!isset($content)) {
 .viz-panel.active { display: flex; }
 
 /* Custom Gauges/Visuals */
-.viz-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-align: center; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px; padding-bottom:12px; border-bottom: 1px solid var(--border-color); }
+.viz-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-align: center; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-bottom:8px; border-bottom: 1px solid var(--border-color); }
 
 /* Article View for Step 2 */
 .article-preview { width:100%; flex:1; overflow-y:auto; border-radius:8px; }
@@ -343,6 +365,50 @@ if (!isset($content)) {
 .image-upload-zone__hint {
   font-size: 12px;
   color: var(--text-tertiary);
+}
+
+/* Tag Input Styles */
+.tag-input-wrapper { position: relative; width: 100%; margin-top: 8px; }
+.tag-input-container {
+    display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 12px;
+    background: var(--input-bg); border: 1px solid var(--border-color);
+    border-radius: var(--radius-md); transition: border-color 0.3s;
+    min-height: 48px; align-items: center; cursor: text;
+}
+.tag-input-container:focus-within { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+.tag-input-container input {
+    border: none; background: transparent; outline: none;
+    color: var(--text-primary); font-size: 14px; flex: 1; min-width: 120px;
+    padding: 4px 0;
+}
+.tag-chip {
+    display: flex; align-items: center; gap: 6px; padding: 4px 10px;
+    background: rgba(99, 102, 241, 0.1); color: var(--accent-primary);
+    border-radius: 20px; font-size: 12px; font-weight: 600;
+    animation: fadeInTag 0.2s ease;
+}
+@keyframes fadeInTag { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.tag-chip .remove-tag {
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: center; width: 14px; height: 14px;
+    border-radius: 50%; opacity: 0.6; transition: opacity 0.2s;
+    font-size: 16px; line-height: 1;
+}
+.tag-chip .remove-tag:hover { opacity: 1; background: rgba(99, 102, 241, 0.2); }
+
+.tag-suggestions {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    max-height: 200px; overflow-y: auto; background: var(--bg-main);
+    border: 1px solid var(--border-color); border-radius: var(--radius-md);
+    z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none;
+    backdrop-filter: blur(10px);
+}
+.tag-suggestion-item {
+    padding: 10px 16px; cursor: pointer; font-size: 14px;
+    color: var(--text-secondary); transition: all 0.2s;
+}
+.tag-suggestion-item:hover {
+    background: rgba(99, 102, 241, 0.05); color: var(--accent-primary);
 }
 .image-upload-preview {
   position: absolute;
@@ -434,15 +500,44 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
         </button>
     </div>
 
-    <div class="published-list" style="margin-top:20px;">
-      <?php foreach ($listeRapportsDb as $p): ?>
-      <div class="published-item" style="display:flex; justify-content:space-between; align-items:center; padding:16px;">
+    <!-- Sector Filter Bar -->
+    <div id="sector-filter-bar" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; align-items:center;">
+        <span style="font-size:13px; font-weight:600; color:var(--text-secondary); margin-right:4px;">Filtrer :</span>
+        <button class="sector-filter-btn active" data-sector="all" onclick="filterBySector('all', this)">
+            Tous
+        </button>
+        <?php 
+        $allSecteurs = [];
+        foreach ($listeRapportsDb as $p) {
+            if (!empty($p['secteur_principal'])) {
+                foreach (explode(',', $p['secteur_principal']) as $s) {
+                    $s = trim($s);
+                    if ($s && !in_array($s, $allSecteurs)) $allSecteurs[] = $s;
+                }
+            }
+        }
+        foreach ($allSecteurs as $sec): ?>
+        <button class="sector-filter-btn" data-sector="<?php echo htmlspecialchars($sec); ?>" onclick="filterBySector('<?php echo htmlspecialchars(addslashes($sec)); ?>', this)">
+            <?php echo htmlspecialchars($sec); ?>
+        </button>
+        <?php endforeach; ?>
+    </div>
+
+    <div class="published-list" style="margin-top:0;" id="rapports-list">
+      <?php foreach ($listeRapportsDb as $p): 
+        $secteursData = htmlspecialchars($p['secteur_principal'] ?? '');
+      ?>
+      <div class="published-item rapport-item" data-secteurs="<?php echo $secteursData; ?>" style="display:flex; justify-content:space-between; align-items:center; padding:16px;">
         <div>
           <div class="published-item__title" style="font-size:16px; font-weight:600; margin-bottom:4px;"><?php echo htmlspecialchars($p['titre']); ?></div>
           <div class="published-item__meta" style="color:var(--text-secondary); font-size:13px;">
             <span><i data-lucide="calendar" style="width:12px;height:12px;display:inline;vertical-align:-2px;"></i> <?php echo date('d M', strtotime($p['date_publication'])); ?></span>
             <span style="margin-left:12px;"><i data-lucide="link" style="width:12px;height:12px;display:inline;vertical-align:-2px;"></i> <?php echo $p['nombre_donnees']; ?> données liées</span>
             <span class="badge badge-sm" style="margin-left:12px; background:rgba(99,102,241,0.1); color:var(--accent-primary);"><i data-lucide="eye" style="width:10px;height:10px;display:inline;"></i> <?php echo $p['vues']; ?> vues</span>
+            <?php if (!empty($p['secteur_principal'])): 
+              foreach(explode(',', $p['secteur_principal']) as $tag): $tag = trim($tag); if (!$tag) continue; ?>
+              <span class="badge badge-sm" style="margin-left:6px; background:rgba(99,102,241,0.08); color:var(--accent-primary); border:1px solid rgba(99,102,241,0.2);"><?php echo htmlspecialchars($tag); ?></span>
+            <?php endforeach; endif; ?>
           </div>
         </div>
         <div style="display:flex; gap:8px;">
@@ -451,7 +546,46 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
         </div>
       </div>
       <?php endforeach; ?>
+
     </div>
+
+    <!-- AI Forecast Dashboard Section -->
+    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-top: 32px; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%); z-index: 0;"></div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1;">
+            <div>
+                <h3 style="margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="line-chart" style="color: var(--accent-primary);"></i>
+                    🔮 Intelligent Market Forecast
+                </h3>
+                <p style="color: var(--text-secondary); font-size: 14px; max-width: 600px;">
+                    Notre IA analyse vos rapports historiques par secteur pour prédire les tendances futures des salaires et de la demande sur les 6 prochains mois.
+                </p>
+                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                    <label for="forecast-category" style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Secteur :</label>
+                    <select id="forecast-category" class="select" style="width: 250px; padding: 6px 12px; font-size: 13px;" onchange="loadAIForecast(false)">
+                        <option value="">Tous les secteurs</option>
+                        <?php foreach ($allSecteurs as $sec): ?>
+                            <option value="<?php echo htmlspecialchars($sec); ?>"><?php echo htmlspecialchars($sec); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-ai-sparkle" onclick="loadAIForecast(true)" id="btn-refresh-forecast">
+                <i data-lucide="refresh-cw" style="width:14px;height:14px;margin-right:6px;"></i> Update Predictions
+            </button>
+        </div>
+
+        <div id="forecast-chart-container" style="width: 100%; height: 300px; margin-top: 24px; background: rgba(255,255,255,0.02); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+            <div id="forecast-placeholder" style="text-align: center; color: var(--text-tertiary);">
+                <i data-lucide="sparkles" style="width:48px; height:48px; margin-bottom: 12px; opacity: 0.3;"></i>
+                <p>Sélectionnez un secteur ou cliquez sur "Update Predictions".</p>
+            </div>
+            <div id="echarts-forecast" style="width: 100%; height: 100%; display: none;"></div>
+        </div>
+    </div>
+
 </div>
 
 <!-- ============================================== -->
@@ -600,7 +734,17 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
                             <option value="International">International</option>
                         </select>
                     </div>
-                    <div class="form-group"><label class="form-label">Secteur Principal (Optionnel)</label><input type="text" class="input" name="secteur_principal" id="rapport-secteur"></div>
+                    <div class="form-group">
+                        <label class="form-label">Secteur Principal <span class="text-danger" style="color:#ef4444;">*</span></label>
+                        <div class="tag-input-wrapper" id="secteur-tag-wrapper">
+                            <div class="tag-input-container" id="tag-container">
+                                <!-- Tags will be injected here -->
+                                <input type="text" id="tag-input" placeholder="Ajouter un secteur..." autocomplete="off">
+                            </div>
+                            <div class="tag-suggestions" id="tag-suggestions"></div>
+                        </div>
+                        <input type="hidden" name="secteur_principal" id="rapport-secteur" required>
+                    </div>
                 </div>
             </div>
 
@@ -638,7 +782,18 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
                 </div>
 
                 <div class="form-group mb-4">
-                    <label class="form-label">Corps du Rapport <span class="text-danger" style="color:#ef4444;">*</span></label>
+                    <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="color: var(--accent-primary); font-size: 14px;"><i data-lucide="sparkles" style="width:14px;height:14px;display:inline;"></i> Génération Assistée par IA</strong>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin: 4px 0 0 0;">Générez automatiquement une analyse de marché approfondie et en français basée sur vos critères.</p>
+                        </div>
+                        <button type="button" class="btn btn-ai-sparkle" onclick="generateAIDraft()" id="btn-ai-draft">
+                            Générer le rapport IA
+                        </button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin-bottom: 0;">Corps du Rapport <span class="text-danger" style="color:#ef4444;">*</span></label>
+                    </div>
                     <div id="editor-container" style="height: 300px;" class="<?php echo isset($fieldErrors['contenu_detaille']) ? 'is-invalid' : ''; ?>"></div>
                     <input type="hidden" name="contenu_detaille" id="rapport-contenu">
                     <?php if(isset($fieldErrors['contenu_detaille'])): ?><span class="error-text"><?php echo $fieldErrors['contenu_detaille']; ?></span><?php endif; ?>
@@ -703,19 +858,14 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
                 </div> <!-- End Left Panel -->
                 
                 <div class="stepper-right-panel custom-scrollbar">
-                    <div id="viz-step-1" class="viz-panel active" style="align-items:center; justify-content:center;">
+                    <div id="viz-step-1" class="viz-panel active" style="align-items:center; padding: 4px 0;">
                         <div class="viz-title">Couverture Géographique</div>
-                        <!-- We will place our vector map here -->
-                        <div id="map-container" style="width:100%; height:280px; position:relative; background:#f8fafc; border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                            <!-- Placeholder map icon -->
-                            <i data-lucide="map" style="width:64px;height:64px;color:var(--border-color);position:absolute;"></i>
-                            <div id="tunisia-map-layer" style="position:absolute; width:100%; height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:2;">
-                                <i data-lucide="map-pin" id="map-pin-icon" style="width:48px;height:48px;color:var(--accent-primary); transition:all 0.4s; opacity:0; transform:translateY(-10px);"></i>
-                                <span id="map-region-label" style="font-weight:bold; color:var(--text-primary); margin-top:12px; opacity:0; transition:all 0.4s;"></span>
-                            </div>
+                        <!-- Map container — aspect ratio controlled by CSS -->
+                        <div id="map-wrapper" style="width:100%; position:relative; display:flex; align-items:center; justify-content:center;">
+                            <div id="echarts-map" style="width:100%; height:200px; border-radius:8px; overflow:hidden;"></div>
                         </div>
-                        <div id="intl-country-container" style="display:none; width:100%; margin-top:24px;">
-                            <label class="form-label" style="text-align:left;">Sélectionner un pays <span class="text-danger">*</span></label>
+                        <div id="intl-country-container" style="display:none; width:100%; margin-top:8px;">
+                            <label class="form-label" style="text-align:left; font-size:12px; margin-bottom:4px;">Sélectionner un pays <span class="text-danger">*</span></label>
                             <select class="select" id="rapport-pays" name="pays">
                                 <option value="">Choisir un pays...</option>
                                 <option value="France">France</option>
@@ -723,7 +873,19 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
                                 <option value="États-Unis">États-Unis</option>
                                 <option value="Royaume-Uni">Royaume-Uni</option>
                                 <option value="Allemagne">Allemagne</option>
+                                <option value="Italie">Italie</option>
+                                <option value="Espagne">Espagne</option>
+                                <option value="Belgique">Belgique</option>
+                                <option value="Suisse">Suisse</option>
+                                <option value="Maroc">Maroc</option>
+                                <option value="Algérie">Algérie</option>
+                                <option value="Égypte">Égypte</option>
+                                <option value="Arabie Saoudite">Arabie Saoudite</option>
+                                <option value="Émirats Arabes Unis">Émirats Arabes Unis</option>
+                                <option value="Qatar">Qatar</option>
                                 <option value="Chine">Chine</option>
+                                <option value="Japon">Japon</option>
+                                <option value="Brésil">Brésil</option>
                             </select>
                         </div>
                     </div>
@@ -799,6 +961,23 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
         <button class="modal-close" onclick="closeModals()"><i data-lucide="x" style="width:24px;height:24px;"></i></button>
         
         <h3 id="donnee-modal-title" style="margin-bottom:24px;">Ajouter une donnée</h3>
+
+        <!-- AI Scout Section -->
+        <div style="background: rgba(99, 102, 241, 0.05); border: 1px dashed var(--accent-primary); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+            <label class="form-label" style="color: var(--accent-primary); font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="search" style="width:16px;height:16px;"></i> AI Scout & Research
+            </label>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <textarea id="ai-scout-query" class="textarea" placeholder="Décrivez ce que vous cherchez et/ou collez des URLs (ex: Salaire dev React Tunis https://...)" style="flex: 1;" rows="2"></textarea>
+                <button type="button" class="btn btn-primary" onclick="scoutMarketData()" id="btn-scout" style="align-self: center;">
+                    <i data-lucide="zap" style="width:16px;height:16px;margin-right:4px;"></i> Scout
+                </button>
+            </div>
+            <p style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
+                <i data-lucide="info" style="width:12px;height:12px;display:inline;vertical-align:-2px;"></i> L'IA peut chercher à partir d'une description simple ou explorer jusqu'à 3 liens fournis pour extraire précisément les informations du marché.
+            </p>
+        </div>
+
         <form action="veille_admin.php" method="POST" id="form-donnee">
             <input type="hidden" name="action" id="donnee-action" value="add_donnee">
             <input type="hidden" name="id_donnee" id="donnee-id" value="">
@@ -1031,8 +1210,18 @@ function validateStep(step) {
     if (step === 1) {
         const titre = document.getElementById('rapport-titre');
         const auteur = document.getElementById('rapport-auteur');
+        const secteur = document.getElementById('rapport-secteur');
+        const tagContainer = document.getElementById('tag-container');
+
         if(!titre.value.trim()) { titre.classList.add('is-invalid'); isValid = false; }
         if(!auteur.value.trim()) { auteur.classList.add('is-invalid'); isValid = false; }
+        
+        if(!secteur.value.trim()) { 
+            tagContainer.classList.add('is-invalid-tags');
+            isValid = false; 
+        } else {
+            tagContainer.classList.remove('is-invalid-tags');
+        }
     } else if (step === 2) {
         const contenu = quill.root.innerHTML.trim();
         if(contenu === '<p><br></p>' || contenu === '') {
@@ -1158,52 +1347,230 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ==========================================
-    // INTERACTIVE VISUALIZATIONS LOGIC (V2 - Simple & Fast)
+    // GEOGRAPHIC VISUALIZATION (V5 — High Fidelity)
+    // Southern Tunisia Focus, Geo-Region Highlighting & Expanded Global Catalogue
     // ==========================================
 
-    // 1. Step 1: Geo Map Simple Interaction
     const regionSelect = document.getElementById('rapport-region');
     const intlContainer = document.getElementById('intl-country-container');
     const countrySelect = document.getElementById('rapport-pays');
-    const mapPin = document.getElementById('map-pin-icon');
-    const mapLabel = document.getElementById('map-region-label');
+    let mapChart = null;
+    let tunisiaLoaded = false;
+    let worldLoaded = false;
+    let currentMapView = 'Tunisia'; 
 
-    function updateMapZoom(label, isInternational) {
-        if(!label) {
-            mapPin.style.opacity = '0';
-            mapPin.style.transform = 'translateY(-10px)';
-            mapLabel.style.opacity = '0';
-            return;
+    // ── Tunisia Region Centers & Zooms ──
+    const TUNISIA_REGIONS_VIEW = {
+        'Tunis':       { center: [10.25, 36.82], zoom: 4.5 },
+        'Ariana':      { center: [10.12, 36.94], zoom: 4.5 },
+        'Ben Arous':   { center: [10.26, 36.68], zoom: 4.2 },
+        'Manouba':     { center: [9.91, 36.79],  zoom: 4.5 },
+        'Nabeul':      { center: [10.75, 36.65], zoom: 3.2 },
+        'Zaghouan':    { center: [10.14, 36.31], zoom: 3.8 },
+        'Bizerte':     { center: [9.38, 37.15],  zoom: 3.5 },
+        'Béja':        { center: [9.27, 36.73],  zoom: 3.8 },
+        'Jendouba':    { center: [8.65, 36.68],  zoom: 3.8 },
+        'Le Kef':      { center: [8.75, 36.06],  zoom: 3.8 },
+        'Siliana':     { center: [9.36, 35.94],  zoom: 3.5 },
+        'Sousse':      { center: [10.45, 35.84], zoom: 4.5 },
+        'Monastir':    { center: [10.82, 35.63], zoom: 4.5 },
+        'Mahdia':      { center: [10.75, 35.25], zoom: 3.5 },
+        'Sfax':        { center: [10.42, 34.78], zoom: 2.8 },
+        'Kairouan':    { center: [9.85, 35.69],  zoom: 3.0 },
+        'Kasserine':   { center: [8.85, 35.30],  zoom: 3.0 },
+        'Sidi Bouzid': { center: [9.52, 34.93],  zoom: 3.2 },
+        'Gabès':       { center: [10.00, 33.79], zoom: 3.5 },
+        'Médenine':    { center: [10.95, 33.15], zoom: 2.5 },
+        'Tataouine':   { center: [10.55, 32.30], zoom: 1.8 },
+        'Gafsa':       { center: [8.85, 34.34],  zoom: 3.2 },
+        'Tozeur':      { center: [8.18, 33.95],  zoom: 3.8 },
+        'Kebili':      { center: [9.05, 33.35],  zoom: 2.5 }
+    };
+
+    // ── Global Market Catalogue (Dropdown Val -> GeoJSON Name) ──
+    const WORLD_NAME_MAP = {
+        'France': 'France',
+        'Canada': 'Canada',
+        'États-Unis': 'United States',
+        'Royaume-Uni': 'United Kingdom',
+        'Allemagne': 'Germany',
+        'Italie': 'Italy',
+        'Espagne': 'Spain',
+        'Belgique': 'Belgium',
+        'Suisse': 'Switzerland',
+        'Maroc': 'Morocco',
+        'Algérie': 'Algeria',
+        'Égypte': 'Egypt',
+        'Arabie Saoudite': 'Saudi Arabia',
+        'Émirats Arabes Unis': 'United Arab Emirates',
+        'Qatar': 'Qatar',
+        'Chine': 'China',
+        'Japon': 'Japan',
+        'Brésil': 'Brazil'
+    };
+
+    // ── Cinematic Camera Points [Center, Zoom] ──
+    const COUNTRY_VIEW = {
+        'France':       { center: [2.2, 46.2],     zoom: 5 },
+        'Canada':       { center: [-96.8, 56.1],   zoom: 2.5 },
+        'États-Unis':   { center: [-98.5, 39.5],   zoom: 3 },
+        'Royaume-Uni':  { center: [-3.4, 55.4],    zoom: 5 },
+        'Allemagne':    { center: [10.5, 51.2],    zoom: 5.5 },
+        'Italie':       { center: [12.5, 41.8],    zoom: 5.5 },
+        'Espagne':      { center: [-3.7, 40.4],    zoom: 5.5 },
+        'Belgique':     { center: [4.4, 50.5],     zoom: 12 },
+        'Suisse':       { center: [8.2, 46.8],     zoom: 10 },
+        'Maroc':        { center: [-7.0, 31.7],    zoom: 4.5 },
+        'Algérie':      { center: [3.0, 28.0],     zoom: 2.5 },
+        'Égypte':       { center: [30.8, 26.8],    zoom: 3.5 },
+        'Arabie Saoudite': { center: [45.0, 23.8],  zoom: 2.5 },
+        'Émirats Arabes Unis': { center: [54.0, 24.0], zoom: 8 },
+        'Qatar':        { center: [51.2, 25.3],    zoom: 15 },
+        'Chine':        { center: [104.2, 35.9],   zoom: 2.5 },
+        'Japon':        { center: [138.0, 36.5],   zoom: 4.5 },
+        'Brésil':       { center: [-51.9, -14.2],  zoom: 2.5 }
+    };
+
+    function getOrInitChart() {
+        if (!mapChart) {
+            mapChart = echarts.init(document.getElementById('echarts-map'), null, { renderer: 'svg' });
         }
-        mapPin.style.opacity = '1';
-        mapPin.style.transform = 'translateY(0)';
-        mapLabel.style.opacity = '1';
-        mapLabel.innerText = label;
-        
-        // Simple zoom effect
-        if(isInternational) {
-            document.getElementById('map-container').style.transform = 'scale(0.85)';
-        } else {
-            document.getElementById('map-container').style.transform = 'scale(1)';
-        }
-        document.getElementById('map-container').style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+        return mapChart;
     }
 
+    // Preload GeoJSONs
+    fetch('../../assets/js/tunisia.json').then(r => r.json()).then(data => {
+        echarts.registerMap('Tunisia', data);
+        tunisiaLoaded = true;
+        if (document.getElementById('viz-step-1').classList.contains('active')) {
+            renderTunisiaMap(regionSelect.value || null);
+        }
+    });
+
+    fetch('../../assets/js/world.json').then(r => r.json()).then(data => {
+        echarts.registerMap('World', data);
+        worldLoaded = true;
+    });
+
+    // ── RENDER: Tunisia Map (V5) ─────────────────────────────────────────────
+    function renderTunisiaMap(regionSelected, customZoom = null) {
+        if (!tunisiaLoaded) return;
+        const chart = getOrInitChart();
+        const isSwitching = currentMapView !== 'Tunisia';
+        currentMapView = 'Tunisia';
+
+        const hl = regionSelected || '';
+        // FIX: Shifted center further south [34.5 instead of 35.5] to show the bottom tip
+        const view = TUNISIA_REGIONS_VIEW[hl] || { center: [9.4, 34.2], zoom: 0.95 };
+        const targetZoom = customZoom !== null ? customZoom : (hl ? view.zoom : 0.95);
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const baseFill   = isDark ? '#1e293b' : '#e8edf5';
+        const baseBorder = isDark ? '#334155' : '#b8c4d4';
+
+        const option = {
+            animation: true,
+            animationDurationUpdate: 1200,
+            animationEasing: 'cubicInOut',
+            backgroundColor: 'transparent',
+            series: [{
+                type: 'map',
+                map: 'Tunisia',
+                roam: false,
+                aspectScale: 0.72,
+                center: view.center,
+                zoom: targetZoom,
+                label: { 
+                    show: false,
+                    color: '#fff',
+                    textBorderColor: isDark ? '#1e293b' : '#334155',
+                    textBorderWidth: 2
+                },
+                emphasis: {
+                    label: { show: true },
+                    itemStyle: { areaColor: '#818cf8', borderColor: '#4f46e5' }
+                },
+                itemStyle: { areaColor: baseFill, borderColor: baseBorder, borderWidth: 0.8 },
+                data: hl ? [{
+                    name: hl,
+                    itemStyle: { areaColor: '#6366f1', borderColor: '#a5b4fc', borderWidth: 2, shadowBlur: 10, shadowColor: 'rgba(99,102,241,0.4)' },
+                    label: { show: true, fontSize: 11, fontWeight: 700 }
+                }] : []
+            }]
+        };
+
+        // Use true for map switches to clear previous state, false for intra-map pans
+        chart.setOption(option, isSwitching);
+    }
+
+    // ── RENDER: World Map (V5) ───────────────────────────────────────────────
+    function renderWorldMap(countryVal) {
+        if (!worldLoaded) return;
+        const chart = getOrInitChart();
+        const isSwitching = currentMapView !== 'World';
+        currentMapView = 'World';
+
+        const echName = WORLD_NAME_MAP[countryVal] || null;
+        const view = echName ? (COUNTRY_VIEW[countryVal] || { center: [10, 20], zoom: 1.1 }) : { center: [10, 20], zoom: 1.1 };
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+        const option = {
+            animation: true,
+            animationDurationUpdate: 1200,
+            animationEasing: 'cubicInOut',
+            backgroundColor: 'transparent',
+            geo: {
+                map: 'World',
+                roam: false,
+                center: view.center,
+                zoom: view.zoom,
+                label: { show: false },
+                itemStyle: {
+                    areaColor: isDark ? '#1e293b' : '#dde4ef',
+                    borderColor: isDark ? '#334155' : '#b8c4d4',
+                    borderWidth: 0.5
+                },
+                // Highlighting logic moved to Regions for Geo component reliability
+                regions: echName ? [{
+                    name: echName,
+                    itemStyle: {
+                        areaColor: '#6366f1',
+                        borderColor: '#a5b4fc',
+                        shadowBlur: 15,
+                        shadowColor: 'rgba(99,102,241,0.5)'
+                    },
+                    label: { show: true, color: '#fff', fontWeight: 700, textBorderColor: '#4f46e5', textBorderWidth: 2 }
+                }] : []
+            },
+            series: [] // No extra series needed when using geo.regions
+        };
+
+        chart.setOption(option, isSwitching);
+    }
+
+    // ── Event Handlers ───────────────────────────────────────────────────────
     regionSelect.addEventListener('change', (e) => {
         const val = e.target.value;
         if (val === 'International') {
             intlContainer.style.display = 'block';
-            updateMapZoom(countrySelect.value, true);
+            if (currentMapView === 'Tunisia') {
+                renderTunisiaMap(null, 0.3); // Zoom-out first
+                setTimeout(() => renderWorldMap(countrySelect.value || null), 500);
+            } else {
+                renderWorldMap(countrySelect.value || null);
+            }
         } else {
             intlContainer.style.display = 'none';
             countrySelect.value = '';
-            updateMapZoom(val, false);
+            renderTunisiaMap(val || null);
         }
     });
 
     countrySelect.addEventListener('change', (e) => {
-        updateMapZoom(e.target.value, true);
+        renderWorldMap(e.target.value || null);
     });
+
+    window.addEventListener('resize', () => { if (mapChart) mapChart.resize(); });
 
     // 2. Step 2: Article Live Preview
     window.updateLivePreview = function() {
@@ -1290,8 +1657,23 @@ document.addEventListener('DOMContentLoaded', function() {
     window.openRapportModal = function(type, data) {
         if (typeof originalOpenRapport === 'function') originalOpenRapport(type, data);
         setTimeout(() => {
-            // Force dispatch changes so the right panel matches the loaded data
-            document.getElementById('rapport-region').dispatchEvent(new Event('change'));
+            // Force a resize after modal expansion (standard transition is ~300ms)
+            // Using 350ms to be safe for ECharts container calculation
+            if (mapChart) {
+                mapChart.resize();
+            }
+            
+            // Render the correct map based on current region value
+            const regionVal = document.getElementById('rapport-region').value;
+            if (regionVal === 'International') {
+                intlContainer.style.display = 'block';
+                const countryVal = document.getElementById('rapport-pays').value;
+                renderWorldMap(countryVal || null);
+            } else {
+                intlContainer.style.display = 'none';
+                renderTunisiaMap(regionVal || null);
+            }
+
             updateLivePreview();
             
             // Sync slider to hidden inputs loaded data
@@ -1303,8 +1685,90 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             updateDemandBlocks(parseInt(document.getElementById('rapport-demande').value) || 3);
             updateDataNodes();
-        }, 100);
+
+            // Populate tags from data
+            const rawSecteurs = document.getElementById('rapport-secteur').value;
+            tags = rawSecteurs ? rawSecteurs.split(',').filter(s => s.trim() !== '') : [];
+            updateTagsDisplay();
+        }, 350);
     };
+
+    // --- HYBRID TAG SYSTEM LOGIC ---
+    const SECTORS_LIST = [
+        'Technologie', 'Informatique', 'Finance', 'Banque', 'Assurance', 'Santé', 
+        'Pharmacie', 'Industrie', 'Énergie', 'Agriculture', 'Tourisme', 'Hôtellerie',
+        'Commerce', 'Retail', 'Éducation', 'Formation', 'Services Publics', 
+        'Marketing', 'Communication', 'Logistique', 'Transport', 'Immobilier',
+        'Construction', 'Juridique', 'Ressources Humaines', 'E-commerce'
+    ];
+
+    const tagContainerEl = document.getElementById('tag-container');
+    const tagInputEl = document.getElementById('tag-input');
+    const tagSuggestionsEl = document.getElementById('tag-suggestions');
+    const hiddenSecteurInput = document.getElementById('rapport-secteur');
+    let tags = [];
+
+    function updateTagsDisplay() {
+        tagContainerEl.querySelectorAll('.tag-chip').forEach(el => el.remove());
+        tags.forEach(tag => {
+            const chip = document.createElement('div');
+            chip.className = 'tag-chip';
+            chip.innerHTML = `${tag} <span class="remove-tag">&times;</span>`;
+            chip.querySelector('.remove-tag').onclick = () => removeTag(tag);
+            tagContainerEl.insertBefore(chip, tagInputEl);
+        });
+        hiddenSecteurInput.value = tags.join(',');
+    }
+
+    window.addTag = function(tag) {
+        tag = tag.trim();
+        if (tag && !tags.includes(tag)) {
+            tags.push(tag);
+            updateTagsDisplay();
+        }
+        tagInputEl.value = '';
+        tagSuggestionsEl.style.display = 'none';
+        tagInputEl.focus();
+    };
+
+    window.removeTag = function(tag) {
+        tags = tags.filter(t => t !== tag);
+        updateTagsDisplay();
+    };
+
+    tagInputEl.addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase().trim();
+        if (!val) {
+            tagSuggestionsEl.style.display = 'none';
+            return;
+        }
+        const matches = SECTORS_LIST.filter(s => s.toLowerCase().includes(val) && !tags.includes(s));
+        if (matches.length > 0) {
+            tagSuggestionsEl.innerHTML = matches.map(m => `<div class="tag-suggestion-item" onclick="addTag('${m}')">${m}</div>`).join('');
+            tagSuggestionsEl.style.display = 'block';
+        } else {
+            tagSuggestionsEl.style.display = 'none';
+        }
+    });
+
+    tagInputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            addTag(tagInputEl.value);
+        }
+        if (e.key === 'Backspace' && !tagInputEl.value && tags.length > 0) {
+            removeTag(tags[tags.length - 1]);
+        }
+    });
+
+    tagContainerEl.addEventListener('click', () => tagInputEl.focus());
+
+    document.addEventListener('click', (e) => {
+        if (!document.getElementById('secteur-tag-wrapper').contains(e.target)) {
+            tagSuggestionsEl.style.display = 'none';
+        }
+    });
+
 
     // 4. Step 4: Simple Connection Counter
     window.updateDataNodes = function() {
@@ -1323,6 +1787,236 @@ document.addEventListener('DOMContentLoaded', function() {
         chk.addEventListener('change', () => updateDataNodes());
     });
 });
+
+// --- AI ASSISTANT HANDLERS ---
+async function generateAIDraft() {
+    const btn = document.getElementById('btn-ai-draft');
+    const metadata = {
+        titre: document.getElementById('rapport-titre').value,
+        auteur: document.getElementById('rapport-auteur').value,
+        region: document.getElementById('rapport-region').value,
+        secteur: document.getElementById('rapport-secteur').value,
+        salaire: document.getElementById('rapport-smoy').value,
+        demande: document.getElementById('rapport-demande').value,
+        tendance: document.getElementById('rapport-tendance').value
+    };
+
+    if (!metadata.titre || !metadata.secteur) {
+        alert("Veuillez remplir au moins le titre et le secteur pour générer un brouillon.");
+        return;
+    }
+
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width:14px;height:14px;margin-right:6px;"></i> Generating...';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    try {
+        const response = await fetch('api_veille_ai.php?action=generate_draft', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(metadata)
+        });
+        const result = await response.json();
+        if (result.success) {
+            quill.root.innerHTML = result.draft;
+            updateLivePreview();
+        } else {
+            alert("Erreur IA: " + result.error);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Impossible de contacter l'assistant IA.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+}
+
+async function scoutMarketData() {
+    const queryInput = document.getElementById('ai-scout-query');
+    const btn = document.getElementById('btn-scout');
+    const query = queryInput.value.trim();
+
+    if (!query) {
+        alert("Veuillez entrer une description ou des URLs.");
+        return;
+    }
+
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width:16px;height:16px;"></i>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    try {
+        const response = await fetch('api_veille_ai.php?action=scout_data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: query })
+        });
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const data = result.data;
+            document.getElementById('donnee-domaine').value = data.domaine || '';
+            document.getElementById('donnee-competence').value = data.competence || '';
+            document.getElementById('donnee-smin').value = data.salaire_min || '';
+            document.getElementById('donnee-smax').value = data.salaire_max || '';
+            document.getElementById('donnee-smoy').value = data.salaire_moyen || '';
+            document.getElementById('donnee-desc').value = data.source_summary || '';
+            
+            if (data.demande) {
+                if (data.demande === 'Très forte' || data.demande === '4') document.getElementById('donnee-demande').value = '4';
+                else if (data.demande === 'Forte' || data.demande === '3') document.getElementById('donnee-demande').value = '3';
+                else if (data.demande === 'Modérée' || data.demande === '2') document.getElementById('donnee-demande').value = '2';
+                else document.getElementById('donnee-demande').value = '1';
+            }
+
+            queryInput.value = '';
+            alert("Données du marché générées et extraites avec succès !");
+        } else {
+            alert("Scout Error: " + (result.error || "Impossible d'extraire les données."));
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Erreur de connexion avec le service AI Scout.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+}
+
+let forecastChart = null;
+let forecastCache = {}; // Object to store forecasts by category
+
+async function loadAIForecast(forceRefresh = false) {
+    const btn = document.getElementById('btn-refresh-forecast');
+    const placeholder = document.getElementById('forecast-placeholder');
+    const chartEl = document.getElementById('echarts-forecast');
+    const categorySelect = document.getElementById('forecast-category');
+    
+    // Default to empty string if element not found, but it should exist
+    const selectedCategory = categorySelect ? categorySelect.value : ''; 
+    const cacheKey = selectedCategory || 'all';
+
+    // If we have cached data and are NOT forcing a refresh, just render it
+    if (!forceRefresh && forecastCache[cacheKey]) {
+        renderForecastChart(forecastCache[cacheKey], chartEl, placeholder);
+        return;
+    }
+
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width:14px;height:14px;margin-right:6px;"></i> Predicting...';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    try {
+        const response = await fetch(`api_veille_ai.php?action=get_forecast&secteur=${encodeURIComponent(selectedCategory)}`);
+        const result = await response.json();
+
+        if (result.success && result.forecast) {
+            // Save to cache
+            forecastCache[cacheKey] = result.forecast;
+            renderForecastChart(result.forecast, chartEl, placeholder);
+        } else {
+            alert("Erreur de prédiction: " + (result.error || "Réponse invalide de l'API."));
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Erreur lors de la génération des prévisions.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+}
+
+function renderForecastChart(forecastData, chartEl, placeholder) {
+    placeholder.style.display = 'none';
+    chartEl.style.display = 'block';
+    
+    if (!forecastChart) {
+        forecastChart = echarts.init(chartEl);
+    }
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const months = forecastData.map(f => f.month);
+    const salaries = forecastData.map(f => f.predicted_salary);
+    const demands = forecastData.map(f => f.predicted_demand);
+
+    const option = {
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['Predicted Salary (TND)', 'Predicted Demand (1-10)'], bottom: 0, textStyle: { color: isDark ? '#fff' : '#333' } },
+        grid: { top: 40, left: 50, right: 50, bottom: 60 },
+        xAxis: { type: 'category', data: months, axisLabel: { color: isDark ? '#94a3b8' : '#64748b' } },
+        yAxis: [
+            { type: 'value', name: 'Salary', axisLabel: { color: isDark ? '#94a3b8' : '#64748b' } },
+            { type: 'value', name: 'Demand', max: 10, position: 'right', axisLabel: { color: isDark ? '#94a3b8' : '#64748b' } }
+        ],
+        series: [
+            {
+                name: 'Predicted Salary (TND)',
+                type: 'line',
+                smooth: true,
+                data: salaries,
+                itemStyle: { color: '#6366f1' },
+                areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(99, 102, 241, 0.3)' }, { offset: 1, color: 'transparent' }]) }
+            },
+            {
+                name: 'Predicted Demand (1-10)',
+                type: 'bar',
+                yAxisIndex: 1,
+                data: demands,
+                itemStyle: { color: '#a855f7', opacity: 0.6 }
+            }
+        ]
+    };
+    forecastChart.setOption(option);
+    window.addEventListener('resize', () => forecastChart.resize());
+}
+
+function filterBySector(sector, btnEl) {
+    // Toggle active state on filter buttons
+    document.querySelectorAll('.sector-filter-btn').forEach(b => b.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    const items = document.querySelectorAll('.rapport-item');
+    let visibleCount = 0;
+    items.forEach(item => {
+        if (sector === 'all') {
+            item.style.display = '';
+            visibleCount++;
+        } else {
+            const secteurs = item.dataset.secteurs || '';
+            const tags = secteurs.split(',').map(s => s.trim().toLowerCase());
+            if (tags.includes(sector.toLowerCase())) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+
+    // Show empty state if no results
+    const list = document.getElementById('rapports-list');
+    let emptyState = document.getElementById('filter-empty-state');
+    if (visibleCount === 0) {
+        if (!emptyState) {
+            emptyState = document.createElement('div');
+            emptyState.id = 'filter-empty-state';
+            emptyState.style.cssText = 'text-align:center; padding:40px; color:var(--text-secondary); font-size:14px;';
+            emptyState.innerHTML = '<i data-lucide="search-x" style="width:32px;height:32px;margin-bottom:12px;opacity:0.4;display:block;margin-left:auto;margin-right:auto;"></i> Aucun rapport pour ce secteur.';
+            list.appendChild(emptyState);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+        emptyState.style.display = '';
+    } else if (emptyState) {
+        emptyState.style.display = 'none';
+    }
+}
 
 function openDeleteModal(actionName, idFieldName, idValue, message) {
     document.getElementById('delete-action').value = actionName;
