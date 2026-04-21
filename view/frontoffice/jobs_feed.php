@@ -3,7 +3,43 @@ $pageTitle = "Browse Jobs";
 $pageCSS = "feeds.css"; 
 
 require_once '../../controller/offreC.php';
+require_once '../../controller/candidatureC.php';
+require_once '../../model/candidature.php';
+
 $offreC = new offreC();
+$candidatureC = new candidatureC();
+
+// --- TRAITEMENT DU FORMULAIRE DE CANDIDATURE ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])) {
+    $id_offre = $_POST['id_offre'] ?? null;
+    $nom = $_POST['nom'] ?? '';
+    $prenom = $_POST['prenom'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $reponses = $_POST['reponses_ques'] ?? '';
+    $date_candidature = date('Y-m-d');
+    
+    // Pour l'id_candidat, on met 1 par défaut pour le moment (ou null s'il n'est pas connecté)
+    $id_candidat = 1; 
+    
+    // Gérer l'upload du CV
+    $cv_cand_base64 = null;
+    if (isset($_FILES['cv_cand']) && $_FILES['cv_cand']['error'] === UPLOAD_ERR_OK) {
+        $file_tmp = $_FILES['cv_cand']['tmp_name'];
+        $file_type = mime_content_type($file_tmp);
+        $file_data = file_get_contents($file_tmp);
+        $cv_cand_base64 = 'data:' . $file_type . ';base64,' . base64_encode($file_data);
+    }
+    
+    // On ignore le statut et note d'après le constructeur (ou on met des valeurs mock si le constructeur les exige)
+    // constructeur actuel : __construct($id_candidat, $id_offre, $nom, $prenom, $email, $date_candidature, $reponses_ques, $cv_cand, $note, $statut)
+    $nouvelleCandidature = new candidature($id_candidat, $id_offre, $nom, $prenom, $email, $date_candidature, $reponses, $cv_cand_base64, null, 'en_attente');
+    
+    $candidatureC->addCandidature($nouvelleCandidature);
+    
+    // Redirection pour éviter la soumission en double
+    header("Location: jobs_feed.php?success=applied");
+    exit();
+}
 
 $q = trim($_GET['q'] ?? '');
 $criteres = [];
@@ -164,7 +200,10 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+var currentOfferId = null;
+
 function openOfferModal(data) {
+    currentOfferId = data.id;
     document.getElementById('modal-title').innerText = data.titre || 'Titre inconnu';
     document.getElementById('modal-company').innerText = (data.nom_entreprise || 'Entreprise Inconnue') + ' • ' + (data.domaine || '');
     document.getElementById('modal-desc').innerText = data.description || 'Aucune description fournie.';
@@ -184,6 +223,27 @@ function openOfferModal(data) {
         overlay.classList.add('active');
         var modal = overlay.querySelector('.modal');
         if (modal) modal.classList.add('active');
+    }
+}
+
+function openApplyModal() {
+    // Fermer l'ancien modal
+    var detailsOverlay = document.getElementById('offer-details-modal');
+    if (detailsOverlay) {
+        detailsOverlay.classList.remove('active');
+        var detailsModal = detailsOverlay.querySelector('.modal');
+        if (detailsModal) detailsModal.classList.remove('active');
+    }
+
+    // Mettre l'ID de l'offre dans le form
+    document.getElementById('apply-id-offre').value = currentOfferId;
+
+    // Ouvrir le nouveau modal
+    var applyOverlay = document.getElementById('apply-modal');
+    if (applyOverlay) {
+        applyOverlay.classList.add('active');
+        var applyModal = applyOverlay.querySelector('.modal');
+        if (applyModal) applyModal.classList.add('active');
     }
 }
 
@@ -228,10 +288,82 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <div class="flex gap-3 justify-end" style="border-top:1px solid var(--border-color); padding-top:1.5rem;">
         <button type="button" class="btn btn-secondary modal-close-btn" style="padding: 0.5rem 1.5rem;">Fermer</button>
-        <button type="button" class="btn btn-primary" onclick="alert('Fonctionnalité de candidature à venir !')" style="padding: 0.5rem 1.5rem;">
+        <button type="button" class="btn btn-primary" onclick="openApplyModal()" style="padding: 0.5rem 1.5rem;">
           <i data-lucide="send" style="width:16px;height:16px;"></i> Postuler
         </button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- ═══ Modal Formulaire de Candidature ═══ -->
+<div class="modal-overlay" id="apply-modal">
+  <div class="modal" style="max-width:850px; padding: 2.5rem; border-radius: 12px; background: #ffffff; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);">
+    
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2.5rem; border-bottom: 1px solid #f0f0f0; padding-bottom: 1rem;">
+        <h2 style="font-size:1.6rem; font-weight:700; color:#1a1a2e; margin:0;">Nouvelle Candidature</h2>
+        <button type="button" onclick="closeApplyModal()" style="background:none; border:none; cursor:pointer; color:#999;"><i data-lucide="x" style="width:24px;height:24px;"></i></button>
+    </div>
+
+    <!-- Formulaire (aspect sérieux, bords fins) -->
+    <form method="POST" action="jobs_feed.php" enctype="multipart/form-data">
+      <input type="hidden" name="id_offre" id="apply-id-offre" value="">
+      
+      <div style="display: flex; gap: 2rem;">
+        <!-- Colonne Gauche -->
+        <div style="flex:1;">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:#4a4a68; margin-bottom:0.5rem;">Nom de famille <span style="color:#e94560;">*</span></label>
+                <input type="text" name="nom" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:#fafafa;" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='#e0e0e0'">
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:#4a4a68; margin-bottom:0.5rem;">Prénom <span style="color:#e94560;">*</span></label>
+                <input type="text" name="prenom" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:#fafafa;" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='#e0e0e0'">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:#4a4a68; margin-bottom:0.5rem;">Adresse Email <span style="color:#e94560;">*</span></label>
+                <input type="email" name="email" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:#fafafa;" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='#e0e0e0'">
+            </div>
+        </div>
+
+        <!-- Colonne Droite (Façon panneau map dans le screenshot) -->
+        <div style="flex:1;">
+            <div style="height: 100%; border: 1px solid #f0f0f5; border-radius: 10px; padding: 1.5rem; background: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
+                <label style="display:block; font-size:0.75rem; font-weight:700; color:#4a4a68; margin-bottom:1rem; text-align:center; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid #f0f0f5; padding-bottom:0.5rem;">Documents & Motivation</label>
+                
+                <div style="margin-bottom: 1.5rem; flex:1;">
+                    <textarea name="reponses_ques" placeholder="Décrivez succinctement votre parcours et vos motivations..." required style="width:100%; height:100%; min-height:80px; padding: 0.75rem; border: none; background: #fdfdfd; border-radius: 6px; font-size:0.9rem; resize:none; outline:none; box-shadow: inset 0 0 0 1px #f0f0f5;"></textarea>
+                </div>
+
+                <div style="padding: 1.25rem 1rem; border: 1px dashed #d0d0e0; border-radius: 8px; background: #fafafa; text-align: center;">
+                    <i data-lucide="file-up" style="width:24px;height:24px;color:#a0a0b0; margin-bottom: 0.5rem;"></i>
+                    <p style="font-size: 0.75rem; color: #666; margin-bottom: 0.75rem;">Formats acceptés : PDF, DOCX</p>
+                    <input type="file" name="cv_cand" accept=".pdf,.doc,.docx" required style="max-width: 100%; font-size:0.8rem; outline:none;">
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:2rem;">
+        <button type="submit" name="submit_application" style="padding: 0.6rem 2rem; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); color: white; border:none; border-radius: 6px; font-weight: 600; cursor:pointer; box-shadow:0 4px 10px rgba(168,100,228,0.3);">Suivant</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// JS for closing the apply modal
+function closeApplyModal() {
+    var overlay = document.getElementById('apply-modal');
+    if (overlay) {
+        overlay.classList.remove('active');
+        var modal = overlay.querySelector('.modal');
+        if (modal) modal.classList.remove('active');
+    }
+}
+
+// Ensure close clicking outside applies to the new modal too if needed
+// Or it's already handled by CSS if there's no JS specifically binding it
+</script>

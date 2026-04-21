@@ -1,6 +1,11 @@
 <?php $pageTitle = "Candidatures"; $pageCSS = "feeds.css"; $userRole = "Entreprise"; ?>
 
 <?php
+require_once '../../controller/candidatureC.php';
+$candidatureC = new candidatureC();
+$listeCandidatures = $candidatureC->afficherCandidatures();
+$count = $listeCandidatures->rowCount();
+
 if (!isset($content)) {
     $content = __FILE__;
     include 'layout_front.php';
@@ -21,48 +26,48 @@ if (!isset($content)) {
   <!-- ═══ CANDIDATE CARDS ═══ -->
   <div>
     <div class="results-info mb-4">
-      <strong>18</strong> candidatures pour "Senior Full Stack Developer"
+      <strong><?php echo $count; ?></strong> candidatures totales
     </div>
 
     <div class="candidate-cards-grid stagger">
-      <?php
-      $candidates = [
-        ['name' => 'Amine Belloumi', 'role' => 'Full Stack Developer', 'match' => 92, 'skills' => ['React', 'Node.js', 'TypeScript', 'PostgreSQL'], 'initials' => 'AB', 'applied' => 'Il y a 2h'],
-        ['name' => 'Sara Khediri', 'role' => 'Frontend Developer', 'match' => 87, 'skills' => ['Vue.js', 'CSS', 'Figma', 'JavaScript'], 'initials' => 'SK', 'applied' => 'Il y a 5h'],
-        ['name' => 'Mohamed Dridi', 'role' => 'Backend Developer', 'match' => 84, 'skills' => ['Python', 'Django', 'PostgreSQL', 'Docker'], 'initials' => 'MD', 'applied' => 'Il y a 1j'],
-        ['name' => 'Fatma Jelassi', 'role' => 'Software Engineer', 'match' => 81, 'skills' => ['Java', 'Spring Boot', 'Microservices'], 'initials' => 'FJ', 'applied' => 'Il y a 1j'],
-        ['name' => 'Youssef Hamdi', 'role' => 'Full Stack Developer', 'match' => 78, 'skills' => ['React', 'Express', 'MongoDB', 'AWS'], 'initials' => 'YH', 'applied' => 'Il y a 2j'],
-        ['name' => 'Nour Maalej', 'role' => 'DevOps & Full Stack', 'match' => 75, 'skills' => ['Node.js', 'Docker', 'Kubernetes', 'CI/CD'], 'initials' => 'NM', 'applied' => 'Il y a 3j'],
-      ];
-      foreach ($candidates as $i => $c):
+      <?php foreach ($listeCandidatures as $cand): 
+          $initials = strtoupper(substr($cand['prenom'], 0, 1) . substr($cand['nom'], 0, 1));
+          $nomComplet = htmlspecialchars($cand['prenom'] . ' ' . $cand['nom']);
+          $titreOffre = htmlspecialchars($cand['titre_offre'] ?? 'Candidature Spontanée');
+          $dateCand = date('d/m/Y', strtotime($cand['date_candidature']));
+          $idCand = $cand['id_candidature'];
       ?>
-      <div class="candidate-card animate-on-scroll" id="candidate-<?php echo $i; ?>">
+      <div class="candidate-card animate-on-scroll" id="candidate-<?php echo $idCand; ?>">
         <div class="candidate-card__header">
-          <div class="avatar avatar-lg avatar-initials"><?php echo $c['initials']; ?></div>
+          <div class="avatar avatar-lg avatar-initials"><?php echo $initials; ?></div>
           <div class="candidate-card__info">
-            <div class="candidate-card__name"><?php echo $c['name']; ?></div>
-            <div class="candidate-card__role"><?php echo $c['role']; ?></div>
-            <span class="text-xs text-tertiary"><?php echo $c['applied']; ?></span>
+            <div class="candidate-card__name"><?php echo $nomComplet; ?></div>
+            <div class="candidate-card__role">Poste: <?php echo $titreOffre; ?></div>
+            <span class="text-xs text-tertiary">Déposé le: <?php echo $dateCand; ?></span>
           </div>
           <div class="candidate-card__match">
-            <?php echo $c['match']; ?>%
-            <span>match</span>
+            <span class="badge badge-<?php echo ($cand['statut'] === 'accepte') ? 'success' : (($cand['statut'] === 'refuse') ? 'danger' : 'warning'); ?>">
+              <?php echo htmlspecialchars($cand['statut']); ?>
+            </span>
           </div>
         </div>
 
-        <div class="candidate-card__skills">
-          <?php foreach ($c['skills'] as $skill): ?>
-            <span class="badge badge-primary"><?php echo $skill; ?></span>
-          <?php endforeach; ?>
+        <div class="candidate-card__skills" style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.85rem; padding: 0.5rem; background: var(--surface-1); border-radius: 6px;">
+          <strong>Motivation :</strong> <?php echo htmlspecialchars(substr($cand['reponses_ques'], 0, 80)); ?><?php echo strlen($cand['reponses_ques']) > 80 ? '...' : ''; ?>
         </div>
 
         <div class="candidate-card__actions">
-          <button class="btn btn-sm btn-primary"><i data-lucide="file-text" style="width:14px;height:14px;"></i> Voir CV</button>
-          <button class="btn btn-sm btn-success"><i data-lucide="check" style="width:14px;height:14px;"></i> Shortlist</button>
+          <a href="#" class="btn btn-sm btn-primary" onclick="alert('Feature to download CV Base64/Blob coming soon.')"><i data-lucide="file-text" style="width:14px;height:14px;"></i> Voir CV</a>
+          <button class="btn btn-sm btn-success"><i data-lucide="check" style="width:14px;height:14px;"></i> Shortlister</button>
           <button class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);"><i data-lucide="x" style="width:14px;height:14px;"></i> Refuser</button>
         </div>
       </div>
       <?php endforeach; ?>
+      <?php if ($count == 0): ?>
+         <div class="empty-state text-center" style="padding: 3rem; background: var(--surface-1); border-radius: 12px; grid-column: 1 / -1;">
+             <p>Aucune candidature reçue pour le moment.</p>
+         </div>
+      <?php endif; ?>
     </div>
   </div>
 
