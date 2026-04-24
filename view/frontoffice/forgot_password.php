@@ -6,6 +6,8 @@ require_once __DIR__ . '/../../libs/PHPMailer/Exception.php';
 require_once __DIR__ . '/../../libs/PHPMailer/PHPMailer.php';
 require_once __DIR__ . '/../../libs/PHPMailer/SMTP.php';
 
+require_once __DIR__ . '/../../.env.php';
+
 session_start();
 include_once __DIR__ . '/../../controller/UtilisateurC.php';
 
@@ -35,14 +37,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 // Paramètres du serveur SMTP
                 $mail->isSMTP();
-                $mail->Host       = 'smtp-relay.brevo.com';
+                $mail->Host       = SMTP_HOST;
                 $mail->SMTPAuth   = true;
-                $mail->Username   = 'a9340c001@smtp-brevo.com';
-                $mail->Password   = 'YOUR_BREVO_SMTP_KEY';                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port       = 587;
+                $mail->Username   = SMTP_USER;
+                $mail->Password   = SMTP_PASS;
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = SMTP_PORT;
 
                 // Destinataires
-                $mail->setFrom('archipel.association@outlook.com', 'Equipe Aptus');
+                $mail->setFrom(SMTP_FROM, SMTP_FROM_NAME);
                 $mail->addAddress($email);
 
                 // Contenu
