@@ -164,18 +164,25 @@
     <script src="../assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
   <script>lucide.createIcons();</script>
+  <!-- Modal Confirmation Suppression -->
   <div class="aptus-modal-overlay" id="confirm-modal">
-    <div class="aptus-modal-content">
-      <div class="modal-icon-circle">
-        <i data-lucide="trash-2" style="width:40px;height:40px;"></i>
+      <div class="aptus-modal-content" style="max-width:450px; text-align:center; padding: 40px 32px; position:relative;">
+          <button class="modal-close-btn" onclick="document.getElementById('confirm-modal').classList.remove('active')" style="position:absolute; top:20px; right:20px; background:none; border:none; color:var(--text-tertiary); cursor:pointer;">
+            <i data-lucide="x" style="width:24px;height:24px;"></i>
+          </button>
+
+          <div style="width:64px; height:64px; background:rgba(239,68,68,0.1); color:#ef4444; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+              <i data-lucide="alert-triangle" style="width:32px;height:32px;"></i>
+          </div>
+
+          <h3 id="confirm-title" style="margin-bottom:12px; color:var(--text-primary); font-size:1.5rem; font-weight:800;">Confirmation de suppression</h3>
+          <p id="confirm-text" style="color:var(--text-secondary); margin-bottom:24px; line-height:1.6;">Êtes-vous sûr de vouloir continuer ? Cette action est irréversible.</p>
+
+          <div style="display:flex; gap:12px; justify-content:center;">
+              <button type="button" class="btn btn-secondary" style="flex:1; border-radius:12px; font-weight:700;" onclick="document.getElementById('confirm-modal').classList.remove('active')">Annuler</button>
+              <button type="button" id="confirm-ok" class="btn btn-primary" style="flex:1; background:#ef4444; border-color:#ef4444; color:white; border-radius:12px; font-weight:700; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">Oui, Supprimer</button>
+          </div>
       </div>
-      <h3 class="aptus-modal-title" id="confirm-title">Supprimer ?</h3>
-      <p class="aptus-modal-text" id="confirm-text">Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.</p>
-      <div class="aptus-modal-footer">
-        <button class="btn-modal-cancel" id="confirm-cancel">Annuler</button>
-        <button class="btn-modal-confirm" id="confirm-ok">Oui, Supprimer</button>
-      </div>
-    </div>
   </div>
 
   <script>
@@ -185,7 +192,6 @@
             const titleEl = document.getElementById('confirm-title');
             const textEl = document.getElementById('confirm-text');
             const okBtn = document.getElementById('confirm-ok');
-            const cancelBtn = document.getElementById('confirm-cancel');
 
             if(title) titleEl.textContent = title;
             if(text) textEl.textContent = text;
@@ -196,12 +202,10 @@
             const cleanup = (val) => {
                 modal.classList.remove('active');
                 okBtn.onclick = null;
-                cancelBtn.onclick = null;
                 resolve(val);
             };
 
             okBtn.onclick = () => cleanup(true);
-            cancelBtn.onclick = () => cleanup(false);
             modal.onclick = (e) => { if(e.target === modal) cleanup(false); };
         });
     };

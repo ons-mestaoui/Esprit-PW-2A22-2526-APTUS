@@ -196,15 +196,22 @@
   <?php endif; ?>
   <script>lucide.createIcons();</script>
   <div class="aptus-modal-overlay" id="confirm-modal">
-    <div class="aptus-modal-content">
-      <div class="modal-icon-circle">
-        <i data-lucide="trash-2" style="width:40px;height:40px;"></i>
+    <div class="aptus-modal-content" style="position:relative;">
+      <!-- Close Button -->
+      <button class="modal-close-btn" id="confirm-close" style="position:absolute; top:20px; right:20px; color:var(--text-tertiary); cursor:pointer;">
+        <i data-lucide="x" style="width:24px;height:24px;"></i>
+      </button>
+
+      <div class="modal-icon-circle" style="background:#FFF0F0; color:#E11D48; width:70px; height:70px; margin-bottom:1.5rem;">
+        <i data-lucide="alert-triangle" style="width:32px;height:32px;"></i>
       </div>
-      <h3 class="aptus-modal-title" id="confirm-title">Supprimer ?</h3>
-      <p class="aptus-modal-text" id="confirm-text">Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.</p>
-      <div class="aptus-modal-footer">
-        <button class="btn-modal-cancel" id="confirm-cancel">Annuler</button>
-        <button class="btn-modal-confirm" id="confirm-ok">Oui, Supprimer</button>
+
+      <h3 class="aptus-modal-title" id="confirm-title" style="font-size:1.8rem; font-weight:800; color:#1e293b; margin-bottom:1rem;">Confirmation de suppression</h3>
+      <p class="aptus-modal-text" id="confirm-text" style="font-size:1rem; color:#64748b; margin-bottom:2rem; line-height:1.6;">Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.</p>
+      
+      <div class="aptus-modal-footer" style="display:flex; gap:1rem;">
+        <button class="btn-modal-cancel" id="confirm-cancel" style="flex:1; padding:0.8rem; border:1px solid #e2e8f0; border-radius:12px; font-weight:700; background:white; color:#1e293b;">Annuler</button>
+        <button class="btn-modal-confirm" id="confirm-ok" style="flex:1; padding:0.8rem; background:#ef4444; border:none; border-radius:12px; font-weight:700; color:white; box-shadow:0 4px 12px rgba(239, 68, 68, 0.25);">Oui, Supprimer</button>
       </div>
     </div>
   </div>
@@ -217,6 +224,7 @@
             const textEl = document.getElementById('confirm-text');
             const okBtn = document.getElementById('confirm-ok');
             const cancelBtn = document.getElementById('confirm-cancel');
+            const closeBtn = document.getElementById('confirm-close');
 
             if(title) titleEl.textContent = title;
             if(text) textEl.textContent = text;
@@ -228,11 +236,13 @@
                 modal.classList.remove('active');
                 okBtn.onclick = null;
                 cancelBtn.onclick = null;
+                closeBtn.onclick = null;
                 resolve(val);
             };
 
             okBtn.onclick = () => cleanup(true);
             cancelBtn.onclick = () => cleanup(false);
+            closeBtn.onclick = () => cleanup(false);
             modal.onclick = (e) => { if(e.target === modal) cleanup(false); };
         });
     };

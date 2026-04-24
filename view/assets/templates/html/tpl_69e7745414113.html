@@ -1,0 +1,146 @@
+<style>
+/* Reset et dimensionnement global */
+* { box-sizing: border-box; }
+
+.cv-render { 
+    font-family: 'Inter', sans-serif; 
+    color: #1e293b; 
+    line-height: 1.8; /* Interligne très aéré */
+    font-size: 16px; /* Police de base extra-large */
+    --cv-accent: #2563eb; 
+    display: flex; 
+    height: 100%; 
+    min-height: 850px; /* Force la hauteur pour remplir la grande box */
+    width: 100%;
+    background: #fff;
+}
+
+/* Colonne de gauche (Sidebar) */
+.cv-sidebar { 
+    width: 35%; 
+    background: #f8fafc; 
+    padding: 60px 30px; /* Marges géantes en haut et en bas */
+    border-right: 4px solid var(--cv-accent); 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    text-align: center; 
+}
+
+/* Photo de profil */
+.cv-photo { 
+    width: 160px; /* Photo très grande */
+    height: 160px; 
+    border-radius: 50%; 
+    object-fit: cover; 
+    margin-bottom: 30px; 
+    border: 4px solid #fff; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); 
+    background-color: #e2e8f0; 
+}
+
+/* Informations Personnelles */
+.cv-name { 
+    font-size: 28px; /* Nom massif */
+    font-weight: 800; 
+    color: #0f172a; 
+    margin-bottom: 10px; 
+    text-transform: uppercase; 
+    line-height: 1.2;
+}
+
+.cv-title { 
+    color: var(--cv-accent); 
+    font-size: 18px; /* Titre du poste bien visible */
+    font-weight: 600; 
+    margin-bottom: 40px; 
+}
+
+.cv-contact { 
+    font-size: 14px; 
+    color: #64748b; 
+    margin-bottom: 55px; /* Écarte beaucoup la section contact */
+    text-align: center; 
+    line-height: 2; /* Espacement fort entre email, tel, etc. */
+}
+
+/* Colonne de droite (Main content) */
+.cv-main { 
+    width: 65%; 
+    padding: 60px 50px; /* Marges massives pour s'étaler */
+    background: #fff; 
+    display: flex;
+    flex-direction: column;
+}
+
+/* Structure des sections communes */
+.cv-section { 
+    margin-bottom: 45px; /* Espaces géants entre les sections */
+    text-align: left; 
+    width: 100%; 
+}
+
+.cv-section-title { 
+    font-weight: 700; 
+    font-size: 16px; 
+    color: var(--cv-accent); 
+    border-bottom: 2px solid #e2e8f0; 
+    margin-bottom: 20px; 
+    padding-bottom: 10px; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+
+/* Contenu textuel */
+.cv-content { 
+    white-space: pre-wrap; 
+    font-size: 15px; /* Texte globalement plus grand */
+    color: #334155; 
+}
+</style>
+
+<div class="cv-render template-manager">
+    <div class="cv-sidebar">
+        <img id="preview-photo" class="cv-photo" src="" alt="Photo de profil">
+        <div class="cv-name" id="preview-nomComplet">Jean Dupont</div>
+        <div class="cv-title" id="preview-titrePoste">Développeur Full-Stack</div>
+        
+        <div class="cv-contact" id="preview-infoContact">nom@exemple.com<br>+216 ...<br>Tunis, Tunisie</div>
+        
+        <div class="cv-section">
+            <div class="cv-section-title">Compétences</div>
+            <div class="cv-content" id="preview-competences">HTML / CSS
+JavaScript
+C++ / Python
+Git / GitHub</div>
+        </div>
+        
+        <div class="cv-section">
+            <div class="cv-section-title">Langues</div>
+            <div class="cv-content" id="preview-langues">Français — Maternel
+Anglais — Courant</div>
+        </div>
+    </div>
+    
+    <div class="cv-main">
+        <div class="cv-section">
+            <div class="cv-section-title">Résumé Professionnel</div>
+            <div class="cv-content" id="preview-resume">Professionnel passionné avec une expertise en développement. Capacité démontrée à transformer des besoins complexes en solutions techniques robustes. Fort d'une expérience en travail d'équipe et d'une volonté d'apprentissage continu.</div>
+        </div>
+        
+        <div class="cv-section">
+            <div class="cv-section-title">Expérience Professionnelle</div>
+            <div class="cv-content" id="preview-experience">Poste — Entreprise
+Dates
+• Mission principale avec des verbes d'action.
+• Développement et optimisation des processus.
+• Réalisation d'objectifs clés en équipe.</div>
+        </div>
+        
+        <div class="cv-section">
+            <div class="cv-section-title">Formation</div>
+            <div class="cv-content" id="preview-formation">Diplôme — Université
+Année</div>
+        </div>
+    </div>
+</div>

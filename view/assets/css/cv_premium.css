@@ -1165,3 +1165,358 @@ textarea.form-control {
         width: 100%;
     }
 }
+
+/* -- NEW DYNAMIC UI ENHANCEMENTS --------------------------------- */
+/* Step 2: Persona Cards */
+.persona-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.persona-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+.persona-card:hover {
+    border-color: var(--accent-primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+.persona-card.active {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary-light);
+    box-shadow: 0 0 0 3px rgba(107, 52, 163, 0.1);
+}
+.persona-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent-primary);
+}
+.persona-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+.mad-libs-container {
+    background: var(--bg-secondary);
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+    line-height: 2;
+    font-size: 1.1rem;
+}
+.mad-libs-input {
+    border: none;
+    border-bottom: 2px dashed var(--accent-primary);
+    background: transparent;
+    color: var(--accent-primary);
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0 0.2rem;
+    text-align: center;
+    width: auto;
+    min-width: 80px;
+    outline: none;
+}
+.mad-libs-input:focus { border-bottom-style: solid; }
+
+/* Step 3: Experience Timeline */
+.timeline-container {
+    position: relative;
+    padding-left: 20px;
+    border-left: 2px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+.role-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+}
+.role-card::before {
+    content: "";
+    position: absolute;
+    left: -27px;
+    top: 20px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    border: 2px solid var(--bg-card);
+}
+.achievements-list {
+    margin-top: 1rem;
+}
+.achievement-item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+    background: var(--bg-secondary);
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--accent-primary);
+}
+.achievement-text {
+    flex: 1;
+    font-size: 0.9rem;
+    border: none;
+    background: transparent;
+    outline: none;
+    resize: vertical;
+    min-height: 40px;
+}
+.achievement-cat { font-size: 0.75rem; font-weight: 700; color: var(--accent-primary); text-transform: uppercase; margin-bottom: 4px; }
+.metric-highlight { color: #10b981; font-weight: 800; }
+
+/* Step 4: Skills Heatmap */
+.skill-category-container {
+    margin-bottom: 1.5rem;
+}
+.skill-category-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.25rem;
+}
+.heatmap-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0 0.5rem 0.5rem 0;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+.heatmap-tag.lvl-beginner { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-color: rgba(59, 130, 246, 0.3); }
+.heatmap-tag.lvl-intermediate { background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
+.heatmap-tag.lvl-expert { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.3); }
+
+/* Step 5: Education Map */
+.degree-milestone {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    position: relative;
+    border-top: 4px solid var(--accent-primary);
+    box-shadow: var(--shadow-sm);
+}
+.course-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+}
+.course-chip {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+}
+.honors-toggle {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    cursor: pointer;
+    color: #cbd5e1;
+    transition: var(--transition-fast);
+}
+.honors-toggle.active { color: #f59e0b; }
+
+/* Step 6: Language Meters */
+.lang-meter-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.75rem;
+}
+.lang-meter-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+}
+.lang-meter-fill {
+    height: 100%;
+    background: var(--gradient-primary);
+    width: 20%;
+    pointer-events: none;
+    transition: width 0.3s ease;
+}
+.lang-flag { font-size: 1.5rem; }
+
+
+/* -- Gender Toggle Styling -- */
+.gender-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 1.5rem;
+    justify-content: flex-end;
+}
+.gender-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.gender-switch {
+    background: var(--bg-secondary);
+    padding: 4px;
+    border-radius: 30px;
+    display: flex;
+    position: relative;
+    width: 130px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+.gender-option {
+    flex: 1;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    z-index: 2;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--text-tertiary);
+}
+.gender-option.active { color: #ffffff; }
+.gender-slider {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    background: var(--gradient-primary);
+    border-radius: 25px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 10px rgba(107, 52, 163, 0.3);
+}
+.gender-switch.female .gender-slider { transform: translateX(100%); }
+
+
+/* -- Alchemist Profile DNA Styling -- */
+.alchemist-box {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+}
+.alchemist-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+.alchemist-field {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.alchemist-field i {
+    position: absolute;
+    left: 12px;
+    width: 16px;
+    height: 16px;
+    color: var(--accent-primary);
+    opacity: 0.7;
+}
+.alchemist-field input {
+    width: 100%;
+    padding: 12px 12px 12px 38px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    color: var(--text-primary);
+}
+.alchemist-field input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(107, 52, 163, 0.1);
+    transform: translateY(-2px);
+}
+.alchemist-field input::placeholder {
+    color: var(--text-tertiary);
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+
+/* -- Updated Gender Toggle & Alchemist Box -- */
+.alchemist-box-premium {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+.gender-selector-premium {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 40px;
+    width: fit-content;
+    margin: 0 auto 20px auto;
+    position: relative;
+    border: 1px solid #e2e8f0;
+}
+.gender-btn {
+    padding: 8px 20px;
+    border-radius: 35px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    z-index: 2;
+    color: #64748b;
+}
+.gender-btn.active {
+    color: #ffffff;
+    background: var(--gradient-primary);
+    box-shadow: 0 4px 12px rgba(107, 52, 163, 0.2);
+}
+.lang-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    z-index: 100;
+    display: none;
+    box-shadow: var(--shadow-md);
+}
+

@@ -131,24 +131,66 @@ if (!isset($content)) {
     <div class="published-list">
       <?php
       $published = [
-        ['title' => 'Tendances IT Q1 2026', 'date' => '08 Avr.', 'views' => '1.2k', 'status' => 'Publié'],
-        ['title' => 'Compétences clés 2026', 'date' => '02 Avr.', 'views' => '890', 'status' => 'Publié'],
-        ['title' => 'Salaires digital comparatif', 'date' => '28 Mar.', 'views' => '1.5k', 'status' => 'Publié'],
-        ['title' => 'Impact IA recrutement', 'date' => '20 Mar.', 'views' => '2.1k', 'status' => 'Publié'],
-        ['title' => 'Freelancing vs CDI', 'date' => '15 Mar.', 'views' => '756', 'status' => 'Publié'],
-        ['title' => 'Rapport Q2 (brouillon)', 'date' => '10 Avr.', 'views' => '—', 'status' => 'Brouillon'],
+        ['id' => 1, 'title' => 'Tendances IT Q1 2026', 'date' => '08 Avr.', 'views' => '1.2k', 'status' => 'Publié'],
+        ['id' => 2, 'title' => 'Compétences clés 2026', 'date' => '02 Avr.', 'views' => '890', 'status' => 'Publié'],
+        ['id' => 3, 'title' => 'Salaires digital comparatif', 'date' => '28 Mar.', 'views' => '1.5k', 'status' => 'Publié'],
+        ['id' => 4, 'title' => 'Impact IA recrutement', 'date' => '20 Mar.', 'views' => '2.1k', 'status' => 'Publié'],
+        ['id' => 5, 'title' => 'Freelancing vs CDI', 'date' => '15 Mar.', 'views' => '756', 'status' => 'Publié'],
+        ['id' => 6, 'title' => 'Rapport Q2 (brouillon)', 'date' => '10 Avr.', 'views' => '—', 'status' => 'Brouillon'],
       ];
       foreach ($published as $p):
       ?>
-      <div class="published-item">
-        <div class="published-item__title"><?php echo $p['title']; ?></div>
-        <div class="published-item__meta">
-          <span><i data-lucide="calendar" style="width:11px;height:11px;display:inline;vertical-align:-1px;"></i> <?php echo $p['date']; ?></span>
-          <span><i data-lucide="eye" style="width:11px;height:11px;display:inline;vertical-align:-1px;"></i> <?php echo $p['views']; ?></span>
-          <span class="badge <?php echo $p['status'] === 'Publié' ? 'badge-success' : 'badge-warning'; ?>" style="font-size:10px;"><?php echo $p['status']; ?></span>
+      <div class="published-item" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <div class="published-item__title"><?php echo $p['title']; ?></div>
+            <div class="published-item__meta">
+              <span><i data-lucide="calendar" style="width:11px;height:11px;display:inline;vertical-align:-1px;"></i> <?php echo $p['date']; ?></span>
+              <span><i data-lucide="eye" style="width:11px;height:11px;display:inline;vertical-align:-1px;"></i> <?php echo $p['views']; ?></span>
+              <span class="badge <?php echo $p['status'] === 'Publié' ? 'badge-success' : 'badge-warning'; ?>" style="font-size:10px;"><?php echo $p['status']; ?></span>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button class="btn btn-sm btn-ghost" title="Modifier"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
+            <button class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" onclick="openDeleteModal(<?php echo $p['id']; ?>, '<?php echo addslashes($p['title']); ?>')" title="Supprimer"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
         </div>
       </div>
       <?php endforeach; ?>
     </div>
   </div>
 </div>
+
+<!-- 3. Modal Confirmation Suppression -->
+<div class="aptus-modal-overlay" id="modal-delete">
+    <div class="aptus-modal-content" style="max-width:450px; text-align:center; padding: 40px 32px; position:relative;">
+        <button class="modal-close" onclick="closeModals()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:var(--text-tertiary); cursor:pointer;"><i data-lucide="x" style="width:24px;height:24px;"></i></button>
+
+        <div style="width:64px; height:64px; background:rgba(239,68,68,0.1); color:#ef4444; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+            <i data-lucide="alert-triangle" style="width:32px;height:32px;"></i>
+        </div>
+
+        <h3 style="margin-bottom:12px; color:var(--text-primary); font-size:1.5rem; font-weight:800;">Confirmation de suppression</h3>
+        <p id="delete-modal-msg" style="color:var(--text-secondary); margin-bottom:24px; line-height:1.6;">Êtes-vous sûr de vouloir continuer ? Cette action est irréversible.</p>
+
+        <form action="veille_admin.php" method="POST" id="form-delete">
+            <input type="hidden" name="action" id="delete-action" value="delete">
+            <input type="hidden" name="id" id="delete-id-field" value="">
+
+            <div style="display:flex; gap:12px; justify-content:center;">
+                <button type="button" class="btn btn-secondary" style="flex:1; border-radius:12px; font-weight:700;" onclick="closeModals()">Annuler</button>
+                <button type="submit" class="btn btn-primary" style="flex:1; background:#ef4444; border-color:#ef4444; color:white; border-radius:12px; font-weight:700;">Oui, Supprimer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openDeleteModal(id, title) {
+    document.getElementById('delete-id-field').value = id;
+    document.getElementById('delete-modal-msg').innerHTML = `Êtes-vous sûr de vouloir supprimer le rapport <strong>"${title}"</strong> ? Cette action est irréversible.`;
+    document.getElementById('modal-delete').classList.add('active');
+}
+
+function closeModals() {
+    document.getElementById('modal-delete').classList.remove('active');
+}
+</script>

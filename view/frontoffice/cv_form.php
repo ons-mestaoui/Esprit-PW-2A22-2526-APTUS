@@ -175,56 +175,108 @@ if (!isset($content)) {
             <div class="wizard-footer"><div></div><button class="btn-primary-cv" onclick="goToStep(2)">Suivant: Résumé</button></div>
         </div>
 
-        <!-- STEP 2: Summary -->
+        <!-- STEP 2: Summary (The Persona Architect) -->
         <div class="step-content" id="step-2">
             <div class="step-header"><h2>Résumé Professionnel</h2></div>
+            
+            <div class="persona-grid">
+                <div class="persona-card" onclick="selectPersona('visionary', this)">
+                    <i data-lucide="rocket" class="persona-icon"></i>
+                    <div class="persona-title">Le Visionnaire</div>
+                </div>
+                <div class="persona-card" onclick="selectPersona('expert', this)">
+                    <i data-lucide="award" class="persona-icon"></i>
+                    <div class="persona-title">L'Expert</div>
+                </div>
+                <div class="persona-card" onclick="selectPersona('leader', this)">
+                    <i data-lucide="users" class="persona-icon"></i>
+                    <div class="persona-title">Le Leader</div>
+                </div>
+            </div>
+
+            <div class="gender-selector-premium">
+                <div class="gender-btn active" id="btn-male" onclick="setGender('m')">
+                    <i data-lucide="user"></i> Masculin
+                </div>
+                <div class="gender-btn" id="btn-female" onclick="setGender('f')">
+                    <i data-lucide="user-round"></i> Féminin
+                </div>
+            </div>
+
+            <div class="alchemist-box-premium" style="border-top: 4px solid var(--accent-primary);">
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="input-icon-group">
+                        <i data-lucide="briefcase" style="color: var(--accent-primary); width: 16px; height: 16px;"></i>
+                        <input type="text" id="ml-title" class="form-control" style="padding-left: 38px;" placeholder="Titre du poste" oninput="updateSummaryFromMadLibs()">
+                    </div>
+                    <div class="input-icon-group">
+                        <i data-lucide="calendar" style="color: var(--accent-primary); width: 16px; height: 16px;"></i>
+                        <input type="text" id="ml-years" class="form-control" style="padding-left: 38px;" placeholder="Années d'exp." oninput="updateSummaryFromMadLibs()">
+                    </div>
+                </div>
+                <div class="input-icon-group">
+                    <i data-lucide="award" style="color: var(--accent-primary); width: 16px; height: 16px;"></i>
+                    <input type="text" id="ml-skill" class="form-control" style="padding-left: 38px;" placeholder="Points forts (ex: Design, Management...)" oninput="updateSummaryFromMadLibs()">
+                </div>
+            </div>
+
             <div class="form-group" style="position:relative;">
-                <label>Votre Profil *</label>
-                <textarea id="input-summary" class="form-control" placeholder="Professionnel passionné..." required style="padding-bottom:45px;"></textarea>
-                <button type="button" class="btn-ai-premium" onclick="optimizeWithAI('input-summary', 'summary', this)">
+                <label>Votre Profil Final *</label>
+                <div id="input-summary" contenteditable="true" class="form-control" 
+                     style="padding: 15px; padding-bottom:45px; height:auto; min-height:120px; overflow-y:auto; background:white; line-height:1.6;"
+                     oninput="syncField({id:'input-summary', value:this.innerHTML})"></div>
+                <button type="button" class="btn-ai-premium" onclick="optimizeWithAI('input-summary', 'summary', this)" style="bottom:12px; right:12px; position:absolute;">
                     <i data-lucide="sparkles" style="width:14px;height:14px;"></i> <span>Polish via IA</span>
                 </button>
             </div>
             <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(1)">Retour</button><button class="btn-primary-cv" onclick="goToStep(3)">Suivant: Expérience</button></div>
         </div>
 
-        <!-- STEP 3: Experience -->
+        <!-- STEP 3: Experience (The Impact Timeline) -->
         <div class="step-content" id="step-3">
             <div class="step-header"><h2>Expérience Professionnelle</h2></div>
-            <div class="form-group" style="position:relative;">
-                <textarea id="input-experience" class="form-control" style="height:220px; padding-bottom:45px;" placeholder="Poste — Entreprise&#10;Dates&#10;• Mission..."></textarea>
-                <button type="button" class="btn-ai-premium" onclick="optimizeWithAI('input-experience', 'experience', this)" style="bottom:12px; right:12px; position:absolute;">
-                    <i data-lucide="sparkles" style="width:14px;height:14px;"></i> <span>Polish via IA</span>
-                </button>
+            <div class="timeline-container" id="experience-timeline">
+                <!-- Roles will be appended here -->
             </div>
+            <button class="btn-secondary-cv" style="width:100%; border-style:dashed; margin-bottom:1.5rem;" onclick="addRoleCard()"><i data-lucide="plus-circle"></i> Ajouter un poste</button>
+            
+            <textarea id="input-experience" class="form-control" style="display:none;"></textarea>
+            
             <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(2)">Retour</button><button class="btn-primary-cv" onclick="goToStep(4)">Suivant: Compétences</button></div>
         </div>
 
-        <!-- STEP 4: Skills -->
+        <!-- STEP 4: Skills (The Skill Heatmap) -->
         <div class="step-content" id="step-4">
             <div class="step-header"><h2>Compétences</h2></div>
+            
             <div class="form-group">
-                <div class="tags-container" id="skills-tags-container">
-                    <input type="text" id="input-skill-search" class="tag-input" placeholder="Ajouter une compétence..." autocomplete="off">
+                <div class="tags-container" id="skills-tags-container" style="border:none; padding:0; background:transparent;">
+                    <!-- Skills will be grouped here -->
+                </div>
+                <div style="display:flex; gap:10px; margin-top:1rem; position:relative;">
+                    <div class="input-icon-group" style="flex:1;">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="input-skill-search" class="form-control" placeholder="Ajouter une compétence (ex: React, Photoshop...)" autocomplete="off" onkeydown="if(event.key==='Enter'){ event.preventDefault(); addSkillFromInput(); }">
+                    </div>
                 </div>
                 <input type="hidden" id="input-skills" value="">
             </div>
             <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(3)">Retour</button><button class="btn-primary-cv" onclick="goToStep(5)">Suivant: Formation</button></div>
         </div>
 
-        <!-- STEP 5: Education -->
+        <!-- STEP 5: Education (The Academic Journey) -->
         <div class="step-content" id="step-5">
             <div class="step-header"><h2>Formation</h2></div>
-            <div class="form-group" style="position:relative;">
-                <textarea id="input-education" class="form-control" style="height:180px; padding-bottom:45px;" placeholder="Diplôme — Université"></textarea>
-                <button type="button" class="btn-ai-premium" onclick="optimizeWithAI('input-education', 'education', this)" style="bottom:12px; right:12px; position:absolute;">
-                    <i data-lucide="sparkles" style="width:14px;height:14px;"></i> <span>Polish via IA</span>
-                </button>
+            <div id="education-journey">
+                <!-- Degrees will be appended here -->
             </div>
+            <button class="btn-secondary-cv" style="width:100%; border-style:dashed; margin-bottom:1.5rem;" onclick="addDegreeCard()"><i data-lucide="plus-circle"></i> Ajouter un diplôme</button>
+            
+            <textarea id="input-education" class="form-control" style="display:none;"></textarea>
             <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(4)">Retour</button><button class="btn-primary-cv" onclick="goToStep(6)">Suivant: Langues</button></div>
         </div>
 
-        <!-- STEP 6: Languages -->
+        <!-- STEP 6: Languages (Visual Fluency Meters) -->
         <div class="step-content" id="step-6">
             <div class="step-header"><h2>Langues</h2></div>
             <div id="dynamic-languages-container"></div>
@@ -331,8 +383,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial Fill
     if (INITIAL_DATA) {
-        Object.entries({ 'nomComplet':'input-name', 'titrePoste':'input-title', 'email':'input-email', 'telephone':'input-phone', 'adresse':'input-location', 'resume':'input-summary', 'experience':'input-experience', 'formation':'input-education' })
+        Object.entries({ 'nomComplet':'input-name', 'titrePoste':'input-title', 'email':'input-email', 'telephone':'input-phone', 'adresse':'input-location', 'resume':'input-summary' })
             .forEach(([k, id]) => { const el = document.getElementById(id); if(el && INITIAL_DATA[k]) el.value = INITIAL_DATA[k]; });
+
+        // Parse Experience
+        if (INITIAL_DATA.experience) {
+            const rolesRaw = INITIAL_DATA.experience.split('\n\n');
+            currentRoles = rolesRaw.map(block => {
+                const lines = block.split('\n').filter(l => l.trim());
+                if(lines.length === 0) return null;
+                const head = lines[0].split(/[—–-]/);
+                return {
+                    role: head[0]?.trim() || '',
+                    company: head[1]?.trim() || '',
+                    dates: lines[1]?.trim() || '',
+                    achievements: lines.slice(2).filter(l => l.includes('•')).map(l => ({ text: l.replace('•', '').trim(), cat: 'Impact' }))
+                };
+            }).filter(r => r && r.role);
+            if(currentRoles.length === 0) addRoleCard();
+        } else { addRoleCard(); }
+        renderRoles();
+
+        // Parse Education
+        if (INITIAL_DATA.formation) {
+            const eduRaw = INITIAL_DATA.formation.split('\n\n');
+            currentDegrees = eduRaw.map(block => {
+                const lines = block.split('\n').filter(l => l.trim());
+                if(lines.length === 0) return null;
+                const head = lines[0].split(/[—–-]/);
+                const hasStar = head[0]?.includes('★');
+                return {
+                    degree: head[0]?.replace('★', '').trim() || '',
+                    school: head[1]?.trim() || '',
+                    dates: lines[1]?.trim() || '',
+                    honors: hasStar,
+                    courses: lines[2]?.includes('Cours clés :') ? lines[2].replace('Cours clés :', '').split(',').map(c => c.trim()).filter(c => c) : []
+                };
+            }).filter(d => d && d.degree);
+            if(currentDegrees.length === 0) addDegreeCard();
+        } else { addDegreeCard(); }
+        renderDegrees();
+
+        // Languages
         if (INITIAL_DATA.langues) {
             currentLangs = INITIAL_DATA.langues.split('\n').filter(x=>x.trim()).map(line => {
                 const p = line.split(/[—–-]/);
@@ -340,7 +432,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } else { addLanguage(); }
         renderLanguages();
-        if (INITIAL_DATA.competences) { currentSkills = INITIAL_DATA.competences.split(',').filter(x=>x.trim()); renderTags(); }
+
+        // Skills
+        if (INITIAL_DATA.competences) { 
+            currentSkills = INITIAL_DATA.competences.split(',').filter(x=>x.trim()).map(s => ({ name: s.trim(), level: 'intermediate' })); 
+            renderTags(); 
+        }
+
         if (INITIAL_DATA.urlPhoto) { document.getElementById('photo-b64').value = INITIAL_DATA.urlPhoto; const pi = document.getElementById('photo-preview-img'); if(pi) { pi.src=INITIAL_DATA.urlPhoto; pi.style.display='block'; }}
     }
 
@@ -364,8 +462,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Photo Upload
     const photoWrap = document.getElementById('photo-upload-wrapper');
     const photoInput = document.getElementById('input-photo');
-    photoWrap.addEventListener('click', () => photoInput.click());
-    photoInput.addEventListener('change', function() {
+    if(photoWrap) photoWrap.addEventListener('click', () => photoInput.click());
+    if(photoInput) photoInput.addEventListener('change', function() {
         if (this.files[0]) {
             const rd = new FileReader();
             rd.onload = (e) => {
@@ -379,10 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     updateProgress();
-    
-    // Attach smart autocomplete to existing fields
     setupSmartAutocomplete(document.getElementById('input-skill-search'), SKILL_DB, true);
-
     if (typeof lucide !== 'undefined') lucide.createIcons();
 });
 
@@ -455,21 +550,18 @@ function updateProgress() {
             });
         }
         else if (i === 2) done = document.getElementById('input-summary').value.trim().length > 10;
-        else if (i === 3) done = document.getElementById('input-experience').value.trim().length > 10;
+        else if (i === 3) done = currentRoles.length > 0 && currentRoles.some(r => r.role.trim().length > 2);
         else if (i === 4) done = currentSkills.length > 0;
-        else if (i === 5) done = document.getElementById('input-education').value.trim().length > 10;
+        else if (i === 5) done = currentDegrees.length > 0 && currentDegrees.some(d => d.degree.trim().length > 2);
         else if (i === 6) done = currentLangs.some(l => l.lang.trim().length > 0);
         
         markStep(i, done);
         if (done) completedSteps++;
     }
     
-    // Mathematical Formula: (Steps / Total) * 100
     const percentage = Math.round((completedSteps / stepsCount) * 100);
-    
     const bar = document.getElementById('progress-bar-fill');
     const text = document.getElementById('progress-text');
-    
     if (bar) bar.style.width = percentage + '%';
     if (text) text.textContent = percentage + '%';
 }
@@ -512,9 +604,9 @@ function initIframe() {
                 };
                 if (d.field === 'nomComplet') setVal('.cv-name, #preview-nomComplet, h1', d.value);
                 else if (d.field === 'titrePoste') setVal('.cv-title, #preview-titrePoste, h2', d.value);
-                else if (d.field === 'resume') setVal('.summary-text, #preview-resume, .summary, .cv-summary', d.value);
+                else if (d.field === 'resume') setVal('.summary-text, #preview-resume, .summary, .cv-summary', d.value, true);
                 else if (d.field === 'experience') setVal('#preview-experience, .cv-exp, .experience-list, .cv-experience', d.value, true);
-                else if (d.field === 'competences') setVal('#preview-competences, .cv-skills, .skills-list, .cv-competences', d.value);
+                else if (d.field === 'competences') setVal('#preview-competences, .cv-skills, .skills-list, .cv-competences', d.value, true);
                 else if (d.field === 'langues') setVal('#preview-langues, .cv-languages, .languages-list, .cv-langues', d.value, true);
                 else if (d.field === 'formation') setVal('#preview-formation, .cv-edu, .education-list, .cv-formation', d.value, true);
                 else if (d.field === 'infoContact') {
@@ -592,27 +684,46 @@ function scaleIframe() {
     const wrap = document.getElementById('cv-wrapper');
     if(!ifrm || !wrap) return;
     
-    // Stable width-based scaling
-    const containerWidth = wrap.clientWidth - 40;
+    // Get actual available width (ignoring padding/borders)
+    const containerWidth = wrap.clientWidth; 
     const targetWidth = 794;
+    
+    if (containerWidth <= 0) return; // Layout not ready yet
+
     let scale = containerWidth / targetWidth;
     if (scale > 1) scale = 1;
 
+    ifrm.style.transformOrigin = 'top left';
     ifrm.style.transform = `scale(${scale})`;
     ifrm.style.width = '794px';
     ifrm.style.height = '1123px';
     
-    // Adjust wrap height to avoid cutting off
-    wrap.style.height = (1123 * scale + 40) + 'px';
+    // Adjust wrapper height to prevent scrolling issues
+    wrap.style.height = (1123 * scale + 20) + 'px';
 }
 
-function syncField(el) {
+// Aggressive triggers to ensure the scale is applied after layout settles
+window.addEventListener('resize', scaleIframe);
+window.addEventListener('load', () => {
+    scaleIframe();
+    // Re-check 3 times as layout settles
+    setTimeout(scaleIframe, 300);
+    setTimeout(scaleIframe, 1000);
+    setTimeout(scaleIframe, 3000);
+});
+
+// Also trigger when the iframe content loads
+document.getElementById('template-preview-frame').onload = scaleIframe;
+
+function syncField(el, directValue = null) {
     const map = { 'input-name':'nomComplet', 'input-title':'titrePoste', 'input-summary':'resume', 'input-experience':'experience', 'input-education':'formation', 'input-languages':'langues' };
-    const field = map[el.id];
+    const id = el.id || el;
+    const field = map[id];
+    const value = directValue !== null ? directValue : (el.value || el.innerHTML || '---');
     const ifrm = document.getElementById('template-preview-frame');
     if(ifrm && ifrm.contentWindow) {
-        if(field) ifrm.contentWindow.postMessage({ type: 'cv-update', field, value: el.value || '---' }, '*');
-        if(['input-email','input-phone','input-location'].includes(el.id)) {
+        if(field) ifrm.contentWindow.postMessage({ type: 'cv-update', field, value: value }, '*');
+        if(['input-email','input-phone','input-location'].includes(id)) {
             const email = document.getElementById('input-email').value;
             const phone = document.getElementById('input-phone').value;
             const loc   = document.getElementById('input-location').value;
@@ -644,19 +755,267 @@ function syncAllData() {
     }
 }
 
-/* ── Specific Systems ── */
+/* ── Specific Systems (Dynamic Enhancements) ── */
+// STEP 2: Persona Architect (Profile Alchemist)
+let currentPersona = 'expert';
+let currentGender = 'm';
+
+const LANG_DB = ['Français', 'Anglais', 'Arabe', 'Allemand', 'Espagnol', 'Italien', 'Chinois', 'Japonais', 'Russe', 'Portugais'];
+
+function setGender(g) {
+    currentGender = g;
+    document.getElementById('btn-male').classList.toggle('active', g === 'm');
+    document.getElementById('btn-female').classList.toggle('active', g === 'f');
+    updateSummaryFromMadLibs();
+}
+
+function formatSkillsList(str) {
+    const skills = str.split(',').map(s => s.trim()).filter(s => s);
+    if (skills.length === 0) return "";
+    if (skills.length === 1) return skills[0];
+    const last = skills.pop();
+    return skills.join(', ') + " et " + last;
+}
+
+const personaTemplates = {
+    visionary: (t, y, s) => {
+        const title = `<strong>${t || (currentGender === 'm' ? "Professionnel" : "Professionnelle")}</strong>`;
+        const skillsFormatted = `<strong>${formatSkillsList(s) || "mon domaine"}</strong>`;
+        const passion = currentGender === 'm' ? "passionné" : "passionnée";
+        const yearsStr = (y && y != "0") ? `avec <strong>${y} ans</strong> d'élan créatif` : `${passion} par l'innovation`;
+        
+        return `En tant que ${title} ${yearsStr}, je cherche à transformer des idées complexes en solutions créatives, en m'appuyant sur ma maîtrise de ${skillsFormatted}.`;
+    },
+    expert: (t, y, s) => {
+        const title = `<strong>${t || "Spécialiste"}</strong>`;
+        const skillsFormatted = `<strong>${formatSkillsList(s) || "mon expertise"}</strong>`;
+        const focus = currentGender === 'm' ? "focalisé" : "focalisée";
+        const yearsStr = (y && y != "0") ? `doté${currentGender === 'f' ? 'e' : ''} de <strong>${y} ans</strong> de rigueur technique` : `en quête d'excellence technique`;
+        const adj = parseInt(y) > 5 ? (currentGender === 'm' ? "expert chevronné" : "experte chevronnée") : (currentGender === 'm' ? "spécialiste" : "spécialiste");
+        
+        return `${title} ${adj} ${yearsStr}, je suis ${focus} sur la maîtrise de ${skillsFormatted} pour garantir des résultats de haute qualité dès mes premiers projets.`;
+    },
+    leader: (t, y, s) => {
+        const title = `<strong>${t || "Profil"}</strong>`;
+        const skillsFormatted = `<strong>${formatSkillsList(s) || "mes compétences"}</strong>`;
+        const fort = currentGender === 'm' ? "fort" : "forte";
+        const yearsStr = (y && y != "0") ? `${fort}e de <strong>${y} ans</strong> d'impact` : `dynamique et moteur de projets`;
+        
+        return `Leader stratégique et ${title} ${yearsStr}, je mobilise mon énergie et ma maîtrise de ${skillsFormatted} pour porter des initiatives ambitieuses vers la réussite.`;
+    }
+};
+
+function selectPersona(type, el) {
+    currentPersona = type;
+    document.querySelectorAll('.persona-card').forEach(c => c.classList.remove('active'));
+    if(el) el.classList.add('active');
+    updateSummaryFromMadLibs();
+}
+
+function updateSummaryFromMadLibs() {
+    const t = document.getElementById('ml-title').value.trim();
+    const y = document.getElementById('ml-years').value.trim();
+    const s = document.getElementById('ml-skill').value.trim();
+    
+    const inputSum = document.getElementById('input-summary');
+    if (personaTemplates[currentPersona] && inputSum) {
+        const summary = personaTemplates[currentPersona](t, y, s);
+        inputSum.innerHTML = summary;
+        syncField('input-summary', summary);
+    }
+    updateProgress();
+}
+
+// STEP 3: Experience Timeline
+let currentRoles = [];
+function addRoleCard() {
+    currentRoles.push({ role: '', company: '', dates: '', achievements: [{ text: '', cat: 'Impact' }] });
+    renderRoles();
+}
+function removeRoleCard(idx) {
+    currentRoles.splice(idx, 1);
+    renderRoles();
+    syncExperience();
+}
+function addAchievement(idx) {
+    currentRoles[idx].achievements.push({ text: '', cat: 'Impact' });
+    renderRoles();
+}
+function renderRoles() {
+    const c = document.getElementById('experience-timeline'); if(!c) return;
+    c.innerHTML = '';
+    currentRoles.forEach((r, i) => {
+        const d = document.createElement('div'); d.className = 'role-card';
+        let achHtml = r.achievements.map((a, j) => `
+            <div class="achievement-item" style="flex-direction:column; align-items:stretch;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <span class="achievement-cat">Mission / Tâche</span>
+                    <button type="button" class="text-danger" style="background:none;border:none;cursor:pointer;" onclick="currentRoles[${i}].achievements.splice(${j},1); renderRoles(); syncExperience();">&times;</button>
+                </div>
+                <div style="position:relative;">
+                    <textarea class="achievement-text" id="exp-desc-${i}-${j}" placeholder="Décrivez vos missions..." oninput="currentRoles[${i}].achievements[${j}].text=this.value; syncExperience();" style="width:100%; min-height:80px; padding-bottom:35px;">${a.text}</textarea>
+                    <button type="button" class="btn-ai-premium" onclick="optimizeWithAI('exp-desc-${i}-${j}', 'experience', this)" style="position:absolute; bottom:5px; right:5px; padding:2px 8px; font-size:0.7rem;">
+                        <i data-lucide="sparkles" style="width:10px;"></i> <span>Polish</span>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        
+        d.innerHTML = `
+            <button type="button" class="text-danger" style="position:absolute; right:10px; top:10px; background:none; border:none; cursor:pointer; font-size:1.2rem;" onclick="removeRoleCard(${i})">&times;</button>
+            <div style="display:flex; gap:10px; margin-bottom:10px; padding-right:25px;">
+                <div class="input-icon-group" style="flex:1;"><i data-lucide="briefcase"></i><input type="text" class="form-control" placeholder="Poste" value="${r.role}" oninput="currentRoles[${i}].role=this.value; syncExperience();"></div>
+                <div class="input-icon-group" style="flex:1;"><i data-lucide="building"></i><input type="text" class="form-control" placeholder="Entreprise" value="${r.company}" oninput="currentRoles[${i}].company=this.value; syncExperience();"></div>
+            </div>
+            <div class="input-icon-group" style="margin-bottom:10px;"><i data-lucide="calendar"></i><input type="text" class="form-control" placeholder="Période (ex: 2020 - Présent)" value="${r.dates}" oninput="currentRoles[${i}].dates=this.value; syncExperience();"></div>
+            <div class="achievements-list">${achHtml}</div>
+            <button type="button" class="btn-secondary-cv" style="width:100%; border-style:dashed; margin-top:10px;" onclick="addAchievement(${i})"><i data-lucide="plus"></i> Ajouter une mission</button>
+        `;
+        c.appendChild(d);
+    });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+function syncExperience() {
+    let rawText = '';
+    currentRoles.forEach(r => {
+        if(r.role || r.company) {
+            // Use HTML tags for bold and clarify period
+            rawText += `<strong>${r.role} — ${r.company}</strong>\n`;
+            if(r.dates) rawText += `<em style="color:#666; font-size:0.95em;">${r.dates}</em>\n`;
+            r.achievements.forEach(a => { if(a.text) rawText += `• ${a.text}\n`; });
+            rawText += '\n';
+        }
+    });
+    const el = document.getElementById('input-experience');
+    if(el) { el.value = rawText.trim(); syncField(el); }
+    updateProgress();
+}
+
+// STEP 4: Skills Heatmap
+function addSkillFromInput(val) {
+    const input = document.getElementById('input-skill-search');
+    const v = val || input.value.trim();
+    if(v && !currentSkills.includes(v)) {
+        currentSkills.push(v);
+        if(input) input.value = '';
+        renderTags();
+    }
+}
+function renderTags() {
+    const c = document.getElementById('skills-tags-container'); if(!c) return;
+    c.innerHTML = '';
+    currentSkills.forEach(s => {
+        const name = typeof s === 'string' ? s : s.name;
+        const t = document.createElement('div'); t.className = 'tag-item';
+        t.innerHTML = `<span>${name}</span><button type="button" onclick="removeSkillObj('${name}')">&times;</button>`;
+        c.appendChild(t);
+    });
+    const strArray = currentSkills.map(s => typeof s === 'string' ? s : s.name);
+    document.getElementById('input-skills').value = strArray.join(',');
+    const ifrm = document.getElementById('template-preview-frame');
+    if(ifrm && ifrm.contentWindow) ifrm.contentWindow.postMessage({ type: 'cv-update', field: 'competences', value: strArray.join(' • ') }, '*');
+    updateProgress();
+}
+function removeSkillObj(name) {
+    currentSkills = currentSkills.filter(s => (typeof s === 'string' ? s : s.name) !== name);
+    renderTags();
+}
+
+// STEP 5: Education Map
+let currentDegrees = [];
+function addDegreeCard() {
+    currentDegrees.push({ degree: '', school: '', dates: '', honors: false, courses: [] });
+    renderDegrees();
+}
+function removeDegreeCard(idx) {
+    currentDegrees.splice(idx, 1);
+    renderDegrees();
+    syncEducation();
+}
+function renderDegrees() {
+    const c = document.getElementById('education-journey'); if(!c) return;
+    c.innerHTML = '';
+    currentDegrees.forEach((d, i) => {
+        const div = document.createElement('div'); div.className = 'degree-milestone';
+        div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-right:30px;">
+                <i data-lucide="star" class="honors-toggle ${d.honors?'active':''}" onclick="currentDegrees[${i}].honors=!currentDegrees[${i}].honors; renderDegrees(); syncEducation();" style="cursor:pointer;"></i>
+                <button type="button" class="text-danger" style="background:none; border:none; cursor:pointer; font-size:1.1rem;" onclick="removeDegreeCard(${i})">&times;</button>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <div class="input-icon-group" style="flex:1;"><i data-lucide="graduation-cap"></i><input type="text" class="form-control" placeholder="Diplôme" value="${d.degree}" oninput="currentDegrees[${i}].degree=this.value; syncEducation();"></div>
+                <div class="input-icon-group" style="flex:1;"><i data-lucide="school"></i><input type="text" class="form-control" placeholder="Université" value="${d.school}" oninput="currentDegrees[${i}].school=this.value; syncEducation();"></div>
+            </div>
+            <div class="input-icon-group"><i data-lucide="calendar"></i><input type="text" class="form-control" placeholder="Années" value="${d.dates}" oninput="currentDegrees[${i}].dates=this.value; syncEducation();"></div>
+        `;
+        c.appendChild(div);
+    });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+function syncEducation() {
+    let rawText = '';
+    currentDegrees.forEach(d => {
+        if(d.degree || d.school) {
+            // Degree in bold, School and Date on the same line below
+            rawText += `<strong>${d.degree} ${d.honors?'★':''}</strong>\n`;
+            rawText += `${d.school}${d.dates ? ' | ' + d.dates : ''}\n\n`;
+        }
+    });
+    const el = document.getElementById('input-education');
+    if(el) { el.value = rawText.trim(); syncField(el); }
+    updateProgress();
+}
+
+// STEP 6: Language Meters
 function addLanguage() { currentLangs.push({ lang: '', level: 'B1' }); renderLanguages(); }
 function removeLanguage(i) { currentLangs.splice(i, 1); renderLanguages(); syncLangs(); }
+function getLangPercentage(lvl) {
+    const map = { 'A1': 15, 'A2': 30, 'B1': 50, 'B2': 70, 'C1': 85, 'C2': 100 };
+    return map[lvl] || 50;
+}
+function getFlagEmoji(lang) {
+    const l = lang.toLowerCase();
+    if(l.includes('fran')) return '🇫🇷';
+    if(l.includes('angl') || l.includes('english')) return '🇬🇧';
+    if(l.includes('arab')) return '🇹🇳';
+    if(l.includes('esp')) return '🇪🇸';
+    if(l.includes('ita')) return '🇮🇹';
+    if(l.includes('all') || l.includes('ger')) return '🇩🇪';
+    return '🌍';
+}
 function renderLanguages() {
-    const c = document.getElementById('dynamic-languages-container'); c.innerHTML = '';
+    const c = document.getElementById('dynamic-languages-container'); if(!c) return;
+    c.innerHTML = '';
     currentLangs.forEach((l, i) => {
         const d = document.createElement('div'); d.className = 'language-card';
         d.innerHTML = `
-            <div class="language-card-header"><span class="language-card-title"><i data-lucide="languages" style="width:14px;"></i> Langue #${i+1}</span><button type="button" class="text-danger" style="background:none;border:none;cursor:pointer;" onclick="removeLanguage(${i})">&times;</button></div>
-            <div class="input-icon-group" style="margin-bottom:0.8rem;"><i data-lucide="book-open"></i><input type="text" class="form-control" placeholder="Anglais..." value="${l.lang}" oninput="currentLangs[${i}].lang=this.value; syncLangs();" onfocus="setupSmartAutocomplete(this, LANGUAGES_DB)"></div>
-            <div class="level-selector">${['A1','A2','B1','B2','C1','C2'].map(lvl => `<div class="level-pill ${l.level===lvl?'active':''}" onclick="currentLangs[${i}].level='${lvl}'; renderLanguages(); syncLangs();">${lvl}</div>`).join('')}</div>`;
+            <div class="language-card-header">
+                <span class="language-card-title">${getFlagEmoji(l.lang)} Langue #${i+1}</span>
+                <button type="button" class="text-danger" style="background:none;border:none;cursor:pointer;" onclick="removeLanguage(${i})">&times;</button>
+            </div>
+            <div class="input-icon-group" style="margin-bottom:10px; position:relative;">
+                <i data-lucide="languages"></i>
+                <input type="text" class="form-control lang-input-field" placeholder="ex: Anglais, Allemand..." value="${l.lang}" data-index="${i}" autocomplete="off">
+            </div>
+            <div class="level-selector">
+                ${['A1','A2','B1','B2','C1','C2'].map(lvl => `
+                    <div class="level-pill ${l.level===lvl?'active':''}" onclick="currentLangs[${i}].level='${lvl}'; renderLanguages(); syncLangs();">${lvl}</div>
+                `).join('')}
+            </div>
+        `;
         c.appendChild(d);
     });
+
+    // Re-attach listeners & suggestions to avoid focus loss bug
+    document.querySelectorAll('.lang-input-field').forEach(inp => {
+        setupSmartAutocomplete(inp, LANG_DB, false);
+        inp.addEventListener('input', (e) => {
+            const idx = e.target.dataset.index;
+            currentLangs[idx].lang = e.target.value;
+            syncLangs();
+        });
+    });
+    
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 function syncLangs() {
@@ -667,65 +1026,31 @@ function syncLangs() {
     updateProgress();
 }
 
-function renderTags() {
-    const c = document.getElementById('skills-tags-container'); const i = document.getElementById('input-skill-search');
-    c.querySelectorAll('.tag-item').forEach(t => t.remove());
-    currentSkills.forEach(s => {
-        const t = document.createElement('div'); t.className = 'tag-item';
-        t.innerHTML = `<span>${s}</span><button type="button" onclick="removeSkill('${s}')" style="background:none;border:none;color:inherit;cursor:pointer;margin-left:4px;">&times;</button>`;
-        c.insertBefore(t, i);
-    });
-    document.getElementById('input-skills').value = currentSkills.join(',');
-    const ifrm = document.getElementById('template-preview-frame');
-    if(ifrm && ifrm.contentWindow) ifrm.contentWindow.postMessage({ type: 'cv-update', field: 'competences', value: currentSkills.join(' • ') }, '*');
-    updateProgress();
-}
-function removeSkill(s) { currentSkills = currentSkills.filter(x=>x!==s); renderTags(); }
-document.getElementById('input-skill-search')?.addEventListener('keydown', (e) => { if(e.key==='Enter' && e.target.value.trim()){ e.preventDefault(); const v=e.target.value.trim(); if(!currentSkills.includes(v)){ currentSkills.push(v); renderTags(); e.target.value=''; } } });
-
 function setupSmartAutocomplete(inp, db, isSkill = false) {
     if (!inp) return;
     let sD = inp.parentElement.querySelector('.tag-suggestions');
     if (!sD) {
-        sD = document.createElement('div');
-        sD.className = 'tag-suggestions';
-        inp.parentElement.style.position = 'relative';
-        inp.parentElement.appendChild(sD);
+        sD = document.createElement('div'); sD.className = 'tag-suggestions';
+        inp.parentElement.style.position = 'relative'; inp.parentElement.appendChild(sD);
     }
-
     inp.addEventListener('input', () => {
-        const v = inp.value.toLowerCase().trim();
-        sD.innerHTML = '';
+        const v = inp.value.toLowerCase().trim(); sD.innerHTML = '';
         if (v.length < 1) { sD.style.display = 'none'; return; }
-        
         const m = db.filter(x => x.toLowerCase().includes(v)).slice(0, 5);
         if (m.length > 0) {
             m.forEach(match => {
-                const d = document.createElement('div');
-                d.className = 'tag-suggest-item';
-                d.innerHTML = match;
+                const d = document.createElement('div'); d.className = 'tag-suggest-item'; d.innerHTML = match;
                 d.onclick = () => {
-                    if (isSkill) {
-                        if (!currentSkills.includes(match)) { currentSkills.push(match); renderTags(); }
-                        inp.value = '';
-                    } else {
-                        inp.value = match;
-                        inp.dispatchEvent(new Event('input')); // Trigger sync
-                    }
+                    if (isSkill) { addSkillFromInput(match); inp.value = ''; }
+                    else { inp.value = match; inp.dispatchEvent(new Event('input')); }
                     sD.style.display = 'none';
                 };
                 sD.appendChild(d);
             });
             sD.style.display = 'block';
-        } else {
-            sD.style.display = 'none';
-        }
+        } else { sD.style.display = 'none'; }
     });
-
-    // Hide suggestion box when clicking outside
-    document.addEventListener('click', (e) => {
-        if (e.target !== inp && e.target !== sD) sD.style.display = 'none';
-    });
+    document.addEventListener('click', (e) => { if (e.target !== inp && e.target !== sD) sD.style.display = 'none'; });
 }
 
 let AUDIT_CV_ID = null;
@@ -751,7 +1076,22 @@ function animateATSScore(targetScore, elementId) {
 
 async function saveCV() {
     const b = document.getElementById('btn-save'); b.disabled = true; b.textContent = 'Enregistrement...';
-    const d = { cv_id: CV_ID, template_id: TEMPLATE_ID, name: document.getElementById('input-name').value.trim(), title: document.getElementById('input-title').value.trim(), email: document.getElementById('input-email').value.trim(), phone: document.getElementById('input-phone').value.trim(), location: document.getElementById('input-location').value.trim(), summary: document.getElementById('input-summary').value.trim(), experience: document.getElementById('input-experience').value, skills: document.getElementById('input-skills').value, education: document.getElementById('input-education').value, languages: document.getElementById('input-languages').value, photo: document.getElementById('photo-b64').value, color_theme: document.getElementById('color-picker').value };
+    const d = { 
+        cv_id: CV_ID, 
+        template_id: TEMPLATE_ID, 
+        name: document.getElementById('input-name').value.trim(), 
+        title: document.getElementById('input-title').value.trim(), 
+        email: document.getElementById('input-email').value.trim(), 
+        phone: document.getElementById('input-phone').value.trim(), 
+        location: document.getElementById('input-location').value.trim(), 
+        summary: document.getElementById('input-summary').innerHTML.trim(), 
+        experience: document.getElementById('input-experience').value, 
+        skills: document.getElementById('input-skills').value, 
+        education: document.getElementById('input-education').value, 
+        languages: document.getElementById('input-languages').value, 
+        photo: document.getElementById('photo-b64').value, 
+        color_theme: document.getElementById('color-picker').value 
+    };
     try {
         const rs = await fetch('cv_save.php', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) });
         const rj = await rs.json(); 
@@ -859,10 +1199,15 @@ Compétences: ${document.getElementById('input-skills').value}
         btnElement.disabled = true;
 
         try {
+            let finalContext = context;
+            if (context === 'summary' && typeof currentPersona !== 'undefined') {
+                finalContext = `summary_as_${currentPersona}`;
+            }
+
             const response = await fetch('ajax_ai_polish.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: textRaw, context: context })
+                body: JSON.stringify({ text: textRaw, context: finalContext })
             });
 
             const data = await response.json();

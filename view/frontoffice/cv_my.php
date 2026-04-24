@@ -382,8 +382,8 @@ async function deleteCV(cvId) {
     const name = card ? card.querySelector('h3').textContent : 'ce CV';
     
     const ok = await aptusConfirm(
-        'Supprimer le CV ?', 
-        `Êtes-vous sûr de vouloir supprimer le CV de "${name}" ? Cette action est irréversible.`
+        'Confirmation de suppression', 
+        `Êtes-vous sûr de vouloir supprimer le CV "${name}" ? Cette action est irréversible.`
     );
     
     if(ok) {
