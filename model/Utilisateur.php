@@ -8,8 +8,10 @@ class Utilisateur {
     private string $role;
     private ?string $telephone;
     private ?string $photo;
+    private int $est_verifie;
+    private ?string $token_verification;
 
-    public function __construct(?int $id_utilisateur, string $nom, string $prenom, string $email, string $motDePasse, string $role, ?string $telephone = null, ?string $photo = null) {
+    public function __construct(?int $id_utilisateur, string $nom, string $prenom, string $email, string $motDePasse, string $role, ?string $telephone = null, ?string $photo = null, int $est_verifie = 0, ?string $token_verification = null) {
         $this->id_utilisateur = $id_utilisateur;
         $this->nom = $nom;
         $this->prenom = $prenom;
@@ -18,6 +20,8 @@ class Utilisateur {
         $this->role = $role;
         $this->telephone = $telephone;
         $this->photo = $photo;
+        $this->est_verifie = $est_verifie;
+        $this->token_verification = $token_verification;
     }
 
     // Getters
@@ -84,6 +88,22 @@ class Utilisateur {
 
     public function setPhoto(?string $photo): void {
         $this->photo = $photo;
+    }
+
+    public function getEstVerifie(): int {
+        return $this->est_verifie;
+    }
+
+    public function setEstVerifie(int $est_verifie): void {
+        $this->est_verifie = $est_verifie;
+    }
+
+    public function getTokenVerification(): ?string {
+        return $this->token_verification;
+    }
+
+    public function setTokenVerification(?string $token_verification): void {
+        $this->token_verification = $token_verification;
     }
 }
 ?>

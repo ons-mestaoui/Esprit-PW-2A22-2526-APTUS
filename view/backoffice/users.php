@@ -258,7 +258,7 @@ if (!isset($content)) {
                 <a href="users.php?action=edit&id=<?php echo $u['id_utilisateur']; ?>" class="btn btn-sm btn-ghost" title="Éditer">
                     <i data-lucide="pencil" style="width:14px;height:14px;"></i>
                 </a>
-                <a href="users.php?action=delete&id=<?php echo $u['id_utilisateur']; ?>" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
+                <a href="#" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer" onclick="return confirmDelete('users.php?action=delete&id=<?php echo $u['id_utilisateur']; ?>', 'cet utilisateur');">
                     <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
                 </a>
               </div>
@@ -274,3 +274,34 @@ if (!isset($content)) {
   </table>
 </div>
 <?php endif; ?>
+
+<!-- Generic Delete Confirmation Modal -->
+<div id="generalDeleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:9999; backdrop-filter: blur(4px);">
+  <div style="background:var(--bg-card, #ffffff); border-radius:16px; padding:32px 24px; text-align:center; max-width:400px; width:90%; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.1); display:flex; flex-direction:column; align-items:center;">
+    <button type="button" onclick="document.getElementById('generalDeleteModal').style.display='none';" style="position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; color:var(--text-secondary); padding:4px;">
+      <i data-lucide="x" style="width:20px;height:20px;"></i>
+    </button>
+    
+    <div style="width:64px; height:64px; background:#fee2e2; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto;">
+        <i data-lucide="alert-triangle" style="width:32px;height:32px;color:#ef4444;"></i>
+    </div>
+    
+    <h3 style="font-size:24px; font-weight:700; color:var(--text-primary, #1e293b); margin-bottom:12px; font-family:'Inter', sans-serif;">Confirmation de suppression</h3>
+    
+    <p id="deleteModalText" style="font-size:16px; color:var(--text-secondary, #64748b); margin-bottom:32px; line-height:1.5;">Êtes-vous sûr de vouloir supprimer cet élément ?</p>
+    
+    <div style="display:flex; gap:16px; width:100%;">
+      <button type="button" onclick="document.getElementById('generalDeleteModal').style.display='none';" style="flex:1; padding:12px; border-radius:8px; border:1px solid var(--border-color, #e2e8f0); background:transparent; font-weight:600; color:var(--text-primary, #1e293b); cursor:pointer; font-size:15px; transition:all 0.2s;">Annuler</button>
+      <a id="deleteModalConfirmBtn" href="#" style="flex:1; padding:12px; border-radius:8px; border:none; background:#ef4444; font-weight:600; color:#ffffff; cursor:pointer; font-size:15px; transition:all 0.2s; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Oui, Supprimer</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDelete(url, itemName) {
+    document.getElementById('deleteModalText').innerText = "Êtes-vous sûr de vouloir supprimer " + itemName + " ? Cette action est irréversible.";
+    document.getElementById('deleteModalConfirmBtn').href = url;
+    document.getElementById('generalDeleteModal').style.display = 'flex';
+    return false; // prevent default link behavior
+}
+</script>

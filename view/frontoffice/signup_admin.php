@@ -17,6 +17,13 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require_once __DIR__ . '/../../libs/PHPMailer/Exception.php';
+require_once __DIR__ . '/../../libs/PHPMailer/PHPMailer.php';
+require_once __DIR__ . '/../../libs/PHPMailer/SMTP.php';
+
 include_once __DIR__ . '/../../controller/UtilisateurC.php';
 include_once __DIR__ . '/../../controller/AdminC.php';
 
@@ -49,7 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "Cette adresse email est déjà utilisée.";
         } else {
             $utilisateur = new Utilisateur(0, $nom, '', $email, $password, 'Admin', $telephone);
-            $last_id = $utilisateurC->addUtilisateur($utilisateur);
+            $result = $utilisateurC->addUtilisateur($utilisateur);
+            $last_id = $result['id'];
+            $token_verification = $result['token'];
 
             if ($last_id) {
                 try {
@@ -62,11 +71,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $p = new Profil(null, $last_id, null, null, $adresse, $ville, $pays, $date_naissance, $linkedin, null);
                     $profilC->addProfil($p);
 
-                    $_SESSION['id_utilisateur'] = $last_id;
-                    $_SESSION['nom'] = $nom;
-                    $_SESSION['role'] = 'Admin';
+                    // Send Verification Email
+                    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+                    $host = $_SERVER['HTTP_HOST'];
+                    $verificationLink = $protocol . $host . "/aptus_first_official_version/view/frontoffice/verify_email.php?token=" . urlencode($token_verification);
+
+                    $mail = new PHPMailer(true);
+                    try {
+                        $mail->isSMTP();
+                        $mail->Host       = 'smtp-relay.brevo.com';
+                        $mail->SMTPAuth   = true;
+                        $mail->Username   = 'a9340c001@smtp-brevo.com';
+                        $mail->Password   = 'YOUR_BREVO_SMTP_KEY';
+                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                        $mail->Port       = 587;
+
+                        $mail->setFrom('archipel.association@outlook.com', 'Equipe Aptus');
+                        $mail->addAddress($email, $nom);
+
+                        $mail->isHTML(true);
+                        $mail->CharSet = 'UTF-8';
+                        $mail->Subject = 'Activez votre compte Administrateur - Aptus';
+                        $mail->Body    = "
+                        <html><body>
+                          <h2>Bienvenue sur Aptus !</h2>
+                          <p>Vous avez été inscrit en tant qu'Administrateur ($nom). Avant d'accéder au panneau de contrôle, vous devez vérifier cette adresse email.</p>
+                          <p>Cliquez sur le lien ci-dessous pour activer le compte administrateur :</p>
+                          <p><a href='" . htmlspecialchars($verificationLink) . "'><strong>Activer mon compte Admin</strong></a></p>
+                          <br><p>L'équipe Aptus</p>
+                        </body></html>";
+                        $mail->send();
+                    } catch (Exception $e) {}
                     
-                    header("Location: ../backoffice/dashboard.php");
+                    header("Location: login.php?registered=1");
                     exit();
                 } catch (Exception $e) {
                     $error = "Erreur de création admin : " . $e->getMessage();
@@ -212,6 +249,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="/aptus_first_official_version/view/assets/js/forms.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/password-toggle.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
   <script>lucide.createIcons();</script>
 </body>
 </html>

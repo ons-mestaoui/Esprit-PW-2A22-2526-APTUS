@@ -17,6 +17,13 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require_once __DIR__ . '/../../libs/PHPMailer/Exception.php';
+require_once __DIR__ . '/../../libs/PHPMailer/PHPMailer.php';
+require_once __DIR__ . '/../../libs/PHPMailer/SMTP.php';
+
 include_once __DIR__ . '/../../controller/UtilisateurC.php';
 
 $error = "";
@@ -51,7 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "Cette adresse email est déjà utilisée par un autre compte.";
         } else {
             $utilisateur = new Utilisateur(0, $nom, $prenom, $email, $password, 'Candidat', $telephone);
-            $last_id = $utilisateurC->addUtilisateur($utilisateur);
+            $result = $utilisateurC->addUtilisateur($utilisateur);
+            $last_id = $result['id'];
+            $token_verification = $result['token'];
 
             if ($last_id) {
                 // Add Candidat details
@@ -64,17 +73,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $c = new Candidat($last_id, $competences, $niveauEtudes, $niveau);
                     $candidatC->addCandidat($c);
 
+                    // Set Profil Attributes
                     $p = new Profil(null, $last_id, null, null, $adresse, $ville, $pays, $date_naissance, $linkedin, null);
-    $profilC->addProfil($p);
+                    $profilC->addProfil($p);
 
-                    // Set Session for Auto-Login
-                    $_SESSION['id_utilisateur'] = $last_id;
-                    $_SESSION['nom'] = $nom;
-                    $_SESSION['prenom'] = $prenom;
-                    $_SESSION['role'] = 'Candidat';
+                    // Send Verification Email
+                    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+                    $host = $_SERVER['HTTP_HOST'];
+                    $verificationLink = $protocol . $host . "/aptus_first_official_version/view/frontoffice/verify_email.php?token=" . urlencode($token_verification);
 
-                    // Redirect directly to the feed
-                    header("Location: jobs_feed.php");
+                    $mail = new PHPMailer(true);
+                    try {
+                        $mail->isSMTP();
+                        $mail->Host       = 'smtp-relay.brevo.com';
+                        $mail->SMTPAuth   = true;
+                        $mail->Username   = 'a9340c001@smtp-brevo.com';
+                        $mail->Password   = 'YOUR_BREVO_SMTP_KEY';
+                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                        $mail->Port       = 587;
+
+                        $mail->setFrom('archipel.association@outlook.com', 'Equipe Aptus');
+                        $mail->addAddress($email, $nom . ' ' . $prenom);
+
+                        $mail->isHTML(true);
+                        $mail->CharSet = 'UTF-8';
+                        $mail->Subject = 'Activez votre compte Candidat - Aptus';
+                        $mail->Body    = "
+                        <html><body>
+                          <h2>Bienvenue sur Aptus !</h2>
+                          <p>Merci pour votre inscription. Avant de pouvoir vous connecter et postuler aux offres, vous devez vérifier votre adresse email.</p>
+                          <p>Cliquez sur le lien ci-dessous pour activer votre compte :</p>
+                          <p><a href='" . htmlspecialchars($verificationLink) . "'><strong>Activer mon compte</strong></a></p>
+                          <br><p>L'équipe Aptus</p>
+                        </body></html>";
+                        $mail->send();
+                    } catch (Exception $e) {}
+
+                    // Redirect to login with verification prompt
+                    header("Location: login.php?registered=1");
                     exit();
                 } catch (Exception $e) {
                     $error = "Erreur d'inscription du candidat: " . $e->getMessage();
@@ -303,6 +339,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="/aptus_first_official_version/view/assets/js/forms.js?v=2"></script>
+  <script src="/aptus_first_official_version/view/assets/js/password-toggle.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
   <script>lucide.createIcons();</script>
 </body>
 </html>

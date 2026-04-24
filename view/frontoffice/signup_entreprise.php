@@ -17,6 +17,13 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require_once __DIR__ . '/../../libs/PHPMailer/Exception.php';
+require_once __DIR__ . '/../../libs/PHPMailer/PHPMailer.php';
+require_once __DIR__ . '/../../libs/PHPMailer/SMTP.php';
+
 include_once __DIR__ . '/../../controller/UtilisateurC.php';
 
 $error = "";
@@ -55,8 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "Cette adresse email est déjà utilisée par un autre compte.";
         } else {
             // Création dans "utilisateur" - nom prend raisonSociale, prenom est vide pour une entreprise
+            // Création dans "utilisateur" - nom prend raisonSociale, prenom est vide pour une entreprise
             $utilisateur = new Utilisateur(0, $raison_sociale, '', $email, $password, 'Entreprise', $telephone);
-            $last_id = $utilisateurC->addUtilisateur($utilisateur);
+            $result = $utilisateurC->addUtilisateur($utilisateur);
+            $last_id = $result['id'];
+            $token_verification = $result['token'];
 
             if ($last_id) {
                 try {
@@ -76,13 +86,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $profilC->addProfil($profil);
                     
                     // 2. Entreprise
+                    // 2. Entreprise
                     $ent = new Entreprise($last_id, $secteur, $siret, $raison_sociale, $taille, $annee_fondation);
                     $entrepriseC->addEntreprise($ent);
 
-                    $_SESSION['id_utilisateur'] = $last_id;
-                    $_SESSION['nom'] = $raison_sociale;
-                    $_SESSION['role'] = 'Entreprise';
-                    header("Location: hr_posts.php"); // Redirection vers le dashboard entreprise approprié
+                    // Send Verification Email
+                    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+                    $host = $_SERVER['HTTP_HOST'];
+                    $verificationLink = $protocol . $host . "/aptus_first_official_version/view/frontoffice/verify_email.php?token=" . urlencode($token_verification);
+
+                    $mail = new PHPMailer(true);
+                    try {
+                        $mail->isSMTP();
+                        $mail->Host       = 'smtp-relay.brevo.com';
+                        $mail->SMTPAuth   = true;
+                        $mail->Username   = 'a9340c001@smtp-brevo.com';
+                        $mail->Password   = 'YOUR_BREVO_SMTP_KEY';
+                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                        $mail->Port       = 587;
+
+                        $mail->setFrom('archipel.association@outlook.com', 'Equipe Aptus');
+                        $mail->addAddress($email, $raison_sociale);
+
+                        $mail->isHTML(true);
+                        $mail->CharSet = 'UTF-8';
+                        $mail->Subject = 'Activez le compte de votre Entrerpise - Aptus';
+                        $mail->Body    = "
+                        <html><body>
+                          <h2>Bienvenue sur Aptus !</h2>
+                          <p>Vous avez inscrit l'entreprise <strong>$raison_sociale</strong>. Avant de pouvoir publier des offres, vous devez vérifier cette adresse email professionnelle.</p>
+                          <p>Cliquez sur le lien ci-dessous pour activer le compte de l'entreprise :</p>
+                          <p><a href='" . htmlspecialchars($verificationLink) . "'><strong>Activer le compte</strong></a></p>
+                          <br><p>L'équipe Aptus</p>
+                        </body></html>";
+                        $mail->send();
+                    } catch (Exception $e) {}
+
+                    header("Location: login.php?registered=1");
                     exit();
                 } catch (Exception $e) {
                     $error = "Erreur de création entreprise : " . $e->getMessage();
@@ -296,6 +336,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="/aptus_first_official_version/view/assets/js/forms.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/password-toggle.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
   <script>lucide.createIcons();</script>
 </body>
 </html>

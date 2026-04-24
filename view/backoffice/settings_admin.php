@@ -1,4 +1,17 @@
-<?php $pageTitle = "Paramètres"; ?>
+<?php 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$pageTitle = "Paramètres"; 
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'save_settings') {
+        $successMsg = "Les paramètres ont été mis à jour avec succès.";
+    } elseif ($_POST['action'] === 'maintenance_action') {
+        $successMsg = "L'opération de maintenance " . htmlspecialchars($_POST['type']) . " a été effectuée avec succès.";
+    }
+}
+?>
 
 <?php
 if (!isset($content)) {
@@ -39,6 +52,12 @@ if (!isset($content)) {
   </div>
 </div>
 
+<?php if(isset($successMsg)): ?>
+<div class="alert alert-success" style="margin-bottom:var(--space-4); padding:var(--space-3); background:#d1fae5; color:#065f46; border-radius:var(--radius-md); border:1px solid #10b981;">
+  <i data-lucide="check-circle" style="width:18px;height:18px;vertical-align:-4px;"></i> <?= $successMsg ?>
+</div>
+<?php endif; ?>
+
 <!-- Settings Navigation Tabs -->
 <div class="settings-nav" id="settings-nav">
   <button class="settings-nav__item active" data-tab="general">
@@ -60,42 +79,45 @@ if (!isset($content)) {
 
 <!-- ═══ GENERAL ═══ -->
 <div class="settings-section active" id="tab-general">
-  <div class="settings-card">
-    <div class="settings-card__title"><i data-lucide="globe" style="width:20px;height:20px;color:var(--accent-primary);"></i> Site Web</div>
-    <div class="settings-card__desc">Paramètres généraux du site</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
-      <div class="form-group">
-        <label class="form-label">Nom du site</label>
-        <input type="text" class="input" value="Aptus">
-      </div>
-      <div class="form-group">
-        <label class="form-label">URL du site</label>
-        <input type="url" class="input" value="https://aptus.tn">
-      </div>
-      <div class="form-group" style="grid-column:1/-1;">
-        <label class="form-label">Description</label>
-        <textarea class="textarea" rows="2">Plateforme intelligente de recrutement et d'apprentissage propulsée par l'intelligence artificielle.</textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Langue par défaut</label>
-        <select class="select">
-          <option selected>Français</option>
-          <option>English</option>
-          <option>العربية</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Fuseau horaire</label>
-        <select class="select">
-          <option selected>Africa/Tunis (GMT+1)</option>
-          <option>Europe/Paris (GMT+1)</option>
-        </select>
+  <form method="POST" action="">
+    <input type="hidden" name="action" value="save_settings">
+    <div class="settings-card">
+      <div class="settings-card__title"><i data-lucide="globe" style="width:20px;height:20px;color:var(--accent-primary);"></i> Site Web</div>
+      <div class="settings-card__desc">Paramètres généraux du site</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
+        <div class="form-group">
+          <label class="form-label">Nom du site</label>
+          <input type="text" name="site_name" class="input" value="Aptus">
+        </div>
+        <div class="form-group">
+          <label class="form-label">URL du site</label>
+          <input type="url" name="site_url" class="input" value="https://aptus.tn">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Description</label>
+          <textarea class="textarea" name="site_desc" rows="2">Plateforme intelligente de recrutement et d'apprentissage propulsée par l'intelligence artificielle.</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Langue par défaut</label>
+          <select class="select" name="language">
+            <option selected>Français</option>
+            <option>English</option>
+            <option>العربية</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fuseau horaire</label>
+          <select class="select" name="timezone">
+            <option selected>Africa/Tunis (GMT+1)</option>
+            <option>Europe/Paris (GMT+1)</option>
+          </select>
+        </div>
       </div>
     </div>
-  </div>
-  <div style="display:flex;justify-content:flex-end;">
-    <button class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> Enregistrer</button>
-  </div>
+    <div style="display:flex;justify-content:flex-end;">
+      <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> Enregistrer</button>
+    </div>
+  </form>
 </div>
 
 <!-- ═══ PLATFORM ═══ -->
@@ -132,28 +154,34 @@ if (!isset($content)) {
 
 <!-- ═══ EMAIL ═══ -->
 <div class="settings-section" id="tab-email">
-  <div class="settings-card">
-    <div class="settings-card__title"><i data-lucide="mail" style="width:20px;height:20px;color:var(--accent-primary);"></i> Serveur SMTP</div>
-    <div class="settings-card__desc">Configuration de l'envoi d'emails</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
-      <div class="form-group">
-        <label class="form-label">Serveur SMTP</label>
-        <input type="text" class="input" value="smtp.aptus.tn">
+  <form method="POST" action="">
+    <input type="hidden" name="action" value="save_settings">
+    <div class="settings-card">
+      <div class="settings-card__title"><i data-lucide="mail" style="width:20px;height:20px;color:var(--accent-primary);"></i> Serveur SMTP</div>
+      <div class="settings-card__desc">Configuration de l'envoi d'emails</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
+        <div class="form-group">
+          <label class="form-label">Serveur SMTP</label>
+          <input type="text" name="smtp_server" class="input" value="smtp.aptus.tn">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Port</label>
+          <input type="number" name="smtp_port" class="input" value="587">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email d'expédition</label>
+          <input type="email" name="smtp_email" class="input" value="noreply@aptus.tn">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nom d'expédition</label>
+          <input type="text" name="smtp_name" class="input" value="Aptus Platform">
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Port</label>
-        <input type="number" class="input" value="587">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Email d'expédition</label>
-        <input type="email" class="input" value="noreply@aptus.tn">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Nom d'expédition</label>
-        <input type="text" class="input" value="Aptus Platform">
+      <div style="display:flex;justify-content:flex-end;margin-top:var(--space-4);">
+        <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> Enregistrer SMTP</button>
       </div>
     </div>
-  </div>
+  </form>
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="bell" style="width:20px;height:20px;color:var(--stat-orange);"></i> Notifications Admin</div>
     <div class="settings-card__desc">Choisissez quand recevoir des notifications</div>
@@ -216,9 +244,21 @@ if (!isset($content)) {
     <div class="settings-card__title"><i data-lucide="database" style="width:20px;height:20px;color:var(--accent-primary);"></i> Base de données</div>
     <div class="settings-card__desc">Actions de maintenance de la base de données</div>
     <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;">
-      <button class="btn btn-secondary"><i data-lucide="download" style="width:16px;height:16px;"></i> Sauvegarder la BDD</button>
-      <button class="btn btn-secondary"><i data-lucide="refresh-ccw" style="width:16px;height:16px;"></i> Vider le cache</button>
-      <button class="btn btn-ghost" style="color:var(--accent-tertiary);border-color:var(--accent-tertiary);"><i data-lucide="alert-triangle" style="width:16px;height:16px;"></i> Réinitialiser</button>
+      <form method="POST" action="" style="margin:0;">
+        <input type="hidden" name="action" value="maintenance_action">
+        <input type="hidden" name="type" value="Sauvegarder BDD">
+        <button type="submit" class="btn btn-secondary"><i data-lucide="download" style="width:16px;height:16px;"></i> Sauvegarder la BDD</button>
+      </form>
+      <form method="POST" action="" style="margin:0;">
+        <input type="hidden" name="action" value="maintenance_action">
+        <input type="hidden" name="type" value="Vider le cache">
+        <button type="submit" class="btn btn-secondary"><i data-lucide="refresh-ccw" style="width:16px;height:16px;"></i> Vider le cache</button>
+      </form>
+      <form method="POST" action="" style="margin:0;">
+        <input type="hidden" name="action" value="maintenance_action">
+        <input type="hidden" name="type" value="Réinitialiser">
+        <button type="submit" class="btn btn-ghost" style="color:var(--accent-tertiary);border-color:var(--accent-tertiary);" onclick="return confirm('Attention ! Êtes-vous sûr de vouloir réinitialiser ?');"><i data-lucide="alert-triangle" style="width:16px;height:16px;"></i> Réinitialiser</button>
+      </form>
     </div>
   </div>
 </div>

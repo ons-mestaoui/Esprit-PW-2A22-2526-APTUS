@@ -26,47 +26,51 @@ if (isset($_SESSION['id_utilisateur'])) {
 include_once __DIR__ . '/../../controller/UtilisateurC.php';
 
 $error = "";
+$success_msg = "";
+if (isset($_GET['registered']) && $_GET['registered'] == 1) {
+    $success_msg = "Inscription réussie ! Veuillez vérifier votre adresse email pour activer votre compte. (N'oubliez pas de vérifier vos courriers indésirables).";
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
-    $captchaInput = trim($_POST['captcha'] ?? '');
-    $captchaSession = $_SESSION['captcha'] ?? '';
 
-    if (!empty($email) && !empty($password) && !empty($captchaInput)) {
-        if (strtolower($captchaInput) !== strtolower($captchaSession) || empty($captchaSession)) {
-            $error = "Code de sécurité (Captcha) incorrect.";
-        } else {
-            $db = config::getConnexion();
-            try {
-                $query = $db->prepare("SELECT * FROM utilisateur WHERE email = :email");
-                $query->execute(['email' => $email]);
-                $user = $query->fetch();
+    if (!empty($email) && !empty($password)) {
+        $db = config::getConnexion();
+        try {
+            $query = $db->prepare("SELECT * FROM utilisateur WHERE email = :email");
+            $query->execute(['email' => $email]);
+            $user = $query->fetch();
 
-                if ($user && password_verify($password, $user['motDePasse'])) {
+            if ($user && password_verify($password, $user['motDePasse'])) {
+                // Check if account is verified
+                if (isset($user['est_verifie']) && $user['est_verifie'] == 0) {
+                    $error = "Veuillez vérifier votre adresse email avant de vous connecter. Un lien d'activation vous a été envoyé.";
+                } else {
                     $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
                     $_SESSION['nom'] = $user['nom'];
                     $_SESSION['prenom'] = $user['prenom'] ?? '';
-                    $_SESSION['role'] = $user['role'];
+                $_SESSION['role'] = $user['role'];
 
-                    // Redirection basée sur le rôle (insensible à la casse par sécurité)
-                    $role = strtolower($user['role']);
-                    if ($role === 'admin') {
-                        header("Location: ../backoffice/dashboard.php");
-                    } elseif ($role === 'candidat') {
-                        header("Location: jobs_feed.php");
-                    } elseif ($role === 'entreprise') {
-                        header("Location: hr_posts.php");
-                    } else {
-                        // Par défaut si rôle inconnu
-                        header("Location: landing.php");
-                    }
-                    exit();
+                // Redirection basée sur le rôle (insensible à la casse par sécurité)
+                $role = strtolower($user['role']);
+                if ($role === 'admin') {
+                    header("Location: ../backoffice/dashboard.php");
+                } elseif ($role === 'candidat') {
+                    header("Location: jobs_feed.php");
+                } elseif ($role === 'entreprise') {
+                    header("Location: hr_posts.php");
                 } else {
-                    $error = "Email ou mot de passe incorrect.";
+                    // Par défaut si rôle inconnu
+                    header("Location: landing.php");
                 }
-            } catch (Exception $e) {
-                $error = "Erreur de connexion : " . $e->getMessage();
+                exit();
+                } // End est_verifie check
+            } else {
+                $error = "Email ou mot de passe incorrect.";
             }
+        } catch (Exception $e) {
+            $error = "Erreur de connexion : " . $e->getMessage();
         }
     } else {
         $error = "Veuillez remplir tous les champs.";
@@ -366,8 +370,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <h1>Connexion</h1>
           
           <?php if (!empty($error)): ?>
-            <div class="alert alert-danger" style="color:red; text-align:center; margin-bottom: 15px; font-size: 14px;">
+            <div class="alert alert-danger" style="color:red; background-color:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); padding:10px; border-radius:5px; text-align:center; margin-bottom: 15px; font-size: 14px;">
                 <?php echo $error; ?>
+            </div>
+          <?php endif; ?>
+          <?php if (!empty($success_msg)): ?>
+            <div class="alert alert-success" style="color:#2ecc71; background-color:rgba(46,204,113,0.1); border:1px solid rgba(46,204,113,0.2); padding:10px; border-radius:5px; text-align:center; margin-bottom: 15px; font-size: 14px;">
+                <?php echo htmlspecialchars($success_msg); ?>
             </div>
           <?php endif; ?>
 
@@ -385,15 +394,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
           </div>
 
-          <div class="form-group w-full" style="display: flex; gap: 10px; align-items: center;">
-            <div class="input-icon-wrapper" style="flex: 1;">
-              <i data-lucide="shield-check" style="width:18px;height:18px;"></i>
-              <input type="text" class="input" name="captcha" placeholder="Code de sécurité" data-required="true" autocomplete="off" maxlength="5">
-            </div>
-            <div style="flex-shrink: 0; background: white; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color); cursor: pointer;" onclick="document.getElementById('captcha-img').src='captcha.php?'+Math.random();" title="Cliquez pour rafraîchir">
-              <img src="captcha.php" id="captcha-img" alt="CAPTCHA" style="display: block; height: 42px;">
-            </div>
-          </div>
+
 
           <a href="forgot_password.php" class="text-xs text-secondary" style="margin: 10px 0;">Mot de passe oublié ?</a>
           
@@ -438,6 +439,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="/aptus_first_official_version/view/assets/js/forms.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/auth_slider.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/password-toggle.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
   <script>lucide.createIcons();</script>
 </body>
 </html>

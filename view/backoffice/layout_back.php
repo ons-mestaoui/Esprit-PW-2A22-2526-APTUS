@@ -210,6 +210,7 @@ if ($userId) {
   <?php if (isset($pageJS)): ?>
     <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
+  <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
   <script>lucide.createIcons();</script>
 
   <!-- ═══════════════════════════════════════════

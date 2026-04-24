@@ -67,60 +67,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenValid) {
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    .auth-page {
-      padding: 0 !important;
-      background: var(--bg-body);
-      overflow-x: hidden;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .fp-card {
-      background: var(--bg-card);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-2xl);
-      padding: var(--space-8);
-      width: 100%;
-      max-width: 450px;
-      text-align: center;
-      border: 1px solid var(--border-color);
-    }
-    .fp-card h1 {
-        margin-bottom: var(--space-2);
-        background: var(--gradient-primary);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .fp-card p {
-        color: var(--text-secondary);
-        margin-bottom: var(--space-6);
-        font-size: var(--fs-sm);
-    }
+    /* Any specific styles (none for now since we removed fp-card) */
   </style>
 </head>
 <body>
 
   <div class="auth-page">
-    <div style="position:absolute;top:var(--space-4);right:var(--space-4);z-index:1000;">
-      <button class="theme-toggle" aria-label="Toggle theme">
-        <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
-        <i data-lucide="moon" class="icon-moon"></i>
-      </button>
-    </div>
-
-    <div class="fp-card">
-      <div style="margin-bottom: 20px; color: var(--accent-primary);">
-          <i data-lucide="<?php echo $messageType === 'success' && !$tokenValid ? 'check-circle' : 'lock-keyhole'; ?>" style="width: 48px; height: 48px;"></i>
+    <div class="auth-card">
+      <div class="auth-card__header">
+          <div style="color: var(--accent-primary); margin-bottom: var(--space-4);">
+              <i data-lucide="<?php echo $messageType === 'success' && !$tokenValid ? 'check-circle' : 'lock-keyhole'; ?>" style="width: 48px; height: 48px; margin: 0 auto;"></i>
+          </div>
+          
+          <?php if ($messageType === 'success' && !$tokenValid): ?>
+              <h1>Félicitations !</h1>
+              <p>Votre mot de passe a été mis à jour.</p>
+          <?php else: ?>
+              <h1>Nouveau mot de passe</h1>
+              <p>Saisissez votre nouveau mot de passe sécurisé pour retrouver l'accès à votre compte.</p>
+          <?php endif; ?>
       </div>
-      
-      <?php if ($messageType === 'success' && !$tokenValid): ?>
-          <h1>Félicitations !</h1>
-          <p>Votre mot de passe a été mis à jour.</p>
-      <?php else: ?>
-          <h1>Nouveau mot de passe</h1>
-          <p>Saisissez votre nouveau mot de passe sécurisé pour retrouver l'accès à votre compte.</p>
-      <?php endif; ?>
 
       <?php if (!empty($message)): ?>
           <div class="alert alert-<?php echo $messageType === 'success' ? 'success' : 'danger'; ?>" style="font-size: 14px; margin-bottom: 20px; padding: 10px; border-radius: var(--radius-sm); text-align: left; background-color: <?php echo $messageType === 'success' ? 'rgba(46, 204, 113, 0.1)' : 'rgba(231, 76, 60, 0.1)'; ?>; color: <?php echo $messageType === 'success' ? '#2ecc71' : '#e74c3c'; ?>;">
@@ -129,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenValid) {
       <?php endif; ?>
 
       <?php if ($tokenValid): ?>
-      <form method="POST" action="" style="display: flex; flex-direction: column; gap: var(--space-4);">
+      <form method="POST" action="" class="auth-form">
         <div class="form-group w-full">
           <div class="input-icon-wrapper">
             <i data-lucide="lock" style="width:18px;height:18px;"></i>
@@ -144,25 +110,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenValid) {
           </div>
         </div>
         
-        <button type="submit" class="btn btn-primary btn-lg w-full">Enregistrer</button>
+        <button type="submit" class="btn btn-primary btn-lg w-full" style="margin-top:var(--space-2);">Enregistrer</button>
       </form>
       <?php endif; ?>
       
       <?php if (!$tokenValid && $messageType === 'error'): ?>
-      <div style="margin-top:20px;">
+      <div style="margin-top:var(--space-4);">
           <a href="forgot_password.php" class="btn btn-primary btn-lg w-full" style="display:block; text-decoration:none;">Générer un nouveau lien</a>
       </div>
       <?php endif; ?>
 
       <div class="auth-footer" style="margin-top: var(--space-6);">
-          <a href="login.php" class="back-to-site" style="display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); text-decoration: none; font-weight: 500;">
+          <a href="login.php" class="back-to-site" style="margin-top: 0;">
             <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
             Retour à la connexion
           </a>
       </div>
+
+      <div style="position:absolute;top:var(--space-4);right:var(--space-4);z-index:1000;">
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
+          <i data-lucide="moon" class="icon-moon"></i>
+        </button>
+      </div>
+
     </div>
   </div>
 
+  <script src="/aptus_first_official_version/view/assets/js/password-toggle.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
   <script>
       lucide.createIcons();
   </script>

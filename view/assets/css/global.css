@@ -443,8 +443,8 @@ p {
 .input-icon-wrapper .input {
   padding-left: 2.5rem;
 }
-.input-icon-wrapper i,
-.input-icon-wrapper svg {
+.input-icon-wrapper > i:first-child,
+.input-icon-wrapper > svg:first-child {
   position: absolute;
   left: 0.875rem;
   top: 50%;
@@ -453,6 +453,42 @@ p {
   pointer-events: none;
   width: 18px;
   height: 18px;
+}
+
+/* ── Password Toggle Button ──────────────────── */
+.password-toggle-btn {
+  position: absolute !important;
+  right: 0.75rem !important;
+  left: auto !important;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+  pointer-events: all;
+  z-index: 2;
+}
+.password-toggle-btn:hover {
+  color: var(--accent-primary);
+  background: var(--bg-secondary);
+}
+.password-toggle-btn i,
+.password-toggle-btn svg {
+  position: static;
+  transform: none;
+  pointer-events: none;
+  width: 18px;
+  height: 18px;
+  color: inherit;
+  left: auto;
+  top: auto;
 }
 
 /* ── Avatars ──────────────────────────────────── */

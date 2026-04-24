@@ -8,14 +8,182 @@ if (!isset($_SESSION['id_utilisateur'])) {
 }
 
 include_once __DIR__ . '/../../controller/UtilisateurC.php';
+include_once __DIR__ . '/../../controller/ProfilC.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_account') {
-    $utilisateurC = new UtilisateurC();
-    $id = $_SESSION['id_utilisateur'];
-    $utilisateurC->deleteUtilisateur($id);
-    session_destroy();
-    header("Location: login.php");
-    exit();
+$utilisateurC = new UtilisateurC();
+$id = $_SESSION['id_utilisateur'];
+$prefs = $utilisateurC->getPreferences($id);
+$activeTab = 'general';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+
+    if ($_POST['action'] === 'delete_account') {
+        $utilisateurC->deleteUtilisateur($id);
+        session_destroy();
+        header("Location: login.php");
+        exit();
+
+    } elseif ($_POST['action'] === 'change_password') {
+        $activeTab = 'security';
+        $user = $utilisateurC->getUtilisateurById($id);
+        $current_password = $_POST['current_password'] ?? '';
+        $new_password = $_POST['new_password'] ?? '';
+        $confirm_password = $_POST['confirm_password'] ?? '';
+        
+        if (password_verify($current_password, $user['motDePasse'])) {
+            if ($new_password === $confirm_password) {
+                if (strlen($new_password) >= 8) {
+                    $utilisateurC->resetPassword($id, $new_password);
+                    $successMsg = "Mot de passe mis à jour avec succès.";
+                } else {
+                    $errorMsg = "Le nouveau mot de passe doit contenir au moins 8 caractères.";
+                }
+            } else {
+                $errorMsg = "Les nouveaux mots de passe ne correspondent pas.";
+            }
+        } else {
+            $errorMsg = "Le mot de passe actuel est incorrect.";
+        }
+
+    } elseif ($_POST['action'] === 'update_general') {
+        $activeTab = 'general';
+        $lang = $_POST['language'] ?? 'fr';
+        $tz = $_POST['timezone'] ?? 'Africa/Tunis';
+        $utilisateurC->updatePreferences($id, ['language' => $lang, 'timezone' => $tz]);
+        $prefs = $utilisateurC->getPreferences($id);
+        $successMsg = "Paramètres généraux enregistrés.";
+
+    } elseif ($_POST['action'] === 'update_appearance') {
+        $activeTab = 'appearance';
+        $theme = $_POST['theme'] ?? 'dark';
+        $color = $_POST['accent_color'] ?? '#6366f1';
+        $fontSize = intval($_POST['font_size'] ?? 14);
+        $utilisateurC->updatePreferences($id, ['theme' => $theme, 'accent_color' => $color, 'font_size' => $fontSize]);
+        $prefs = $utilisateurC->getPreferences($id);
+        $successMsg = "Apparence mise à jour.";
+
+    } elseif ($_POST['action'] === 'update_privacy') {
+        $activeTab = 'privacy';
+        $utilisateurC->updatePreferences($id, [
+            'privacy_public' => isset($_POST['privacy_public']),
+            'privacy_email'  => isset($_POST['privacy_email']),
+            'privacy_phone'  => isset($_POST['privacy_phone']),
+            'privacy_search' => isset($_POST['privacy_search']),
+        ]);
+        $prefs = $utilisateurC->getPreferences($id);
+        $successMsg = "Paramètres de confidentialité enregistrés.";
+
+    } elseif ($_POST['action'] === 'export_data') {
+        require_once __DIR__ . '/../../libs/FPDF/fpdf.php';
+
+        $user = $utilisateurC->getUtilisateurById($id);
+        $profilC = new ProfilC();
+        $profil = $profilC->getProfilByIdUtilisateur($id);
+
+        $pdf = new FPDF();
+        $pdf->AddPage();
+        $pdf->SetAutoPageBreak(true, 20);
+
+        // ── Header ──
+        $pdf->SetFillColor(99, 102, 241);
+        $pdf->Rect(0, 0, 210, 40, 'F');
+        $pdf->SetFont('Helvetica', 'B', 22);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->Cell(0, 20, 'Aptus', 0, 1, 'C');
+        $pdf->SetFont('Helvetica', '', 11);
+        $pdf->Cell(0, 8, 'Export de vos donnees personnelles', 0, 1, 'C');
+        $pdf->Ln(15);
+
+        // ── Section: Compte ──
+        $pdf->SetTextColor(99, 102, 241);
+        $pdf->SetFont('Helvetica', 'B', 14);
+        $pdf->Cell(0, 10, 'Informations du compte', 0, 1);
+        $pdf->SetDrawColor(99, 102, 241);
+        $pdf->Line(10, $pdf->GetY(), 200, $pdf->GetY());
+        $pdf->Ln(4);
+
+        $pdf->SetTextColor(60, 60, 60);
+        $pdf->SetFont('Helvetica', '', 11);
+
+        $fields = [
+            'Nom' => $user['nom'] ?? '-',
+            'Prenom' => $user['prenom'] ?? '-',
+            'Email' => $user['email'] ?? '-',
+            'Role' => $user['role'] ?? '-',
+            'Telephone' => $user['telephone'] ?? '-',
+        ];
+        foreach ($fields as $label => $val) {
+            $pdf->SetFont('Helvetica', 'B', 10);
+            $pdf->Cell(50, 8, $label . ' :', 0, 0);
+            $pdf->SetFont('Helvetica', '', 10);
+            $pdf->Cell(0, 8, $val, 0, 1);
+        }
+
+        // ── Section: Profil ──
+        if ($profil && is_array($profil)) {
+            $pdf->Ln(6);
+            $pdf->SetTextColor(99, 102, 241);
+            $pdf->SetFont('Helvetica', 'B', 14);
+            $pdf->Cell(0, 10, 'Profil', 0, 1);
+            $pdf->Line(10, $pdf->GetY(), 200, $pdf->GetY());
+            $pdf->Ln(4);
+            $pdf->SetTextColor(60, 60, 60);
+
+            $profilFields = [
+                'Bio' => $profil['bio'] ?? '-',
+                'Adresse' => $profil['adresse'] ?? '-',
+                'Ville' => $profil['ville'] ?? '-',
+                'Pays' => $profil['pays'] ?? '-',
+                'Date de naissance' => $profil['dateNaissance'] ?? '-',
+                'LinkedIn' => $profil['linkedin'] ?? '-',
+                'Site Web' => $profil['siteWeb'] ?? '-',
+            ];
+            foreach ($profilFields as $label => $val) {
+                $pdf->SetFont('Helvetica', 'B', 10);
+                $pdf->Cell(50, 8, $label . ' :', 0, 0);
+                $pdf->SetFont('Helvetica', '', 10);
+                $pdf->Cell(0, 8, $val, 0, 1);
+            }
+        }
+
+        // ── Section: Preferences ──
+        $pdf->Ln(6);
+        $pdf->SetTextColor(99, 102, 241);
+        $pdf->SetFont('Helvetica', 'B', 14);
+        $pdf->Cell(0, 10, 'Preferences', 0, 1);
+        $pdf->Line(10, $pdf->GetY(), 200, $pdf->GetY());
+        $pdf->Ln(4);
+        $pdf->SetTextColor(60, 60, 60);
+
+        $prefLabels = [
+            'language' => 'Langue',
+            'timezone' => 'Fuseau horaire',
+            'theme' => 'Theme',
+            'accent_color' => 'Couleur accent',
+            'font_size' => 'Taille du texte',
+            'privacy_public' => 'Profil public',
+            'privacy_email' => 'Email visible',
+            'privacy_phone' => 'Telephone visible',
+            'privacy_search' => 'Recherche recruteurs',
+        ];
+        foreach ($prefLabels as $key => $label) {
+            $val = $prefs[$key] ?? '-';
+            if (is_bool($val)) $val = $val ? 'Oui' : 'Non';
+            $pdf->SetFont('Helvetica', 'B', 10);
+            $pdf->Cell(50, 8, $label . ' :', 0, 0);
+            $pdf->SetFont('Helvetica', '', 10);
+            $pdf->Cell(0, 8, (string)$val, 0, 1);
+        }
+
+        // ── Footer ──
+        $pdf->Ln(10);
+        $pdf->SetTextColor(150, 150, 150);
+        $pdf->SetFont('Helvetica', 'I', 9);
+        $pdf->Cell(0, 8, 'Exporte le ' . date('d/m/Y a H:i') . ' depuis Aptus', 0, 1, 'C');
+
+        $pdf->Output('D', 'aptus_export_' . date('Ymd') . '.pdf');
+        exit();
+    }
 }
 
 $pageTitle = "Paramètres"; 
@@ -63,6 +231,17 @@ if (!isset($content)) {
   <p class="page-header__subtitle">Personnalisez votre expérience sur Aptus</p>
 </div>
 
+<?php if(isset($successMsg)): ?>
+<div class="alert alert-success" style="margin-bottom:var(--space-4); padding:var(--space-3); background:#d1fae5; color:#065f46; border-radius:var(--radius-md); border:1px solid #10b981;">
+  <i data-lucide="check-circle" style="width:18px;height:18px;vertical-align:-4px;"></i> <?= htmlspecialchars($successMsg) ?>
+</div>
+<?php endif; ?>
+<?php if(isset($errorMsg)): ?>
+<div class="alert alert-danger" style="margin-bottom:var(--space-4); padding:var(--space-3); background:#fee2e2; color:#b91c1c; border-radius:var(--radius-md); border:1px solid #ef4444;">
+  <i data-lucide="alert-circle" style="width:18px;height:18px;vertical-align:-4px;"></i> <?= htmlspecialchars($errorMsg) ?>
+</div>
+<?php endif; ?>
+
 <!-- Settings Navigation Tabs -->
 <div class="settings-nav" id="settings-nav">
   <button class="settings-nav__item active" data-tab="general">
@@ -87,83 +266,116 @@ if (!isset($content)) {
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="globe" style="width:20px;height:20px;color:var(--accent-primary);"></i> Langue & Région</div>
     <div class="settings-card__desc">Choisissez la langue d'affichage et votre fuseau horaire</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
-      <div class="form-group">
-        <label class="form-label">Langue</label>
-        <select class="select">
-          <option selected>Français</option>
-          <option>English</option>
-          <option>العربية</option>
-        </select>
+    <form method="POST" action="">
+      <input type="hidden" name="action" value="update_general">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
+        <div class="form-group">
+          <label class="form-label">Langue</label>
+          <select class="select" name="language">
+            <option value="fr" <?= ($prefs['language']??'fr')==='fr'?'selected':'' ?>>Français</option>
+            <option value="en" <?= ($prefs['language']??'')==='en'?'selected':'' ?>>English</option>
+            <option value="ar" <?= ($prefs['language']??'')==='ar'?'selected':'' ?>>العربية</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fuseau horaire</label>
+          <select class="select" name="timezone">
+            <option value="Africa/Tunis" <?= ($prefs['timezone']??'')==='Africa/Tunis'?'selected':'' ?>>Africa/Tunis (GMT+1)</option>
+            <option value="Europe/Paris" <?= ($prefs['timezone']??'')==='Europe/Paris'?'selected':'' ?>>Europe/Paris (GMT+1)</option>
+            <option value="Europe/London" <?= ($prefs['timezone']??'')==='Europe/London'?'selected':'' ?>>Europe/London (GMT+0)</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <button type="submit" class="btn btn-primary" style="width:fit-content;"><i data-lucide="save" style="width:16px;height:16px;"></i> Enregistrer</button>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Fuseau horaire</label>
-        <select class="select">
-          <option selected>Africa/Tunis (GMT+1)</option>
-          <option>Europe/Paris (GMT+1)</option>
-          <option>Europe/London (GMT+0)</option>
-        </select>
-      </div>
-    </div>
+    </form>
   </div>
 
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="download" style="width:20px;height:20px;color:var(--accent-secondary);"></i> Données & Export</div>
     <div class="settings-card__desc">Téléchargez vos données ou supprimez votre compte</div>
     <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;">
-      <button class="btn btn-secondary"><i data-lucide="download" style="width:16px;height:16px;"></i> Exporter mes données</button>
-      <form method="POST" action="" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement votre compte ? Cette action est irréversible.');" style="margin:0;">
-        <input type="hidden" name="action" value="delete_account">
-        <button type="submit" class="btn btn-ghost" style="color:var(--accent-tertiary);border-color:var(--accent-tertiary);"><i data-lucide="trash-2" style="width:16px;height:16px;"></i> Supprimer mon compte</button>
-      </form>
+      <form method="POST" action="" style="margin:0;"><input type="hidden" name="action" value="export_data"><button type="submit" class="btn btn-secondary"><i data-lucide="download" style="width:16px;height:16px;"></i> Exporter mes données</button></form>
+      <button type="button" class="btn btn-ghost" onclick="document.getElementById('deleteModal').style.display='flex';" style="color:var(--accent-tertiary);border-color:var(--accent-tertiary);"><i data-lucide="trash-2" style="width:16px;height:16px;"></i> Supprimer mon compte</button>
+      
+      <!-- Delete Confirmation Modal -->
+      <div id="deleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:9999; backdrop-filter: blur(4px);">
+        <div style="background:var(--bg-card, #ffffff); border-radius:16px; padding:32px 24px; text-align:center; max-width:400px; width:90%; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.1); display:flex; flex-direction:column; align-items:center;">
+          <button type="button" onclick="document.getElementById('deleteModal').style.display='none';" style="position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; color:var(--text-secondary); padding:4px;">
+            <i data-lucide="x" style="width:20px;height:20px;"></i>
+          </button>
+          
+          <div style="width:64px; height:64px; background:#fee2e2; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto;">
+              <i data-lucide="alert-triangle" style="width:32px;height:32px;color:#ef4444;"></i>
+          </div>
+          
+          <h3 style="font-size:24px; font-weight:700; color:var(--text-primary, #1e293b); margin-bottom:12px; font-family:'Inter', sans-serif;">Confirmation de suppression</h3>
+          
+          <p style="font-size:16px; color:var(--text-secondary, #64748b); margin-bottom:32px; line-height:1.5;">Êtes-vous sûr de vouloir supprimer définitivement votre compte ? Cette action est irréversible.</p>
+          
+          <div style="display:flex; gap:16px; width:100%;">
+            <button type="button" onclick="document.getElementById('deleteModal').style.display='none';" style="flex:1; padding:12px; border-radius:8px; border:1px solid var(--border-color, #e2e8f0); background:transparent; font-weight:600; color:var(--text-primary, #1e293b); cursor:pointer; font-size:15px; transition:all 0.2s;">Annuler</button>
+            <form method="POST" action="" style="flex:1; margin:0; display:flex;">
+              <input type="hidden" name="action" value="delete_account">
+              <button type="submit" style="flex:1; padding:12px; border-radius:8px; border:none; background:#ef4444; font-weight:600; color:#ffffff; cursor:pointer; font-size:15px; transition:all 0.2s;">Oui, Supprimer</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- ═══ APPEARANCE ═══ -->
 <div class="settings-section" id="tab-appearance">
-  <div class="settings-card">
-    <div class="settings-card__title"><i data-lucide="sun" style="width:20px;height:20px;color:var(--stat-orange);"></i> Thème</div>
-    <div class="settings-card__desc">Choisissez le mode d'affichage de l'interface</div>
-    <div style="display:flex;gap:var(--space-4);">
-      <div style="flex:1;padding:var(--space-5);border:2px solid var(--accent-primary);border-radius:var(--radius-lg);text-align:center;cursor:pointer;background:var(--bg-body);">
-        <i data-lucide="sun" style="width:28px;height:28px;color:var(--accent-primary);margin-bottom:var(--space-2);"></i>
-        <div class="text-sm fw-semibold">Clair</div>
-      </div>
-      <div style="flex:1;padding:var(--space-5);border:2px solid var(--border-color);border-radius:var(--radius-lg);text-align:center;cursor:pointer;background:var(--bg-body);">
-        <i data-lucide="moon" style="width:28px;height:28px;color:var(--text-secondary);margin-bottom:var(--space-2);"></i>
-        <div class="text-sm fw-semibold">Sombre</div>
-      </div>
-      <div style="flex:1;padding:var(--space-5);border:2px solid var(--border-color);border-radius:var(--radius-lg);text-align:center;cursor:pointer;background:var(--bg-body);">
-        <i data-lucide="monitor" style="width:28px;height:28px;color:var(--text-secondary);margin-bottom:var(--space-2);"></i>
-        <div class="text-sm fw-semibold">Système</div>
-      </div>
-    </div>
-  </div>
+  <form method="POST" action="" id="appearance-form">
+    <input type="hidden" name="action" value="update_appearance">
+    <input type="hidden" name="theme" id="pref-theme" value="<?= htmlspecialchars($prefs['theme'] ?? 'dark') ?>">
+    <input type="hidden" name="accent_color" id="pref-color" value="<?= htmlspecialchars($prefs['accent_color'] ?? '#6366f1') ?>">
+    <input type="hidden" name="font_size" id="pref-fontsize" value="<?= intval($prefs['font_size'] ?? 14) ?>">
 
-  <div class="settings-card">
-    <div class="settings-card__title"><i data-lucide="palette" style="width:20px;height:20px;color:var(--accent-primary);"></i> Couleur d'accent</div>
-    <div class="settings-card__desc">Personnalisez la couleur principale de l'interface</div>
-    <div style="display:flex;gap:var(--space-3);">
-      <div class="color-swatch active" style="background:#6366f1;"></div>
-      <div class="color-swatch" style="background:#3B82F6;"></div>
-      <div class="color-swatch" style="background:#8B5CF6;"></div>
-      <div class="color-swatch" style="background:#EC4899;"></div>
-      <div class="color-swatch" style="background:#10B981;"></div>
-      <div class="color-swatch" style="background:#F59E0B;"></div>
-      <div class="color-swatch" style="background:#EF4444;"></div>
+    <div class="settings-card">
+      <div class="settings-card__title"><i data-lucide="sun" style="width:20px;height:20px;color:var(--stat-orange);"></i> Thème</div>
+      <div class="settings-card__desc">Choisissez le mode d'affichage de l'interface</div>
+      <div style="display:flex;gap:var(--space-4);">
+        <div class="theme-select" data-theme="light" style="flex:1;padding:var(--space-5);border:2px solid var(--border-color);border-radius:var(--radius-lg);text-align:center;cursor:pointer;background:var(--bg-body);">
+          <i data-lucide="sun" style="width:28px;height:28px;color:var(--text-secondary);margin-bottom:var(--space-2);"></i>
+          <div class="text-sm fw-semibold">Clair</div>
+        </div>
+        <div class="theme-select" data-theme="dark" style="flex:1;padding:var(--space-5);border:2px solid var(--border-color);border-radius:var(--radius-lg);text-align:center;cursor:pointer;background:var(--bg-body);">
+          <i data-lucide="moon" style="width:28px;height:28px;color:var(--text-secondary);margin-bottom:var(--space-2);"></i>
+          <div class="text-sm fw-semibold">Sombre</div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="settings-card">
-    <div class="settings-card__title"><i data-lucide="type" style="width:20px;height:20px;color:var(--accent-secondary);"></i> Taille du texte</div>
-    <div class="settings-card__desc">Ajustez la taille du texte de l'interface</div>
-    <div style="display:flex;align-items:center;gap:var(--space-4);max-width:300px;">
-      <span class="text-xs">A</span>
-      <input type="range" style="flex:1;accent-color:var(--accent-primary);" min="12" max="20" value="14">
-      <span style="font-size:1.25rem;font-weight:600;">A</span>
+    <div class="settings-card">
+      <div class="settings-card__title"><i data-lucide="palette" style="width:20px;height:20px;color:var(--accent-primary);"></i> Couleur d'accent</div>
+      <div class="settings-card__desc">Personnalisez la couleur principale de l'interface</div>
+      <div style="display:flex;gap:var(--space-3);">
+        <div class="color-swatch" data-color="#6366f1" style="background:#6366f1;"></div>
+        <div class="color-swatch" data-color="#3B82F6" style="background:#3B82F6;"></div>
+        <div class="color-swatch" data-color="#8B5CF6" style="background:#8B5CF6;"></div>
+        <div class="color-swatch" data-color="#EC4899" style="background:#EC4899;"></div>
+        <div class="color-swatch" data-color="#10B981" style="background:#10B981;"></div>
+        <div class="color-swatch" data-color="#F59E0B" style="background:#F59E0B;"></div>
+        <div class="color-swatch" data-color="#EF4444" style="background:#EF4444;"></div>
+      </div>
     </div>
-  </div>
+
+    <div class="settings-card">
+      <div class="settings-card__title"><i data-lucide="type" style="width:20px;height:20px;color:var(--accent-secondary);"></i> Taille du texte</div>
+      <div class="settings-card__desc">Ajustez la taille du texte de l'interface</div>
+      <div style="display:flex;align-items:center;gap:var(--space-4);max-width:300px;">
+        <span class="text-xs">A</span>
+        <input type="range" id="font-size-range" style="flex:1;accent-color:var(--accent-primary);" min="12" max="20" value="<?= intval($prefs['font_size'] ?? 14) ?>">
+        <span style="font-size:1.25rem;font-weight:600;">A</span>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width:fit-content;"><i data-lucide="save" style="width:16px;height:16px;"></i> Enregistrer l'apparence</button>
+  </form>
 </div>
 
 <!-- ═══ NOTIFICATIONS ═══ -->
@@ -187,31 +399,44 @@ if (!isset($content)) {
       <div class="setting-row__info"><div class="setting-row__label">Newsletter Aptus</div><div class="setting-row__hint">Actualités, conseils carrière et tendances du marché</div></div>
       <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
     </div>
+    <p style="font-size:var(--fs-xs);color:var(--text-tertiary);margin-top:var(--space-4);"><i data-lucide="info" style="width:14px;height:14px;vertical-align:-2px;"></i> Les notifications ne sont pas encore disponibles.</p>
   </div>
 </div>
 
 <!-- ═══ PRIVACY ═══ -->
 <div class="settings-section" id="tab-privacy">
-  <div class="settings-card">
-    <div class="settings-card__title"><i data-lucide="eye" style="width:20px;height:20px;color:var(--accent-primary);"></i> Visibilité du profil</div>
-    <div class="settings-card__desc">Contrôlez qui peut voir vos informations</div>
-    <div class="setting-row">
-      <div class="setting-row__info"><div class="setting-row__label">Profil public</div><div class="setting-row__hint">Votre profil est visible par les recruteurs</div></div>
-      <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+  <form method="POST" action="">
+    <input type="hidden" name="action" value="update_privacy">
+    <div class="settings-card">
+      <div class="settings-card__title"><i data-lucide="eye" style="width:20px;height:20px;color:var(--accent-primary);"></i> Visibilité du profil</div>
+      <div class="settings-card__desc">Contrôlez qui peut voir vos informations</div>
+      <div class="setting-row">
+        <div class="setting-row__info"><div class="setting-row__label">Profil public</div><div class="setting-row__hint">Votre profil est visible par les recruteurs</div></div>
+        <label class="toggle-switch <?= !empty($prefs['privacy_public']) ? 'active' : '' ?>">
+          <input type="checkbox" name="privacy_public" value="1" <?= !empty($prefs['privacy_public']) ? 'checked' : '' ?> style="display:none;" onchange="this.parentElement.classList.toggle('active', this.checked)">
+        </label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-row__info"><div class="setting-row__label">Afficher l'email</div><div class="setting-row__hint">Montrer votre adresse email sur votre profil</div></div>
+        <label class="toggle-switch <?= !empty($prefs['privacy_email']) ? 'active' : '' ?>">
+          <input type="checkbox" name="privacy_email" value="1" <?= !empty($prefs['privacy_email']) ? 'checked' : '' ?> style="display:none;" onchange="this.parentElement.classList.toggle('active', this.checked)">
+        </label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-row__info"><div class="setting-row__label">Afficher le téléphone</div><div class="setting-row__hint">Montrer votre numéro de téléphone sur votre profil</div></div>
+        <label class="toggle-switch <?= !empty($prefs['privacy_phone']) ? 'active' : '' ?>">
+          <input type="checkbox" name="privacy_phone" value="1" <?= !empty($prefs['privacy_phone']) ? 'checked' : '' ?> style="display:none;" onchange="this.parentElement.classList.toggle('active', this.checked)">
+        </label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-row__info"><div class="setting-row__label">Recherche par les recruteurs</div><div class="setting-row__hint">Permettre aux entreprises de vous trouver par recherche</div></div>
+        <label class="toggle-switch <?= !empty($prefs['privacy_search']) ? 'active' : '' ?>">
+          <input type="checkbox" name="privacy_search" value="1" <?= !empty($prefs['privacy_search']) ? 'checked' : '' ?> style="display:none;" onchange="this.parentElement.classList.toggle('active', this.checked)">
+        </label>
+      </div>
     </div>
-    <div class="setting-row">
-      <div class="setting-row__info"><div class="setting-row__label">Afficher l'email</div><div class="setting-row__hint">Montrer votre adresse email sur votre profil</div></div>
-      <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
-    </div>
-    <div class="setting-row">
-      <div class="setting-row__info"><div class="setting-row__label">Afficher le téléphone</div><div class="setting-row__hint">Montrer votre numéro de téléphone sur votre profil</div></div>
-      <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
-    </div>
-    <div class="setting-row">
-      <div class="setting-row__info"><div class="setting-row__label">Recherche par les recruteurs</div><div class="setting-row__hint">Permettre aux entreprises de vous trouver par recherche</div></div>
-      <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
-    </div>
-  </div>
+    <button type="submit" class="btn btn-primary" style="width:fit-content;margin-top:var(--space-3);"><i data-lucide="save" style="width:16px;height:16px;"></i> Enregistrer la confidentialité</button>
+  </form>
 </div>
 
 <!-- ═══ SECURITY ═══ -->
@@ -219,21 +444,24 @@ if (!isset($content)) {
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="key" style="width:20px;height:20px;color:var(--stat-orange);"></i> Mot de passe</div>
     <div class="settings-card__desc">Modifiez votre mot de passe de connexion</div>
-    <div style="display:grid;grid-template-columns:1fr;gap:var(--space-4);max-width:400px;">
-      <div class="form-group">
-        <label class="form-label">Mot de passe actuel</label>
-        <div class="input-icon-wrapper"><i data-lucide="lock" style="width:18px;height:18px;"></i><input type="password" class="input" placeholder="••••••••"></div>
+    <form method="POST" action="">
+      <input type="hidden" name="action" value="change_password">
+      <div style="display:grid;grid-template-columns:1fr;gap:var(--space-4);max-width:400px;">
+        <div class="form-group">
+          <label class="form-label">Mot de passe actuel</label>
+          <div class="input-icon-wrapper"><i data-lucide="lock" style="width:18px;height:18px;"></i><input type="password" name="current_password" class="input" placeholder="••••••••" required></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nouveau mot de passe</label>
+          <div class="input-icon-wrapper"><i data-lucide="lock" style="width:18px;height:18px;"></i><input type="password" name="new_password" class="input" placeholder="Min. 8 caractères" required></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmer le nouveau mot de passe</label>
+          <div class="input-icon-wrapper"><i data-lucide="lock" style="width:18px;height:18px;"></i><input type="password" name="confirm_password" class="input" placeholder="Confirmez" required></div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:fit-content;"><i data-lucide="check" style="width:16px;height:16px;"></i> Mettre à jour</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Nouveau mot de passe</label>
-        <div class="input-icon-wrapper"><i data-lucide="lock" style="width:18px;height:18px;"></i><input type="password" class="input" placeholder="Min. 8 caractères"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Confirmer le nouveau mot de passe</label>
-        <div class="input-icon-wrapper"><i data-lucide="lock" style="width:18px;height:18px;"></i><input type="password" class="input" placeholder="Confirmez"></div>
-      </div>
-      <button class="btn btn-primary" style="width:fit-content;"><i data-lucide="check" style="width:16px;height:16px;"></i> Mettre à jour</button>
-    </div>
+    </form>
   </div>
 
   <div class="settings-card">
@@ -267,6 +495,7 @@ if (!isset($content)) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // ─── Tabs Navigation ───
   var navItems = document.querySelectorAll('.settings-nav__item');
   navItems.forEach(function(item) {
     item.addEventListener('click', function() {
@@ -275,6 +504,85 @@ document.addEventListener('DOMContentLoaded', function() {
       item.classList.add('active');
       var tab = document.getElementById('tab-' + item.getAttribute('data-tab'));
       if (tab) tab.classList.add('active');
+    });
+  });
+
+  // Restore active tab after form submission (set by PHP)
+  var serverTab = '<?= $activeTab ?>';
+  if (serverTab && serverTab !== 'general') {
+    var actBtn = document.querySelector('.settings-nav__item[data-tab="' + serverTab + '"]');
+    if (actBtn) actBtn.click();
+  }
+
+  // ─── Appearance — Theme ───
+  var themeSelects = document.querySelectorAll('.theme-select');
+  var prefThemeInput = document.getElementById('pref-theme');
+  var currentTheme = prefThemeInput ? prefThemeInput.value : (localStorage.getItem('theme') || 'dark');
+
+  function applyThemeUI() {
+    themeSelects.forEach(function(el) {
+      if (el.dataset.theme === currentTheme) {
+        el.style.borderColor = 'var(--accent-primary)';
+        el.querySelector('i').style.color = 'var(--accent-primary)';
+      } else {
+        el.style.borderColor = 'var(--border-color)';
+        el.querySelector('i').style.color = 'var(--text-secondary)';
+      }
+    });
+  }
+  applyThemeUI();
+
+  themeSelects.forEach(function(el) {
+    el.addEventListener('click', function() {
+      currentTheme = this.dataset.theme;
+      localStorage.setItem('theme', currentTheme);
+      document.documentElement.setAttribute('data-theme', currentTheme);
+      if (prefThemeInput) prefThemeInput.value = currentTheme;
+      applyThemeUI();
+    });
+  });
+
+  // ─── Appearance — Color ───
+  var colorSwatches = document.querySelectorAll('.color-swatch');
+  var prefColorInput = document.getElementById('pref-color');
+  var currentColor = prefColorInput ? prefColorInput.value : (localStorage.getItem('primaryColor') || '#6366f1');
+
+  function applyColorUI() {
+    colorSwatches.forEach(function(el) {
+      el.classList.toggle('active', el.dataset.color === currentColor);
+    });
+  }
+  applyColorUI();
+
+  colorSwatches.forEach(function(el) {
+    el.addEventListener('click', function() {
+      currentColor = this.dataset.color;
+      localStorage.setItem('primaryColor', currentColor);
+      document.documentElement.style.setProperty('--accent-primary', currentColor);
+      if (prefColorInput) prefColorInput.value = currentColor;
+      applyColorUI();
+    });
+  });
+
+  // ─── Appearance — Font Size ───
+  var fontSizeRange = document.getElementById('font-size-range');
+  var prefFontSizeInput = document.getElementById('pref-fontsize');
+  if (fontSizeRange) {
+    fontSizeRange.addEventListener('input', function() {
+      document.documentElement.style.fontSize = this.value + 'px';
+      localStorage.setItem('fontSize', this.value);
+      if (prefFontSizeInput) prefFontSizeInput.value = this.value;
+    });
+  }
+
+  // ─── Privacy — Toggle click on label ───
+  document.querySelectorAll('#tab-privacy .toggle-switch').forEach(function(toggle) {
+    toggle.addEventListener('click', function() {
+      var cb = this.querySelector('input[type="checkbox"]');
+      if (cb) {
+        cb.checked = !cb.checked;
+        this.classList.toggle('active', cb.checked);
+      }
     });
   });
 });
