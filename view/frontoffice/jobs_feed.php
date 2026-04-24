@@ -67,11 +67,37 @@ if (!isset($content)) {
 }
 ?>
 <!-- Included inside layout_front.php -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+<style>
+/* Custom style to integrate Quill nicely inside our modal */
+.ql-toolbar.ql-snow {
+    border: 1px solid #f0f0f5;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    background: #fcfcfc;
+}
+.ql-container.ql-snow {
+    border: 1px solid #f0f0f5;
+    border-top: none;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+/* Empêche le texte de déborder horizontalement et ajoute une scrollbar verticale si trop long */
+.ql-editor {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+}
+</style>
 
 <div class="page-header">
   <h1 class="page-header__title">
     <i data-lucide="search" style="width:28px;height:28px;color:var(--accent-primary);"></i>
-    Browse Jobs &amp; Tasks
+    Nos offres &amp; Tasks
   </h1>
   <p class="page-header__subtitle">Trouvez l'offre qui correspond à votre profil</p>
 </div>
@@ -163,6 +189,7 @@ if (!isset($content)) {
           'competences' => $offreItem['competences_requises'],
           'experience' => $offreItem['experience_requise'],
           'salaire' => $offreItem['salaire'],
+          'question' => $offreItem['question'] ?? 'Décrivez succinctement votre parcours et vos motivations...',
           'date_pub' => $offreItem['date_publication'],
           'img_post' => $offreItem['img_post'] ?? ''
       ])); ?>)">
@@ -201,9 +228,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 var currentOfferId = null;
+var currentOfferTitle = '';
+var currentOfferQuestion = '';
 
 function openOfferModal(data) {
     currentOfferId = data.id;
+    currentOfferTitle = data.titre || 'Poste sans titre';
+    currentOfferQuestion = data.question || 'Décrivez succinctement votre parcours et vos motivations...';
     document.getElementById('modal-title').innerText = data.titre || 'Titre inconnu';
     document.getElementById('modal-company').innerText = (data.nom_entreprise || 'Entreprise Inconnue') + ' • ' + (data.domaine || '');
     document.getElementById('modal-desc').innerText = data.description || 'Aucune description fournie.';
@@ -237,6 +268,16 @@ function openApplyModal() {
 
     // Mettre l'ID de l'offre dans le form
     document.getElementById('apply-id-offre').value = currentOfferId;
+    
+    // Mettre à jour le titre et la question du modal
+    var titleEl = document.getElementById('apply-modal-title');
+    if (titleEl) {
+        titleEl.innerText = "Nouvelle Candidature - " + currentOfferTitle;
+    }
+    var questionEl = document.getElementById('apply-modal-question-label');
+    if (questionEl) {
+        questionEl.innerText = currentOfferQuestion;
+    }
 
     // Ouvrir le nouveau modal
     var applyOverlay = document.getElementById('apply-modal');
@@ -298,20 +339,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- ═══ Modal Formulaire de Candidature ═══ -->
 <div class="modal-overlay" id="apply-modal">
-  <div class="modal" style="max-width:850px; padding: 2.5rem; border-radius: 12px; background: #ffffff; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);">
+<div class="modal" style="max-width:1150px; padding: 2.5rem; border-radius: 12px; background: #ffffff; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);">
     
     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2.5rem; border-bottom: 1px solid #f0f0f0; padding-bottom: 1rem;">
-        <h2 style="font-size:1.6rem; font-weight:700; color:#1a1a2e; margin:0;">Nouvelle Candidature</h2>
+        <h2 id="apply-modal-title" style="font-size:1.6rem; font-weight:700; color:#1a1a2e; margin:0;">Nouvelle Candidature</h2>
         <button type="button" onclick="closeApplyModal()" style="background:none; border:none; cursor:pointer; color:#999;"><i data-lucide="x" style="width:24px;height:24px;"></i></button>
     </div>
 
     <!-- Formulaire (aspect sérieux, bords fins) -->
-    <form method="POST" action="jobs_feed.php" enctype="multipart/form-data">
+    <form id="apply-form" method="POST" action="jobs_feed.php" enctype="multipart/form-data">
       <input type="hidden" name="id_offre" id="apply-id-offre" value="">
       
       <div style="display: flex; gap: 2rem;">
         <!-- Colonne Gauche -->
-        <div style="flex:1;">
+        <div style="flex:0 0 32%;">
             <div style="margin-bottom: 1.5rem;">
                 <label style="display:block; font-size:0.85rem; font-weight:600; color:#4a4a68; margin-bottom:0.5rem;">Nom de famille <span style="color:#e94560;">*</span></label>
                 <input type="text" name="nom" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:#fafafa;" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='#e0e0e0'">
@@ -326,21 +367,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 <label style="display:block; font-size:0.85rem; font-weight:600; color:#4a4a68; margin-bottom:0.5rem;">Adresse Email <span style="color:#e94560;">*</span></label>
                 <input type="email" name="email" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:#fafafa;" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='#e0e0e0'">
             </div>
+            
+            <div style="margin-bottom: 1.5rem; padding: 1.25rem 1rem; border: 1px dashed #d0d0e0; border-radius: 8px; background: #fafafa; text-align: center;">
+                <i data-lucide="file-up" style="width:24px;height:24px;color:#a0a0b0; margin-bottom: 0.5rem;"></i>
+                <p style="font-size: 0.75rem; color: #666; margin-bottom: 0.75rem;">Téléchargez votre CV (PDF, DOCX)</p>
+                <input type="file" name="cv_cand" accept=".pdf,.doc,.docx" required style="max-width: 100%; font-size:0.8rem; outline:none;">
+            </div>
         </div>
 
         <!-- Colonne Droite (Façon panneau map dans le screenshot) -->
         <div style="flex:1;">
             <div style="height: 100%; border: 1px solid #f0f0f5; border-radius: 10px; padding: 1.5rem; background: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
-                <label style="display:block; font-size:0.75rem; font-weight:700; color:#4a4a68; margin-bottom:1rem; text-align:center; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid #f0f0f5; padding-bottom:0.5rem;">Documents & Motivation</label>
+                <label id="apply-modal-question-label" style="display:block; font-size:0.9rem; font-weight:700; color:#4a4a68; margin-bottom:1rem; text-align:center; letter-spacing:0.5px; border-bottom:1px solid #f0f0f5; padding-bottom:0.75rem;">Vos Motivations</label>
                 
-                <div style="margin-bottom: 1.5rem; flex:1;">
-                    <textarea name="reponses_ques" placeholder="Décrivez succinctement votre parcours et vos motivations..." required style="width:100%; height:100%; min-height:80px; padding: 0.75rem; border: none; background: #fdfdfd; border-radius: 6px; font-size:0.9rem; resize:none; outline:none; box-shadow: inset 0 0 0 1px #f0f0f5;"></textarea>
-                </div>
-
-                <div style="padding: 1.25rem 1rem; border: 1px dashed #d0d0e0; border-radius: 8px; background: #fafafa; text-align: center;">
-                    <i data-lucide="file-up" style="width:24px;height:24px;color:#a0a0b0; margin-bottom: 0.5rem;"></i>
-                    <p style="font-size: 0.75rem; color: #666; margin-bottom: 0.75rem;">Formats acceptés : PDF, DOCX</p>
-                    <input type="file" name="cv_cand" accept=".pdf,.doc,.docx" required style="max-width: 100%; font-size:0.8rem; outline:none;">
+                <div style="margin-bottom: 0; flex:1; display:flex; flex-direction:column; min-height:180px;">
+                    <input type="hidden" name="reponses_ques" id="hidden_reponses_ques">
+                    <div id="quill-editor" style="flex:1; background: #fdfdfd; font-size:1rem;"></div>
                 </div>
             </div>
         </div>
@@ -366,4 +408,44 @@ function closeApplyModal() {
 
 // Ensure close clicking outside applies to the new modal too if needed
 // Or it's already handled by CSS if there's no JS specifically binding it
+
+document.addEventListener('DOMContentLoaded', function() {
+    var lucideScript = document.createElement('script');
+    lucideScript.src = "https://unpkg.com/lucide@latest";
+    lucideScript.onload = function() {
+        lucide.createIcons();
+    };
+    document.head.appendChild(lucideScript);
+    
+    // Initialisation de Quill
+    if(document.getElementById('quill-editor')) {
+        var quill = new Quill('#quill-editor', {
+            theme: 'snow',
+            placeholder: 'Saisissez votre réponse ici...',
+            modules: {
+                toolbar: [
+                    [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'align': [] }],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Copier le contenu HTML vers l'input caché lors du submit
+        var form = document.getElementById('apply-form');
+        if(form) {
+            form.addEventListener('submit', function(e) {
+                var hiddenInput = document.getElementById('hidden_reponses_ques');
+                var rawText = quill.getText().trim();
+                if(rawText.length === 0) {
+                    hiddenInput.value = "";
+                } else {
+                    hiddenInput.value = quill.root.innerHTML;
+                }
+            });
+        }
+    }
+});
 </script>

@@ -150,8 +150,46 @@ if (!isset($content)) {
   <p class="page-header__subtitle">Gérez vos offres d'emploi publiées</p>
 </div>
 
-<div class="hr-layout">
-  <!-- ═══ MAIN CONTENT ═══ -->
+<div class="hr-layout" style="<?php echo ($action === 'list') ? 'grid-template-columns: 300px 1fr;' : 'grid-template-columns: 1fr;'; ?>">
+  <?php if ($action === 'list'): ?>
+  <!-- ═══ SIDEBAR (Gauche) ═══ -->
+  <aside class="hr-sidebar">
+    
+      <a href="hr_posts.php?action=add" class="text-decoration-none" style="display: flex !important; align-items: center; justify-content: center; gap: 0.75rem; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); color: #FFFFFF; border: none; border-radius: 12px; font-weight: 700; padding: 1rem; box-shadow: 0 4px 20px rgba(168, 100, 228, 0.3); transition: all 0.3s; cursor: pointer; width: 100%; font-size: 1rem; box-sizing: border-box;" 
+         onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(168, 100, 228, 0.4)';" 
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(168, 100, 228, 0.3)';">
+        <i data-lucide="plus" style="width:20px;height:20px;"></i> 
+        <span>Poster une offre</span>
+      </a>
+    
+
+    <!-- ═══ appel fonction filtre_statut ═══ -->
+    <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+      <form method="GET" action="hr_posts.php" style="margin: 0;">
+          <?php if(!empty($_GET['q'])): ?>
+              <input type="hidden" name="q" value="<?php echo htmlspecialchars($_GET['q']); ?>">
+          <?php endif; ?>
+          <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">STATUT</h4>
+          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+              <label style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (empty($_GET['filter_status'])) ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (empty($_GET['filter_status'])) ? '600' : '500'; ?>; transition: all 0.2s;">
+                  <input type="radio" name="filter_status" value="" onchange="this.form.submit()" <?php echo (empty($_GET['filter_status'])) ? 'checked' : ''; ?> style="display:none;">
+                  Tous
+              </label>
+              <label style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? '600' : '500'; ?>; transition: all 0.2s;">
+                  <input type="radio" name="filter_status" value="Actif" onchange="this.form.submit()" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'checked' : ''; ?> style="display:none;">
+                  Actif
+              </label>
+              <label style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? '600' : '500'; ?>; transition: all 0.2s;">
+                  <input type="radio" name="filter_status" value="Expiré" onchange="this.form.submit()" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'checked' : ''; ?> style="display:none;">
+                  Expiré
+              </label>
+          </div>
+      </form>
+    </div>
+    </aside>
+  <?php endif; ?>
+
+  <!-- ═══ MAIN CONTENT (Droite) ═══ -->
   <div>
     <?php if ($action === 'list'): ?>
       <?php 
@@ -166,12 +204,49 @@ if (!isset($content)) {
         }
         $count = $listeOffres->rowCount();
       ?>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+          <div class="results-info" style="background: var(--bg-card); padding: 0.6rem 1.25rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; align-items: center; gap: 0.6rem; color: var(--text-primary); font-weight: 500; font-size: 0.95rem;">
+            <span style="color: #0ea5e9; font-weight: 700; font-size: 1.1rem;"><?php echo $count; ?></span>
+            <span>postes publiés au total</span>
+          </div>
+
+          <!-- ═══ VIEW TOGGLE ═══ -->
+          <div style="background: var(--bg-card); padding: 4px; border-radius: 12px; display: flex; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+              <button onclick="setViewMode('grid')" id="view-grid-btn" title="Vue Grille" style="border: none; width: 38px; height: 38px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); color: white;">
+                  <i data-lucide="layout-grid" style="width: 18px; height: 18px;"></i>
+              </button>
+              <button onclick="setViewMode('list')" id="view-list-btn" title="Vue Liste" style="border: none; width: 38px; height: 38px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: transparent; color: var(--text-tertiary);">
+                  <i data-lucide="list" style="width: 18px; height: 18px;"></i>
+              </button>
+          </div>
+      </div>
       
-      <div class="results-info mb-4">
-        <strong><?php echo $count; ?></strong> postes publiés
+      <!-- ═══ BARRE DE RECHERCHE (AU-DESSUS DES POSTS) ═══ -->
+      <div style="background: var(--bg-card); border-radius: 20px; padding: 0.75rem 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 2rem; border: 1px solid var(--border-color);">
+          <form method="GET" action="hr_posts.php" style="display: flex; align-items: center; gap: 1rem; margin: 0;">
+              <div style="flex: 1; position: relative; display: flex; align-items: center;">
+                  <i data-lucide="search" style="position: absolute; left: 1.25rem; width: 20px; height: 20px; color: var(--text-tertiary);"></i>
+                  <input type="text" name="q" placeholder="Rechercher une offre..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" 
+                         style="width: 100%; padding: 1rem 1rem 1rem 3.5rem; border: 1px solid var(--border-color); border-radius: 14px; font-size: 1rem; outline: none; transition: all 0.2s; background: var(--bg-secondary); color: var(--text-primary);"
+                         onfocus="this.style.borderColor='var(--accent-primary)'; this.style.background='var(--bg-card)';" 
+                         onblur="this.style.borderColor='var(--border-color)'; this.style.background='var(--bg-secondary)';"
+                         class="search-input-field">
+              </div>
+              <button type="submit" style="width: 52px; height: 52px; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); border: none; border-radius: 14px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: all 0.2s;" 
+                      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(168, 100, 228, 0.4)';" 
+                      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(168, 100, 228, 0.3)';">
+                  <i data-lucide="search" style="width: 22px; height: 22px;"></i>
+              </button>
+              <?php if(!empty($_GET['filter_status'])): ?>
+                  <input type="hidden" name="filter_status" value="<?php echo htmlspecialchars($_GET['filter_status']); ?>">
+              <?php endif; ?>
+          </form>
       </div>
 
-      <div class="hr-posts-grid stagger">
+      
+
+      <div class="hr-posts-grid stagger" id="posts-container">
         <?php foreach ($listeOffres as $offreItem): ?>
         <div class="hr-post-card animate-on-scroll" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
           <?php if (!empty($offreItem['img_post'])): ?>
@@ -189,24 +264,37 @@ if (!isset($content)) {
                </div>
             </div>
             
-            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
-                <h3 class="hr-post-card__title" style="margin-top: 0;"><?php echo htmlspecialchars($offreItem['titre'] ?? ''); ?></h3>
-                <p class="text-sm text-secondary mb-3" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"><?php echo htmlspecialchars($offreItem['description'] ?? ''); ?></p>
+            <div style="padding: 0.75rem 1.5rem; flex: 1; display: flex; flex-direction: column;" class="hr-post-card__content">
+                <div class="hr-post-card__main-info">
+                    <span class="post-id-badge">#<?php echo $offreItem['id_offre']; ?></span>
+                    <h3 class="hr-post-card__title"><?php echo htmlspecialchars($offreItem['titre'] ?? ''); ?></h3>
+                    <div class="status-badge-inline">
+                        <?php if (isset($offreItem['statut']) && $offreItem['statut'] === 'Expiré'): ?>
+                            <span class="badge badge-danger">Expiré</span>
+                        <?php else: ?>
+                            <span class="badge badge-success">Actif</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <p class="text-sm text-secondary hr-post-card__description"><?php echo htmlspecialchars($offreItem['description'] ?? ''); ?></p>
+                
                 <div class="hr-post-card__stats">
                     <span class="hr-post-card__stat" title="Domaine">
-                    <i data-lucide="folder" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['domaine'] ?? ''); ?>
-                    </span>
-                    <span class="hr-post-card__stat" title="Date de Publication">
-                    <i data-lucide="calendar" style="width:14px;height:14px;"></i> Publié: <?php echo htmlspecialchars($offreItem['date_publication'] ?? ''); ?>
+                        <i data-lucide="folder"></i> <?php echo htmlspecialchars($offreItem['domaine'] ?? ''); ?>
                     </span>
                     <span class="hr-post-card__stat" title="Salaire">
-                    <i data-lucide="coins" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['salaire'] ?? ''); ?> TND
+                        <i data-lucide="coins"></i> <span class="salary-amount"><?php echo htmlspecialchars($offreItem['salaire'] ?? ''); ?> TND</span>
+                    </span>
+                    <span class="hr-post-card__stat date-stat" title="Date de Publication">
+                        <i data-lucide="calendar"></i> <?php echo htmlspecialchars($offreItem['date_publication'] ?? ''); ?>
                     </span>
                 </div>
-                <div class="hr-post-card__actions" style="margin-top: auto; padding-top: 1rem;">
-                    <a href="hr_posts.php?action=edit&id=<?php echo $offreItem['id_offre']; ?>" class="btn btn-sm btn-secondary text-decoration-none d-flex align-items-center gap-1"><i data-lucide="pencil" style="width:14px;height:14px;"></i> Éditer</a>
-                    <button class="btn btn-sm btn-ghost d-flex align-items-center gap-1"><i data-lucide="users" style="width:14px;height:14px;"></i> Candidats</button>
-                    <button type="button" onclick="confirmDelete(<?php echo $offreItem['id_offre']; ?>, '<?php echo htmlspecialchars(addslashes($offreItem['titre'] ?? '')); ?>')" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary); margin-left: auto;"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+
+                <div class="hr-post-card__actions">
+                    <a href="hr_posts.php?action=edit&id=<?php echo $offreItem['id_offre']; ?>" class="btn-icon" title="Éditer"><i data-lucide="pencil"></i></a>
+                    <button class="btn-icon" title="Candidats"><i data-lucide="users"></i></button>
+                    <button type="button" onclick="confirmDelete(<?php echo $offreItem['id_offre']; ?>, '<?php echo htmlspecialchars(addslashes($offreItem['titre'] ?? '')); ?>')" class="btn-icon btn-icon--danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
                 </div>
             </div>
         </div>
@@ -234,168 +322,374 @@ if (!isset($content)) {
             return $default;
         }
       ?>
-      <div class="form-container" style="background:var(--surface-1); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);">
-        <h2 class="mb-4 text-xl fw-bold d-flex align-items-center gap-2">
-            <i data-lucide="<?php echo $action === 'edit' ? 'pencil' : 'plus-circle'; ?>" style="width:24px;height:24px;color:var(--accent-primary);"></i>
-            <?php echo $action === 'edit' ? 'Modifier l\'offre' : 'Nouvelle offre'; ?>
-        </h2>
+      <div class="form-container" style="background: var(--bg-card); padding: 2.5rem 3rem; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.04); max-width: 1100px; margin: 1.5rem auto;">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: 0 10px 20px rgba(168, 100, 228, 0.2);">
+                <i data-lucide="<?php echo $action === 'edit' ? 'pencil' : 'plus'; ?>" style="width:32px;height:32px;color:white;"></i>
+            </div>
+            <h2 style="font-size: 1.75rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">
+                <?php echo $action === 'edit' ? 'Modifier l\'offre' : 'Publier une nouvelle offre'; ?>
+            </h2>
+            <p style="color: var(--text-tertiary); font-size: 1rem;">Remplissez les détails ci-dessous pour attirer les meilleurs candidats.</p>
+        </div>
         
         <?php if (!empty($errors)): ?>
-        <div style="background: rgba(220, 38, 38, 0.1); border-left: 4px solid #dc2626; color: #dc2626; padding: 1rem; border-radius: 6px; margin-bottom: 2rem;">
-            <strong>Erreur !</strong> Veuillez corriger les erreurs dans le formulaire ci-dessous.
+        <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: 1.25rem; border-radius: 12px; margin-bottom: 2.5rem; display: flex; align-items: center; gap: 1rem;">
+            <i data-lucide="alert-circle" style="width:24px;height:24px;"></i>
+            <span style="font-weight: 500;">Certains champs nécessitent votre attention.</span>
         </div>
         <?php endif; ?>
 
-        <!-- Validation HTML5 désactivée via la suppression des attributs required -->
         <form method="POST" enctype="multipart/form-data" action="hr_posts.php?<?php echo ($action === 'edit' && isset($_GET['id'])) ? 'action=edit&id='.$_GET['id'] : 'action=add'; ?>">
             
-            <div class="form-group mb-3">
-                <label class="form-label" for="titre">Titre de l'offre</label>
-                <input type="text" class="input <?php echo isset($errors['titre']) ? 'has-error' : ''; ?>" name="titre" id="titre" value="<?php echo htmlspecialchars(val('titre', $form_data, $offreEdit)); ?>">
-                <?php if (isset($errors['titre'])): ?>
-                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['titre']; ?></span>
-                <?php endif; ?>
-            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start;">
+                <!-- COLONNE GAUCHE -->
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                    <!-- SECTION 1: INFORMATIONS DE BASE -->
+                    <div class="form-section" style="border-bottom: 1px solid var(--border-color); padding-bottom: 2rem;">
+                        <h4 class="form-section-title"><i data-lucide="info" style="width:18px;height:18px;"></i> Informations Générales</h4>
+                        
+                        <div class="form-group mb-4">
+                            <label class="form-label" for="titre">Titre de l'offre</label>
+                            <input type="text" class="input <?php echo isset($errors['titre']) ? 'has-error' : ''; ?>" name="titre" id="titre" placeholder="ex: Développeur Full Stack Senior" value="<?php echo htmlspecialchars(val('titre', $form_data, $offreEdit)); ?>">
+                            <?php if (isset($errors['titre'])): ?>
+                                <span class="error-msg"><?php echo $errors['titre']; ?></span>
+                            <?php endif; ?>
+                        </div>
 
-            <div class="form-group mb-3">
-                <label class="form-label" for="img_post">Image de couverture de l'offre (Optionnelle, Max 1Mo)</label>
-                <!-- Le champ accepte uniquement des images -->
-                <input type="file" class="input <?php echo isset($errors['img_post']) ? 'has-error' : ''; ?>" name="img_post" id="img_post" accept="image/*" style="padding: 10px;">
-                <?php if ($action === 'edit' && !empty($offreEdit['img_post'])): ?>
-                    <p class="text-sm text-secondary mt-1">Laissez vide pour conserver l'image actuelle.</p>
-                <?php endif; ?>
-                <?php if (isset($errors['img_post'])): ?>
-                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['img_post']; ?></span>
-                <?php endif; ?>
-            </div>
+                        <div class="form-group">
+                            <label class="form-label" for="img_post">Image de couverture</label>
+                            <div style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 1rem; text-align: center; background: var(--bg-secondary);">
+                                <input type="file" name="img_post" id="img_post" accept="image/*" style="width:100%; font-size: 0.85rem;">
+                            </div>
+                            <?php if ($action === 'edit' && !empty($offreEdit['img_post'])): ?>
+                                <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.5rem; padding:0.4rem; background:var(--bg-secondary); border-radius:8px;">
+                                    <img src="<?php echo htmlspecialchars($offreEdit['img_post']); ?>" style="width:30px;height:30px;border-radius:4px;object-fit:cover;">
+                                    <span style="font-size:0.75rem; color:var(--text-secondary);">Image actuelle</span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
 
-            <div class="form-group mb-3">
-                <label class="form-label" for="description">Description</label>
-                <textarea class="textarea <?php echo isset($errors['description']) ? 'has-error' : ''; ?>" name="description" id="description" rows="4"><?php echo htmlspecialchars(val('description', $form_data, $offreEdit)); ?></textarea>
-                <?php if (isset($errors['description'])): ?>
-                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['description']; ?></span>
-                <?php endif; ?>
-            </div>
+                    <!-- SECTION 2: DÉTAILS DU POSTE -->
+                    <div class="form-section">
+                        <h4 class="form-section-title"><i data-lucide="briefcase" style="width:18px;height:18px;"></i> Détails du Poste</h4>
+                        
+                        <div class="form-group mb-4">
+                            <label class="form-label" for="description">Description du poste</label>
+                            <textarea class="textarea <?php echo isset($errors['description']) ? 'has-error' : ''; ?>" name="description" id="description" rows="4" placeholder="Missions et responsabilités..."><?php echo htmlspecialchars(val('description', $form_data, $offreEdit)); ?></textarea>
+                            <?php if (isset($errors['description'])): ?>
+                                <span class="error-msg"><?php echo $errors['description']; ?></span>
+                            <?php endif; ?>
+                        </div>
 
-            <div style="display:flex; gap: 1rem;" class="mb-3">
-                <div class="form-group flex-1" style="flex:1;">
-                    <label class="form-label" for="domaine">Domaine</label>
-                    <input type="text" class="input <?php echo isset($errors['domaine']) ? 'has-error' : ''; ?>" name="domaine" id="domaine" value="<?php echo htmlspecialchars(val('domaine', $form_data, $offreEdit)); ?>">
-                    <?php if (isset($errors['domaine'])): ?>
-                        <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['domaine']; ?></span>
-                    <?php endif; ?>
+                        <div class="input-group-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="domaine">Domaine</label>
+                                <input type="text" class="input <?php echo isset($errors['domaine']) ? 'has-error' : ''; ?>" name="domaine" id="domaine" placeholder="ex: IT" value="<?php echo htmlspecialchars(val('domaine', $form_data, $offreEdit)); ?>">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="salaire">Salaire (TND)</label>
+                                <input type="text" class="input <?php echo isset($errors['salaire']) ? 'has-error' : ''; ?>" name="salaire" id="salaire" placeholder="ex: 2000" value="<?php echo htmlspecialchars(val('salaire', $form_data, $offreEdit)); ?>">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group flex-1" style="flex:1;">
-                    <label class="form-label" for="salaire">Salaire proposé (TND)</label>
-                    <!-- Garder type text autorise le JS/PHP à capturer des mauvaises saisies pour valider explicitement en PHP -->
-                    <input type="text" class="input <?php echo isset($errors['salaire']) ? 'has-error' : ''; ?>" name="salaire" id="salaire" value="<?php echo htmlspecialchars(val('salaire', $form_data, $offreEdit)); ?>">
-                    <?php if (isset($errors['salaire'])): ?>
-                        <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['salaire']; ?></span>
-                    <?php endif; ?>
+
+                <!-- COLONNE DROITE -->
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                    <!-- SECTION 3: PROFIL RECHERCHÉ -->
+                    <div class="form-section" style="border-bottom: 1px solid var(--border-color); padding-bottom: 2rem;">
+                        <h4 class="form-section-title"><i data-lucide="target" style="width:18px;height:18px;"></i> Profil Recherché</h4>
+                        
+                        <div class="form-group mb-4">
+                            <label class="form-label" for="competences_requises_visual">Compétences (Entrée)</label>
+                            <input type="hidden" name="competences_requises" id="competences_requises" value="<?php echo htmlspecialchars(val('competences_requises', $form_data, $offreEdit)); ?>">
+                            <div class="input" id="tags-container" style="display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.6rem; min-height: 45px; background: var(--bg-secondary);">
+                                <input type="text" id="competences_requises_visual" placeholder="Ajouter..." style="border: none; outline: none; background: transparent; flex: 1; min-width: 100px; font-size: 0.9rem;">
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label class="form-label" for="experience_requise">Expérience</label>
+                            <input type="text" class="input" name="experience_requise" id="experience_requise" placeholder="ex: 2 ans" value="<?php echo htmlspecialchars(val('experience_requise', $form_data, $offreEdit)); ?>">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="question">Question candidat</label>
+                            <input type="text" class="input" name="question" id="question" placeholder="ex: Disponibilité ?" value="<?php echo htmlspecialchars(val('question', $form_data, $offreEdit)); ?>">
+                        </div>
+                    </div>
+
+                    <!-- SECTION 4: CALENDRIER -->
+                    <div class="form-section">
+                        <h4 class="form-section-title"><i data-lucide="calendar" style="width:18px;height:18px;"></i> Calendrier</h4>
+                        
+                        <div class="input-group-grid">
+                            <div class="form-group">
+                                <label class="form-label">Publication</label>
+                                <?php $default_date_pub = ($action === 'edit' && $offreEdit) ? $offreEdit['date_publication'] : date('Y-m-d'); ?>
+                                <input type="date" class="input" name="date_publication" value="<?php echo htmlspecialchars($default_date_pub); ?>" readonly style="background:rgba(0,0,0,0.02); opacity:0.7;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="date_expir">Expiration</label>
+                                <input type="date" class="input <?php echo isset($errors['date_expir']) ? 'has-error' : ''; ?>" name="date_expir" id="date_expir" value="<?php echo htmlspecialchars(val('date_expir', $form_data, $offreEdit)); ?>">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="form-group mb-3">
-                <label class="form-label" for="competences_requises_visual">Compétences Requises (Appuyez sur Entrée)</label>
-                <input type="hidden" name="competences_requises" id="competences_requises" value="<?php echo htmlspecialchars(val('competences_requises', $form_data, $offreEdit)); ?>">
-                
-                <div class="input <?php echo isset($errors['competences_requises']) ? 'has-error' : ''; ?>" id="tags-container" style="display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; min-height: 45px; align-items: center; cursor: text;">
-                    <!-- Les tags seront insérés ici dynamiquement -->
-                    <input type="text" id="competences_requises_visual" placeholder="ex: PHP, HTML, CSS..." style="border: none; outline: none; background: transparent; flex: 1; min-width: 120px; color: var(--text-primary);">
-                </div>
-                <?php if (isset($errors['competences_requises'])): ?>
-                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['competences_requises']; ?></span>
-                <?php endif; ?>
-            </div>
-
-            <div class="form-group mb-3">
-                <label class="form-label" for="experience_requise">Expérience Requise</label>
-                <input type="text" class="input <?php echo isset($errors['experience_requise']) ? 'has-error' : ''; ?>" name="experience_requise" id="experience_requise" value="<?php echo htmlspecialchars(val('experience_requise', $form_data, $offreEdit)); ?>" placeholder="ex: 3 à 5 ans">
-                <?php if (isset($errors['experience_requise'])): ?>
-                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['experience_requise']; ?></span>
-                <?php endif; ?>
-            </div>
-
-            <div class="form-group mb-3">
-                <label class="form-label" for="question">Question Personnalisée pour les candidats</label>
-                <input type="text" class="input <?php echo isset($errors['question']) ? 'has-error' : ''; ?>" name="question" id="question" value="<?php echo htmlspecialchars(val('question', $form_data, $offreEdit)); ?>">
-                <?php if (isset($errors['question'])): ?>
-                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['question']; ?></span>
-                <?php endif; ?>
-            </div>
-
-            <div style="display:flex; gap: 1rem;" class="mb-3">
-                <div class="form-group flex-1" style="flex:1;">
-                    <label class="form-label" for="date_publication">Date de Publication (Automatique)</label>
-                    <?php 
-                        // Toujours figer à aujourd'hui si Add, ou l'ancienne date si Edit
-                        $default_date_pub = ($action === 'edit' && $offreEdit) ? $offreEdit['date_publication'] : date('Y-m-d'); 
-                    ?>
-                    <input type="date" class="input" name="date_publication" id="date_publication" value="<?php echo htmlspecialchars($default_date_pub); ?>" readonly style="background:var(--bg-body); cursor:not-allowed; color:var(--text-secondary); opacity:0.8;">
-                </div>
-                <div class="form-group flex-1" style="flex:1;">
-                    <label class="form-label" for="date_expir">Date d'Expiration</label>
-                    <input type="date" class="input <?php echo isset($errors['date_expir']) ? 'has-error' : ''; ?>" name="date_expir" id="date_expir" value="<?php echo htmlspecialchars(val('date_expir', $form_data, $offreEdit)); ?>">
-                    <?php if (isset($errors['date_expir'])): ?>
-                        <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['date_expir']; ?></span>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <div class="mt-4" style="display:flex; gap: 1rem;">
-                <button type="submit" name="<?php echo $action === 'edit' ? 'submit_update' : 'submit_add'; ?>" class="btn btn-primary d-flex align-items-center gap-2">
-                    <i data-lucide="check" style="width:16px;height:16px;"></i>
-                    <?php echo $action === 'edit' ? 'Mettre à jour' : 'Publier l\'offre'; ?>
+            <!-- ACTIONS -->
+            <div style="display:flex; gap: 1.5rem; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                <button type="submit" name="<?php echo $action === 'edit' ? 'submit_update' : 'submit_add'; ?>" style="flex: 2; padding: 1.25rem; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.75rem; box-shadow: 0 10px 25px rgba(168, 100, 228, 0.3); transition: all 0.3s;"
+                        onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 15px 30px rgba(168, 100, 228, 0.4)';" 
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 25px rgba(168, 100, 228, 0.3)';"
+                >
+                    <i data-lucide="send" style="width:20px;height:20px;"></i>
+                    <?php echo $action === 'edit' ? 'Enregistrer les modifications' : 'Publier l\'offre maintenant'; ?>
                 </button>
-                <a href="hr_posts.php" class="btn btn-secondary text-decoration-none">Annuler</a>
+                <a href="hr_posts.php" class="btn-cancel" style="flex: 1; padding: 1.25rem; background: var(--bg-secondary); color: var(--text-secondary); border-radius: 14px; text-decoration: none; font-weight: 600; text-align: center; border: 1px solid var(--border-color); transition: all 0.2s;"
+                   onmouseover="this.style.background='var(--border-color)';" onmouseout="this.style.background='var(--bg-secondary)';"
+                >Annuler</a>
             </div>
         </form>
+      </div>
       </div>
     <?php endif; ?>
   </div>
 
-  <!-- ═══ SIDEBAR ═══ -->
-  <aside class="hr-sidebar">
-    <?php if ($action === 'list'): ?>
-    <div class="hr-sidebar__section" style="text-align:center;">
-      <a href="hr_posts.php?action=add" class="btn btn-primary btn-lg w-full text-decoration-none d-flex align-items-center justify-content-center gap-2">
-        <i data-lucide="plus" style="width:18px;height:18px;"></i> Poster une offre
-      </a>
-    </div>
 
-    <div class="hr-sidebar__section">
-      <form method="GET" action="hr_posts.php" style="display:flex; gap:0.5rem; max-width:100%;">
-        <div class="search-bar" style="flex:1;">
-          <i data-lucide="search" style="width:16px;height:16px;"></i>
-          <input type="text" class="input" placeholder="Rechercher..." id="hr-search" name="q" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
-        </div>
-        <button type="submit" class="btn btn-primary" style="padding: 0.5rem 0.75rem;"><i data-lucide="search" style="width:14px;height:14px;"></i></button>
-      </form>
-    </div>
-<!-- ═══ appel fonction filtre_statut ═══ -->
-    <div class="hr-sidebar__section">
-      <form method="GET" action="hr_posts.php" style="margin: 0;">
-          <h4 class="text-sm fw-semibold mb-3">Filtrer par statut</h4>
-          <label class="cv-sidebar__option"><input type="radio" name="filter_status" value="" onchange="this.form.submit()" <?php echo (empty($_GET['filter_status']) || $_GET['filter_status'] === 'Tous statuts') ? 'checked' : ''; ?>> Tous</label>
-          <label class="cv-sidebar__option"><input type="radio" name="filter_status" value="Actif" onchange="this.form.submit()" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'checked' : ''; ?>> Actif</label>
-          <label class="cv-sidebar__option"><input type="radio" name="filter_status" value="Expiré" onchange="this.form.submit()" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'checked' : ''; ?>> Expiré</label>
-      </form>
-    </div>
-
-    <div class="hr-sidebar__section">
-      <h4 class="text-sm fw-semibold mb-3">Résumé</h4>
-      <div style="display:flex;flex-direction:column;gap:var(--space-3);">
-        <div class="flex items-center justify-between">
-          <span class="text-sm text-secondary">Postes total</span>
-          <span class="fw-semibold text-sm"><?php echo isset($count) ? $count : 0; ?></span>
-        </div>
-      </div>
-    </div>
-    <?php endif; ?>
-  </aside>
 </div>
 
-<!-- ═══ popup suppression ═══ -->
+<!-- ═══ Scripts & Styles pour le Toggle de Vue ═══ -->
+<style>
+.hr-post-card__description,
+.post-id-badge {
+    display: none !important;
+}
+
+/* ── FORM STYLES ── */
+.form-section-title {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: var(--accent-primary) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    margin-bottom: 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+}
+
+.form-section-title::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.input-group-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1.5rem !important;
+}
+
+.form-label {
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    margin-bottom: 0.6rem !important;
+    color: var(--text-primary) !important;
+    display: block !important;
+}
+
+.input, .textarea {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    padding: 0.85rem 1.1rem !important;
+    font-size: 0.95rem !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    color: var(--text-primary) !important;
+}
+
+.input:focus, .textarea:focus {
+    border-color: var(--accent-primary) !important;
+    background: var(--bg-card) !important;
+    box-shadow: 0 0 0 4px rgba(79, 181, 255, 0.1) !important;
+    outline: none !important;
+}
+
+.error-msg {
+    color: #ef4444;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.error-msg::before {
+    content: "•";
+    font-weight: bold;
+}
+
+.hr-post-card__actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    align-items: center;
+}
+
+.hr-post-card__actions .btn-icon--danger {
+    margin-left: auto;
+}
+
+.hr-posts-grid.view-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+}
+
+.hr-posts-grid.view-list .hr-post-card {
+    flex-direction: row !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    transition: all 0.2s ease !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+}
+
+.hr-posts-grid.view-list .hr-post-card:hover {
+    border-color: var(--accent-primary) !important;
+    transform: translateX(4px) !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
+}
+
+.hr-posts-grid.view-list .hr-post-card > div:first-child {
+    display: none !important; /* Hide image */
+}
+
+.hr-posts-grid.view-list .hr-post-card__content {
+    display: grid !important;
+    grid-template-columns: 2.5fr 1fr 1fr 0.8fr 140px !important;
+    align-items: center !important;
+    padding: 0.75rem 1.5rem !important;
+    gap: 1rem !important;
+}
+
+.hr-posts-grid.view-list .hr-post-card__main-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+}
+
+.hr-posts-grid.view-list .post-id-badge {
+    display: none !important;
+}
+
+.status-badge-inline {
+    display: none;
+}
+
+.hr-posts-grid.view-list .status-badge-inline {
+    display: block !important;
+}
+
+.hr-posts-grid.view-list .hr-post-card__title {
+    margin: 0 !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.hr-posts-grid.view-list .hr-post-card__description {
+    display: none !important;
+}
+
+.hr-posts-grid.view-list .hr-post-card__stats {
+    display: contents !important; /* Allow stats children to follow grid */
+}
+
+.hr-posts-grid.view-list .hr-post-card__stat {
+    font-size: 0.85rem !important;
+    color: var(--text-secondary) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+.hr-posts-grid.view-list .hr-post-card__stat i {
+    width: 14px !important;
+    height: 14px !important;
+    opacity: 0.6 !important;
+}
+
+.hr-posts-grid.view-list .salary-amount {
+    background: rgba(16, 185, 129, 0.1) !important;
+    color: #10b981 !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-weight: 600 !important;
+}
+
+.hr-posts-grid.view-list .date-stat {
+    color: var(--text-tertiary) !important;
+}
+
+.hr-posts-grid.view-list .hr-post-card__actions {
+    display: flex !important;
+    gap: 0.5rem !important;
+    justify-content: flex-end !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+/* Icon Button Style */
+.btn-icon {
+    width: 34px !important;
+    height: 34px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--border-color) !important;
+    background: var(--bg-card) !important;
+    color: var(--text-secondary) !important;
+    transition: all 0.2s !important;
+    cursor: pointer !important;
+}
+
+.btn-icon:hover {
+    background: var(--bg-secondary) !important;
+    color: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
+    transform: scale(1.05) !important;
+}
+
+.btn-icon--danger:hover {
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.05) !important;
+}
+
+.btn-icon i {
+    width: 16px !important;
+    height: 16px !important;
+}
+</style>
+
 <script>
 var deleteUrl = '';
 
@@ -419,6 +713,41 @@ function executeDelete() {
     }
 }
 
+function setViewMode(mode) {
+    const grid = document.getElementById('posts-container');
+    const gridBtn = document.getElementById('view-grid-btn');
+    const listBtn = document.getElementById('view-list-btn');
+    
+    if (!grid || !gridBtn || !listBtn) return;
+
+    if (mode === 'list') {
+        grid.classList.add('view-list');
+        listBtn.style.background = 'linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%)';
+        listBtn.style.color = 'white';
+        listBtn.style.boxShadow = '0 4px 12px rgba(168, 100, 228, 0.2)';
+        
+        gridBtn.style.background = 'transparent';
+        gridBtn.style.color = 'var(--text-tertiary)';
+        gridBtn.style.boxShadow = 'none';
+    } else {
+        grid.classList.remove('view-list');
+        gridBtn.style.background = 'linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%)';
+        gridBtn.style.color = 'white';
+        gridBtn.style.boxShadow = '0 4px 12px rgba(168, 100, 228, 0.2)';
+        
+        listBtn.style.background = 'transparent';
+        listBtn.style.color = 'var(--text-tertiary)';
+        listBtn.style.boxShadow = 'none';
+    }
+    localStorage.setItem('hr_posts_view_mode', mode);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const savedMode = localStorage.getItem('hr_posts_view_mode');
+    if (savedMode === 'list') {
+        setViewMode('list');
+    }
+});
 
 // Ensure the cancel button removes the classes (simulating the layout logic)
 document.addEventListener('DOMContentLoaded', function() {
