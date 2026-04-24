@@ -104,7 +104,33 @@ if (!isset($content)) {
                 <div class="step-name">Langues</div>
             </div>
         </div>
-        <div class="progress-section" style="margin-top:auto; padding-top:30px; border-top:1px solid var(--border-color);">
+
+        <!-- Dyslexia & Bionic Toggles -->
+        <div class="dyslexia-toggle-wrapper" style="margin-top: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color);">
+            <div class="tooltip-trigger" data-tooltip="Optimise la police (OpenDyslexic) et l'espacement pour réduire la fatigue visuelle." style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="glasses" style="color: var(--accent-primary); width: 20px;"></i>
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Mode Lecture</span>
+                </div>
+                <label class="premium-switch">
+                    <input type="checkbox" id="dyslexia-toggle" onchange="toggleDyslexiaMode(this.checked)">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            
+            <div class="tooltip-trigger" data-tooltip="Met en gras le début des mots pour scanner votre texte 3x plus vite et repérer les fautes." style="display: flex; align-items: center; justify-content: space-between; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="zap" style="color: var(--accent-primary); width: 20px;"></i>
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Mode Bionique</span>
+                </div>
+                <label class="premium-switch">
+                    <input type="checkbox" id="bionic-toggle" onchange="toggleBionicMode(this.checked)">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="progress-section tooltip-trigger" data-tooltip="Suivez votre progression en complétant chaque étape du CV." style="margin-top:auto; padding-top:30px; border-top:1px solid var(--border-color); cursor:help;">
             <div class="progress-info" style="margin-bottom:12px;">
                 <span style="font-weight:500; font-size:0.85rem; letter-spacing:0.5px; color:var(--text-primary)">CV Progression:</span>
             </div>
@@ -114,7 +140,6 @@ if (!isset($content)) {
                 </div>
                 <span id="progress-text" style="font-weight:800; color:var(--text-primary); font-size:1.1rem; min-width:50px;">0%</span>
             </div>
-            <p style="font-size:0.7rem; color:var(--text-tertiary); margin-top:15px; text-align:left; font-style:italic;">Suivez votre progression en complétant chaque étape.</p>
         </div>
     </aside>
 
@@ -380,11 +405,15 @@ const TEMPLATE_HTML = <?php echo json_encode($templateHtml); ?>;
 document.addEventListener('DOMContentLoaded', () => {
     initIframe();
     window.addEventListener('resize', scaleIframe);
+    updateProgress();
 
     // Initial Fill
     if (INITIAL_DATA) {
-        Object.entries({ 'nomComplet':'input-name', 'titrePoste':'input-title', 'email':'input-email', 'telephone':'input-phone', 'adresse':'input-location', 'resume':'input-summary' })
+        Object.entries({ 'nomComplet':'input-name', 'titrePoste':'input-title', 'email':'input-email', 'telephone':'input-phone', 'adresse':'input-location' })
             .forEach(([k, id]) => { const el = document.getElementById(id); if(el && INITIAL_DATA[k]) el.value = INITIAL_DATA[k]; });
+        
+        const sumEl = document.getElementById('input-summary');
+        if (sumEl && INITIAL_DATA['resume']) sumEl.innerHTML = INITIAL_DATA['resume'];
 
         // Parse Experience
         if (INITIAL_DATA.experience) {
@@ -546,14 +575,17 @@ function updateProgress() {
         if (i === 1) {
             done = ['input-name','input-title','input-email','input-phone','input-location'].every(id => {
                 const el = document.getElementById(id);
-                return el && el.value.trim().length >= 2;
+                return el && (el.value || "").trim().length >= 2;
             });
         }
-        else if (i === 2) done = document.getElementById('input-summary').value.trim().length > 10;
-        else if (i === 3) done = currentRoles.length > 0 && currentRoles.some(r => r.role.trim().length > 2);
-        else if (i === 4) done = currentSkills.length > 0;
-        else if (i === 5) done = currentDegrees.length > 0 && currentDegrees.some(d => d.degree.trim().length > 2);
-        else if (i === 6) done = currentLangs.some(l => l.lang.trim().length > 0);
+        else if (i === 2) {
+            const el = document.getElementById('input-summary');
+            done = el && el.innerText.trim().length > 10;
+        }
+        else if (i === 3) done = typeof currentRoles !== 'undefined' && currentRoles.length > 0 && currentRoles.some(r => r.role && r.role.trim().length > 1);
+        else if (i === 4) done = typeof currentSkills !== 'undefined' && currentSkills.length > 0 && currentSkills.some(s => s.trim().length > 1);
+        else if (i === 5) done = typeof currentDegrees !== 'undefined' && currentDegrees.length > 0 && currentDegrees.some(d => d.degree && d.degree.trim().length > 1);
+        else if (i === 6) done = typeof currentLangs !== 'undefined' && currentLangs.length > 0 && currentLangs.some(l => l.lang && l.lang.trim().length > 1);
         
         markStep(i, done);
         if (done) completedSteps++;
@@ -592,14 +624,38 @@ function initIframe() {
         }
     </style>
     <script>
+        let isBionic = false;
+        function bionify(str) {
+            if (!str || typeof str !== 'string') return str;
+            // Handle HTML tags: only bionify text outside tags
+            return str.replace(/(>|^)([^<]+)(?=<|$)/g, function(match, prefix, text) {
+                const words = text.split(/(\s+)/);
+                const processed = words.map(word => {
+                    if (word.trim().length <= 1) return word;
+                    const mid = Math.ceil(word.length * 0.45);
+                    return \`<b>\${word.slice(0, mid)}</b>\${word.slice(mid)}\`;
+                }).join('');
+                return prefix + processed;
+            });
+        }
+
         window.addEventListener('message', function(e) {
             if (e.data.type === 'cv-update') {
                 const d = e.data;
                 const setVal = (sel, val, isHtml = false) => { 
                     const el = document.querySelectorAll(sel); 
+                    let displayVal = val;
+                    
+                    // Apply bionic ONLY if NOT name or title, and mode is active
+                    const isNameOrTitle = d.field === 'nomComplet' || d.field === 'titrePoste';
+                    if (isBionic && !isNameOrTitle) {
+                        displayVal = bionify(val);
+                        isHtml = true; // Force HTML to render the <b> tags
+                    }
+
                     el.forEach(e => {
-                        if (isHtml) e.innerHTML = val;
-                        else e.innerText = val;
+                        if (isHtml) e.innerHTML = displayVal;
+                        else e.innerText = displayVal;
                     });
                 };
                 if (d.field === 'nomComplet') setVal('.cv-name, #preview-nomComplet, h1', d.value);
@@ -615,6 +671,11 @@ function initIframe() {
                 }
                 else if (d.field === 'photo') { const pi = document.querySelectorAll('#preview-photo, .cv-photo img, .profile-img'); pi.forEach(i => i.src = d.value); }
                 return;
+            }
+            if (e.data.type === 'toggle-bionic') {
+                isBionic = e.data.enabled;
+                // Force a full refresh from parent to apply bionic
+                window.parent.postMessage({ type: 'request-full-sync' }, '*');
             }
             if (e.data.type === 'highlight-section') {
                 document.querySelectorAll('.highlight-active').forEach(el => {
@@ -660,17 +721,42 @@ function initIframe() {
                 }
                 if (target) { 
                     target.classList.add('highlight-active');
-                    // Force styles to ensure visibility (sometimes classes aren't enough in iframes)
                     target.style.outline = '3px solid #6B34A3';
                     target.style.outlineOffset = '4px';
                     target.style.borderRadius = '4px';
                     target.style.backgroundColor = 'rgba(107, 52, 163, 0.05)';
                     target.scrollIntoView({ behavior:'smooth', block:'center' }); 
                 }
+            } else if (e.data.type === 'toggle-dyslexia') {
+                const existing = document.getElementById('dyslexia-style-iframe');
+                if (e.data.enabled) {
+                    document.body.classList.add('dyslexia-mode');
+                    if (!existing) {
+                        const style = document.createElement('style');
+                        style.id = 'dyslexia-style-iframe';
+                        style.innerHTML = "@import url('https://cdn.jsdelivr.net/npm/opendyslexic@1.0.3/dist/opendyslexic.css'); * { font-family: 'OpenDyslexic', sans-serif !important; line-height: 1.8 !important; letter-spacing: 0.03em !important; }";
+                        document.head.appendChild(style);
+                    }
+                } else {
+                    document.body.classList.remove('dyslexia-mode');
+                    if (existing) existing.remove();
+                }
             }
         });
     <\/script>`;
-    doc.open(); doc.write(TEMPLATE_HTML.replace('</body>', receiver + '</body>')); doc.close();
+    
+    try {
+        doc.open();
+        let html = typeof TEMPLATE_HTML !== 'undefined' ? TEMPLATE_HTML : '<html><body></body></html>';
+        if (html.includes('</body>')) {
+            doc.write(html.replace('</body>', receiver + '</body>'));
+        } else {
+            doc.write(html + receiver);
+        }
+        doc.close();
+    } catch(err) {
+        console.error("Iframe injection failed:", err);
+    }
     
     // Initial sync of all data once iframe is alive
     setTimeout(() => {
@@ -710,6 +796,155 @@ window.addEventListener('load', () => {
     setTimeout(scaleIframe, 300);
     setTimeout(scaleIframe, 1000);
     setTimeout(scaleIframe, 3000);
+});
+
+function toggleDyslexiaMode(enabled) {
+    if (enabled) document.body.classList.add('dyslexia-mode');
+    else document.body.classList.remove('dyslexia-mode');
+    
+    const ifrm = document.getElementById('template-preview-frame');
+    if (ifrm && ifrm.contentWindow) {
+        ifrm.contentWindow.postMessage({ type: 'toggle-dyslexia', enabled: enabled }, '*');
+    }
+    setTimeout(scaleIframe, 100);
+}
+
+function showToast(msg, icon = 'info') {
+    let toast = document.querySelector('.toast-notification');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        document.body.appendChild(toast);
+    }
+    toast.innerHTML = `<i data-lucide="${icon}" style="width:18px;height:18px;"></i> <span>${msg}</span>`;
+    if (window.lucide) window.lucide.createIcons();
+    toast.classList.add('show');
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+window.addEventListener('keydown', (e) => {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const ctrl = isMac ? e.metaKey : e.ctrlKey;
+    const alt = e.altKey;
+
+    // Navigation Ctrl + 1-6 (Support Digit and Numpad)
+    const digitMatch = e.code.match(/^(Digit|Numpad)([1-6])$/);
+    if (ctrl && digitMatch) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const targetIdx = parseInt(digitMatch[2]);
+        const currentStepEl = document.querySelector('.step-content.active');
+        const currentIdx = parseInt(currentStepEl.id.replace('step-', ''));
+
+        if (targetIdx > currentIdx) {
+            if (validateStep(currentIdx)) {
+                goToStep(targetIdx);
+                showToast(`Navigation : Étape ${targetIdx}`, 'arrow-right-circle');
+            } else {
+                showToast("Veuillez remplir les champs obligatoires", 'alert-circle');
+                const firstErr = currentStepEl.querySelector('.is-invalid');
+                if(firstErr) firstErr.focus();
+            }
+        } else {
+            // Going backwards is always allowed
+            goToStep(targetIdx);
+            showToast(`Navigation : Étape ${targetIdx}`, 'arrow-right-circle');
+        }
+    }
+
+    // Save Ctrl + S
+    if (ctrl && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        const btnSave = document.getElementById('btn-save');
+        if (btnSave) btnSave.click();
+        showToast("Action : Sauvegarde du CV", 'save');
+    }
+
+    // AI Polish Ctrl + P
+    if (ctrl && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        const active = document.activeElement;
+        if (active && (active.tagName === 'TEXTAREA' || active.contentEditable === 'true')) {
+            const btn = active.closest('.step-content')?.querySelector('.btn-ai');
+            if (btn) btn.click();
+            else showToast("IA indisponible pour ce champ", 'alert-circle');
+        } else {
+            showToast("Cliquez dans un texte pour utiliser l'IA", 'mouse-pointer-2');
+        }
+    }
+
+    // Accessibility toggles
+    if (ctrl && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        const tg = document.getElementById('dyslexia-toggle');
+        if (tg) {
+            tg.checked = !tg.checked;
+            toggleDyslexiaMode(tg.checked);
+            showToast(tg.checked ? "Mode Lecture Activé" : "Mode Lecture Désactivé", 'glasses');
+        }
+    }
+    if (ctrl && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        const tg = document.getElementById('bionic-toggle');
+        if (tg) {
+            tg.checked = !tg.checked;
+            toggleBionicMode(tg.checked);
+            showToast(tg.checked ? "Mode Bionique Activé" : "Mode Bionique Désactivé", 'zap');
+        }
+    }
+
+    // Help Ctrl + I
+    if (ctrl && e.key.toLowerCase() === 'i') {
+        e.preventDefault();
+        toggleHelpModal();
+    }
+});
+
+function toggleHelpModal() {
+    let modal = document.getElementById('power-user-help');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'power-user-help';
+        modal.className = 'aptus-modal-overlay';
+        modal.innerHTML = `
+            <div class="aptus-modal-content" style="max-width:500px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="font-size:1.4rem; display:flex; align-items:center; gap:10px;">
+                        <i data-lucide="keyboard" style="color:var(--accent-primary);"></i> Raccourcis Power User
+                    </h2>
+                    <button onclick="toggleHelpModal()" style="background:none; border:none; cursor:pointer; color:var(--text-tertiary);">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="shortcut-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div class="shortcut-item"><span>Ctrl + 1-6</span> <label>Navigation Étapes</label></div>
+                    <div class="shortcut-item"><span>Ctrl + S</span> <label>Enregistrer</label></div>
+                    <div class="shortcut-item"><span>Ctrl + P</span> <label>AI Polish</label></div>
+                    <div class="shortcut-item"><span>Ctrl + D</span> <label>Mode Dyslexie</label></div>
+                    <div class="shortcut-item"><span>Ctrl + B</span> <label>Mode Bionique</label></div>
+                    <div class="shortcut-item"><span>Ctrl + I</span> <label>Aide</label></div>
+                </div>
+                <p style="margin-top:20px; font-size:0.8rem; color:var(--text-tertiary); text-align:center;">Devenez un pro de la création de CV au clavier !</p>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        if (window.lucide) window.lucide.createIcons();
+    }
+    modal.style.display = (modal.style.display === 'none' || modal.style.display === '') ? 'flex' : 'none';
+}
+
+function toggleBionicMode(enabled) {
+    const ifrm = document.getElementById('template-preview-frame');
+    if (ifrm && ifrm.contentWindow) {
+        ifrm.contentWindow.postMessage({ type: 'toggle-bionic', enabled: enabled }, '*');
+    }
+}
+
+window.addEventListener('message', (e) => {
+    if (e.data.type === 'request-full-sync') {
+        syncAllData();
+    }
 });
 
 // Also trigger when the iframe content loads

@@ -3,6 +3,20 @@
    with Aptus theme colors
    ======================================================== */
 
+@import url('https://cdn.jsdelivr.net/npm/opendyslexic@1.0.3/dist/opendyslexic.css');
+
+body.dyslexia-mode, 
+body.dyslexia-mode .form-control,
+body.dyslexia-mode .step-name,
+body.dyslexia-mode label,
+body.dyslexia-mode h1,
+body.dyslexia-mode h2,
+body.dyslexia-mode h3 {
+    font-family: 'OpenDyslexic', sans-serif !important;
+    line-height: 1.8 !important;
+    letter-spacing: 0.03em !important;
+}
+
 /* ── Main 3-Column Layout ─────────────────────── */
 /* Force front-content to take full width for this specific page */
 .front-content {
@@ -1520,3 +1534,168 @@ textarea.form-control {
     box-shadow: var(--shadow-md);
 }
 
+/* Premium Switch */
+.premium-switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+.premium-switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+}
+input:checked + .slider {
+  background-color: var(--accent-primary);
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--accent-primary);
+}
+input:checked + .slider:before {
+  transform: translateX(14px);
+}
+.slider.round {
+  border-radius: 34px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+[data-theme="dark"] .slider {
+  background-color: #334155;
+}
+
+/* Premium Tooltips */
+.tooltip-trigger {
+    position: relative;
+}
+
+.tooltip-trigger::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(15, 23, 42, 0.95);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    width: 220px;
+    text-align: center;
+    line-height: 1.4;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.tooltip-trigger:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.progress-help-text {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.progress-section:hover .progress-help-text {
+    opacity: 1;
+}
+
+/* Adjust for sidebar edge if needed */
+.wizard-sidebar .tooltip-trigger::after {
+    left: 100px; /* Center more towards the right of the sidebar */
+}
+
+/* Toast Notifications */
+.toast-notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 99px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    z-index: 10000;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.toast-notification.show {
+    transform: translateX(-50%) translateY(0);
+}
+.toast-notification i {
+    color: var(--accent-primary);
+}
+
+/* Shortcut Modal Styles */
+.shortcut-item {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.shortcut-item:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.shortcut-item span {
+    font-family: monospace;
+    background: var(--bg-secondary);
+    color: var(--accent-primary);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+    width: fit-content;
+}
+
+.shortcut-item label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
