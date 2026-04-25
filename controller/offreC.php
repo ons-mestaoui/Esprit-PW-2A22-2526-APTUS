@@ -21,6 +21,10 @@ class offreC{
             echo 'Erreur: '.$e->getMessage();
         }
     }
+
+
+
+
     public function afficherOffres($onlyActive = false){
         $db = config::getConnexion();
         try{
@@ -28,7 +32,8 @@ class offreC{
             $db->exec("UPDATE offreemploi SET statut = 'Expiré' WHERE date_expir < CURDATE()");
             $db->exec("UPDATE offreemploi SET statut = 'Actif' WHERE date_expir >= CURDATE()");
 
-            $sql = "SELECT o.*, u.nom as nom_entreprise 
+            $sql = "SELECT o.*, u.nom as nom_entreprise,
+                    (SELECT COUNT(*) FROM candidatures c WHERE c.id_offre = o.id_offre) as nb_candidats
                     FROM offreemploi o 
                     LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur";
             if ($onlyActive) {
@@ -42,6 +47,9 @@ class offreC{
             die('Erreur: '.$e->getMessage());
         }
     }
+
+
+
     public function filtrerOffres($criteres = []){
         $db = config::getConnexion();
         try {
@@ -49,7 +57,8 @@ class offreC{
             $db->exec("UPDATE offreemploi SET statut = 'Expiré' WHERE date_expir < CURDATE()");
             $db->exec("UPDATE offreemploi SET statut = 'Actif' WHERE date_expir >= CURDATE()");
 
-            $sql = "SELECT o.*, u.nom as nom_entreprise 
+            $sql = "SELECT o.*, u.nom as nom_entreprise,
+                    (SELECT COUNT(*) FROM candidatures c WHERE c.id_offre = o.id_offre) as nb_candidats
                     FROM offreemploi o 
                     LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur
                     WHERE 1=1";
@@ -79,25 +88,6 @@ class offreC{
         }
     }
 
-    public function recherche_offre($keyword, $onlyActive = false) {
-        $db = config::getConnexion();
-        try {
-            $sql = "SELECT o.*, u.nom as nom_entreprise 
-                    FROM offreemploi o 
-                    LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur
-                    WHERE o.titre LIKE :kw";
-            if ($onlyActive) {
-                $sql .= " AND o.statut = 'Actif'";
-            }
-            $sql .= " ORDER BY o.date_publication DESC";
-            $like = '%' . $keyword . '%';
-            $req = $db->prepare($sql);
-            $req->execute(['kw' => $like]);
-            return $req;
-        } catch (Exception $e) {
-            die('Erreur: ' . $e->getMessage());
-        }
-    }
 
     public function supprimerOffre($id_offre){
         $db = config::getConnexion();
@@ -111,6 +101,10 @@ class offreC{
             die('Erreur: '.$e->getMessage());
         }
     }
+
+
+
+
     public function modifierOffre($offre, $id_offre){
         $db = config::getConnexion();
         try{
@@ -143,6 +137,10 @@ class offreC{
             echo 'Erreur: '.$e->getMessage();
         }
     }
+
+
+
+
     public function getOffreById($id_offre){
         $db = config::getConnexion();
         try{
@@ -157,4 +155,62 @@ class offreC{
             die('Erreur: '.$e->getMessage());
         }
     }
+
+    // ═══ RECHERCHE DYNAMIQUE AJAX (RETOURNE UN ARRAY POUR JSON) ═══
+    public function rechercherOffresAjax(string $keyword, bool $onlyActive = false): array {
+        $db = config::getConnexion();
+        try {
+            $sql = "SELECT o.*, u.nom as nom_entreprise,
+                    (SELECT COUNT(*) FROM candidatures c WHERE c.id_offre = o.id_offre) as nb_candidats
+                    FROM offreemploi o 
+                    LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur
+                    WHERE o.titre LIKE :kw";
+            if ($onlyActive) {
+                $sql .= " AND o.statut = 'Actif'";
+            }
+            $sql .= " ORDER BY o.date_publication DESC";
+            $like = '%' . $keyword . '%';
+            $req = $db->prepare($sql);
+            $req->execute(['kw' => $like]);
+            return $req->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    // ═══ HANDLER AJAX (POINT D'ENTRÉE UNIQUE) ═══
+    public function handleAjax(): void {
+        header('Content-Type: application/json; charset=utf-8');
+        
+        $action = $_POST['action'] ?? '';
+
+        if ($action === 'search_offres') {
+            $query = trim($_POST['query'] ?? '');
+            $onlyActive = isset($_POST['only_active']) && $_POST['only_active'] === '1';
+            
+            if ($query === '') {
+                // Si vide, retourner toutes les offres
+                $db = config::getConnexion();
+                $sql = "SELECT o.*, u.nom as nom_entreprise,
+                        (SELECT COUNT(*) FROM candidatures c WHERE c.id_offre = o.id_offre) as nb_candidats
+                        FROM offreemploi o 
+                        LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur";
+                if ($onlyActive) {
+                    $sql .= " WHERE o.statut = 'Actif'";
+                }
+                $sql .= " ORDER BY o.date_publication DESC, o.id_offre DESC";
+                $results = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+            } else {
+                $results = $this->rechercherOffresAjax($query, $onlyActive);
+            }
+            
+            echo json_encode(['success' => true, 'results' => $results]);
+            exit;
+        }
+
+        // Action non reconnue
+        echo json_encode(['success' => false, 'message' => 'Action non reconnue']);
+        exit;
+    }
+
 }

@@ -193,11 +193,8 @@ if (!isset($content)) {
   <div>
     <?php if ($action === 'list'): ?>
       <?php 
-        $q_hr = trim($_GET['q'] ?? '');
         $filter_status = $_GET['filter_status'] ?? '';
-        if ($q_hr !== '') {
-            $listeOffres = $offreC->recherche_offre($q_hr);
-        } elseif (!empty($filter_status) && $filter_status !== 'Tous statuts') {
+        if (!empty($filter_status) && $filter_status !== 'Tous statuts') {
             $listeOffres = $offreC->filtrerOffres(['statut' => $filter_status]);
         } else {
             $listeOffres = $offreC->afficherOffres();
@@ -222,27 +219,23 @@ if (!isset($content)) {
           </div>
       </div>
       
-      <!-- ═══ BARRE DE RECHERCHE (AU-DESSUS DES POSTS) ═══ -->
+      <!-- ═══ BARRE DE RECHERCHE DYNAMIQUE ═══ -->
       <div style="background: var(--bg-card); border-radius: 20px; padding: 0.75rem 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 2rem; border: 1px solid var(--border-color);">
-          <form method="GET" action="hr_posts.php" style="display: flex; align-items: center; gap: 1rem; margin: 0;">
+          <div style="display: flex; align-items: center; gap: 1rem; margin: 0;">
               <div style="flex: 1; position: relative; display: flex; align-items: center;">
                   <i data-lucide="search" style="position: absolute; left: 1.25rem; width: 20px; height: 20px; color: var(--text-tertiary);"></i>
-                  <input type="text" name="q" placeholder="Rechercher une offre..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" 
+                  <input type="text" id="ajax-search-input" name="q" autocomplete="off" placeholder="Rechercher une offre..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" 
                          style="width: 100%; padding: 1rem 1rem 1rem 3.5rem; border: 1px solid var(--border-color); border-radius: 14px; font-size: 1rem; outline: none; transition: all 0.2s; background: var(--bg-secondary); color: var(--text-primary);"
                          onfocus="this.style.borderColor='var(--accent-primary)'; this.style.background='var(--bg-card)';" 
                          onblur="this.style.borderColor='var(--border-color)'; this.style.background='var(--bg-secondary)';"
                          class="search-input-field">
               </div>
-              <button type="submit" style="width: 52px; height: 52px; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); border: none; border-radius: 14px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: all 0.2s;" 
-                      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(168, 100, 228, 0.4)';" 
-                      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(168, 100, 228, 0.3)';">
-                  <i data-lucide="search" style="width: 22px; height: 22px;"></i>
-              </button>
-              <?php if(!empty($_GET['filter_status'])): ?>
-                  <input type="hidden" name="filter_status" value="<?php echo htmlspecialchars($_GET['filter_status']); ?>">
-              <?php endif; ?>
-          </form>
+              <div id="search-spinner" style="display: none;">
+                  <div class="spinner-border text-primary" role="status" style="width: 24px; height: 24px; border: 3px solid rgba(168, 100, 228, 0.2); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+              </div>
+          </div>
       </div>
+      <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
       
 
@@ -741,6 +734,136 @@ function setViewMode(mode) {
     }
     localStorage.setItem('hr_posts_view_mode', mode);
 }
+
+// ═══ DYNAMIC AJAX SEARCH (HR POSTS - MVC) ═══
+let searchTimeout;
+const searchInput = document.getElementById('ajax-search-input');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        const query = this.value;
+        const spinner = document.getElementById('search-spinner');
+        clearTimeout(searchTimeout);
+        if (spinner) spinner.style.display = 'block';
+        
+        searchTimeout = setTimeout(() => {
+            fetchHrPostsSearch(query);
+        }, 300);
+    });
+}
+
+function fetchHrPostsSearch(query) {
+    const formData = new FormData();
+    formData.append('action', 'search_offres');
+    formData.append('query', query);
+    
+    fetch('ajax_offres.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateHrPostsGrid(data.results);
+        }
+        const spinner = document.getElementById('search-spinner');
+        if (spinner) spinner.style.display = 'none';
+    })
+    .catch(err => {
+        console.error('Erreur recherche:', err);
+        const spinner = document.getElementById('search-spinner');
+        if (spinner) spinner.style.display = 'none';
+    });
+}
+
+function updateHrPostsGrid(offres) {
+    const container = document.getElementById('posts-container');
+    const resultsInfo = document.querySelector('.results-info');
+    if (!container) return;
+    
+    // Mise à jour du compteur
+    if (resultsInfo) {
+        resultsInfo.innerHTML = `<span style="color: #0ea5e9; font-weight: 700; font-size: 1.1rem;">${offres.length}</span> <span>postes publiés au total</span>`;
+    }
+    
+    if (offres.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--text-tertiary);">Aucun résultat trouvé</div>';
+        return;
+    }
+    
+    let html = '';
+    offres.forEach(o => {
+        const statut = o.statut || 'Actif';
+        const badgeType = statut === 'Expiré' ? 'badge-danger' : 'badge-success';
+        const titre = escapeHtml(o.titre || '');
+        const domaine = escapeHtml(o.domaine || '');
+        const description = escapeHtml(o.description || '');
+        const competences = escapeHtml(o.competences_requises || '');
+        const experience = escapeHtml(o.experience_requise || '');
+        const salaire = escapeHtml(String(o.salaire || ''));
+        const datePub = o.date_publication || '';
+        const dateExpir = o.date_expir || '';
+        const imgPost = o.img_post || '';
+        
+        let imgSection = '';
+        if (imgPost) {
+            imgSection = `<div style="height: 140px; background-image: url('${imgPost}'); background-size: cover; background-position: center; position: relative;">`;
+        } else {
+            imgSection = `<div style="height: 80px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+               <i data-lucide="image" style="width: 32px; height: 32px; color: var(--text-secondary); opacity: 0.5;"></i>`;
+        }
+        
+        html += `<div class="hr-post-card animate-on-scroll" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+            ${imgSection}
+               <div style="position: absolute; top: 12px; right: 12px;">
+                    <span class="badge ${badgeType}" style="box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${statut}</span>
+               </div>
+            </div>
+            <div style="padding: 0.75rem 1.5rem; flex: 1; display: flex; flex-direction: column;" class="hr-post-card__content">
+                <div class="hr-post-card__main-info">
+                    <span class="post-id-badge">#${o.id_offre}</span>
+                    <h3 class="hr-post-card__title">${titre}</h3>
+                    <div class="status-badge-inline">
+                        <span class="badge ${badgeType}">${statut}</span>
+                    </div>
+                </div>
+                
+                <p class="text-sm text-secondary hr-post-card__description">${description}</p>
+                
+                <div class="hr-post-card__stats">
+                    <span class="hr-post-card__stat" title="Domaine">
+                        <i data-lucide="folder"></i> ${domaine}
+                    </span>
+                    <span class="hr-post-card__stat" title="Salaire">
+                        <i data-lucide="coins"></i> <span class="salary-amount">${salaire} TND</span>
+                    </span>
+                    <span class="hr-post-card__stat date-stat" title="Date de Publication">
+                        <i data-lucide="calendar"></i> ${datePub}
+                    </span>
+                </div>
+
+                <div class="hr-post-card__actions">
+                    <a href="hr_posts.php?action=edit&id=${o.id_offre}" class="btn-icon" title="Éditer"><i data-lucide="pencil"></i></a>
+                    <button class="btn-icon" title="Candidats"><i data-lucide="users"></i></button>
+                    <button type="button" onclick="confirmDelete(${o.id_offre}, '${titre.replace(/'/g, "\\\\'")}')" class="btn-icon btn-icon--danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+                </div>
+            </div>
+        </div>`;
+    });
+    
+    container.innerHTML = html;
+    // Re-appliquer le mode d'affichage
+    if (localStorage.getItem('hr_posts_view_mode') === 'list') {
+        container.classList.add('view-list');
+    }
+    if (window.lucide) lucide.createIcons();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(text));
+    return div.innerHTML;
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const savedMode = localStorage.getItem('hr_posts_view_mode');

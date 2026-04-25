@@ -157,15 +157,12 @@ if (!isset($content)) {
 
 <?php if ($action === 'list'): ?>
   <?php 
-    $q = trim($_GET['q'] ?? '');
     $criteres_admin = [];
     if (!empty($_GET['filter_status']) && $_GET['filter_status'] !== 'Tous statuts') {
         $criteres_admin['statut'] = $_GET['filter_status'];
     }
 
-    if ($q !== '') {
-        $listeOffres = $offreC->recherche_offre($q);
-    } elseif (!empty($criteres_admin)) {
+    if (!empty($criteres_admin)) {
         $listeOffres = $offreC->filtrerOffres($criteres_admin);
     } else {
         $listeOffres = $offreC->afficherOffres();
@@ -221,10 +218,13 @@ if (!isset($content)) {
   </div>
 
   <!-- ═══ Search & Sort Toolbar ═══ -->
-  <form method="GET" action="offres_admin.php" class="filter-bar mb-6" id="admin-filter-form">
-    <div class="search-bar" style="flex:1;max-width:350px;">
+  <div class="filter-bar mb-6" id="admin-filter-toolbar" style="display: flex; gap: 1rem; align-items: center;">
+    <div class="search-bar" style="flex:1;max-width:350px; position: relative; display: flex; align-items: center;">
       <i data-lucide="search" style="width:16px;height:16px;"></i>
-      <input type="text" class="input" placeholder="Rechercher une offre..." id="admin-offers-search" name="q" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
+      <input type="text" class="input" placeholder="Rechercher une offre..." id="admin-offers-search" name="q" autocomplete="off" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
+      <div id="admin-search-spinner" style="position: absolute; right: 1rem; display: none;">
+        <div class="spinner-border text-primary" role="status" style="width: 18px; height: 18px; border: 2px solid rgba(168, 100, 228, 0.2); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      </div>
     </div>
     <select class="select" style="max-width:160px;" id="admin-offers-category">
       <option value="">Toutes domaines</option>
@@ -233,16 +233,17 @@ if (!isset($content)) {
       <option>Design</option>
       <option>Marketing</option>
     </select>
-    <select class="select" style="max-width:140px;" id="admin-offers-status" name="filter_status" onchange="this.form.submit()">
+    <select class="select" style="max-width:140px;" id="admin-offers-status" name="filter_status" onchange="const url = new URL(window.location.href); url.searchParams.set('filter_status', this.value); window.location.href = url.href;">
       <option value="">Tous statuts</option>
       <option value="Actif" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'selected' : ''; ?>>Actif</option>
       <option value="Expiré" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'selected' : ''; ?>>Expiré</option>
     </select>
-  </form>
+  </div>
+  <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
   </div>
 
   <!-- ═══ Offers Data Table ═══ -->
-  <div class="card-flat" style="overflow:hidden;">
+  <div class="card-flat" id="admin-table-container" style="overflow:hidden;">
     <table class="data-table">
       <thead>
         <tr>
@@ -259,29 +260,47 @@ if (!isset($content)) {
         </tr>
       </thead>
       <tbody>
-        <?php foreach ($listeOffres as $o): ?>
-        <tr>
-          <td class="text-secondary text-sm">#<?php echo htmlspecialchars($o['id_offre'] ?? ''); ?></td>
-          <td class="fw-medium">Ent. <?php echo htmlspecialchars($o['id_entreprise'] ?? '1'); ?></td>
-          <td class="fw-medium"><?php echo htmlspecialchars($o['titre'] ?? ''); ?></td>
-          <td class="text-secondary"><?php echo htmlspecialchars($o['domaine'] ?? ''); ?></td>
-          <td><span class="badge badge-neutral"><?php echo htmlspecialchars($o['salaire'] ?? ''); ?> TND</span></td>
-          <td class="fw-medium text-secondary">N/A</td>
-          <td>
-            <?php if(isset($o['statut']) && $o['statut'] === 'Expiré'): ?>
-               <span class="badge badge-danger">Expiré 🔴</span>
-            <?php else: ?>
-               <span class="badge badge-success">Actif 🟢</span>
-            <?php endif; ?>
-          </td>
-          <td><span class="badge badge-warning"><?php echo htmlspecialchars($o['date_expir'] ?? ''); ?></span></td>
-          <td class="text-sm text-secondary"><?php echo htmlspecialchars($o['date_publication'] ?? ''); ?></td>
-          <td>
-            <div class="flex gap-1">
-              <a href="offres_admin.php?action=edit&id=<?php echo $o['id_offre']; ?>" class="btn btn-sm btn-ghost" title="Éditer"><i data-lucide="pencil" style="width:14px;height:14px;"></i></a>
-              <button type="button" onclick="confirmDelete(<?php echo $o['id_offre']; ?>, '<?php echo htmlspecialchars(addslashes($o['titre'] ?? '')); ?>')" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
-            </div>
-          </td>
+        <?php foreach ($listeOffres as $o): 
+            $id = $o['id_offre'];
+            $titre = htmlspecialchars($o['titre'] ?? '');
+            $statut = $o['statut'] ?? 'Actif';
+            $badgeClass = ($statut === 'Expiré') ? 'badge-danger' : 'badge-success';
+        ?>
+        <tr class="animate-on-scroll">
+            <td style="font-weight:600; color:var(--text-tertiary);">#<?php echo $id; ?></td>
+            <td>
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:32px; height:32px; border-radius:8px; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; color:var(--accent-primary);">
+                        <i data-lucide="building" style="width:16px; height:16px;"></i>
+                    </div>
+                    <span style="font-weight:500;"><?php echo htmlspecialchars($o['nom_entreprise'] ?? 'Aptus'); ?></span>
+                </div>
+            </td>
+            <td>
+                <div style="font-weight:600; color:var(--text-primary);"><?php echo $titre; ?></div>
+                <div style="font-size:0.8rem; color:var(--text-tertiary);"><?php echo htmlspecialchars($o['experience_requise'] ?? ''); ?> exp.</div>
+            </td>
+            <td><span class="tag-flat" style="background: var(--bg-secondary); padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.85rem; color: var(--text-secondary);"><?php echo htmlspecialchars($o['domaine'] ?? ''); ?></span></td>
+            <td style="font-weight:600; color:var(--accent-primary);"><?php echo number_format($o['salaire'] ?? 0, 0, '.', ' '); ?> TND</td>
+            <td>
+                <div style="display:flex; align-items:center; gap:0.4rem;">
+                    <i data-lucide="users" style="width:14px; height:14px; color:var(--text-tertiary);"></i>
+                    <span style="font-weight:500;"><?php echo $o['nb_candidats'] ?? 0; ?></span>
+                </div>
+            </td>
+            <td><span class="badge <?php echo $badgeClass; ?>"><?php echo $statut; ?></span></td>
+            <td style="color:var(--text-tertiary); font-size:0.85rem;"><?php echo date('d/m/Y', strtotime($o['date_expir'])); ?></td>
+            <td style="color:var(--text-tertiary); font-size:0.85rem;"><?php echo date('d/m/Y', strtotime($o['date_publication'])); ?></td>
+            <td>
+                <div class="flex gap-2">
+                    <a href="offres_admin.php?action=edit&id=<?php echo $id; ?>" class="btn-icon purple" title="Modifier" style="color: var(--accent-primary); background: rgba(168, 100, 228, 0.1); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                        <i data-lucide="pencil" style="width:16px; height:16px;"></i>
+                    </a>
+                    <button type="button" class="btn-icon red" title="Supprimer" onclick="confirmDelete(<?php echo $id; ?>, '<?php echo addslashes($titre); ?>')" style="color: #ef4444; background: rgba(239, 68, 68, 0.1); width: 32px; height: 32px; border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                        <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
+                    </button>
+                </div>
+            </td>
         </tr>
         <?php endforeach; ?>
       </tbody>
@@ -307,127 +326,166 @@ if (!isset($content)) {
         }
     }
   ?>
-  <div class="card" style="max-width: 800px; margin: 0 auto; background: var(--surface-1);">
-    <h2 class="mb-6 text-xl fw-bold d-flex align-items-center gap-2">
-        <i data-lucide="<?php echo $action === 'edit' ? 'pencil' : 'plus-circle'; ?>" style="width:24px;height:24px;color:var(--accent-primary);"></i>
-        <?php echo $action === 'edit' ? 'Modifier l\'offre' : 'Nouvelle offre'; ?>
-    </h2>
+  <div class="card" style="max-width: 1100px; margin: 0 auto; background: var(--bg-card); border-radius: 24px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.06); padding: 2.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem;">
+        <div>
+            <h2 style="font-size: 1.75rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                <i data-lucide="<?php echo $action === 'edit' ? 'pencil' : 'plus-circle'; ?>" style="width:32px;height:32px;color:var(--accent-primary);"></i>
+                <?php echo $action === 'edit' ? 'Modifier l\'offre' : 'Publier une nouvelle offre'; ?>
+            </h2>
+            <p style="color: var(--text-tertiary); font-size: 1rem;">Remplissez les informations ci-dessous pour <?php echo $action === 'edit' ? 'mettre à jour l\'offre' : 'diffuser votre annonce'; ?>.</p>
+        </div>
+        <a href="offres_admin.php" style="width: 44px; height: 44px; border-radius: 12px; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444';" onmouseout="this.style.background='var(--bg-secondary)'; this.style.color='var(--text-secondary)';" title="Fermer">
+            <i data-lucide="x" style="width: 24px; height: 24px;"></i>
+        </a>
+    </div>
     
     <?php if (!empty($errors)): ?>
-    <div style="background: rgba(220, 38, 38, 0.1); border-left: 4px solid #dc2626; color: #dc2626; padding: 1rem; border-radius: 6px; margin-bottom: 2rem;">
-        <strong>Erreur !</strong> Veuillez corriger les erreurs dans le formulaire ci-dessous.
+    <div style="background: #fef2f2; border: 1px solid #fee2e2; color: #991b1b; padding: 1.25rem; border-radius: 16px; margin-bottom: 2.5rem; display: flex; align-items: flex-start; gap: 1rem;">
+        <i data-lucide="alert-circle" style="width: 24px; height: 24px; flex-shrink: 0; margin-top: 2px;"></i>
+        <div>
+            <strong style="display: block; margin-bottom: 0.25rem; font-size: 1.05rem;">Attention</strong>
+            <p style="font-size: 0.95rem; line-height: 1.5; margin: 0;">Veuillez corriger les <?php echo count($errors); ?> erreur(s) signalée(s) ci-dessous pour pouvoir valider l'offre.</p>
+        </div>
     </div>
     <?php endif; ?>
 
-        <form method="POST" enctype="multipart/form-data" action="offres_admin.php?<?php echo ($action === 'edit' && isset($_GET['id'])) ? 'action=edit&id='.$_GET['id'] : 'action=add'; ?>" class="auth-form">
-        <?php if ($action === 'edit'): ?>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);" class="mb-4">
-            <div class="form-group">
-                <label class="form-label">ID de l'offre</label>
-                <input type="text" class="input" value="#<?php echo htmlspecialchars($offreEdit['id_offre'] ?? ''); ?>" disabled readonly style="background: var(--bg-body); cursor: not-allowed; color: var(--text-secondary);">
+    <form method="POST" enctype="multipart/form-data" action="offres_admin.php?<?php echo ($action === 'edit' && isset($_GET['id'])) ? 'action=edit&id='.$_GET['id'] : 'action=add'; ?>">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+            <!-- ═══ COLONNE GAUCHE ═══ -->
+            <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+                <!-- Section 1: Informations Générales -->
+                <section>
+                    <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-primary); font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="info" style="width: 16px; height: 16px;"></i> Informations Générales
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Titre du poste <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="input <?php echo isset($errors['titre']) ? 'has-error' : ''; ?>" name="titre" placeholder="ex: Senior React Developer" value="<?php echo htmlspecialchars(val('titre', $form_data, $offreEdit)); ?>" style="height: 52px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-secondary); font-size: 1rem;">
+                            <?php if (isset($errors['titre'])): ?>
+                                <span style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> <?php echo $errors['titre']; ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Domaine d'activité <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="input <?php echo isset($errors['domaine']) ? 'has-error' : ''; ?>" name="domaine" placeholder="ex: Informatique / IT" value="<?php echo htmlspecialchars(val('domaine', $form_data, $offreEdit)); ?>" style="height: 52px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-secondary);">
+                            <?php if (isset($errors['domaine'])): ?>
+                                <span style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> <?php echo $errors['domaine']; ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 2: Détails du Poste -->
+                <section>
+                    <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-primary); font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="briefcase" style="width: 16px; height: 16px;"></i> Détails du Poste
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Salaire (TND) <span style="color: #ef4444;">*</span></label>
+                                <div style="position: relative;">
+                                    <input type="text" class="input <?php echo isset($errors['salaire']) ? 'has-error' : ''; ?>" name="salaire" value="<?php echo htmlspecialchars(val('salaire', $form_data, $offreEdit)); ?>" style="height: 52px; border-radius: 12px; padding-left: 2.75rem;">
+                                    <i data-lucide="banknote" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-tertiary);"></i>
+                                </div>
+                                <?php if (isset($errors['salaire'])): ?>
+                                    <span style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> <?php echo $errors['salaire']; ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Expérience <span style="color: #ef4444;">*</span></label>
+                                <input type="text" class="input <?php echo isset($errors['experience_requise']) ? 'has-error' : ''; ?>" name="experience_requise" placeholder="ex: 2-3 ans" value="<?php echo htmlspecialchars(val('experience_requise', $form_data, $offreEdit)); ?>" style="height: 52px; border-radius: 12px;">
+                                <?php if (isset($errors['experience_requise'])): ?>
+                                    <span style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> <?php echo $errors['experience_requise']; ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Description du poste <span style="color: #ef4444;">*</span></label>
+                            <textarea class="textarea <?php echo isset($errors['description']) ? 'has-error' : ''; ?>" name="description" rows="6" placeholder="Décrivez les missions et responsabilités..." style="border-radius: 16px; padding: 1.25rem; font-size: 1rem; background: var(--bg-secondary);"><?php echo htmlspecialchars(val('description', $form_data, $offreEdit)); ?></textarea>
+                            <?php if (isset($errors['description'])): ?>
+                                <span style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> <?php echo $errors['description']; ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </section>
             </div>
-            <div class="form-group">
-                <label class="form-label">Entreprise</label>
-                <input type="text" class="input" value="Ent. <?php echo htmlspecialchars($offreEdit['id_entreprise'] ?? '1'); ?>" disabled readonly style="background: var(--bg-body); cursor: not-allowed; color: var(--text-secondary);">
-            </div>
-        </div>
-        <?php endif; ?>
 
-        <div class="form-group mb-4">
-            <label class="form-label" for="titre">Titre du poste</label>
-            <input type="text" class="input <?php echo isset($errors['titre']) ? 'has-error' : ''; ?>" name="titre" id="titre" value="<?php echo htmlspecialchars(val('titre', $form_data, $offreEdit)); ?>">
-            <?php if (isset($errors['titre'])): ?>
-                <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['titre']; ?></span>
-            <?php endif; ?>
-        </div>
+            <!-- ═══ COLONNE DROITE ═══ -->
+            <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+                <!-- Section 3: Profil Recherché -->
+                <section>
+                    <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-primary); font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="user-check" style="width: 16px; height: 16px;"></i> Profil Recherché
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Compétences clés <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="input <?php echo isset($errors['competences_requises']) ? 'has-error' : ''; ?>" name="competences_requises" placeholder="ex: PHP, MySQL, React (séparées par des virgules)" value="<?php echo htmlspecialchars(val('competences_requises', $form_data, $offreEdit)); ?>" style="height: 52px; border-radius: 12px;">
+                            <?php if (isset($errors['competences_requises'])): ?>
+                                <span style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> <?php echo $errors['competences_requises']; ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Question de filtrage <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="input <?php echo isset($errors['question']) ? 'has-error' : ''; ?>" name="question" placeholder="ex: Pourquoi devrions-nous vous choisir ?" value="<?php echo htmlspecialchars(val('question', $form_data, $offreEdit)); ?>" style="height: 52px; border-radius: 12px;">
+                            <p style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 0.5rem;">Cette question sera posée à chaque candidat lors de sa postulation.</p>
+                            <?php if (isset($errors['question'])): ?>
+                                <span style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> <?php echo $errors['question']; ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </section>
 
-        <div class="form-group mb-4">
-            <label class="form-label" for="img_post">Image de couverture (Optionnelle, Max 1Mo)</label>
-            <input type="file" class="input <?php echo isset($errors['img_post']) ? 'has-error' : ''; ?>" name="img_post" id="img_post" accept="image/*" style="padding: 10px;">
-            <?php if ($action === 'edit' && !empty($offreEdit['img_post'])): ?>
-                <p class="text-sm text-secondary mt-1">Laissez vide pour conserver l'image actuelle.</p>
-            <?php endif; ?>
-            <?php if (isset($errors['img_post'])): ?>
-                <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['img_post']; ?></span>
-            <?php endif; ?>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);" class="mb-4">
-            <div class="form-group">
-                <label class="form-label" for="domaine">Domaine</label>
-                <input type="text" class="input <?php echo isset($errors['domaine']) ? 'has-error' : ''; ?>" name="domaine" id="domaine" value="<?php echo htmlspecialchars(val('domaine', $form_data, $offreEdit)); ?>">
-                <?php if (isset($errors['domaine'])): ?>
-                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['domaine']; ?></span>
-                <?php endif; ?>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="salaire">Salaire (TND)</label>
-                <input type="text" class="input <?php echo isset($errors['salaire']) ? 'has-error' : ''; ?>" name="salaire" id="salaire" value="<?php echo htmlspecialchars(val('salaire', $form_data, $offreEdit)); ?>">
-                <?php if (isset($errors['salaire'])): ?>
-                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['salaire']; ?></span>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <div class="form-group mb-4">
-            <label class="form-label" for="competences_requises">Compétences Requises</label>
-            <input type="text" class="input <?php echo isset($errors['competences_requises']) ? 'has-error' : ''; ?>" name="competences_requises" id="competences_requises" value="<?php echo htmlspecialchars(val('competences_requises', $form_data, $offreEdit)); ?>">
-            <?php if (isset($errors['competences_requises'])): ?>
-                <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['competences_requises']; ?></span>
-            <?php endif; ?>
-        </div>
-
-        <div class="form-group mb-4">
-            <label class="form-label" for="experience_requise">Expérience Requise</label>
-            <input type="text" class="input <?php echo isset($errors['experience_requise']) ? 'has-error' : ''; ?>" name="experience_requise" id="experience_requise" value="<?php echo htmlspecialchars(val('experience_requise', $form_data, $offreEdit)); ?>">
-            <?php if (isset($errors['experience_requise'])): ?>
-                <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['experience_requise']; ?></span>
-            <?php endif; ?>
-        </div>
-
-        <div class="form-group mb-4">
-            <label class="form-label" for="question">Question Personnalisée pour les candidats</label>
-            <input type="text" class="input <?php echo isset($errors['question']) ? 'has-error' : ''; ?>" name="question" id="question" value="<?php echo htmlspecialchars(val('question', $form_data, $offreEdit)); ?>">
-            <?php if (isset($errors['question'])): ?>
-                <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['question']; ?></span>
-            <?php endif; ?>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);" class="mb-4">
-            <div class="form-group">
-                <label class="form-label" for="date_publication">Date de Publication (Automatique)</label>
-                <?php 
-                    $default_date_pub = ($action === 'edit' && $offreEdit) ? $offreEdit['date_publication'] : date('Y-m-d'); 
-                ?>
-                <input type="date" class="input" name="date_publication" id="date_publication" value="<?php echo htmlspecialchars($default_date_pub); ?>" readonly style="background:var(--bg-body); cursor:not-allowed; color:var(--text-secondary); opacity:0.8;">
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="date_expir">Date d'Expiration</label>
-                <input type="date" class="input <?php echo isset($errors['date_expir']) ? 'has-error' : ''; ?>" name="date_expir" id="date_expir" value="<?php echo htmlspecialchars(val('date_expir', $form_data, $offreEdit)); ?>">
-                <?php if (isset($errors['date_expir'])): ?>
-                    <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['date_expir']; ?></span>
-                <?php endif; ?>
+                <!-- Section 4: Médias et Calendrier -->
+                <section>
+                    <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-primary); font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="calendar" style="width: 16px; height: 16px;"></i> Médias &amp; Calendrier
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Image de couverture (Max 1Mo)</label>
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <input type="file" class="input <?php echo isset($errors['img_post']) ? 'has-error' : ''; ?>" name="img_post" accept="image/*" style="flex: 1; padding: 10px; height: auto;">
+                                <?php if ($action === 'edit' && !empty($offreEdit['img_post'])): ?>
+                                    <div style="width: 52px; height: 52px; border-radius: 10px; background-image: url('<?php echo htmlspecialchars($offreEdit['img_post']); ?>'); background-size: cover; background-position: center; border: 2px solid var(--border-color);"></div>
+                                <?php endif; ?>
+                            </div>
+                            <?php if (isset($errors['img_post'])): ?>
+                                <span style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> <?php echo $errors['img_post']; ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Date de publication</label>
+                                <input type="date" class="input" name="date_publication" value="<?php echo htmlspecialchars(($action === 'edit' && $offreEdit) ? $offreEdit['date_publication'] : date('Y-m-d')); ?>" readonly style="background: var(--bg-secondary); color: var(--text-tertiary); cursor: not-allowed; opacity: 0.7;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Date d'expiration <span style="color: #ef4444;">*</span></label>
+                                <input type="date" class="input <?php echo isset($errors['date_expir']) ? 'has-error' : ''; ?>" name="date_expir" value="<?php echo htmlspecialchars(val('date_expir', $form_data, $offreEdit)); ?>" style="height: 52px; border-radius: 12px;">
+                                <?php if (isset($errors['date_expir'])): ?>
+                                    <span style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> <?php echo $errors['date_expir']; ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
 
-        <div class="form-group mb-6">
-            <label class="form-label" for="description">Description complète</label>
-            <textarea class="textarea <?php echo isset($errors['description']) ? 'has-error' : ''; ?>" name="description" id="description" rows="5"><?php echo htmlspecialchars(val('description', $form_data, $offreEdit)); ?></textarea>
-            <?php if (isset($errors['description'])): ?>
-                <span style="color: #dc2626; font-size: 0.85rem; display: block; margin-top: 5px;"><i data-lucide="alert-circle" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;"></i> <?php echo $errors['description']; ?></span>
-            <?php endif; ?>
-        </div>
-
-        <div class="flex gap-4">
-            <button type="submit" name="<?php echo $action === 'edit' ? 'submit_update' : 'submit_add'; ?>" class="btn btn-primary d-flex align-items-center gap-2">
-                <i data-lucide="check" style="width:16px;height:16px;"></i>
-                <?php echo $action === 'edit' ? 'Mettre à jour' : 'Publier l\'offre'; ?>
+        <div style="margin-top: 3.5rem; padding-top: 2rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 1.25rem;">
+            <a href="offres_admin.php" class="btn btn-ghost" style="padding: 0.75rem 2rem; border-radius: 12px; font-weight: 600;">Annuler</a>
+            <button type="submit" name="<?php echo $action === 'edit' ? 'submit_update' : 'submit_add'; ?>" class="btn btn-primary" style="padding: 0.75rem 2.5rem; border-radius: 12px; font-weight: 700; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); border: none; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(168, 100, 228, 0.4)';" onmouseout="this.style.transform='translateY(0)';">
+                <i data-lucide="check" style="width: 20px; height: 20px; margin-right: 0.5rem;"></i>
+                <?php echo $action === 'edit' ? 'Enregistrer les modifications' : 'Publier l\'offre officiellement'; ?>
             </button>
-            <a href="offres_admin.php" class="btn btn-secondary text-decoration-none">Annuler</a>
         </div>
     </form>
   </div>
 <?php endif; ?>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -477,50 +535,115 @@ function executeDelete() {
     }
 }
 
-function executeDelete() {
-    if(deleteUrl) {
-        window.location.href = deleteUrl;
-    }
+// ═══ DYNAMIC AJAX SEARCH (ADMIN - MVC) ═══
+let searchTimeout;
+const adminSearchInput = document.getElementById('admin-offers-search');
+if (adminSearchInput) {
+    adminSearchInput.addEventListener('input', function() {
+        const query = this.value;
+        const spinner = document.getElementById('admin-search-spinner');
+        clearTimeout(searchTimeout);
+        if (spinner) spinner.style.display = 'block';
+        
+        searchTimeout = setTimeout(() => {
+            fetchAdminSearch(query);
+        }, 300);
+    });
 }
 
-// ═══ Recherche dynamique ═══
-(function() {
-    var searchInput = document.getElementById('admin-offers-search');
-    if (!searchInput) return;
-
-    var debounceTimer;
-    searchInput.addEventListener('input', function() {
-        clearTimeout(debounceTimer);
-        var kw = this.value.trim();
-        debounceTimer = setTimeout(function() {
-            if (kw === '') {
-                // Restaurer toutes les lignes
-                document.querySelectorAll('.data-table tbody tr').forEach(function(r) {
-                    r.style.display = '';
-                });
-                return;
-            }
-            fetch('../../controller/search_offres_ajax.php?q=' + encodeURIComponent(kw))
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    var tbody = document.querySelector('.data-table tbody');
-                    if (!tbody) return;
-                    var rows = tbody.querySelectorAll('tr');
-                    // Cacher toutes les lignes
-                    rows.forEach(function(r) { r.style.display = 'none'; });
-                    // Afficher uniquement les lignes dont l'ID offre correspond
-                    var ids = data.map(function(o) { return String(o.id_offre); });
-                    rows.forEach(function(r) {
-                        var idCell = r.querySelector('td:first-child');
-                        if (idCell) {
-                            var rowId = idCell.textContent.replace('#', '').trim();
-                            if (ids.indexOf(rowId) > -1) r.style.display = '';
-                        }
-                    });
-                });
-        }, 300); // Attendre 300ms après la dernière frappe
+function fetchAdminSearch(query) {
+    const formData = new FormData();
+    formData.append('action', 'search_offres');
+    formData.append('query', query);
+    
+    fetch('ajax_offres.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateAdminTable(data.results);
+        }
+        const spinner = document.getElementById('admin-search-spinner');
+        if (spinner) spinner.style.display = 'none';
+    })
+    .catch(err => {
+        console.error('Erreur recherche:', err);
+        const spinner = document.getElementById('admin-search-spinner');
+        if (spinner) spinner.style.display = 'none';
     });
-})();
+}
+
+function updateAdminTable(offres) {
+    const tableBody = document.querySelector('.data-table tbody');
+    if (!tableBody) return;
+    
+    if (offres.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="10" style="padding: 3rem; text-align: center; color: var(--text-tertiary);">Aucun résultat trouvé</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    offres.forEach(o => {
+        const statut = o.statut || 'Actif';
+        const badgeClass = statut === 'Expiré' ? 'badge-danger' : 'badge-success';
+        const salaire = Number(o.salaire || 0).toLocaleString('fr-FR');
+        const dateExpir = new Date(o.date_expir).toLocaleDateString('fr-FR');
+        const datePub = new Date(o.date_publication).toLocaleDateString('fr-FR');
+        const titre = escapeHtml(o.titre || '');
+        const entreprise = escapeHtml(o.nom_entreprise || 'Aptus');
+        const experience = escapeHtml(o.experience_requise || '');
+        const domaine = escapeHtml(o.domaine || '');
+        
+        html += `<tr class="animate-on-scroll">
+            <td style="font-weight:600; color:var(--text-tertiary);">#${o.id_offre}</td>
+            <td>
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:32px; height:32px; border-radius:8px; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; color:var(--accent-primary);">
+                        <i data-lucide="building" style="width:16px; height:16px;"></i>
+                    </div>
+                    <span style="font-weight:500;">${entreprise}</span>
+                </div>
+            </td>
+            <td>
+                <div style="font-weight:600; color:var(--text-primary);">${titre}</div>
+                <div style="font-size:0.8rem; color:var(--text-tertiary);">${experience}</div>
+            </td>
+            <td><span class="tag-flat" style="background:var(--bg-secondary); padding:0.25rem 0.6rem; border-radius:6px; font-size:0.85rem; color:var(--text-secondary);">${domaine}</span></td>
+            <td style="font-weight:600; color:var(--accent-primary);">${salaire} TND</td>
+            <td>
+                <div style="display:flex; align-items:center; gap:0.4rem;">
+                    <i data-lucide="users" style="width:14px; height:14px; color:var(--text-tertiary);"></i>
+                    <span style="font-weight:500;">${o.nb_candidats || 0}</span>
+                </div>
+            </td>
+            <td><span class="badge ${badgeClass}">${statut}</span></td>
+            <td style="color:var(--text-tertiary); font-size:0.85rem;">${dateExpir}</td>
+            <td style="color:var(--text-tertiary); font-size:0.85rem;">${datePub}</td>
+            <td>
+                <div class="flex gap-2">
+                    <a href="offres_admin.php?action=edit&id=${o.id_offre}" class="btn-icon purple" title="Modifier" style="color:var(--accent-primary); background:rgba(168,100,228,0.1); width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
+                        <i data-lucide="pencil" style="width:16px; height:16px;"></i>
+                    </a>
+                    <button type="button" class="btn-icon red" title="Supprimer" onclick="confirmDelete(${o.id_offre}, '${titre.replace(/'/g, "\\\\'")}')"
+                        style="color:#ef4444; background:rgba(239,68,68,0.1); width:32px; height:32px; border-radius:8px; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;">
+                        <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    });
+    
+    tableBody.innerHTML = html;
+    if (window.lucide) lucide.createIcons();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(text));
+    return div.innerHTML;
+}
 </script>
 
 <!-- ═══ Delete Confirmation Modal ═══ -->

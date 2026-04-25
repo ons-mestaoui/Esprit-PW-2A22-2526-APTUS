@@ -41,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])
     exit();
 }
 
-$q = trim($_GET['q'] ?? '');
 $criteres = [];
 if (!empty($_GET['sort_salaire'])) {
     $criteres['sort_salaire'] = $_GET['sort_salaire'];
@@ -51,9 +50,7 @@ if (!empty($_GET['sort_date'])) {
 }
 
 // Toujours filtrer sur les offres actives pour les candidats
-if ($q !== '') {
-    $listeOffres = $offreC->recherche_offre($q, true); // true = actifs seulement
-} elseif (!empty($criteres)) {
+if (!empty($criteres)) {
     $listeOffres = $offreC->filtrerOffres(array_merge($criteres, ['statut' => 'Actif']));
 } else {
     $listeOffres = $offreC->afficherOffres(true);
@@ -105,16 +102,14 @@ if (!isset($content)) {
 <!-- ═══ FILTER BAR ═══ -->
 <div class="job-filter-bar mb-6" id="job-filters" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
   <!-- Group 1: Search -->
-  <form method="GET" action="jobs_feed.php" style="display:flex; gap: 0.5rem; flex: 1; min-width: 300px;">
-    <div class="input-icon-wrapper search-input" style="flex:1;">
-      <i data-lucide="search" style="width:16px;height:16px;"></i>
-      <input type="text" class="input" id="job-search" name="q" placeholder="Mot-clé, poste..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
+  <div class="input-icon-wrapper search-input" style="flex:1; min-width: 300px; position: relative; display: flex; align-items: center;">
+    <i data-lucide="search" style="width:16px;height:16px;"></i>
+    <input type="text" class="input" id="job-search" name="q" autocomplete="off" placeholder="Mot-clé, poste..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" style="flex: 1;">
+    <div id="job-search-spinner" style="position: absolute; right: 1rem; display: none;">
+      <div class="spinner-border" style="width: 18px; height: 18px; border: 2px solid rgba(168, 100, 228, 0.2); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
     </div>
-    <button type="submit" class="btn btn-primary" id="job-search-btn">
-      <i data-lucide="search" style="width:16px;height:16px;"></i>
-      Rechercher
-    </button>
-  </form>
+  </div>
+  <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
   <!-- Group 2: Location & Mode -->
   <div class="input-icon-wrapper" style="width: 180px;">
@@ -151,7 +146,7 @@ if (!isset($content)) {
 </div>
 
 <!-- ═══ JOB CARDS GRID ═══ -->
-<div class="job-cards-grid stagger">
+<div class="job-cards-grid stagger" id="jobs-container">
   <?php foreach ($listeOffres as $offreItem): ?>
     <div class="job-card animate-on-scroll" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
       <?php if (!empty($offreItem['img_post'])): ?>
@@ -448,4 +443,136 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// ═══ DYNAMIC AJAX SEARCH (JOBS FEED - MVC) ═══
+let searchTimeout;
+const jobSearchInput = document.getElementById('job-search');
+if (jobSearchInput) {
+    jobSearchInput.addEventListener('input', function() {
+        const query = this.value;
+        const spinner = document.getElementById('job-search-spinner');
+        clearTimeout(searchTimeout);
+        if (spinner) spinner.style.display = 'block';
+        
+        searchTimeout = setTimeout(() => {
+            fetchJobsSearch(query);
+        }, 300);
+    });
+}
+
+function fetchJobsSearch(query) {
+    const formData = new FormData();
+    formData.append('action', 'search_offres');
+    formData.append('query', query);
+    formData.append('only_active', '1');
+    
+    fetch('ajax_offres.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateJobsGrid(data.results);
+        }
+        const spinner = document.getElementById('job-search-spinner');
+        if (spinner) spinner.style.display = 'none';
+    })
+    .catch(err => {
+        console.error('Erreur recherche:', err);
+        const spinner = document.getElementById('job-search-spinner');
+        if (spinner) spinner.style.display = 'none';
+    });
+}
+
+function updateJobsGrid(offres) {
+    const container = document.getElementById('jobs-container');
+    const resultsInfo = document.querySelector('.results-info');
+    if (!container) return;
+    
+    if (resultsInfo) {
+        resultsInfo.innerHTML = `<strong>${offres.length}</strong> results found`;
+    }
+    
+    if (offres.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--text-tertiary);">Aucune offre trouvée</div>';
+        return;
+    }
+    
+    let html = '';
+    offres.forEach(o => {
+        const titre = escapeHtml(o.titre || '');
+        const entreprise = escapeHtml(o.nom_entreprise || 'Entreprise Inconnue');
+        const domaine = escapeHtml(o.domaine || '');
+        const description = escapeHtml(o.description || '');
+        const competences = escapeHtml(o.competences_requises || '');
+        const experience = escapeHtml(o.experience_requise || '');
+        const salaire = escapeHtml(String(o.salaire || ''));
+        const datePub = o.date_publication || '';
+        const imgPost = o.img_post || '';
+        const question = o.question || 'Décrivez succinctement votre parcours et vos motivations...';
+        
+        // Données JSON pour le modal
+        const modalData = JSON.stringify({
+            id: o.id_offre,
+            titre: o.titre,
+            nom_entreprise: o.nom_entreprise || 'Entreprise Inconnue',
+            domaine: o.domaine,
+            description: o.description,
+            competences: o.competences_requises,
+            experience: o.experience_requise,
+            salaire: o.salaire,
+            question: question,
+            date_pub: datePub,
+            img_post: imgPost
+        }).replace(/"/g, '&quot;');
+        
+        let imgSection = '';
+        if (imgPost) {
+            imgSection = `<div style="height: 160px; background-image: url('${imgPost}'); background-size: cover; background-position: center; border-bottom: 1px solid var(--border-color);"></div>`;
+        } else {
+            imgSection = `<div style="height: 6px; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));"></div>`;
+        }
+        
+        html += `<div class="job-card animate-on-scroll" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+            ${imgSection}
+            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+                <div class="job-card__header">
+                    <div class="job-card__company-logo">
+                        <i data-lucide="building" style="width:20px;height:20px;color:var(--accent-primary);"></i>
+                    </div>
+                    <div class="job-card__title-group">
+                        <h3 class="job-card__title">${titre}</h3>
+                        <span class="job-card__company">${entreprise} • ${domaine}</span>
+                    </div>
+                    <span class="badge badge-info job-card__type-badge">Job</span>
+                </div>
+                <p class="job-card__description" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${description}</p>
+                <div class="job-card__tags">
+                    <span class="job-card__tag" title="Compétences"><i data-lucide="award" style="width:14px;height:14px;"></i> ${competences}</span>
+                    <span class="job-card__tag" title="Expérience"><i data-lucide="clock" style="width:14px;height:14px;"></i> ${experience}</span>
+                    <span class="job-card__tag" title="Salaire"><i data-lucide="banknote" style="width:14px;height:14px;"></i> ${salaire} TND</span>
+                </div>
+                <div class="job-card__footer">
+                    <span class="job-card__date">
+                        <i data-lucide="calendar" style="width:12px;height:12px;"></i> Publié: ${datePub}
+                    </span>
+                    <button type="button" class="btn btn-sm" style="background: linear-gradient(90deg, #4fb5ff 0%, #a864e4 50%, #d85ab2 100%); border: none; color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';" onclick='openOfferModal(${modalData})'>
+                        <i data-lucide="eye" style="width:14px;height:14px;"></i> Voir détails
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    });
+    
+    container.innerHTML = html;
+    if (window.lucide) lucide.createIcons();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(text));
+    return div.innerHTML;
+}
+
 </script>

@@ -101,27 +101,23 @@ if (!isset($content)) {
         </div>
     </div>
 
-    <!-- ═══ BARRE DE RECHERCHE (AU-DESSUS DES CANDIDATS) ═══ -->
+    <!-- ═══ BARRE DE RECHERCHE DYNAMIQUE (CANDIDATS) ═══ -->
     <div style="background: var(--bg-card); border-radius: 20px; padding: 0.75rem 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 2rem; border: 1px solid var(--border-color);">
-        <form method="GET" action="hr_candidatures.php" style="display: flex; align-items: center; gap: 1rem; margin: 0;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin: 0;">
             <div style="flex: 1; position: relative; display: flex; align-items: center;">
                 <i data-lucide="search" style="position: absolute; left: 1.25rem; width: 20px; height: 20px; color: var(--text-tertiary);"></i>
-                <input type="text" name="q" placeholder="Rechercher un candidat par nom..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" 
+                <input type="text" id="ajax-search-candidates" placeholder="Rechercher un candidat par nom..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" 
                        style="width: 100%; padding: 1rem 1rem 1rem 3.5rem; border: 1px solid var(--border-color); border-radius: 14px; font-size: 1rem; outline: none; transition: all 0.2s; background: var(--bg-secondary); color: var(--text-primary);"
                        onfocus="this.style.borderColor='var(--accent-primary)'; this.style.background='var(--bg-card)';" 
                        onblur="this.style.borderColor='var(--border-color)'; this.style.background='var(--bg-secondary)';"
-                       id="candidate-search-main">
+                       class="search-input-field">
             </div>
-            <button type="submit" style="width: 52px; height: 52px; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); border: none; border-radius: 14px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: all 0.2s;" 
-                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(168, 100, 228, 0.4)';" 
-                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(168, 100, 228, 0.3)';">
-                <i data-lucide="search" style="width: 22px; height: 22px;"></i>
-            </button>
-            <?php if(!empty($_GET['status'])): ?>
-                <input type="hidden" name="status" value="<?php echo htmlspecialchars($_GET['status']); ?>">
-            <?php endif; ?>
-        </form>
+            <div id="search-spinner-cand" style="display: none;">
+                <div class="spinner-border text-primary" role="status" style="width: 24px; height: 24px; border: 3px solid rgba(168, 100, 228, 0.2); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            </div>
+        </div>
     </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
     <div class="candidate-cards-grid stagger" id="candidates-container">
       <?php foreach ($listeCandidatures as $cand): 
@@ -301,7 +297,54 @@ function setViewMode(mode) {
     localStorage.setItem('hr_candidates_view_mode', mode);
 }
 
+// ═══ DYNAMIC AJAX SEARCH (CANDIDATES) ═══
 document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('ajax-search-candidates');
+    const container = document.getElementById('candidates-container');
+    const spinner = document.getElementById('search-spinner-cand');
+    let timeout = null;
+
+    if (searchInput && container) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(timeout);
+            if (spinner) spinner.style.display = 'block';
+            
+            timeout = setTimeout(() => {
+                const query = this.value;
+                const url = new URL(window.location.href);
+                url.searchParams.set('q', query);
+                
+                fetch(url.href)
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newContent = doc.getElementById('candidates-container');
+                        const newCount = doc.querySelector('.results-info');
+                        
+                        if (newContent) {
+                            container.innerHTML = newContent.innerHTML;
+                            if (localStorage.getItem('hr_candidates_view_mode') === 'list') {
+                                container.classList.add('view-list');
+                            }
+                            if (window.lucide) lucide.createIcons();
+                        }
+                        
+                        if (newCount) {
+                            document.querySelector('.results-info').innerHTML = newCount.innerHTML;
+                        }
+                        
+                        window.history.replaceState({}, '', url.href);
+                        if (spinner) spinner.style.display = 'none';
+                    })
+                    .catch(err => {
+                        console.error('Search error:', err);
+                        if (spinner) spinner.style.display = 'none';
+                    });
+            }, 300);
+        });
+    }
+
     const savedMode = localStorage.getItem('hr_candidates_view_mode');
     if (savedMode === 'list') {
         setViewMode('list');
