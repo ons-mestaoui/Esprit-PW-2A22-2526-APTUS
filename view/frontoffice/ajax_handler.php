@@ -192,6 +192,14 @@ switch ($action) {
         echo json_encode(['success' => $success]);
         break;
 
+    case 'delete_all_notifications':
+        $uid = $_POST['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        require_once __DIR__ . '/../../controller/NotificationController.php';
+        $notifC = new NotificationController();
+        $success = $notifC->deleteAll((int)$uid);
+        echo json_encode(['success' => $success]);
+        break;
+
     // --------------------------------------------------------
     // CHAT HYBRIDE (Tuteur Augmenté)
     // --------------------------------------------------------

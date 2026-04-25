@@ -223,12 +223,17 @@
                     Notifications
                     <span class="notif-count-pill" id="notif-head-count">0</span>
                 </h5>
-                <button class="notif-panel__mark-btn" onclick="markAllRead()">
-                    Tout marquer lu ✓
-                </button>
-                <button class="notif-panel__mark-btn" id="dnd-toggle-btn" onclick="toggleDND()" style="margin-left:5px; background:rgba(0,0,0,0.2);">
-                    <i data-lucide="bell" id="dnd-icon-status" style="width:12px; height:12px; vertical-align:middle;"></i>
-                </button>
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    <button class="notif-panel__mark-btn" onclick="markAllRead()" title="Tout marquer comme lu" style="padding: 6px 8px;">
+                        <i data-lucide="check-check" style="width:14px; height:14px; vertical-align:middle;"></i>
+                    </button>
+                    <button class="notif-panel__mark-btn" id="dnd-toggle-btn" onclick="toggleDND()" style="background:rgba(0,0,0,0.2); padding: 6px 8px;" title="Mode Silence">
+                        <i data-lucide="bell" id="dnd-icon-status" style="width:14px; height:14px; vertical-align:middle;"></i>
+                    </button>
+                    <button class="notif-panel__mark-btn" onclick="deleteAllNotifications()" style="background:rgba(0,0,0,0.2); color:#fff; padding: 6px 8px;" title="Vider l'historique">
+                        <i data-lucide="trash-2" style="width:14px; height:14px; vertical-align:middle;"></i>
+                    </button>
+                </div>
             </div>
             <div id="dnd-banner" style="display:none; background: #fffbeb; border-bottom:1px solid #fef3c7; padding: 6px 15px; font-size: 11px; color: #92400e; font-weight: 600; text-align: center;">
                 <i data-lucide="moon" style="width:12px; vertical-align:middle;"></i> Mode Silence actif (Seul l'urgent s'affiche)
@@ -447,9 +452,31 @@
     }
 
     // Apply UI on load
-    document.addEventListener('DOMContentLoaded', applyDNDUI);
+    document.addEventListener('DOMContentLoaded', () => {
+        applyDNDUI();
+        requestPushPermission();
+    });
 
-    // ─── Tick Sound via Web Audio API (no CDN needed) ───
+    // ─── Native Push Notifications ───
+    function requestPushPermission() {
+        if (!("Notification" in window)) return;
+        if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+    }
+
+    function sendNativePush(title, options) {
+        if (!("Notification" in window)) return;
+        if (Notification.permission === "granted") {
+            const n = new Notification(title, options);
+            n.onclick = function() {
+                window.focus();
+                n.close();
+            };
+        }
+    }
+
+    // ─── Tick Sound via Web Audio API ───
     function playNotifTick() {
         if (_dndMode) return; // Silent in DND
         try {
@@ -516,8 +543,19 @@
                 bellIcon.classList.add('bell-has-notif');
                 if (hasUrgent) pulse.style.display = 'block';
                 _bellRung = true;
-                // Play tick only when count increases (new notification)
-                if (count > _prevCount && _prevCount !== 0) playNotifTick();
+                // Play tick and send push only when count increases (new notification)
+                if (count > _prevCount && _prevCount !== 0) {
+                    playNotifTick();
+                    
+                    // Native Browser Push
+                    if (notifs.length > 0 && !_dndMode) {
+                        const newest = notifs[0];
+                        sendNativePush("Nouvelle notification Aptus", {
+                            body: newest.message,
+                            icon: "/aptus_first_official_version/view/assets/img/logo.png"
+                        });
+                    }
+                }
             }
         } else {
             badge.style.display   = 'none';
@@ -546,7 +584,10 @@
             const icon     = NOTIF_ICONS[typeKey] || 'bell';
             const label    = (isUrgent ? '⚡ URGENT : ' : '') + (NOTIF_LABELS[typeKey] || 'Notification');
             const time     = timeAgo(parseInt(n.age_minutes) || 0);
-            const href     = n.url_action ? n.url_action : '#';
+            let href = n.url_action ? n.url_action : '#';
+            if (href !== '#' && !href.startsWith('http') && !href.startsWith('/')) {
+                href = '/aptus_first_official_version/' + href;
+            }
             
             const urgentStyle = isUrgent ? 'border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.02);' : '';
 
@@ -579,6 +620,28 @@
         fetch('/aptus_first_official_version/view/frontoffice/ajax_handler.php', { method: 'POST', body: formData })
         .then(r => r.json())
         .then(data => { if (data.success) updateNotifUI([]); });
+    }
+
+    function deleteAllNotifications() {
+        const formData = new FormData();
+        formData.append('action', 'delete_all_notifications');
+        fetch('/aptus_first_official_version/view/frontoffice/ajax_handler.php', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Force empty state update directly
+                _prevCount = 0;
+                document.getElementById('notif-badge').style.display = 'none';
+                document.getElementById('notif-head-count').textContent = '0';
+                document.getElementById('bell-pulse').style.display = 'none';
+                document.getElementById('notif-bell-icon').classList.remove('bell-has-notif');
+                document.getElementById('notif-items').innerHTML = `
+                    <div class="notif-empty">
+                        <div class="notif-empty__icon">${_dndMode ? '🌙' : '✅'}</div>
+                        <p>${_dndMode ? "Mode Silence : Seules les alertes critiques s'afficheront." : "Vous êtes à jour !<br>Aucune nouvelle notification."}</p>
+                    </div>`;
+            }
+        });
     }
 
     // Initial load + poll every 30s

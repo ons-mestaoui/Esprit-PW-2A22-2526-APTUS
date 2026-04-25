@@ -23,45 +23,10 @@ if (isset($_GET['id'])) {
     exit();
 }
 
-// Traitement du formulaire d'édition (quand on clique sur "Enregistrer")
-// Même validation que l'ajout : passe par validateFormation() du contrôleur
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    $is_online = (int) $_POST['is_online'];
-    $lien_room = trim($_POST['online_url'] ?? '');
-
-    // On garde l'ancienne image si l'admin ne remet pas de fichier
-    $image_base64 = $formation['image_base64'];
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $image_data = file_get_contents($_FILES['image']['tmp_name']);
-        $type = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-        $image_base64 = 'data:image/' . $type . ';base64,' . base64_encode($image_data);
-    }
-
-    try {
-        $f = new Formation(
-            $_POST['titre'],
-            $_POST['description'],
-            $_POST['domaine'],
-            $_POST['niveau'],
-            $_POST['duree'] ?? '0',
-            $_POST['date_formation'],
-            $image_base64,
-            !empty($_POST['id_tuteur']) ? (int) $_POST['id_tuteur'] : null,
-            $is_online,
-            $lien_room,
-            !empty($_POST['prerequis_id']) ? (int)$_POST['prerequis_id'] : null,
-            !empty($_POST['date_fin']) ? $_POST['date_fin'] : null
-        );
-
-        $formationC->updateFormation($f, $_GET['id']);
-        $_SESSION['flash_success'] = "Formation modifiée avec succès.";
-        header('Location: formations_admin.php');
-        exit();
-    } catch (Exception $e) {
-        $error_msg = "Erreur de validation : " . $e->getMessage();
-        // Optionnel : passer à flash_error si on retourne sur la même vue après un header, mais ici il affiche sur la page
-    }
+// Affichage des erreurs via la session (depuis traitement_edit.php)
+if (isset($_SESSION['flash_error'])) {
+    $errorMsg = $_SESSION['flash_error'];
+    unset($_SESSION['flash_error']);
 }
 ?>
 
@@ -87,7 +52,8 @@ if (!isset($content)) {
 </div>
 
 <div class="card-flat p-4">
-    <form action="" method="POST" enctype="multipart/form-data" class="auth-form" style="max-width: 600px;">
+    <form action="../../controller/traitement_edit.php" method="POST" enctype="multipart/form-data" class="auth-form" style="max-width: 600px;">
+        <input type="hidden" name="id_formation" value="<?php echo $formation['id_formation']; ?>">
 
         <div class="form-group">
             <label class="form-label">Titre de la formation <span class="required-star">*</span></label>

@@ -26,37 +26,33 @@ if (!isset($content)) {
         }
     }
 
-    // Handle inscription
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_formation'])) {
-        $db = config::getConnexion();
-        if (!$is_unlocked) {
-            $errorMsg = "Prérequis manquant: complétez d'abord « " . htmlspecialchars($prereq_titre) . " ».";
-        } elseif (strtotime($formation['date_formation']) < strtotime(date('Y-m-d'))) {
-            $errorMsg = "Les inscriptions sont closes: la date de formation est dépassée.";
-        } else {
-            try {
-                $stmt = $db->prepare("INSERT INTO inscription (id_user, id_formation, date_inscription, statut, progression) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$id_user, $_POST['id_formation'], date('Y-m-d'), 'En cours', 0]);
-                $isInscribed = true;
-            } catch (Exception $e) {
-                $isInscribed = true;
-            }
-        }
-    } else {
-        // Check if already inscribed
-        $db = config::getConnexion();
+    // Si on a été redirigé avec une erreur (ex: prérequis) ou depuis le contrôleur d'inscription
+    if (isset($_SESSION['flash_error'])) {
+        $errorMsg = $_SESSION['flash_error'];
+        unset($_SESSION['flash_error']);
+    } elseif (isset($_SESSION['flash_success'])) {
+        $successMsg = $_SESSION['flash_success'];
+        unset($_SESSION['flash_success']);
+    }
+
+    if (!$is_unlocked && !isset($errorMsg)) {
+        // Optionnel : un message d'avertissement
+    } elseif (strtotime($formation['date_formation']) < strtotime(date('Y-m-d')) && !isset($errorMsg)) {
+        // Optionnel
+    }
+    // Check if already inscribed
+    $db = config::getConnexion();
+    try {
+        $stmt = $db->prepare("SELECT COUNT(*) FROM inscription WHERE id_formation = ? AND id_user = ?");
+        $stmt->execute([$id, $id_user]);
+        $isInscribed = $stmt->fetchColumn() > 0;
+    } catch (Exception $e) {
         try {
-            $stmt = $db->prepare("SELECT COUNT(*) FROM inscription WHERE id_formation = ? AND id_user = ?");
+            $stmt = $db->prepare("SELECT COUNT(*) FROM Inscription WHERE id_formation = ? AND id_user = ?");
             $stmt->execute([$id, $id_user]);
             $isInscribed = $stmt->fetchColumn() > 0;
-        } catch (Exception $e) {
-            try {
-                $stmt = $db->prepare("SELECT COUNT(*) FROM Inscription WHERE id_formation = ? AND id_user = ?");
-                $stmt->execute([$id, $id_user]);
-                $isInscribed = $stmt->fetchColumn() > 0;
-            } catch (Exception $e2) {
-                $isInscribed = false;
-            }
+        } catch (Exception $e2) {
+            $isInscribed = false;
         }
     }
 
@@ -169,7 +165,7 @@ if (!isset($content)) {
                     <a href="skill_tree.php" class="btn btn-secondary" style="font-size: 0.85rem;"><i data-lucide="git-branch" style="width: 14px; height: 14px;"></i> Voir mon Skill Tree</a>
                 </div>
             <?php else: ?>
-                <form action="formation_detail.php?id=<?php echo $formation['id_formation']; ?>" method="post" style="margin-top: auto;">
+                <form action="../../controller/traitement_inscription.php" method="post" style="margin-top: auto;">
                     <input type="hidden" name="id_formation" value="<?php echo $formation['id_formation']; ?>">
                     <button type="submit" class="btn btn-primary"
                         style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 12px; border: none; cursor: pointer;">

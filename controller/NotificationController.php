@@ -81,6 +81,13 @@ class NotificationController {
         return $stmt->execute(['uid' => (int)$user_id]);
     }
 
+    /** Supprime toutes les notifications d'un utilisateur. */
+    public function deleteAll($user_id): bool {
+        $db = config::getConnexion();
+        $stmt = $db->prepare("DELETE FROM notifications WHERE user_id = :uid");
+        return $stmt->execute(['uid' => (int)$user_id]);
+    }
+
     /** Marque une seule notif comme lue. */
     public function markOneAsRead($notif_id): bool {
         $db = config::getConnexion();

@@ -66,6 +66,39 @@ class InscriptionController
         }
     }
 
+    // Inscription d'un candidat à une formation
+    public function inscrire($id_formation, $id_user)
+    {
+        $db = config::getConnexion();
+        try {
+            // Check if already inscribed
+            try {
+                $stmt = $db->prepare("SELECT COUNT(*) FROM inscription WHERE id_formation = ? AND id_user = ?");
+                $stmt->execute([$id_formation, $id_user]);
+                if ($stmt->fetchColumn() > 0) {
+                    throw new Exception("Vous êtes déjà inscrit à cette formation.");
+                }
+            } catch (Exception $e) {
+                // Table might be capitalized
+                $stmt = $db->prepare("SELECT COUNT(*) FROM Inscription WHERE id_formation = ? AND id_user = ?");
+                $stmt->execute([$id_formation, $id_user]);
+                if ($stmt->fetchColumn() > 0) {
+                    throw new Exception("Vous êtes déjà inscrit à cette formation.");
+                }
+            }
+
+            try {
+                $stmt = $db->prepare("INSERT INTO inscription (id_user, id_formation, date_inscription, statut, progression) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$id_user, $id_formation, date('Y-m-d'), 'En cours', 0]);
+            } catch (Exception $e) {
+                $stmt = $db->prepare("INSERT INTO Inscription (id_user, id_formation, date_inscription, statut, progression) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$id_user, $id_formation, date('Y-m-d'), 'En cours', 0]);
+            }
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
     // Désinscription d'un candidat (action front-office)
     // Contraintes vérifiées ici dans le contrôleur (pas dans le model)
     public function desinscrire()
