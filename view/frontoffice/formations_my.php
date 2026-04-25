@@ -460,7 +460,7 @@ if (!isset($content)) {
                 <?php else: ?>
                     <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: auto;">
                         <?php if ($cours['is_online']): ?>
-                            <a href="<?php echo htmlspecialchars($cours['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn"
+                            <a href="jitsi_room.php?id_formation=<?php echo $cours['id_formation']; ?>&url=<?php echo urlencode($cours['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn"
                                 style="background: var(--accent-info); color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:8px;">📹
                                 Rejoindre la Room</a>
                         <?php endif; ?>
@@ -495,19 +495,7 @@ if (!isset($content)) {
                     </div>
                 <?php endif; ?>
 
-                <?php if ($cours['progression'] == 100 || $cours['statut'] === 'Terminée'): /* Déjà terminé : lien vers Soft-Skills */ ?>
-                    <!-- CONCEPT 3 : Évaluateur Soft-Skills (accès depuis la carte terminée) -->
-                    <div style="margin-top:0.75rem;">
-                        <a href="softskills_evaluator.php?id=<?php echo $cours['id_formation']; ?>" class="btn btn-sm" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem;
-                          background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1));
-                          color: var(--accent-primary); border:1px solid rgba(99,102,241,0.25); font-weight:600;
-                          transition:all .2s; text-decoration:none;"
-                            onmouseover="this.style.background='var(--gradient-primary)';this.style.color='white';this.style.borderColor='transparent';"
-                            onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))';this.style.color='var(--accent-primary)';this.style.borderColor='rgba(99,102,241,0.25)';">
-                            🧠 Valider via Soft-Skills
-                        </a>
-                    </div>
-                <?php endif; ?>
+
             </div>
         <?php endforeach; else: ?>
         <!-- Beautiful Empty State -->
@@ -658,7 +646,7 @@ if (!isset($content)) {
                     }).then((result) => {
                         if (result.isConfirmed) {
                             // Ouvrir Jitsi dans un nouvel onglet
-                            window.open(data.jitsi_link, '_blank', 'noopener');
+                            window.open('jitsi_room.php?id_formation=' + idFormation + '&url=' + encodeURIComponent(data.jitsi_link), '_blank', 'noopener');
                         } else if (result.dismiss === Swal.DismissReason.cancel) {
                             // Copier le lien dans le presse-papier
                             navigator.clipboard.writeText(data.jitsi_link).then(() => {

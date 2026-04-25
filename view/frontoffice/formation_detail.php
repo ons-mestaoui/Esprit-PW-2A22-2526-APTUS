@@ -72,18 +72,18 @@ if (!isset($content)) {
         Retour au catalogue</a>
 
     <div class="card-flat"
-        style="padding: 0; overflow: hidden; display: grid; grid-template-columns: 1fr 1.2fr; border-radius:12px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary);">
+        style="padding: 0; overflow: hidden; display: flex; flex-direction: column; border-radius:12px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary);">
         <?php if (!empty($formation['image_base64'])): ?>
             <div
-                style="background: url('<?php echo $formation['image_base64']; ?>') center/cover; height: 100%; min-height: 300px;">
+                style="background: url('<?php echo $formation['image_base64']; ?>') center/cover; width: 100%; height: 350px;">
             </div>
         <?php else: ?>
             <div
-                style="background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); opacity: 0.2; height: 100%; min-height: 300px;">
+                style="background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); opacity: 0.2; width: 100%; height: 350px;">
             </div>
         <?php endif; ?>
 
-        <div style="padding: 3rem;">
+        <div style="padding: 3rem; display: flex; flex-direction: column;">
             <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
                 <span class="badge badge-info"
                     style="font-size:0.75rem;"><?php echo htmlspecialchars($formation['domaine'] ?? 'Général'); ?></span>
@@ -91,12 +91,8 @@ if (!isset($content)) {
                     style="font-size:0.75rem;"><?php echo htmlspecialchars($formation['niveau']); ?></span>
             </div>
 
-            <h1 style="font-size: 2rem; margin-bottom: 1.5rem;"><?php echo htmlspecialchars($formation['titre']); ?>
-            </h1>
-
-            <!-- Description en contenu riche (Quill) : on affiche le HTML directement -->
-            <div style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 2rem;">
-                <?php echo $formation['description']; ?>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                <h1 style="font-size: 2rem; margin: 0;"><?php echo htmlspecialchars($formation['titre']); ?></h1>
             </div>
 
             <div
@@ -173,7 +169,7 @@ if (!isset($content)) {
                     <a href="skill_tree.php" class="btn btn-secondary" style="font-size: 0.85rem;"><i data-lucide="git-branch" style="width: 14px; height: 14px;"></i> Voir mon Skill Tree</a>
                 </div>
             <?php else: ?>
-                <form action="formation_detail.php?id=<?php echo $formation['id_formation']; ?>" method="post">
+                <form action="formation_detail.php?id=<?php echo $formation['id_formation']; ?>" method="post" style="margin-top: auto;">
                     <input type="hidden" name="id_formation" value="<?php echo $formation['id_formation']; ?>">
                     <button type="submit" class="btn btn-primary"
                         style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 12px; border: none; cursor: pointer;">
@@ -181,6 +177,19 @@ if (!isset($content)) {
                     </button>
                 </form>
             <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Description Card -->
+    <div class="card-flat" style="margin-top: 2rem; padding: 3rem; border-radius:12px; background: var(--bg-card); border: 1px solid var(--border-color); position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.5rem; margin: 0; color: var(--text-primary);">À propos de cette formation</h2>
+            <button onclick="TTS.readElement('formation-description', this)" class="btn-icon-circular" title="Écouter la description" style="background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--primary-cyan); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                <i data-lucide="volume-2" style="width: 18px; height: 18px;"></i>
+            </button>
+        </div>
+        <div id="formation-description" style="color: var(--text-secondary); line-height: 1.8;">
+            <?php echo $formation['description']; ?>
         </div>
     </div>
 </div>

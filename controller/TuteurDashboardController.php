@@ -48,13 +48,46 @@ class TuteurDashboardController
         $statut = $progression >= 100 ? 'Terminée' : 'En cours';
         try {
             $stmt = $db->prepare("UPDATE inscription SET progression = :p, statut = :s WHERE id_formation = :f AND id_user = :u");
-            $stmt->execute(['p' => $progression, 's' => $statut, 'f' => $id_formation, 'u' => $id_user]);
-            return true;
+            $success = $stmt->execute(['p' => $progression, 's' => $statut, 'f' => $id_formation, 'u' => $id_user]);
+            
+            if ($success && $progression >= 100) {
+                // CONCEPT 2 & 4 : Notification de débloquage (Game-alike XP)
+                require_once __DIR__ . '/NotificationController.php';
+                require_once __DIR__ . '/FormationController.php';
+                
+                $fC = new FormationController();
+                $formation = $fC->getFormationById($id_formation);
+                $titre = $f['titre'] ?? $formation['titre'] ?? 'une formation';
+                
+                // 1. Notif de succès
+                NotificationController::creerNotification(
+                    $id_user, 
+                    'success', 
+                    "Félicitations ! Vous avez terminé la formation : $titre. 🎓", 
+                    "view/frontoffice/certificate.php?f_id=$id_formation", 
+                    'award'
+                );
+
+                // 2. Détection des nouveaux cours débloqués (Prerequis logic)
+                $stmtNext = $db->prepare("SELECT id_formation, titre FROM Formation WHERE prerequis_id = :pid");
+                $stmtNext->execute(['pid' => $id_formation]);
+                $nextOnes = $stmtNext->fetchAll();
+                
+                foreach ($nextOnes as $next) {
+                    NotificationController::creerNotification(
+                        $id_user,
+                        'info',
+                        "🚀 Nouveau débloqué : " . $next['titre'] . ". Découvrez votre nouveau chemin sur la Skill Map !",
+                        "view/frontoffice/skill_tree.php?id=" . $next['id_formation'],
+                        'unlock'
+                    );
+                }
+            }
+            return $success;
         } catch (Exception $e) {
             try {
                 $stmt = $db->prepare("UPDATE Inscription SET progression = :p, statut = :s WHERE id_formation = :f AND id_user = :u");
-                $stmt->execute(['p' => $progression, 's' => $statut, 'f' => $id_formation, 'u' => $id_user]);
-                return true;
+                return $stmt->execute(['p' => $progression, 's' => $statut, 'f' => $id_formation, 'u' => $id_user]);
             } catch (Exception $e2) {
                 return false;
             }

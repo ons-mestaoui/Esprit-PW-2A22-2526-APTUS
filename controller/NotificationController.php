@@ -4,20 +4,26 @@ require_once __DIR__ . '/../config.php';
 class NotificationController {
 
     /**
-     * Crée une notification pour un utilisateur depuis n'importe où dans le projet.
+     * Crée une notification avec gestion de priorité via préfixe.
+     * Priorités supportées : URGENT_, SILENT_, (par défaut: NORMAL)
      */
     public static function creerNotification(
-        $user_id, $type, $message, $url = '', $icon = 'bell'
+        $user_id, $type, $message, $url = '', $icon = 'bell', $priority = 'NORMAL'
     ): bool {
         try {
             $db = config::getConnexion();
+            
+            // On préfixe le type si c'est urgent ou silencieux
+            $prefix = ($priority === 'URGENT') ? 'URGENT_' : (($priority === 'SILENT') ? 'SILENT_' : '');
+            $finalType = $prefix . $type;
+
             $sql = "INSERT INTO notifications 
                     (user_id, type, message, url_action, icon, is_read, created_at)
                     VALUES (:uid, :type, :msg, :url, :icon, 0, NOW())";
             $stmt = $db->prepare($sql);
             return $stmt->execute([
                 'uid'  => (int)$user_id,
-                'type' => $type,
+                'type' => $finalType,
                 'msg'  => $message,
                 'url'  => $url,
                 'icon' => $icon

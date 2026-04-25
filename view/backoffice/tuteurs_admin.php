@@ -671,7 +671,7 @@ function submitTuteur() {
     formData.append('specialite', specialite);
     formData.append('bio',        bio);
 
-    fetch('ajax_tuteur.php', { method: 'POST', body: formData })
+    fetch('../../controller/ajax_tuteur.php', { method: 'POST', body: formData })
         .then(r => r.json())
         .then(data => {
             closeModal();
@@ -714,7 +714,7 @@ function supprimerTuteur(id, nom) {
         fd.append('action', 'delete');
         fd.append('id', id);
 
-        fetch('ajax_tuteur.php', { method: 'POST', body: fd })
+        fetch('../../controller/ajax_tuteur.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {

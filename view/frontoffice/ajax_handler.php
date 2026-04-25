@@ -8,7 +8,6 @@
  *
  * Routing via le paramètre GET 'action' :
  *   ?action=peer_help          → PeerLearningController::handleAjax()
- *   ?action=softskills_validate → SoftSkillsController::handleAjax()
  *
  * Conforme à l'architecture MVC : le handler instancie le bon
  * contrôleur et délègue toute la logique à celui-ci.
@@ -49,14 +48,6 @@ switch ($action) {
         $controller->handleAjax();
         break;
 
-    // --------------------------------------------------------
-    // CONCEPT 3 : Soft Skills — Valider le certificat
-    // --------------------------------------------------------
-    case 'softskills_validate':
-        require_once __DIR__ . '/../../controller/SoftSkillsController.php';
-        $controller = new SoftSkillsController();
-        $controller->handleAjax();
-        break;
 
     // --------------------------------------------------------
     // CONCEPT 4 : Tuteur Dashboard - Gestion de progression et ressources
@@ -152,6 +143,36 @@ switch ($action) {
         echo json_encode(['success' => $success]);
         break;
 
+    case 'get_emotion_stats':
+        require_once __DIR__ . '/../../config.php';
+        $db = config::getConnexion();
+        $id_candidat = $_POST['id_candidat'] ?? 0;
+        $id_formation = $_POST['id_formation'] ?? 0;
+        
+        $stmt = $db->prepare("SELECT emotion_detectee, COUNT(*) as count FROM rapport_emotions WHERE id_candidat = :id_candidat AND id_formation = :id_formation GROUP BY emotion_detectee");
+        $stmt->execute(['id_candidat' => $id_candidat, 'id_formation' => $id_formation]);
+        $stats = $stmt->fetchAll();
+        echo json_encode(['success' => true, 'stats' => $stats]);
+        break;
+
+    case 'save_emotion':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
+        $id_candidat = $_POST['id_candidat'] ?? null;
+        $id_formation = $_POST['id_formation'] ?? null;
+        $emotion = $_POST['emotion'] ?? null;
+        echo $controller->saveStudentEmotion($id_candidat, $id_formation, $emotion);
+        break;
+
+    case 'analyze_student_emotions':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
+        $stats_json = $_POST['stats'] ?? '[]';
+        $stats = json_decode($stats_json, true);
+        echo $controller->analyzeStudentEmotions($stats);
+        break;
+
+
     // --------------------------------------------------------
     // NOTIFICATIONS
     // --------------------------------------------------------
@@ -209,6 +230,25 @@ switch ($action) {
         require_once __DIR__ . '/../../controller/PeerLearningController.php';
         $peerC = new PeerLearningController();
         $success = $peerC->submitReview((int)$session_id, (int)$rating, $comment);
+        echo json_encode(['success' => $success]);
+        break;
+
+    case 'send_recording_notif':
+        $uid = $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        $id_formation = $_POST['id_formation'] ?? 0;
+        $transcript = $_POST['transcript_summary'] ?? '';
+        
+        require_once __DIR__ . '/../../controller/NotificationController.php';
+        require_once __DIR__ . '/../../controller/FormationController.php';
+        
+        $formC = new FormationController();
+        $f = $formC->getFormationById($id_formation);
+        $titre = $f ? $f['titre'] : "votre cours";
+        
+        $msg = "🎬 L'enregistrement de '$titre' est disponible ! Retrouvez le transcript IA dans votre espace.";
+        $url = "formation_viewer.php?id=" . $id_formation;
+        
+        $success = NotificationController::creerNotification($uid, 'certif_ready', $msg, $url, 'video', 'URGENT');
         echo json_encode(['success' => $success]);
         break;
 

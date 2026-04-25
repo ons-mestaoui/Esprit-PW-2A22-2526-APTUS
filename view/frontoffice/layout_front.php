@@ -226,6 +226,12 @@
                 <button class="notif-panel__mark-btn" onclick="markAllRead()">
                     Tout marquer lu ✓
                 </button>
+                <button class="notif-panel__mark-btn" id="dnd-toggle-btn" onclick="toggleDND()" style="margin-left:5px; background:rgba(0,0,0,0.2);">
+                    <i data-lucide="bell" id="dnd-icon-status" style="width:12px; height:12px; vertical-align:middle;"></i>
+                </button>
+            </div>
+            <div id="dnd-banner" style="display:none; background: #fffbeb; border-bottom:1px solid #fef3c7; padding: 6px 15px; font-size: 11px; color: #92400e; font-weight: 600; text-align: center;">
+                <i data-lucide="moon" style="width:12px; vertical-align:middle;"></i> Mode Silence actif (Seul l'urgent s'affiche)
             </div>
             <div class="notif-panel__body" id="notif-items">
                 <div class="notif-empty">
@@ -415,9 +421,37 @@
 
     let _prevCount = 0;
     let _bellRung  = false;
+    let _dndMode   = localStorage.getItem('aptus_dnd_mode') === 'true';
+
+    function toggleDND() {
+        _dndMode = !_dndMode;
+        localStorage.setItem('aptus_dnd_mode', _dndMode);
+        applyDNDUI();
+        fetchNotifications();
+    }
+
+    function applyDNDUI() {
+        const btn = document.getElementById('dnd-toggle-btn');
+        const icon = document.getElementById('dnd-icon-status');
+        const banner = document.getElementById('dnd-banner');
+        if (_dndMode) {
+            btn.style.background = '#ef4444';
+            icon.setAttribute('data-lucide', 'bell-off');
+            banner.style.display = 'block';
+        } else {
+            btn.style.background = 'rgba(0,0,0,0.2)';
+            icon.setAttribute('data-lucide', 'bell');
+            banner.style.display = 'none';
+        }
+        lucide.createIcons();
+    }
+
+    // Apply UI on load
+    document.addEventListener('DOMContentLoaded', applyDNDUI);
 
     // ─── Tick Sound via Web Audio API (no CDN needed) ───
     function playNotifTick() {
+        if (_dndMode) return; // Silent in DND
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = ctx.createOscillator();
@@ -445,7 +479,16 @@
     function fetchNotifications() {
         fetch('/aptus_first_official_version/view/frontoffice/ajax_handler.php?action=get_notifications')
         .then(r => r.json())
-        .then(data => { if (data.success) updateNotifUI(data.notifications); })
+        .then(data => { 
+            if (data.success) {
+                // Filter DND if active (keep only URGENT_)
+                let notifs = data.notifications;
+                if (_dndMode) {
+                    notifs = notifs.filter(n => n.type.startsWith('URGENT_'));
+                }
+                updateNotifUI(notifs); 
+            }
+        })
         .catch(() => {}); // silent fail
     }
 
@@ -463,12 +506,15 @@
             badge.style.display   = 'block';
             headCount.textContent = count;
 
+            // Check if there is any URGENT in the list for pulse
+            const hasUrgent = notifs.some(n => n.type.startsWith('URGENT_'));
+
             // Ring bell + play tick sound when NEW notifs arrive
             if (!_bellRung || count > _prevCount) {
                 bellIcon.classList.remove('bell-has-notif');
                 void bellIcon.offsetWidth;
                 bellIcon.classList.add('bell-has-notif');
-                pulse.style.display = 'block';
+                if (hasUrgent) pulse.style.display = 'block';
                 _bellRung = true;
                 // Play tick only when count increases (new notification)
                 if (count > _prevCount && _prevCount !== 0) playNotifTick();
@@ -485,26 +531,32 @@
         if (count === 0) {
             list.innerHTML = `
                 <div class="notif-empty">
-                    <div class="notif-empty__icon">✅</div>
-                    <p>Vous êtes à jour !<br>Aucune nouvelle notification.</p>
+                    <div class="notif-empty__icon">${_dndMode ? '🌙' : '✅'}</div>
+                    <p>${_dndMode ? 'Mode Silence : Seules les alertes critiques s\'afficheront.' : 'Vous êtes à jour !<br>Aucune nouvelle notification.'}</p>
                 </div>`;
             return;
         }
 
         let html = '';
         notifs.forEach(n => {
-            const typeKey  = NOTIF_ICONS[n.type] ? n.type : 'default';
+            let typeKey = n.type.replace('URGENT_', '').replace('SILENT_', '');
+            const isUrgent = n.type.startsWith('URGENT_');
+            
+            typeKey  = NOTIF_ICONS[typeKey] ? typeKey : 'default';
             const icon     = NOTIF_ICONS[typeKey] || 'bell';
-            const label    = NOTIF_LABELS[typeKey] || 'Notification';
+            const label    = (isUrgent ? '⚡ URGENT : ' : '') + (NOTIF_LABELS[typeKey] || 'Notification');
             const time     = timeAgo(parseInt(n.age_minutes) || 0);
             const href     = n.url_action ? n.url_action : '#';
+            
+            const urgentStyle = isUrgent ? 'border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.02);' : '';
+
             html += `
-            <a href="${href}" class="notif-item unread" onclick="markOneRead(${n.id}, this)">
-                <div class="notif-item__icon type-${typeKey}">
+            <a href="${href}" class="notif-item unread" onclick="markOneRead(${n.id}, this)" style="${urgentStyle}">
+                <div class="notif-item__icon type-${typeKey}" ${isUrgent ? 'style="background:#ef4444; color:#fff;"' : ''}>
                     <i data-lucide="${icon}" style="width:18px;height:18px;"></i>
                 </div>
                 <div class="notif-item__body">
-                    <div class="notif-item__type">${label}</div>
+                    <div class="notif-item__type" ${isUrgent ? 'style="color:#ef4444; font-weight:900;"' : ''}>${label}</div>
                     <div class="notif-item__msg">${n.message}</div>
                     <span class="notif-item__time">🕐 ${time}</span>
                 </div>
@@ -532,6 +584,83 @@
     // Initial load + poll every 30s
     fetchNotifications();
     setInterval(fetchNotifications, 30000);
+
+    // --- ACCESSIBILITY : TEXT-TO-SPEECH (TTS) SYSTEM ---
+    const TTS = {
+        synth: window.speechSynthesis,
+        isSpeaking: false,
+        isUniversalMode: false,
+        
+        toggleUniversal: function() {
+            this.isUniversalMode = !this.isUniversalMode;
+            const btn = document.getElementById('tts-universal-btn');
+            if (this.isUniversalMode) {
+                btn.style.background = 'var(--accent-primary)';
+                btn.style.color = 'white';
+                document.body.style.cursor = 'help';
+                Toast.fire({ icon: 'info', title: 'Mode Lecture activé : Cliquez sur un texte pour l\'écouter.' });
+                this.initUniversalEvents();
+            } else {
+                btn.style.background = 'var(--bg-card)';
+                btn.style.color = 'var(--text-primary)';
+                document.body.style.cursor = 'default';
+                this.synth.cancel();
+                Toast.fire({ icon: 'success', title: 'Mode Lecture désactivé.' });
+            }
+        },
+
+        initUniversalEvents: function() {
+            document.addEventListener('click', (e) => {
+                if (!this.isUniversalMode) return;
+                
+                // On ignore les clics sur les boutons de navigation
+                if (e.target.closest('nav') || e.target.closest('button')) return;
+
+                const text = e.target.innerText || e.target.textContent;
+                if (text && text.length > 3) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.speak(text);
+                }
+            }, { capture: true });
+        },
+        
+        speak: function(text, btn = null) {
+            this.synth.cancel(); // Stop previous speech
+            if (text.length === 0) return;
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'fr-FR';
+            utterance.rate = 1.0;
+
+            utterance.onstart = () => {
+                this.isSpeaking = true;
+                if (btn) btn.innerHTML = '<i data-lucide="square" style="width:16px;"></i>';
+                lucide.createIcons();
+            };
+
+            utterance.onend = () => {
+                this.isSpeaking = false;
+                if (btn) btn.innerHTML = '<i data-lucide="volume-2" style="width:16px;"></i>';
+                lucide.createIcons();
+            };
+
+            this.synth.speak(utterance);
+        },
+
+        readElement: function(elementId, btn = null) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            this.speak(el.innerText || el.textContent, btn);
+        }
+    };
   </script>
+
+  <!-- Floating Accessibility Tool -->
+  <button id="tts-universal-btn" onclick="TTS.toggleUniversal()" 
+          style="position: fixed; bottom: 2rem; left: 2rem; z-index: 9999; width: 45px; height: 45px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: var(--shadow-md); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
+          title="Activer le mode Lecture (TTS Universel)">
+      <i data-lucide="headphones" style="width: 20px;"></i>
+  </button>
 </body>
 </html>

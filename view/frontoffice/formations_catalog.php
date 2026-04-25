@@ -15,6 +15,8 @@ if (!isset($content)) {
     
     $formations = [];
     $domainesMap = [];
+    $maintenant = new DateTime();
+    
     foreach($liste as $f) {
         if (!empty($f['domaine'])) {
             $domainesMap[$f['domaine']] = true;
@@ -26,6 +28,8 @@ if (!isset($content)) {
         if ($niveau && $f['niveau'] != $niveau) $match = false;
         
         if ($match) {
+            $dateFormation = isset($f['date_formation']) ? new DateTime($f['date_formation']) : new DateTime();
+            $f['est_passee'] = $dateFormation < $maintenant;
             $formations[] = $f;
         }
     }

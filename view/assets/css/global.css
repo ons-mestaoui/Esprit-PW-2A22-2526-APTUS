@@ -908,3 +908,22 @@ p {
 @media (max-width: 480px) {
   h1 { font-size: var(--fs-xl); }
 }
+/* ── Validation Styles Aptus ── */
+.input.is-valid, .select.is-valid, .textarea.is-valid {
+  border-color: #10b981 !important; /* Vert */
+  background-color: rgba(16, 185, 129, 0.05) !important;
+}
+.input.is-invalid, .select.is-invalid, .textarea.is-invalid {
+  border-color: #ef4444 !important; /* Rouge */
+  background-color: rgba(239, 68, 68, 0.05) !important;
+}
+.error-msg {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  display: none;
+  font-weight: 500;
+}
+.error-msg.show {
+  display: block;
+}

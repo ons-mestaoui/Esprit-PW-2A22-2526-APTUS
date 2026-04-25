@@ -93,7 +93,10 @@ if (!isset($content)) {
                                 </div>
                             </td>
                             <td style="padding: 1rem; text-align: right;">
-                                <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;">
+                                    <button onclick="showStudentEmotions(<?php echo $s['id_user']; ?>, '<?php echo addslashes($s['nom_etudiant']); ?>')" class="btn" style="padding: 0.25rem 0.5rem; background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 1px solid #6366f1; white-space: nowrap;" title="Bilan FaceAPI">
+                                        🧠 Bilan IA
+                                    </button>
                                     <button onclick="updateProg(<?php echo $s['id_user']; ?>, Math.max(0, parseInt(document.getElementById('prog-text-<?php echo $s['id_user']; ?>').innerText) - 20))" class="btn" style="padding: 0.25rem 0.5rem; background: var(--bg-tertiary); color: var(--text-primary);">-20%</button>
                                     <button onclick="updateProg(<?php echo $s['id_user']; ?>, Math.min(100, parseInt(document.getElementById('prog-text-<?php echo $s['id_user']; ?>').innerText) + 20))" class="btn" style="padding: 0.25rem 0.5rem; background: var(--bg-tertiary); color: var(--text-primary);">+20%</button>
                                     <button onclick="updateProg(<?php echo $s['id_user']; ?>, 100)" class="btn btn-primary" style="padding: 0.25rem 0.75rem;">100%</button>
@@ -428,5 +431,110 @@ if (!isset($content)) {
     }
 </script>
 
-<!-- Feature 3 : Canvas Confetti (ultra-léger ~7kb) -->
+<!-- JS: SweetAlert, Confetti, Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    function showStudentEmotions(idCandidat, nom) {
+        Swal.fire({
+            title: `Bilan IA - ${nom}`,
+            html: `
+                <div style="display:flex; flex-direction:column; align-items:center; gap: 1.5rem;">
+                    <div style="width: 250px; height: 250px;">
+                        <canvas id="emotionsChart"></canvas>
+                    </div>
+                    <div id="ai-recommandations" style="text-align: left; width: 100%; min-height: 100px; background: var(--bg-surface); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div style="text-align:center; color: var(--text-secondary);">
+                            <i data-lucide="loader-2" style="width: 20px; height: 20px; animation: spin 1s linear infinite;"></i>
+                            <p>Analyse cognitive en cours par Groq (Llama 3)...</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            width: '600px',
+            showConfirmButton: true,
+            confirmButtonText: 'Fermer',
+            confirmButtonColor: '#3b82f6',
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+            customClass: { popup: 'swal-ai-custom' },
+            didOpen: () => {
+                lucide.createIcons();
+                // 1. Fetch data
+                const formData = new FormData();
+                formData.append('action', 'get_emotion_stats');
+                formData.append('id_candidat', idCandidat);
+                formData.append('id_formation', <?php echo $id_formation; ?>);
+
+                fetch('ajax_handler.php', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.stats.length > 0) {
+                        const labels = data.stats.map(s => s.emotion_detectee);
+                        const values = data.stats.map(s => parseInt(s.count));
+
+                        // 2. Draw Chart
+                        const ctx = document.getElementById('emotionsChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    data: values,
+                                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6366f1', '#64748b'],
+                                    borderWidth: 0
+                                }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false }
+                        });
+
+                        // 3. Ask Groq
+                        askGroqRecommandations(data.stats);
+                    } else {
+                        document.getElementById('ai-recommandations').innerHTML = '<p style="text-align:center;">Aucune donnée émotionnelle enregistrée pour cet étudiant (Il n\'a pas encore utilisé le laboratoire).</p>';
+                    }
+                }).catch(err => {
+                    console.error(err);
+                    document.getElementById('ai-recommandations').innerHTML = '<p style="color:#ef4444;">Erreur serveur.</p>';
+                });
+            }
+        });
+    }
+
+    function askGroqRecommandations(stats) {
+        const formData = new FormData();
+        formData.append('action', 'analyze_student_emotions');
+        formData.append('stats', JSON.stringify(stats));
+
+        fetch('ajax_handler.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('ai-recommandations');
+            if (data.success && data.data) {
+                const info = data.data;
+                let html = `
+                    <h4 style="color: var(--accent-primary); margin-bottom: 0.5rem; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="brain-circuit" style="width:18px;height:18px;"></i> Agent Pédagogique Aptus
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">${info.analyse_globale || info.analyseGlobale}</p>
+                    <ul style="padding-left: 1.2rem; font-size: 0.9rem; font-weight: 500; color: var(--text-primary);">
+                `;
+                (info.conseils || info.conseils || []).forEach(c => {
+                    html += `<li style="margin-bottom: 0.5rem;">${c}</li>`;
+                });
+                html += '</ul>';
+                container.innerHTML = html;
+                lucide.createIcons();
+            } else {
+                container.innerHTML = `<p style="color:#ef4444;">Erreur de l'Agent IA.</p>`;
+            }
+        })
+        .catch(err => {
+            document.getElementById('ai-recommandations').innerHTML = `<p style="color:#ef4444;">Erreur réseau IA.</p>`;
+        });
+    }
+
+    // Le reste du code existant...
+    function switchTab(tab) {

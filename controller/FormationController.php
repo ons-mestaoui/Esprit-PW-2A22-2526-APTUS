@@ -11,23 +11,21 @@ class FormationController
     public function listerFormations()
     {
         $db = config::getConnexion();
-        try {
-            $liste = $db->query("
-                SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
-                FROM Formation f 
-                LEFT JOIN utilisateur u ON f.id_tuteur = u.id
-            ");
-            return $liste;
-        } catch (Exception $e) {
+        // Essayer d'abord la table 'utilisateur', sinon fallback sur 'User'
+        $tables_utilisateurs = ['utilisateur', 'User'];
+        foreach ($tables_utilisateurs as $table) {
             try {
                 $liste = $db->query("
                     SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
                     FROM Formation f 
-                    LEFT JOIN User u ON f.id_tuteur = u.id
+                    LEFT JOIN $table u ON f.id_tuteur = u.id
+                    WHERE f.statut = 'active'
+                      AND (f.date_fin IS NULL OR f.date_fin >= DATE_SUB(NOW(), INTERVAL 48 HOUR))
+                    ORDER BY f.date_formation ASC
                 ");
                 return $liste;
-            } catch (Exception $e2) {
-                throw new Exception('Erreur: ' . $e2->getMessage());
+            } catch (Exception $e) {
+                if ($table === end($tables_utilisateurs)) throw new Exception('Erreur SQL: ' . $e->getMessage());
             }
         }
     }
@@ -210,6 +208,13 @@ class FormationController
             throw new Exception("La date de formation ne peut pas être dans le passé.");
         }
 
+        // Date de fin : optionnelle, mais si présente doit être >= date_formation
+        if (!empty($formation->getDateFin()) && !empty($formation->getDateFormation())) {
+            if (strtotime($formation->getDateFin()) < strtotime($formation->getDateFormation())) {
+                throw new Exception("La date de fin ne peut pas être avant la date de début.");
+            }
+        }
+
         // Durée : optionnel, mais si rempli doit respecter le format "chiffre + unité"
         // Exemples valides : 10h, 2 jours, 30min
         $duree = trim($formation->getDuree());
@@ -251,9 +256,9 @@ class FormationController
         try {
             $query = $db->prepare("
                 INSERT INTO Formation 
-                (titre, description, domaine, niveau, duree, date_formation, image_base64, id_tuteur, is_online, lien_api_room, prerequis_id) 
+                (titre, description, domaine, niveau, duree, date_formation, image_base64, id_tuteur, is_online, lien_api_room, prerequis_id, date_fin) 
                 VALUES 
-                (:titre, :description, :domaine, :niveau, :duree, :date_formation, :image_base64, :id_tuteur, :is_online, :lien_api_room, :prerequis_id)
+                (:titre, :description, :domaine, :niveau, :duree, :date_formation, :image_base64, :id_tuteur, :is_online, :lien_api_room, :prerequis_id, :date_fin)
             ");
             $query->execute([
                 'titre' => $formation->getTitre(),
@@ -266,7 +271,8 @@ class FormationController
                 'id_tuteur' => $formation->getIdTuteur(),
                 'is_online' => $formation->getIsOnline(),
                 'lien_api_room' => $lien,
-                'prerequis_id' => $formation->getPrerequisId()
+                'prerequis_id' => $formation->getPrerequisId(),
+                'date_fin' => !empty($formation->getDateFin()) ? $formation->getDateFin() : null
             ]);
             return $db->lastInsertId();
         } catch (Exception $e) {
@@ -279,10 +285,6 @@ class FormationController
     {
         $db = config::getConnexion();
         try {
-            $checkF = $db->prepare("SELECT statut FROM Formation WHERE id_formation = :id");
-            $checkF->execute(['id' => $id]);
-            $statut_f = $checkF->fetchColumn();
-
             // Vérifier s'il y a des inscrits
             $nb_inscrits = 0;
             try {
@@ -290,14 +292,17 @@ class FormationController
                 $check->execute(['id' => $id]);
                 $nb_inscrits = $check->fetchColumn();
             } catch (Exception $e) {
-                $check = $db->prepare("SELECT COUNT(*) FROM Inscription WHERE id_formation = :id");
-                $check->execute(['id' => $id]);
-                $nb_inscrits = $check->fetchColumn();
+                // Ignore si la table n'est pas trouvée
             }
 
-            if ($nb_inscrits > 0 && $statut_f !== 'annulée') {
-                throw new Exception("Impossible de supprimer une formation active avec des inscrits. Veuillez d'abord l'annuler.");
+            if ($nb_inscrits > 0) {
+                throw new Exception("Impossible de supprimer une formation active avec des inscrits.");
             }
+
+            // Supprimer les enregistrements enfants pour éviter une erreur de contrainte de clé étrangère
+            try {
+                $db->prepare("DELETE FROM rapport_emotions WHERE id_formation = :id")->execute(['id' => $id]);
+            } catch(Exception $e) {}
 
             $query = $db->prepare("DELETE FROM Formation WHERE id_formation = :id");
             $query->execute(['id' => $id]);
@@ -322,7 +327,8 @@ class FormationController
                 UPDATE Formation SET 
                 titre=:titre, description=:description, domaine=:domaine, niveau=:niveau, 
                 duree=:duree, date_formation=:date_formation, image_base64=:image_base64, 
-                id_tuteur=:id_tuteur, is_online=:is_online, lien_api_room=:lien_api_room, prerequis_id=:prerequis_id 
+                id_tuteur=:id_tuteur, is_online=:is_online, lien_api_room=:lien_api_room, 
+                prerequis_id=:prerequis_id, date_fin=:date_fin 
                 WHERE id_formation=:id
             ");
             $query->execute([
@@ -337,7 +343,8 @@ class FormationController
                 'id_tuteur' => $formation->getIdTuteur(),
                 'is_online' => $formation->getIsOnline(),
                 'lien_api_room' => $lien,
-                'prerequis_id' => $formation->getPrerequisId()
+                'prerequis_id' => $formation->getPrerequisId(),
+                'date_fin' => !empty($formation->getDateFin()) ? $formation->getDateFin() : null
             ]);
         } catch (Exception $e) {
             throw new Exception('Erreur SQL: ' . $e->getMessage());
