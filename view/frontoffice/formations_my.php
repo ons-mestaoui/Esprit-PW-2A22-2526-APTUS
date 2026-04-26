@@ -412,10 +412,15 @@ if (!isset($content)) {
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                     <span class="badge badge-info"
                         style="font-size: 0.7rem;"><?php echo ($cours['is_online']) ? '🌐 En ligne' : '📍 Présentiel'; ?></span>
+                    <?php 
+                        $dateFormation = date('Y-m-d', strtotime($cours['date_formation']));
+                        $isAvailable = ($dateFormation <= date('Y-m-d'));
+                        $displayStatut = (!$isAvailable && $cours['statut'] !== 'annulée') ? 'En attente' : $cours['statut'];
+                    ?>
                     <span
-                        class="badge <?php echo ($cours['statut'] == 'annulée') ? 'badge-danger' : ($filterCat === 'terminee' ? 'badge-success' : 'badge-neutral'); ?>"
+                        class="badge <?php echo ($cours['statut'] == 'annulée') ? 'badge-danger' : ($filterCat === 'terminee' ? 'badge-success' : ($isAvailable ? 'badge-neutral' : 'badge-info')); ?>"
                         style="font-size: 0.7rem;">
-                        <?php echo htmlspecialchars($cours['statut']); ?>
+                        <?php echo htmlspecialchars($displayStatut); ?>
                     </span>
                 </div>
 
@@ -459,17 +464,13 @@ if (!isset($content)) {
                     </div>
                 <?php else: ?>
                     <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: auto;">
-                        <?php if ($cours['is_online']): ?>
+                        <?php if ($cours['is_online'] && $isAvailable): ?>
                             <a href="jitsi_room.php?id_formation=<?php echo $cours['id_formation']; ?>&url=<?php echo urlencode($cours['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn"
                                 style="background: var(--accent-info); color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:8px;">📹
                                 Rejoindre la Room</a>
                         <?php endif; ?>
 
-                        <!-- Contrainte : accès si date_formation <= aujourd'hui (comparaison DATE sans heure) -->
-                        <?php
-                            $dateFormation = date('Y-m-d', strtotime($cours['date_formation']));
-                            $isAvailable = ($dateFormation <= date('Y-m-d'));
-                        ?>
+                        <!-- Contrainte : accès si date_formation <= aujourd'hui -->
                         <?php if ($isAvailable): ?>
                             <a href="formation_viewer.php?id=<?php echo $cours['id_formation']; ?>" class="btn btn-primary"
                                 style="text-align:center;">📖 Accéder au cours</a>

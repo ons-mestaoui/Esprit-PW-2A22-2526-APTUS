@@ -130,8 +130,9 @@ class InscriptionController
                 }
 
                 $statut_actuel = $stmtI->fetchColumn();
-                if ($statut_actuel === 'En cours' || $statut_actuel === 'Terminée') {
-                    throw new Exception("Impossible de se désinscrire d'une formation en cours ou terminée.");
+                // On ne bloque la désinscription que si la formation a COMMENCÉ ET qu'elle est en cours/terminée
+                if (strtotime($date_f) <= strtotime(date('Y-m-d')) && ($statut_actuel === 'En cours' || $statut_actuel === 'Terminée')) {
+                    throw new Exception("Impossible de se désinscrire d'une formation qui a déjà commencé ou qui est terminée.");
                 }
 
                 // Suppression de l'inscription

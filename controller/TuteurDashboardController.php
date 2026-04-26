@@ -45,7 +45,7 @@ class TuteurDashboardController
     public function updateProgression($id_formation, $id_user, $progression)
     {
         $db = config::getConnexion();
-        $statut = $progression >= 100 ? 'Terminée' : 'En cours';
+        $statut = ($progression >= 100) ? 'Terminée' : (($progression > 0) ? 'En cours' : 'En attente');
         try {
             $stmt = $db->prepare("UPDATE inscription SET progression = :p, statut = :s WHERE id_formation = :f AND id_user = :u");
             $success = $stmt->execute(['p' => $progression, 's' => $statut, 'f' => $id_formation, 'u' => $id_user]);
