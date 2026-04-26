@@ -72,18 +72,32 @@ if (!isset($content)) {
         border: 1px solid rgba(255,255,255,0.2);
     }
 
-    #invisible-video {
+    .ai-monitor-wrapper {
         position: absolute;
-        bottom: 10px;
-        right: 10px;
-        width: 150px;
-        height: auto;
-        border-radius: 8px;
+        bottom: 85px;
+        right: 20px;
+        width: 180px;
+        border-radius: 12px;
+        overflow: hidden;
         border: 2px solid var(--accent-primary);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        z-index: 1000;
         background: #000;
-        z-index: 10;
-        pointer-events: none;
-        opacity: 0.5; /* rendu semi-transparent pour ne pas gêner */
+    }
+
+    #ai-video-feed {
+        width: 100%;
+        display: block;
+        transform: scaleX(-1);
+    }
+
+    #ai-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transform: scaleX(-1);
     }
 
     #emotion-indicator {
@@ -118,8 +132,11 @@ if (!isset($content)) {
     </div>
     
     <?php if ($role !== 'tuteur'): ?>
-        <!-- Webcam cachée dédiée à l'analyse FaceAPI (En plus de celle de Jitsi) -->
-        <video id="invisible-video" autoplay muted playsinline></video>
+        <!-- Moniteur Edge AI (Pip visible avec détection) -->
+        <div class="ai-monitor-wrapper">
+            <video id="ai-video-feed" autoplay muted playsinline></video>
+            <canvas id="ai-canvas"></canvas>
+        </div>
     <?php endif; ?>
 </div>
 
@@ -199,7 +216,7 @@ if (!isset($content)) {
         formData.append('transcript_summary', fullTranscript.substring(0, 500)); // Send first part
         
         // We use fetch with keepalive to ensure it goes through even if page closes
-        fetch('../../view/frontoffice/ajax_handler.php', { 
+        fetch('ajax_handler.php', { 
             method: 'POST', 
             body: formData,
             keepalive: true 
@@ -208,10 +225,21 @@ if (!isset($content)) {
 
     <?php if ($role !== 'tuteur'): ?>
     async function initEdgeAI() {
-        const video = document.getElementById('invisible-video');
+        const video = document.getElementById('ai-video-feed');
+        const canvas = document.getElementById('ai-canvas');
         const indicator = document.getElementById('emotion-indicator');
         const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
         let lastEmotion = "neutre";
+
+        const trad = {
+            "neutral": "Concentré(e)",
+            "happy": "Engagé(e)",
+            "sad": "Ennuyé(e)",
+            "angry": "Intrigué(e)",
+            "fearful": "Confus(e)",
+            "disgusted": "Rebuté(e)",
+            "surprised": "Surpris(e)"
+        };
 
         try {
             await Promise.all([
@@ -219,28 +247,37 @@ if (!isset($content)) {
                 faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
             ]);
             
-            // Obtenir le flux de la webcam pour FaceAPI (peut parfois nécessiter l'autorisation même si Jitsi l'a)
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             video.srcObject = stream;
             
         } catch(err) {
             console.error("FaceAPI Webcam Error:", err);
-            indicator.innerText = "Non autorisé";
+            indicator.innerText = "IA Offline";
             indicator.style.color = "#ef4444";
         }
 
         video.addEventListener('play', () => {
-            indicator.innerText = "Analyse en cours";
+            const displaySize = { width: video.clientWidth, height: video.clientHeight };
+            faceapi.matchDimensions(canvas, displaySize);
             
-            // Détection toutes les 1.5 secondes
+            indicator.innerText = "Analyse Active";
+            
+            // Détection toutes les 1 seconde
             setInterval(async () => {
                 const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
                 if (detections.length > 0) {
                     const exps = detections[0].expressions;
                     lastEmotion = Object.keys(exps).reduce((a, b) => exps[a] > exps[b] ? a : b);
-                    indicator.innerText = lastEmotion;
+                    indicator.innerText = trad[lastEmotion] || lastEmotion;
+
+                    // Dessiner le rectangle de détection
+                    const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                    faceapi.draw.drawDetections(canvas, resizedDetections);
                 }
-            }, 1500);
+            }, 1000);
 
             // Envoi à la BDD toutes les 10 secondes
             setInterval(() => {
@@ -251,7 +288,6 @@ if (!isset($content)) {
                     formData.append('id_formation', <?php echo $id_formation; ?>);
                     formData.append('emotion', lastEmotion);
 
-                    // Re-utilisation du point d'entrée existant dans ajax_handler
                     fetch('ajax_handler.php', { method: 'POST', body: formData })
                     .catch(e => console.error(e));
                 }

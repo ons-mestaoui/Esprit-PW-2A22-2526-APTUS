@@ -11,7 +11,7 @@ class Inscription
     private string $statut;
     private int $progression;
 
-    public function __construct(int $id_user, int $id_formation, string $statut = 'En cours', int $progression = 0)
+    public function __construct(int $id_user, int $id_formation, string $statut = 'En attente', int $progression = 0)
     {
         $this->id_user = $id_user;
         $this->id_formation = $id_formation;

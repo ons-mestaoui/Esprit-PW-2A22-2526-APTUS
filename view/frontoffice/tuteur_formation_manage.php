@@ -511,27 +511,33 @@ if (!isset($content)) {
         fetch('ajax_handler.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
+            console.log("AI Analysis Result:", data);
             const container = document.getElementById('ai-recommandations');
             if (data.success && data.data) {
                 const info = data.data;
+                // Support both snake_case and camelCase from AI
+                const analysis = info.analyse_globale || info.analyseGlobale || "Analyse indisponible";
+                const tips = info.conseils || info.tips || [];
+
                 let html = `
                     <h4 style="color: var(--accent-primary); margin-bottom: 0.5rem; display:flex; align-items:center; gap:8px;">
                         <i data-lucide="brain-circuit" style="width:18px;height:18px;"></i> Agent Pédagogique Aptus
                     </h4>
-                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">${info.analyse_globale || info.analyseGlobale}</p>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">${analysis}</p>
                     <ul style="padding-left: 1.2rem; font-size: 0.9rem; font-weight: 500; color: var(--text-primary);">
                 `;
-                (info.conseils || info.conseils || []).forEach(c => {
+                tips.forEach(c => {
                     html += `<li style="margin-bottom: 0.5rem;">${c}</li>`;
                 });
                 html += '</ul>';
                 container.innerHTML = html;
                 lucide.createIcons();
             } else {
-                container.innerHTML = `<p style="color:#ef4444;">Erreur de l'Agent IA.</p>`;
+                container.innerHTML = `<p style="color:#ef4444;">Erreur de l'Agent IA : ${data.message || 'Réponse invalide'}</p>`;
             }
         })
         .catch(err => {
+            console.error("Fetch Error:", err);
             document.getElementById('ai-recommandations').innerHTML = `<p style="color:#ef4444;">Erreur réseau IA.</p>`;
         });
     }

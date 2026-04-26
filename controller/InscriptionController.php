@@ -89,10 +89,10 @@ class InscriptionController
 
             try {
                 $stmt = $db->prepare("INSERT INTO inscription (id_user, id_formation, date_inscription, statut, progression) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$id_user, $id_formation, date('Y-m-d'), 'En cours', 0]);
+                $stmt->execute([$id_user, $id_formation, date('Y-m-d'), 'En attente', 0]);
             } catch (Exception $e) {
                 $stmt = $db->prepare("INSERT INTO Inscription (id_user, id_formation, date_inscription, statut, progression) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$id_user, $id_formation, date('Y-m-d'), 'En cours', 0]);
+                $stmt->execute([$id_user, $id_formation, date('Y-m-d'), 'En attente', 0]);
             }
         } catch (Exception $e) {
             throw $e;
@@ -130,8 +130,8 @@ class InscriptionController
                 }
 
                 $statut_actuel = $stmtI->fetchColumn();
-                if ($statut_actuel === 'Terminée') {
-                    throw new Exception("Impossible de se désinscrire d'une formation déjà terminée.");
+                if ($statut_actuel === 'En cours' || $statut_actuel === 'Terminée') {
+                    throw new Exception("Impossible de se désinscrire d'une formation en cours ou terminée.");
                 }
 
                 // Suppression de l'inscription

@@ -586,7 +586,7 @@
             const time     = timeAgo(parseInt(n.age_minutes) || 0);
             let href = n.url_action ? n.url_action : '#';
             if (href !== '#' && !href.startsWith('http') && !href.startsWith('/')) {
-                href = '/aptus_first_official_version/' + href;
+                href = '/aptus_first_official_version/view/frontoffice/' + href;
             }
             
             const urgentStyle = isUrgent ? 'border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.02);' : '';
