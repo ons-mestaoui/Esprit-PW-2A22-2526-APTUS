@@ -454,7 +454,7 @@ if (!isset($content)) {
                     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <div
                             style="background: rgba(139, 92, 246, 0.1); color: var(--primary-purple); padding: 0.75rem; border-radius: 10px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
-                            <span style="font-size: 1.3rem;">🎓</span> Badge "Expert" Acquis !
+                            <span style="font-size: 1.3rem;">🎓</span> Badge "<?php echo htmlspecialchars($cours['niveau']); ?>" Acquis !
                         </div>
                         <a href="certificate.php?f_id=<?php echo $cours['id_formation']; ?>" target="_blank" 
                             class="btn btn-primary btn-certif-pulse"
