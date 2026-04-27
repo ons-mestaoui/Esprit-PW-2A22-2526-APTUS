@@ -147,9 +147,50 @@ class InscriptionController
         try {
             $update = $db->prepare("UPDATE inscription SET statut = 'Terminée', progression = 100 WHERE id_formation = ? AND id_user = ?");
             $update->execute([$id_formation, $id_user]);
+            
+            // --- NOUVEAU : SYSTÈME DE GAMIFICATION ---
+            // 3. Attribution du Badge correspondant au niveau
+            $stmtInfo = $db->prepare("SELECT niveau FROM formation WHERE id_formation = ?");
+            $stmtInfo->execute([$id_formation]);
+            $niveau = $stmtInfo->fetchColumn();
+
+            if ($niveau) {
+                // Correction : le nom de la colonne est id_badge
+                $stmtB = $db->prepare("SELECT id_badge FROM badge WHERE nom = ? LIMIT 1");
+                $stmtB->execute([$niveau]);
+                $id_badge = $stmtB->fetchColumn();
+
+                if ($id_badge) {
+                    // On insère dans user_badges (on ajoute id_formation si présent dans la table)
+                    $stmtAssign = $db->prepare("INSERT IGNORE INTO user_badges (id_user, id_badge, id_formation, date_obtention) VALUES (?, ?, ?, ?)");
+                    $stmtAssign->execute([$id_user, $id_badge, $id_formation, date('Y-m-d')]);
+                }
+            }
+            // ------------------------------------------
+
         } catch (Exception $e) {
+            // Fallback pour les noms de tables en majuscules/minuscules selon l'OS
             $update = $db->prepare("UPDATE Inscription SET statut = 'Terminée', progression = 100 WHERE id_formation = ? AND id_user = ?");
             $update->execute([$id_formation, $id_user]);
+        }
+    }
+
+    // Récupérer la collection de badges d'un utilisateur
+    public function getMesBadges($id_user)
+    {
+        try {
+            $db = config::getConnexion();
+            $stmt = $db->prepare("
+                SELECT b.*, ub.date_obtention 
+                FROM user_badges ub 
+                JOIN badge b ON ub.id_badge = b.id_badge 
+                WHERE ub.id_user = ?
+                ORDER BY ub.date_obtention DESC
+            ");
+            $stmt->execute([$id_user]);
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            return [];
         }
     }
 

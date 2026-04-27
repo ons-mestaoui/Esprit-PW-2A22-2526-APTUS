@@ -2,6 +2,13 @@
 
 <?php
 if (!isset($content)) {
+    require_once __DIR__ . '/../../config.php';
+    require_once __DIR__ . '/../../controller/InscriptionController.php';
+    
+    $inscriptionC = new InscriptionController();
+    $id_user = $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+    $mesBadges = $inscriptionC->getMesBadges($id_user);
+
     $content = __FILE__;
     include 'layout_front.php';
     exit();
@@ -60,6 +67,42 @@ if (!isset($content)) {
 
   <!-- Right: Editable Details -->
   <div style="display:flex;flex-direction:column;gap:var(--space-6);">
+
+    <!-- Badges / Gamification (Moved to top for visibility) -->
+    <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:var(--space-6);margin-bottom:var(--space-6);">
+      <h3 style="font-size:var(--fs-lg);font-weight:600;margin-bottom:var(--space-5);display:flex;align-items:center;gap:var(--space-2);">
+        <i data-lucide="award" style="width:22px;height:22px;color:var(--accent-primary);"></i>
+        Ma Collection de Badges
+      </h3>
+      
+      <?php if (!empty($mesBadges)): ?>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));gap:var(--space-4);">
+          <?php foreach ($mesBadges as $b): 
+              $icon = 'medal';
+              $color = '#94a3b8'; // Default
+              if (strpos($b['nom'], 'Débutant') !== false) { $color = '#10b981'; $icon = 'award'; }
+              elseif (strpos($b['nom'], 'Intermédiaire') !== false) { $color = '#f59e0b'; $icon = 'zap'; }
+              elseif (strpos($b['nom'], 'Expert') !== false) { $color = '#8b5cf6'; $icon = 'crown'; }
+          ?>
+            <div style="text-align:center;padding:var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-secondary);transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='<?php echo $color; ?>'" onmouseout="this.style.transform='none';this.style.borderColor='var(--border-color)'">
+              <div style="width:50px;height:50px;margin:0 auto var(--space-2);background:<?php echo $color; ?>15;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid <?php echo $color; ?>33;">
+                <i data-lucide="<?php echo $icon; ?>" style="width:24px;height:24px;color:<?php echo $color; ?>;"></i>
+              </div>
+              <p style="font-size:0.75rem;font-weight:700;margin-bottom:2px;"><?php echo htmlspecialchars($b['nom']); ?></p>
+              <p style="font-size:0.6rem;color:var(--text-tertiary);">Obtenu le <?php echo date('d/m/Y', strtotime($b['date_obtention'])); ?></p>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php else: ?>
+        <div style="padding:var(--space-8);background:var(--bg-secondary);border:1px dashed var(--border-color);border-radius:var(--radius-md);text-align:center;">
+          <div style="color:var(--text-tertiary);margin-bottom:var(--space-3);">
+            <i data-lucide="lock" style="width:32px;height:32px;margin:0 auto;opacity:0.3;"></i>
+          </div>
+          <p class="text-sm fw-semibold" style="color:var(--text-secondary);">Aucun badge pour le moment</p>
+          <p class="text-xs" style="color:var(--text-tertiary);margin-top:0.5rem;">Complétez votre première formation pour débloquer un trophée !</p>
+        </div>
+      <?php endif; ?>
+    </div>
 
     <!-- Personal Info -->
     <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:var(--space-6);">
@@ -122,31 +165,5 @@ if (!isset($content)) {
       </div>
     </div>
 
-    <!-- Skills -->
-    <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:var(--space-6);">
-      <h3 style="font-size:var(--fs-lg);font-weight:600;margin-bottom:var(--space-5);display:flex;align-items:center;gap:var(--space-2);">
-        <i data-lucide="zap" style="width:20px;height:20px;color:var(--stat-orange);"></i>
-        Compétences
-      </h3>
-      <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);">
-        <span class="badge badge-primary">React</span>
-        <span class="badge badge-primary">Node.js</span>
-        <span class="badge badge-primary">TypeScript</span>
-        <span class="badge badge-primary">Python</span>
-        <span class="badge badge-primary">PostgreSQL</span>
-        <span class="badge badge-primary">Docker</span>
-        <span class="badge badge-primary">Git</span>
-        <span class="badge badge-primary">AWS</span>
-      </div>
-    </div>
-
-    <!-- Save button -->
-    <div style="display:flex;justify-content:flex-end;gap:var(--space-3);">
-      <button class="btn btn-ghost">Annuler</button>
-      <button class="btn btn-primary">
-        <i data-lucide="save" style="width:18px;height:18px;"></i>
-        Enregistrer les modifications
-      </button>
-    </div>
   </div>
 </div>
