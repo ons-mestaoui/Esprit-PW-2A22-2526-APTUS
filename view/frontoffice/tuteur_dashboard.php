@@ -328,7 +328,7 @@ if (!isset($content)) {
 
                         <div style="display: flex; gap: 8px;">
                             <?php if ($f['is_online']): ?>
-                                <a href="jitsi_room.php?id_formation=<?php echo $f['id_formation']; ?>&url=<?php echo urlencode($f['lien_api_room'] ?? '#'); ?>" target="_blank"
+                                <a href="jitsi_room.php?id_formation=<?php echo $f['id_formation']; ?>&url=<?php echo urlencode($f['lien_api_room'] ?? '#'); ?>&role=tuteur" target="_blank"
                                     class="btn btn-sm"
                                     style="background: #3498db; color: white; display: flex; align-items: center; gap: 4px; padding: 4px 12px; font-size: 0.75rem; border-radius: 6px; text-decoration: none;">
                                     <i data-lucide="video" style="width:14px;height:14px;"></i>

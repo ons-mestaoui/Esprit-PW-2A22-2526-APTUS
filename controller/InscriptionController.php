@@ -5,6 +5,93 @@ require_once __DIR__ . '/../model/Inscription.php';
 
 class InscriptionController
 {
+    // Récupère les données complètes pour générer un certificat (Version ultra-robuste)
+    public function getCertificateAccessData($id_user, $id_formation)
+    {
+        $db = config::getConnexion();
+        
+        // 1. On récupère les infos de base (progression + titre formation)
+        // C'est le socle qui ne doit pas échouer
+        $stmt = $db->prepare("
+            SELECT i.progression, f.titre, f.id_tuteur
+            FROM inscription i
+            JOIN Formation f ON i.id_formation = f.id_formation
+            WHERE i.id_user = :uid AND i.id_formation = :fid
+        ");
+        $stmt->execute(['uid' => $id_user, 'fid' => $id_formation]);
+        $res = $stmt->fetch();
+        
+        if (!$res) {
+            // Deuxième essai avec table Inscription majuscule (casse alternative)
+            $stmt = $db->prepare("
+                SELECT i.progression, f.titre, f.id_tuteur
+                FROM Inscription i
+                JOIN Formation f ON i.id_formation = f.id_formation
+                WHERE i.id_user = :uid AND i.id_formation = :fid
+            ");
+            $stmt->execute(['uid' => $id_user, 'fid' => $id_formation]);
+            $res = $stmt->fetch();
+        }
+
+        if (!$res) return false;
+
+        // 2. On essaie de récupérer le NOM du candidat (utilisateur ou candidat)
+        $res['user_nom'] = 'Candidat Aptus';
+        $res['role'] = 'Candidat';
+        
+        try {
+            // Priorité à la table utilisateur
+            $stmtU = $db->prepare("SELECT nom, role FROM utilisateur WHERE id = ?");
+            $stmtU->execute([$id_user]);
+            $u = $stmtU->fetch();
+            if ($u) {
+                $res['user_nom'] = $u['nom'];
+                $res['role'] = $u['role'];
+            } else {
+                // Fallback table candidat
+                $stmtC = $db->prepare("SELECT nom, 'Candidat' as role FROM candidat WHERE id = ?");
+                $stmtC->execute([$id_user]);
+                $c = $stmtC->fetch();
+                if ($c) {
+                    $res['user_nom'] = $c['nom'];
+                    $res['role'] = 'Candidat';
+                }
+            }
+        } catch (Exception $e) { /* On garde les valeurs par défaut */ }
+
+        // 3. On récupère le NOM du tuteur
+        $res['tuteur_nom'] = 'Responsable Aptus';
+        if (!empty($res['id_tuteur'])) {
+            try {
+                $stmtT = $db->prepare("SELECT nom FROM utilisateur WHERE id = ?");
+                $stmtT->execute([$res['id_tuteur']]);
+                $t = $stmtT->fetch();
+                if ($t) $res['tuteur_nom'] = $t['nom'];
+            } catch (Exception $e) { }
+        }
+
+        return $res;
+    }
+
+    // Vérifie si un utilisateur est déjà inscrit à une formation
+    public function isUserInscribed($id_formation, $id_user)
+    {
+        $db = config::getConnexion();
+        try {
+            $stmt = $db->prepare("SELECT COUNT(*) FROM inscription WHERE id_formation = ? AND id_user = ?");
+            $stmt->execute([$id_formation, $id_user]);
+            return $stmt->fetchColumn() > 0;
+        } catch (Exception $e) {
+            try {
+                $stmt = $db->prepare("SELECT COUNT(*) FROM Inscription WHERE id_formation = ? AND id_user = ?");
+                $stmt->execute([$id_formation, $id_user]);
+                return $stmt->fetchColumn() > 0;
+            } catch (Exception $e2) {
+                return false;
+            }
+        }
+    }
+
     // Récupère les formations auxquelles un candidat est inscrit
     // On fait une jointure pour avoir aussi les infos de la formation et du tuteur
     public function listerMesFormations($id_user)

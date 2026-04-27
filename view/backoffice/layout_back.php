@@ -249,12 +249,17 @@
             
             // Extraction robuste de l'ID depuis l'URL ou passage direct d'ID
             let id = param;
+            let targetAction = window.location.pathname;
             if (typeof param === 'string' && param.includes('delete_id=')) {
                 id = param.split('delete_id=')[1].split('&')[0];
+                // Si c'est une URL complète vers un controller, on l'utilise
+                if (param.includes('controller/')) {
+                    targetAction = param.split('?')[0];
+                }
             }
             
             document.getElementById('delete-id-field').value = id;
-            formDelete.action = window.location.pathname; // On reste sur la même page
+            formDelete.action = targetAction; // Utilise le controller si spécifié, sinon reste sur la page
         }
 
         if (message) document.getElementById('delete-modal-msg').textContent = message;

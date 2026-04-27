@@ -10,106 +10,47 @@ if ($id_formation <= 0) {
     die("Formation invalide.");
 }
 
-$db = config::getConnexion();
+require_once __DIR__ . '/../../controller/InscriptionController.php';
 
-// --- 🔐 LOGIQUE MÉTIER & SÉCURITÉ ---
-try {
-    // 1. Vérifier l'inscription, la progression et le rôle du candidat
-    $stmtCheck = $db->prepare("
-        SELECT i.progression, u.role, f.titre 
-        FROM inscription i
-        JOIN utilisateur u ON i.id_user = u.id
-        JOIN formation f ON i.id_formation = f.id_formation
-        WHERE i.id_user = :uid AND i.id_formation = :fid
-    ");
-    $stmtCheck->execute(['uid' => $id_user, 'fid' => $id_formation]);
-    $access = $stmtCheck->fetch();
+$inscriptionController = new InscriptionController();
+$access = $inscriptionController->getCertificateAccessData($id_user, $id_formation);
 
-    if (!$access) {
-        die("<div style='text-align:center; padding:50px; font-family:sans-serif;'>
-                <h1 style='color:#ef4444;'>🚫 Accès Refusé</h1>
-                <p>Vous n'êtes pas inscrit à cette formation.</p>
-             </div>");
-    }
-
-    if ($access['role'] !== 'Candidat' && $access['role'] !== 'candidat') {
-        die("<div style='text-align:center; padding:50px; font-family:sans-serif;'>
-                <h1 style='color:#ef4444;'>❌ Rôle Invalide</h1>
-                <p>Seuls les candidats peuvent obtenir un certificat de réussite.</p>
-             </div>");
-    }
-
-    if ($access['progression'] < 100) {
-        die("<div style='text-align:center; padding:50px; font-family:sans-serif;'>
-                <h1 style='color:#f59e0b;'>⏳ Formation non terminée</h1>
-                <p>Vous devez atteindre 100% de progression pour débloquer votre certificat.</p>
-                <progress value='{$access['progression']}' max='100'></progress> {$access['progression']}%
-             </div>");
-    }
-
-} catch (Exception $e) {
-    die("Erreur système : " . $e->getMessage());
+if (!$access) {
+    die("<div style='text-align:center; padding:50px; font-family:sans-serif;'>
+            <h1 style='color:#ef4444;'>🚫 Accès Refusé</h1>
+            <p>Vous n'êtes pas inscrit à cette formation.</p>
+         </div>");
 }
 
-$user = ['id' => $id_user, 'nom' => 'Candidat Aptus'];
+if ($access['role'] !== 'Candidat' && $access['role'] !== 'candidat') {
+    die("<div style='text-align:center; padding:50px; font-family:sans-serif;'>
+            <h1 style='color:#ef4444;'>❌ Rôle Invalide</h1>
+            <p>Seuls les candidats peuvent obtenir un certificat de réussite.</p>
+         </div>");
+}
+
+if ($access['progression'] < 100) {
+    die("<div style='text-align:center; padding:50px; font-family:sans-serif;'>
+            <h1 style='color:#f59e0b;'>⏳ Formation non terminée</h1>
+            <p>Vous devez atteindre 100% de progression pour débloquer votre certificat.</p>
+            <progress value='{$access['progression']}' max='100'></progress> {$access['progression']}%
+         </div>");
+}
+
+$user = [
+    'id' => $id_user, 
+    'nom' => $access['user_nom'] ?? 'Candidat Aptus'
+];
 $cours_fini = [
     'id_formation' => $id_formation,
     'titre' => $access['titre'],
-    'tuteur_nom' => 'Aptus AI'
+    'tuteur_nom' => $access['tuteur_nom']
 ];
 
 try {
-    $stmt = $db->prepare("
-        SELECT f.titre, COALESCE(u.nom, 'Aptus AI') as tuteur_nom
-        FROM formation f
-        LEFT JOIN utilisateur u ON f.id_tuteur = u.id
-        WHERE f.id_formation = ?
-    ");
-    $stmt->execute([$id_formation]);
-    $data = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($data) {
-        $cours_fini['titre'] = $data['titre'];
-        $cours_fini['tuteur_nom'] = $data['tuteur_nom'];
-    }
-    
-    $q = $db->prepare("SELECT * FROM utilisateur WHERE id = ?");
-    $q->execute([$id_user]);
-    $uData = $q->fetch(PDO::FETCH_ASSOC);
-    if ($uData) {
-        if (isset($uData['prenom'])) {
-            $user['nom'] = trim($uData['prenom'] . ' ' . ($uData['nom'] ?? ''));
-        } elseif (isset($uData['nom'])) {
-            $user['nom'] = $uData['nom'];
-        } elseif (isset($uData['username'])) {
-            $user['nom'] = $uData['username'];
-        }
-    }
+    // Suppression de l'ancien bloc try/SQL ici car tout est déjà dans $access
 } catch (Exception $e) {
-    try {
-        $stmt = $db->prepare("
-            SELECT f.titre, COALESCE(u.nom, 'Aptus AI') as tuteur_nom
-            FROM formation f
-            LEFT JOIN utilisateur u ON f.id_tuteur = u.id
-            WHERE f.id_formation = ?
-        ");
-        $stmt->execute([$id_formation]);
-        $data = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($data) {
-            $cours_fini['titre'] = $data['titre'];
-            $cours_fini['tuteur_nom'] = $data['tuteur_nom'];
-        }
-        
-        $q = $db->prepare("SELECT * FROM User WHERE id = ?");
-        $q->execute([$id_user]);
-        $uData = $q->fetch(PDO::FETCH_ASSOC);
-        if ($uData) {
-            if (isset($uData['prenom'])) {
-                $user['nom'] = trim($uData['prenom'] . ' ' . ($uData['nom'] ?? ''));
-            } elseif (isset($uData['nom'])) {
-                $user['nom'] = $uData['nom'];
-            }
-        }
-    } catch(Exception $e2) {}
+    // Bloc vide conservé pour éviter de casser la structure de fin de fichier si nécessaire
 }
 ?>
 <!DOCTYPE html>

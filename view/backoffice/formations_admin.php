@@ -14,6 +14,8 @@ $listeFormations = $formationC->listerFormations()->fetchAll();
 $tuteurs         = $formationC->getTuteurs();   // Pour le select du modal formation
 $tuteursList     = $tuteurC->listerTuteurs();   // Pour filtre planning + modal créneau
 $totalFormations = count($listeFormations);
+$domaines = array_unique(array_map(function($f) { return $f['domaine']; }, $listeFormations));
+sort($domaines);
 
 // Events : formations (background) + créneaux tuteurs (foreground)
 $formationEvents = $formationC->getFormationsForCalendar();
@@ -125,9 +127,30 @@ if (!isset($content)) {
     <div id="view-list" class="active">
         <div class="flex items-center justify-between p-4" style="border-bottom:1px solid var(--border-color);">
             <h3 class="text-md fw-semibold">Liste du catalogue</h3>
-            <div class="search-bar" style="max-width:280px;">
-                <i data-lucide="search" style="width:16px;height:16px;"></i>
-                <input type="text" class="input" placeholder="Rechercher..." id="admin-formation-search">
+            <div class="flex items-center gap-3">
+                <select id="filter-domaine" class="input" style="padding:0.4rem 0.8rem; border-radius:8px; font-size:0.8rem; width:140px;">
+                    <option value="">Tous Domaines</option>
+                    <?php foreach($domaines as $d): ?>
+                        <option value="<?php echo htmlspecialchars($d); ?>"><?php echo htmlspecialchars($d); ?></option>
+                    <?php endforeach; ?>
+                </select>
+
+                <select id="filter-niveau" class="input" style="padding:0.4rem 0.8rem; border-radius:8px; font-size:0.8rem; width:130px;">
+                    <option value="">Tous Niveaux</option>
+                    <option value="Débutant">Débutant</option>
+                    <option value="Intermédiaire">Intermédiaire</option>
+                    <option value="Avancé">Avancé</option>
+                    <option value="Expert">Expert</option>
+                </select>
+
+                <div class="search-bar" style="max-width:240px;">
+                    <i data-lucide="search" style="width:16px;height:16px;"></i>
+                    <input type="text" class="input" placeholder="Rechercher..." id="admin-formation-search">
+                </div>
+
+                <button id="reset-filters" class="btn btn-sm btn-ghost" style="display:none; color:var(--accent-tertiary); padding: 0.5rem;" title="Effacer les filtres">
+                    <i data-lucide="filter-x" style="width:18px;height:18px;"></i>
+                </button>
             </div>
         </div>
         <table class="data-table">
@@ -141,7 +164,7 @@ if (!isset($content)) {
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="formations-table-body">
                 <?php foreach ($listeFormations as $f):
                     $levelClass = 'badge-neutral';
                     switch ($f['niveau']) {
@@ -349,7 +372,7 @@ if (!isset($content)) {
                         <label class="form-label">Date de début <span class="required-star">*</span></label>
                         <div class="input-validated-wrap" style="position:relative;">
                             <input type="date" class="input iv-field" name="date_formation" id="af-date"
-                                   data-min="1" data-label="Date de début">
+                                   min="<?php echo date('Y-m-d'); ?>" data-min="1" data-label="Date de début">
                             <span class="iv-status" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:none;"></span>
                         </div>
                         <span class="iv-msg" id="af-date-msg" style="display:none;font-size:.78rem;color:#ef4444;margin-top:4px;display:block;"></span>
@@ -717,6 +740,9 @@ if (!isset($content)) {
             valid = val !== '';
         } else if (input.type === 'date') {
             valid = val !== '' && !isNaN(Date.parse(val));
+            if (valid && input.hasAttribute('min')) {
+                valid = val >= input.getAttribute('min');
+            }
         } else {
             valid = val.length >= min;
         }
@@ -735,9 +761,22 @@ if (!isset($content)) {
 
         if (msgEl) {
             if (!valid) {
-                msgEl.textContent = (val.length === 0)
-                    ? `${label} est requis.`
-                    : `Trop court (min. ${min} caractères).`;
+                if (input.type === 'date') {
+                    const valDate = new Date(val);
+                    const now = new Date();
+                    now.setHours(0,0,0,0);
+                    if (val === '') {
+                        msgEl.textContent = `${label} est requis.`;
+                    } else if (valDate < now) {
+                        msgEl.textContent = `La date ne peut pas être dans le passé.`;
+                    } else {
+                        msgEl.textContent = `Date invalide.`;
+                    }
+                } else {
+                    msgEl.textContent = (val.length === 0)
+                        ? `${label} est requis.`
+                        : `Trop court (min. ${min} caractères).`;
+                }
                 msgEl.style.display = 'block';
             } else {
                 msgEl.textContent = '';
@@ -796,4 +835,51 @@ if (!isset($content)) {
             if (ctx.state === 'suspended') ctx.resume();
         }
     }, { once: true });
+    // --- LOGIQUE DE RECHERCHE DYNAMIQUE (AJAX) ---
+    const searchInput = document.getElementById('admin-formation-search');
+    const filterDomaine = document.getElementById('filter-domaine');
+    const filterNiveau = document.getElementById('filter-niveau');
+    const resetBtn = document.getElementById('reset-filters');
+    const tableBody = document.getElementById('formations-table-body');
+
+    function performSearch() {
+        const s = searchInput.value;
+        const d = filterDomaine.value;
+        const n = filterNiveau.value;
+
+        // Afficher/Masquer le bouton reset
+        if (s || d || n) {
+            resetBtn.style.display = 'flex';
+        } else {
+            resetBtn.style.display = 'none';
+        }
+
+        // On ajoute un effet de chargement visuel léger
+        tableBody.style.opacity = '0.5';
+
+        fetch(`ajax_search_formations.php?s=${encodeURIComponent(s)}&d=${encodeURIComponent(d)}&n=${encodeURIComponent(n)}`)
+            .then(response => response.text())
+            .then(html => {
+                tableBody.innerHTML = html;
+                tableBody.style.opacity = '1';
+                // Réinitialiser les icônes Lucide pour les nouveaux éléments
+                if (window.lucide) lucide.createIcons();
+            })
+            .catch(error => {
+                console.error('Erreur lors de la recherche:', error);
+                tableBody.style.opacity = '1';
+            });
+    }
+
+    function resetFilters() {
+        searchInput.value = '';
+        filterDomaine.value = '';
+        filterNiveau.value = '';
+        performSearch();
+    }
+
+    if (searchInput) searchInput.addEventListener('input', performSearch);
+    if (filterDomaine) filterDomaine.addEventListener('change', performSearch);
+    if (filterNiveau) filterNiveau.addEventListener('change', performSearch);
+    if (resetBtn) resetBtn.addEventListener('click', resetFilters);
 </script>

@@ -103,35 +103,12 @@ switch ($action) {
         break;
 
     case 'append_ai_syllabus':
-        require_once __DIR__ . '/../../config.php';
-        $db = config::getConnexion();
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
         $id_formation = $_POST['id_formation'] ?? 0;
         $html_content = "<!-- AI_SYLLABUS_START -->" . $_POST['html_content'] . "<!-- AI_SYLLABUS_END -->";
         
-        $stmt = $db->prepare("SELECT description FROM formation WHERE id_formation = :id");
-        $stmt->execute(['id' => $id_formation]);
-        $row = $stmt->fetch();
-        if ($row) {
-            $desc = $row['description'];
-            
-            // Si un syllabus existe déjà, on le remplace
-            if (strpos($desc, '<!-- AI_SYLLABUS_START -->') !== false) {
-                $desc = preg_replace('/<!-- AI_SYLLABUS_START -->.*?<!-- AI_SYLLABUS_END -->/s', $html_content, $desc);
-            } else {
-                // Sinon on l'insère avant les ressources ou à la fin
-                if (strpos($desc, '<!-- APTUS_RESOURCES:') !== false) {
-                    $desc = str_replace('<!-- APTUS_RESOURCES:', $html_content . '<!-- APTUS_RESOURCES:', $desc);
-                } else {
-                    $desc .= $html_content;
-                }
-            }
-            
-            $stmtU = $db->prepare("UPDATE formation SET description = :desc WHERE id_formation = :id");
-            $success = $stmtU->execute(['desc' => $desc, 'id' => $id_formation]);
-            echo json_encode(['success' => $success]);
-        } else {
-            echo json_encode(['success' => false]);
-        }
+        echo $controller->appendSyllabus($id_formation, $html_content);
         break;
 
     case 'delete_resource':
@@ -144,15 +121,12 @@ switch ($action) {
         break;
 
     case 'get_emotion_stats':
-        require_once __DIR__ . '/../../config.php';
-        $db = config::getConnexion();
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
         $id_candidat = $_POST['id_candidat'] ?? 0;
         $id_formation = $_POST['id_formation'] ?? 0;
         
-        $stmt = $db->prepare("SELECT emotion_detectee, COUNT(*) as count FROM rapport_emotions WHERE id_candidat = :id_candidat AND id_formation = :id_formation GROUP BY emotion_detectee");
-        $stmt->execute(['id_candidat' => $id_candidat, 'id_formation' => $id_formation]);
-        $stats = $stmt->fetchAll();
-        echo json_encode(['success' => true, 'stats' => $stats]);
+        echo $controller->getEmotionStats($id_candidat, $id_formation);
         break;
 
     case 'save_emotion':
@@ -186,9 +160,15 @@ switch ($action) {
 
     case 'mark_notifications_read':
         $uid = $_POST['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        $notif_id = $_POST['notif_id'] ?? null;
         require_once __DIR__ . '/../../controller/NotificationController.php';
         $notifC = new NotificationController();
-        $success = $notifC->markAsRead((int)$uid);
+        
+        if ($notif_id) {
+            $success = $notifC->markOneAsRead((int)$notif_id);
+        } else {
+            $success = $notifC->markAsRead((int)$uid);
+        }
         echo json_encode(['success' => $success]);
         break;
 

@@ -163,6 +163,56 @@ class AIController
         return json_encode(['success' => false, 'message' => 'Erreur de réponse de l\'IA.', 'raw' => $result]);
     }
 
+    public function appendSyllabus($id_formation, $html_content)
+    {
+        try {
+            $db = config::getConnexion();
+            $stmt = $db->prepare("SELECT description FROM formation WHERE id_formation = :id");
+            $stmt->execute(['id' => $id_formation]);
+            $row = $stmt->fetch();
+            if ($row) {
+                $desc = $row['description'];
+                
+                // Si un syllabus existe déjà, on le remplace
+                if (strpos($desc, '<!-- AI_SYLLABUS_START -->') !== false) {
+                    $desc = preg_replace('/<!-- AI_SYLLABUS_START -->.*?<!-- AI_SYLLABUS_END -->/s', $html_content, $desc);
+                } else {
+                    // Sinon on l'insère avant les ressources ou à la fin
+                    if (strpos($desc, '<!-- APTUS_RESOURCES:') !== false) {
+                        $desc = str_replace('<!-- APTUS_RESOURCES:', $html_content . '<!-- APTUS_RESOURCES:', $desc);
+                    } else {
+                        $desc .= $html_content;
+                    }
+                }
+                
+                $stmtU = $db->prepare("UPDATE formation SET description = :desc WHERE id_formation = :id");
+                $success = $stmtU->execute(['desc' => $desc, 'id' => $id_formation]);
+                return json_encode(['success' => $success]);
+            }
+            return json_encode(['success' => false]);
+        } catch (Exception $e) {
+            return json_encode(['success' => false, 'message' => 'Erreur DB: ' . $e->getMessage()]);
+        }
+    }
+
+    public function getEmotionStats($id_candidat, $id_formation)
+    {
+        try {
+            $db = config::getConnexion();
+            if ($id_candidat > 0) {
+                $stmt = $db->prepare("SELECT emotion_detectee, COUNT(*) as count FROM rapport_emotions WHERE id_candidat = :id_candidat AND id_formation = :id_formation GROUP BY emotion_detectee");
+                $stmt->execute(['id_candidat' => $id_candidat, 'id_formation' => $id_formation]);
+            } else {
+                $stmt = $db->prepare("SELECT emotion_detectee, COUNT(*) as count FROM rapport_emotions WHERE id_formation = :id_formation GROUP BY emotion_detectee");
+                $stmt->execute(['id_formation' => $id_formation]);
+            }
+            $stats = $stmt->fetchAll();
+            return json_encode(['success' => true, 'stats' => $stats]);
+        } catch (Exception $e) {
+            return json_encode(['success' => false, 'message' => 'Erreur DB: ' . $e->getMessage()]);
+        }
+    }
+
     public function saveStudentEmotion($id_candidat, $id_formation, $emotion)
     {
         if (!$id_candidat || !$emotion) {

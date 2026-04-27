@@ -672,4 +672,36 @@ class FormationController
         header('Location: formations_admin.php');
         exit();
     }
+    // Recherche multi-critères pour le dashboard admin
+    public function rechercherFormations($search = '', $domaine = '', $niveau = '')
+    {
+        $db = config::getConnexion();
+        $sql = "SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                FROM Formation f 
+                LEFT JOIN utilisateur u ON f.id_tuteur = u.id 
+                WHERE 1=1";
+        
+        $params = [];
+        
+        if (!empty($search)) {
+            $sql .= " AND (f.titre LIKE :search OR f.domaine LIKE :search OR f.description LIKE :search)";
+            $params['search'] = '%' . $search . '%';
+        }
+        
+        if (!empty($domaine)) {
+            $sql .= " AND f.domaine = :domaine";
+            $params['domaine'] = $domaine;
+        }
+        
+        if (!empty($niveau)) {
+            $sql .= " AND f.niveau = :niveau";
+            $params['niveau'] = $niveau;
+        }
+        
+        $sql .= " ORDER BY f.date_formation DESC";
+        
+        $query = $db->prepare($sql);
+        $query->execute($params);
+        return $query->fetchAll();
+    }
 }

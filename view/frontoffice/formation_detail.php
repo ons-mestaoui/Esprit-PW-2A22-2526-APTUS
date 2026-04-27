@@ -41,20 +41,9 @@ if (!isset($content)) {
         // Optionnel
     }
     // Check if already inscribed
-    $db = config::getConnexion();
-    try {
-        $stmt = $db->prepare("SELECT COUNT(*) FROM inscription WHERE id_formation = ? AND id_user = ?");
-        $stmt->execute([$id, $id_user]);
-        $isInscribed = $stmt->fetchColumn() > 0;
-    } catch (Exception $e) {
-        try {
-            $stmt = $db->prepare("SELECT COUNT(*) FROM Inscription WHERE id_formation = ? AND id_user = ?");
-            $stmt->execute([$id, $id_user]);
-            $isInscribed = $stmt->fetchColumn() > 0;
-        } catch (Exception $e2) {
-            $isInscribed = false;
-        }
-    }
+    require_once __DIR__ . '/../../controller/InscriptionController.php';
+    $inscriptionController = new InscriptionController();
+    $isInscribed = $inscriptionController->isUserInscribed($id, $id_user);
 
     $content = __FILE__;
     include 'layout_front.php';

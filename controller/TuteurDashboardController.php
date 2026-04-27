@@ -64,7 +64,7 @@ class TuteurDashboardController
                     $id_user, 
                     'success', 
                     "Félicitations ! Vous avez terminé la formation : $titre. 🎓", 
-                    "view/frontoffice/certificate.php?f_id=$id_formation", 
+                    "certificate.php?f_id=$id_formation", 
                     'award'
                 );
 
@@ -78,7 +78,7 @@ class TuteurDashboardController
                         $id_user,
                         'info',
                         "🚀 Nouveau débloqué : " . $next['titre'] . ". Découvrez votre nouveau chemin sur la Skill Map !",
-                        "view/frontoffice/skill_tree.php?id=" . $next['id_formation'],
+                        "skill_tree.php?id=" . $next['id_formation'],
                         'unlock'
                     );
                 }

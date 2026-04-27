@@ -6,7 +6,7 @@ $room_url = $_GET['url'] ?? '';
 $id_formation = $_GET['id_formation'] ?? 0;
 // Fallback sur session ou 5
 $id_user = $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 5;
-$role = strtolower($_SESSION['role'] ?? 'candidat'); // tuteur ou candidat
+$role = strtolower($_GET['role'] ?? $_SESSION['role'] ?? 'candidat'); // tuteur ou candidat
 
 // On s'assure d'avoir un lien jitsi valide
 if (strpos($room_url, 'meet.jit.si') === false) {
@@ -118,8 +118,11 @@ if (!isset($content)) {
                 Agent Aptus actif — État : <span id="emotion-indicator">Chargement...</span>
             </div>
         <?php else: ?>
-            <div style="color:var(--text-secondary);">
-                <i data-lucide="shield" style="width:16px;height:16px;vertical-align:middle;"></i> Mode Tuteur (Analyse IA désactivée)
+            <div style="color:var(--text-secondary); display:flex; align-items:center; gap:1rem;">
+                <div><i data-lucide="shield" style="width:16px;height:16px;vertical-align:middle;"></i> Mode Tuteur</div>
+                <button onclick="showClassEmotions()" class="btn btn-sm" style="background:var(--accent-primary); color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px;">
+                    <i data-lucide="brain-circuit" style="width:14px;height:14px;"></i> Bilan IA de la classe
+                </button>
             </div>
         <?php endif; ?>
     </div>
@@ -295,4 +298,122 @@ if (!isset($content)) {
         });
     }
     <?php endif; ?>
+    
+    <?php if ($role === 'tuteur'): ?>
+    function showClassEmotions() {
+        if (typeof Swal === 'undefined') {
+            alert('Veuillez patienter, chargement des outils IA...');
+            return;
+        }
+        Swal.fire({
+            title: `Bilan IA - Classe Entière`,
+            html: `
+                <div style="display:flex; flex-direction:column; align-items:center; gap: 1.5rem;">
+                    <div style="width: 250px; height: 250px;">
+                        <canvas id="emotionsChart"></canvas>
+                    </div>
+                    <div id="ai-recommandations" style="text-align: left; width: 100%; min-height: 100px; background: var(--bg-surface); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div style="text-align:center; color: var(--text-secondary);">
+                            <i data-lucide="loader-2" style="width: 20px; height: 20px; animation: spin 1s linear infinite;"></i>
+                            <p>Analyse cognitive globale en cours (Agent Llama 3)...</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            width: '600px',
+            showConfirmButton: true,
+            confirmButtonText: 'Fermer',
+            confirmButtonColor: '#3b82f6',
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+            customClass: { popup: 'swal-ai-custom' },
+            didOpen: () => {
+                if (window.lucide) lucide.createIcons();
+                // 1. Fetch data for whole class (id_candidat = 0)
+                const formData = new FormData();
+                formData.append('action', 'get_emotion_stats');
+                formData.append('id_candidat', 0);
+                formData.append('id_formation', <?php echo $id_formation; ?>);
+
+                fetch('ajax_handler.php', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.stats.length > 0) {
+                        const labels = data.stats.map(s => s.emotion_detectee);
+                        const values = data.stats.map(s => parseInt(s.count));
+
+                        // 2. Draw Chart
+                        const ctx = document.getElementById('emotionsChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    data: values,
+                                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6366f1', '#64748b'],
+                                    borderWidth: 0
+                                }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false }
+                        });
+
+                        // 3. Ask Groq
+                        askGroqRecommandations(data.stats);
+                    } else {
+                        document.getElementById('ai-recommandations').innerHTML = '<p style="text-align:center;">Aucune donnée émotionnelle enregistrée pour la classe (les caméras sont peut-être désactivées).</p>';
+                    }
+                }).catch(err => {
+                    console.error(err);
+                    document.getElementById('ai-recommandations').innerHTML = '<p style="color:#ef4444;">Erreur serveur.</p>';
+                });
+            }
+        });
+    }
+
+    function askGroqRecommandations(stats) {
+        const formData = new FormData();
+        formData.append('action', 'analyze_student_emotions');
+        formData.append('stats', JSON.stringify(stats));
+
+        fetch('ajax_handler.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('ai-recommandations');
+            if (data.success && data.data) {
+                const info = data.data;
+                const analysis = info.analyse_globale || info.analyseGlobale || "Analyse indisponible";
+                const tips = info.conseils || info.tips || [];
+
+                let html = `
+                    <h4 style="color: var(--accent-primary); margin-bottom: 0.5rem; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="brain-circuit" style="width:18px;height:18px;"></i> Agent Pédagogique Aptus
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">${analysis}</p>
+                    <ul style="padding-left: 1.2rem; font-size: 0.9rem; font-weight: 500; color: var(--text-primary);">
+                `;
+                tips.forEach(c => {
+                    html += `<li style="margin-bottom: 0.5rem;">${c}</li>`;
+                });
+                html += '</ul>';
+                container.innerHTML = html;
+                if (window.lucide) lucide.createIcons();
+            } else {
+                container.innerHTML = `<p style="color:#ef4444;">Erreur de l'Agent IA : ${data.message || 'Réponse invalide'}</p>`;
+            }
+        })
+        .catch(err => {
+            console.error("Fetch Error:", err);
+            document.getElementById('ai-recommandations').innerHTML = `<p style="color:#ef4444;">Erreur réseau IA.</p>`;
+        });
+    }
+    <?php endif; ?>
 </script>
+<style>
+    .swal-ai-custom {
+        border-radius: 20px !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

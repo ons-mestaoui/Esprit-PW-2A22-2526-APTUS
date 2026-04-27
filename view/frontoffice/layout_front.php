@@ -610,7 +610,8 @@
     function markOneRead(id, el) {
         el.classList.remove('unread');
         const formData = new FormData();
-        formData.append('action', 'mark_notifications_read'); // marks all; individual endpoint optional
+        formData.append('action', 'mark_notifications_read');
+        formData.append('notif_id', id);
         fetch('/aptus_first_official_version/view/frontoffice/ajax_handler.php', { method: 'POST', body: formData });
     }
 
