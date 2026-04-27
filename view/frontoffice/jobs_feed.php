@@ -1,4 +1,4 @@
-<?php 
+﻿<?php 
 $pageTitle = "Browse Jobs"; 
 $pageCSS = "feeds.css"; 
 

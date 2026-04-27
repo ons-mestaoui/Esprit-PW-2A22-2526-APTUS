@@ -169,6 +169,8 @@ if (!isset($content)) {
     }
     $count = $listeOffres->rowCount();
   ?>
+
+
   <!-- ═══ Engagement Stats (from posts_stats) ═══ -->
   <div class="grid grid-4 gap-6 mb-8 stagger">
     <div class="stat-card animate-on-scroll">
@@ -233,7 +235,7 @@ if (!isset($content)) {
       <option>Design</option>
       <option>Marketing</option>
     </select>
-    <select class="select" style="max-width:140px;" id="admin-offers-status" name="filter_status" onchange="const url = new URL(window.location.href); url.searchParams.set('filter_status', this.value); window.location.href = url.href;">
+    <select class="select" style="max-width:140px;" id="admin-offers-status" name="filter_status" onchange="fetchAdminSearch(document.getElementById('admin-offers-search').value);">
       <option value="">Tous statuts</option>
       <option value="Actif" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'selected' : ''; ?>>Actif</option>
       <option value="Expiré" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'selected' : ''; ?>>Expiré</option>
@@ -487,6 +489,39 @@ if (!isset($content)) {
 <?php endif; ?>
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   if(typeof AptusCharts !== 'undefined' && document.getElementById('posts-monthly-chart')) {
@@ -555,6 +590,11 @@ function fetchAdminSearch(query) {
     const formData = new FormData();
     formData.append('action', 'search_offres');
     formData.append('query', query);
+    
+    const statusSelect = document.getElementById('admin-offers-status');
+    if (statusSelect) {
+        formData.append('filter_status', statusSelect.value);
+    }
     
     fetch('ajax_offres.php', {
         method: 'POST',

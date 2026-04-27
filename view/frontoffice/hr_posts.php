@@ -171,19 +171,40 @@ if (!isset($content)) {
           <?php endif; ?>
           <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">STATUT</h4>
           <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-              <label style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (empty($_GET['filter_status'])) ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (empty($_GET['filter_status'])) ? '600' : '500'; ?>; transition: all 0.2s;">
-                  <input type="radio" name="filter_status" value="" onchange="this.form.submit()" <?php echo (empty($_GET['filter_status'])) ? 'checked' : ''; ?> style="display:none;">
+              <label class="filter-status-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (empty($_GET['filter_status']) || $_GET['filter_status'] === 'Tous statuts') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (empty($_GET['filter_status']) || $_GET['filter_status'] === 'Tous statuts') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'Tous statuts')">
+                  <input type="radio" name="filter_status" value="Tous statuts" <?php echo (empty($_GET['filter_status']) || $_GET['filter_status'] === 'Tous statuts') ? 'checked' : ''; ?> style="position:absolute; opacity:0; width:0; height:0;">
                   Tous
               </label>
-              <label style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? '600' : '500'; ?>; transition: all 0.2s;">
-                  <input type="radio" name="filter_status" value="Actif" onchange="this.form.submit()" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'checked' : ''; ?> style="display:none;">
+              <label class="filter-status-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'Actif')">
+                  <input type="radio" name="filter_status" value="Actif" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'checked' : ''; ?> style="position:absolute; opacity:0; width:0; height:0;">
                   Actif
               </label>
-              <label style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? '600' : '500'; ?>; transition: all 0.2s;">
-                  <input type="radio" name="filter_status" value="Expiré" onchange="this.form.submit()" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'checked' : ''; ?> style="display:none;">
+              <label class="filter-status-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'Expiré')">
+                  <input type="radio" name="filter_status" value="Expiré" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'checked' : ''; ?> style="position:absolute; opacity:0; width:0; height:0;">
                   Expiré
               </label>
           </div>
+          
+          <script>
+          function handleFilterClick(labelElement, value) {
+              // Set the radio button to checked
+              const radio = labelElement.querySelector('input[type="radio"]');
+              if(radio) radio.checked = true;
+              
+              // Update colors
+              document.querySelectorAll('.filter-status-label').forEach(lbl => {
+                  lbl.style.color = 'var(--text-secondary)';
+                  lbl.style.fontWeight = '500';
+              });
+              labelElement.style.color = 'var(--accent-primary)';
+              labelElement.style.fontWeight = '600';
+              
+              // Trigger search
+              const searchInput = document.getElementById('ajax-search-input');
+              const query = searchInput ? searchInput.value : '';
+              fetchHrPostsSearch(query);
+          }
+          </script>
       </form>
     </div>
     </aside>
@@ -755,6 +776,11 @@ function fetchHrPostsSearch(query) {
     const formData = new FormData();
     formData.append('action', 'search_offres');
     formData.append('query', query);
+    
+    const checkedRadio = document.querySelector('input[name="filter_status"]:checked');
+    if (checkedRadio) {
+        formData.append('filter_status', checkedRadio.value);
+    }
     
     fetch('ajax_offres.php', {
         method: 'POST',
