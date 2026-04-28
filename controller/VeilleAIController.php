@@ -61,19 +61,38 @@ class VeilleAIController
 
     public function generateDraft($metadata)
     {
-        $prompt = "As a Market Intelligence Expert, write a professional market analysis report based on the following metadata:
-        Title: {$metadata['titre']}
-        Sector: {$metadata['secteur']}
-        Region: {$metadata['region']}
-        Average Salary: {$metadata['salaire']}
-        General Trend: {$metadata['tendance']}
-        Demand Level: {$metadata['demande']}
-        
-        CRITICAL INSTRUCTIONS:
-        1. The entire report MUST be written strictly in French.
-        2. The report should be in HTML format (suitable for a Quill editor), including headings, bullet points, and a deep analysis.
-        3. Use a professional and insightful tone.
-        4. MUST include a prominent, stylized header or footer at the beginning or end of the report that clearly states: \"✨ Ce rapport a été généré et enrichi par l'Assistant IA Aptus. Vérifiez les données avant publication.\"";
+        $prompt = "You are an expert HTML content writer and Market Intelligence Analyst. Your task is to write a complete, professional market analysis report.
+
+Metadata provided:
+- Titre: {$metadata['titre']}
+- Secteur: {$metadata['secteur']}
+- Region: {$metadata['region']}
+- Salaire moyen: {$metadata['salaire']} TND
+- Tendance generale: {$metadata['tendance']}
+- Niveau de demande: {$metadata['demande']}
+
+OUTPUT RULES — YOU MUST FOLLOW THESE EXACTLY:
+1. Output ONLY valid HTML. Do NOT use Markdown.
+2. FORBIDDEN characters and syntax: do NOT use ---, ***, **, *, ##, ###, ####, ` ``` `, or any other Markdown syntax.
+3. Use ONLY these HTML tags: <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>, <br>.
+4. Start your output directly with an HTML tag like <h2>. Do not add any preamble, explanation, or text before the first HTML tag.
+5. The entire report content MUST be written in French.
+6. Include the following disclaimer as the last paragraph, styled as an italic paragraph: <p><em>✨ Ce rapport a été généré et enrichi par l'Assistant IA Aptus. Vérifiez les données avant publication.</em></p>
+
+REPORT STRUCTURE TO FOLLOW:
+<h2>[Titre du rapport]</h2>
+<h3>Résumé Exécutif</h3>
+<p>[2-3 phrases de synthèse du marché]</p>
+<h3>Analyse du Secteur</h3>
+<p>[Analyse approfondie du secteur ciblé]</p>
+<h3>Tendances Salariales</h3>
+<p>[Discussion des fourchettes salariales et tendances]</p>
+<ul><li>[Points clés]</li></ul>
+<h3>Niveau de Demande et Perspectives</h3>
+<p>[Analyse de la demande du marché]</p>
+<h3>Recommandations</h3>
+<ul><li>[Recommandations actionnables]</li></ul>
+<p><em>✨ Ce rapport a été généré et enrichi par l'Assistant IA Aptus. Vérifiez les données avant publication.</em></p>";
 
         return $this->callGemini($prompt);
     }
@@ -145,10 +164,21 @@ class VeilleAIController
             return ["error" => $aiResponse];
         }
 
-        // Clean AI response if it contains markdown code blocks
-        $aiResponse = preg_replace('/^```json\s*|\s*```$/', '', trim($aiResponse));
+        // Extract JSON robustly
+        $start = strpos($aiResponse, '{');
+        $end = strrpos($aiResponse, '}');
+        if ($start !== false && $end !== false) {
+            $aiResponse = substr($aiResponse, $start, $end - $start + 1);
+        } else {
+            // Clean AI response if it contains markdown code blocks but no obvious JSON structure
+            $aiResponse = preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($aiResponse));
+        }
         
-        return json_decode($aiResponse, true);
+        $decoded = json_decode($aiResponse, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ["error" => "API returned invalid JSON: " . json_last_error_msg() . " - Response: " . substr($aiResponse, 0, 100) . "..."];
+        }
+        return $decoded;
     }
 
     public function generateForecast($historicalData, $secteur = '')
@@ -171,8 +201,18 @@ class VeilleAIController
             return ["error" => $aiResponse];
         }
 
-        $aiResponse = preg_replace('/^```json\s*|\s*```$/', '', trim($aiResponse));
+        $start = strpos($aiResponse, '[');
+        $end = strrpos($aiResponse, ']');
+        if ($start !== false && $end !== false) {
+            $aiResponse = substr($aiResponse, $start, $end - $start + 1);
+        } else {
+            $aiResponse = preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($aiResponse));
+        }
         
-        return json_decode($aiResponse, true);
+        $decoded = json_decode($aiResponse, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ["error" => "API returned invalid JSON: " . json_last_error_msg()];
+        }
+        return $decoded;
     }
 }

@@ -28,9 +28,20 @@ switch ($action) {
 
     case 'get_forecast':
         $secteur = $_GET['secteur'] ?? '';
-        if (empty($secteur)) {
-            echo json_encode(['success' => false, 'error' => 'Secteur is required for forecasting']);
-            break;
+        
+        // Cache mechanism to speed up loading
+        $cacheFile = __DIR__ . '/cache_forecast_' . md5($secteur) . '.json';
+        $cacheTime = 24 * 3600; // 24 hours
+        
+        // If force refresh is requested, skip cache (we don't have it in the GET params currently, but just in case)
+        $forceRefresh = isset($_GET['force']) && $_GET['force'] == '1';
+        
+        if (!$forceRefresh && file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime) {
+            $cachedData = json_decode(file_get_contents($cacheFile), true);
+            if ($cachedData && is_array($cachedData)) {
+                echo json_encode(['success' => true, 'forecast' => $cachedData]);
+                break;
+            }
         }
         
         $reports = $veilleC->afficherRapports();
@@ -48,7 +59,14 @@ switch ($action) {
         }
         
         $forecast = $aiController->generateForecast($historical, $secteur);
-        echo json_encode(['success' => true, 'forecast' => $forecast]);
+        
+        if (isset($forecast['error'])) {
+            echo json_encode(['success' => false, 'error' => $forecast['error']]);
+        } else {
+            // Save to cache
+            file_put_contents($cacheFile, json_encode($forecast));
+            echo json_encode(['success' => true, 'forecast' => $forecast]);
+        }
         break;
 
     default:

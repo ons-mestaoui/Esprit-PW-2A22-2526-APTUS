@@ -283,5 +283,98 @@ class VeilleC
             die('Erreur: ' . $e->getMessage());
         }
     }
+
+    public function getSidebarStats()
+    {
+        $stats = [];
+        
+        // 1. Données analysées (Total)
+        $sql = "SELECT COUNT(*) as total FROM donnee_marche";
+        try {
+            $req = $this->db->query($sql);
+            $res = $req->fetch();
+            $stats['donnees_total'] = $res['total'] > 0 ? $res['total'] : 0;
+        } catch (Exception $e) {
+            $stats['donnees_total'] = 0;
+        }
+
+        // Sparkline for Données analysées (Simulated trend based on total for visual effect)
+        $baseDonnees = $stats['donnees_total'] > 0 ? $stats['donnees_total'] : 15;
+        $stats['sparkline_donnees'] = [
+            max(0, $baseDonnees - 5), max(0, $baseDonnees - 3), max(0, $baseDonnees - 4), 
+            $baseDonnees - 2, $baseDonnees + 1, $baseDonnees
+        ];
+
+        // 2. Salaire moyen global
+        $sql = "SELECT AVG(salaire_moyen) as avg_sal FROM donnee_marche WHERE salaire_moyen IS NOT NULL AND salaire_moyen > 0";
+        try {
+            $req = $this->db->query($sql);
+            $res = $req->fetch();
+            $stats['salaire_moyen'] = $res['avg_sal'] ? round($res['avg_sal']) : 0;
+        } catch (Exception $e) {
+            $stats['salaire_moyen'] = 0;
+        }
+
+        // Sparkline for salaries (Simulated trend based on current avg)
+        $baseSalaire = $stats['salaire_moyen'] > 0 ? $stats['salaire_moyen'] : 2500;
+        $stats['sparkline_salaire'] = [
+            $baseSalaire * 0.9, $baseSalaire * 0.95, $baseSalaire * 0.92, 
+            $baseSalaire * 0.98, $baseSalaire * 1.02, $baseSalaire
+        ];
+        
+        // 3. Top Secteurs (based on rapport_marche secteur_principal)
+        $sql = "SELECT secteur_principal FROM rapport_marche";
+        try {
+            $req = $this->db->query($sql);
+            $secteurs_raw = $req->fetchAll();
+            $secteurs_count = [];
+            $total_secteurs = 0;
+            foreach($secteurs_raw as $row) {
+                if (!empty($row['secteur_principal'])) {
+                    $tags = explode(',', $row['secteur_principal']);
+                    foreach($tags as $t) {
+                        $t = trim($t);
+                        if ($t) {
+                            if (!isset($secteurs_count[$t])) $secteurs_count[$t] = 0;
+                            $secteurs_count[$t]++;
+                            $total_secteurs++;
+                        }
+                    }
+                }
+            }
+            arsort($secteurs_count);
+            $stats['top_secteurs'] = array_slice($secteurs_count, 0, 4, true);
+            $stats['total_secteurs_tags'] = $total_secteurs;
+        } catch (Exception $e) {
+            $stats['top_secteurs'] = [];
+            $stats['total_secteurs_tags'] = 0;
+        }
+
+        // 4. Sujets tendance (Top tags by vues)
+        $sql = "SELECT secteur_principal, vues FROM rapport_marche ORDER BY vues DESC";
+        try {
+            $req = $this->db->query($sql);
+            $reports_raw = $req->fetchAll();
+            $sujets_vues = [];
+            foreach($reports_raw as $row) {
+                if (!empty($row['secteur_principal'])) {
+                    $tags = explode(',', $row['secteur_principal']);
+                    foreach($tags as $t) {
+                        $t = trim($t);
+                        if ($t) {
+                            if (!isset($sujets_vues[$t])) $sujets_vues[$t] = 0;
+                            $sujets_vues[$t] += $row['vues'];
+                        }
+                    }
+                }
+            }
+            arsort($sujets_vues);
+            $stats['sujets_tendance'] = array_slice($sujets_vues, 0, 5, true);
+        } catch (Exception $e) {
+            $stats['sujets_tendance'] = [];
+        }
+
+        return $stats;
+    }
 }
 ?>

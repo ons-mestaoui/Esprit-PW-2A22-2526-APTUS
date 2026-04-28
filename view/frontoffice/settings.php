@@ -59,7 +59,7 @@ if (!isset($content)) {
   </button>
 </div>
 
-<!-- ═══ GENERAL ═══ -->
+<!-- â•Ââ•Ââ•Â GENERAL â•Ââ•Ââ•Â -->
 <div class="settings-section active" id="tab-general">
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="globe" style="width:20px;height:20px;color:var(--accent-primary);"></i> Langue & Région</div>
@@ -70,7 +70,7 @@ if (!isset($content)) {
         <select class="select">
           <option selected>Français</option>
           <option>English</option>
-          <option>العربية</option>
+          <option>ÃƒËœÃ‚Â§Ãƒâ„¢ââ‚¬Å¾ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â±ÃƒËœÃ‚Â¨Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â©</option>
         </select>
       </div>
       <div class="form-group">
@@ -94,7 +94,7 @@ if (!isset($content)) {
   </div>
 </div>
 
-<!-- ═══ APPEARANCE ═══ -->
+<!-- â•Ââ•Ââ•Â APPEARANCE â•Ââ•Ââ•Â -->
 <div class="settings-section" id="tab-appearance">
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="sun" style="width:20px;height:20px;color:var(--stat-orange);"></i> Thème</div>
@@ -140,17 +140,17 @@ if (!isset($content)) {
   </div>
 </div>
 
-<!-- ═══ NOTIFICATIONS ═══ -->
+<!-- â•Ââ•Ââ•Â NOTIFICATIONS â•Ââ•Ââ•Â -->
 <div class="settings-section" id="tab-notifications">
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="mail" style="width:20px;height:20px;color:var(--accent-primary);"></i> Notifications par email</div>
     <div class="settings-card__desc">Gérez les emails que vous recevez d'Aptus</div>
     <div class="setting-row">
-      <div class="setting-row__info"><div class="setting-row__label">Nouveaux postes correspondants</div><div class="setting-row__hint">Recevez un email quand un poste correspond à votre profil</div></div>
+      <div class="setting-row__info"><div class="setting-row__label">Nouveaux postes correspondants</div><div class="setting-row__hint">Recevez un email quand un poste correspond à  votre profil</div></div>
       <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
     </div>
     <div class="setting-row">
-      <div class="setting-row__info"><div class="setting-row__label">Mises à jour des candidatures</div><div class="setting-row__hint">Statut de vos candidatures et retours des entreprises</div></div>
+      <div class="setting-row__info"><div class="setting-row__label">Mises à  jour des candidatures</div><div class="setting-row__hint">Statut de vos candidatures et retours des entreprises</div></div>
       <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
     </div>
     <div class="setting-row">
@@ -164,11 +164,18 @@ if (!isset($content)) {
   </div>
 </div>
 
-<!-- ═══ PRIVACY ═══ -->
+<!-- â•Ââ•Ââ•Â PRIVACY â•Ââ•Ââ•Â -->
 <div class="settings-section" id="tab-privacy">
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="eye" style="width:20px;height:20px;color:var(--accent-primary);"></i> Visibilité du profil</div>
     <div class="settings-card__desc">Contrôlez qui peut voir vos informations</div>
+        <div class="setting-row">
+      <div class="setting-row__info">
+        <div class="setting-row__label">Assistant d'accessibilité IA</div>
+        <div class="setting-row__hint">Activer l'assistant vocal intelligent (Agent Aptus)</div>
+      </div>
+      <div class="toggle-switch" id="front-ai-agent-toggle"></div>
+    </div>
     <div class="setting-row">
       <div class="setting-row__info"><div class="setting-row__label">Profil public</div><div class="setting-row__hint">Votre profil est visible par les recruteurs</div></div>
       <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
@@ -188,7 +195,7 @@ if (!isset($content)) {
   </div>
 </div>
 
-<!-- ═══ SECURITY ═══ -->
+<!-- â•Ââ•Ââ•Â SECURITY â•Ââ•Ââ•Â -->
 <div class="settings-section" id="tab-security">
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="key" style="width:20px;height:20px;color:var(--stat-orange);"></i> Mot de passe</div>
@@ -196,7 +203,7 @@ if (!isset($content)) {
     <div style="display:grid;grid-template-columns:1fr;gap:var(--space-4);max-width:400px;">
       <div class="form-group">
         <label class="form-label">Mot de passe actuel</label>
-        <div class="input-icon-wrapper"><i data-lucide="lock" style="width:18px;height:18px;"></i><input type="password" class="input" placeholder="••••••••"></div>
+        <div class="input-icon-wrapper"><i data-lucide="lock" style="width:18px;height:18px;"></i><input type="password" class="input" placeholder="ââ‚¬Ã‚Â¢ââ‚¬Ã‚Â¢ââ‚¬Ã‚Â¢ââ‚¬Ã‚Â¢ââ‚¬Ã‚Â¢ââ‚¬Ã‚Â¢ââ‚¬Ã‚Â¢ââ‚¬Ã‚Â¢"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Nouveau mot de passe</label>
@@ -206,12 +213,12 @@ if (!isset($content)) {
         <label class="form-label">Confirmer le nouveau mot de passe</label>
         <div class="input-icon-wrapper"><i data-lucide="lock" style="width:18px;height:18px;"></i><input type="password" class="input" placeholder="Confirmez"></div>
       </div>
-      <button class="btn btn-primary" style="width:fit-content;"><i data-lucide="check" style="width:16px;height:16px;"></i> Mettre à jour</button>
+      <button class="btn btn-primary" style="width:fit-content;"><i data-lucide="check" style="width:16px;height:16px;"></i> Mettre à  jour</button>
     </div>
   </div>
 
   <div class="settings-card">
-    <div class="settings-card__title"><i data-lucide="smartphone" style="width:20px;height:20px;color:var(--accent-primary);"></i> Authentification à deux facteurs</div>
+    <div class="settings-card__title"><i data-lucide="smartphone" style="width:20px;height:20px;color:var(--accent-primary);"></i> Authentification à  deux facteurs</div>
     <div class="settings-card__desc">Ajoutez une couche de sécurité supplémentaire</div>
     <div class="setting-row">
       <div class="setting-row__info"><div class="setting-row__label">Activer la 2FA</div><div class="setting-row__hint">Utilisez une application d'authentification pour sécuriser votre compte</div></div>
@@ -221,18 +228,18 @@ if (!isset($content)) {
 
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="monitor" style="width:20px;height:20px;color:var(--accent-secondary);"></i> Sessions actives</div>
-    <div class="settings-card__desc">Gérez les appareils connectés à votre compte</div>
+    <div class="settings-card__desc">Gérez les appareils connectés à  votre compte</div>
     <div class="setting-row">
       <div class="setting-row__info" style="display:flex;align-items:center;gap:var(--space-3);">
         <i data-lucide="monitor" style="width:20px;height:20px;color:var(--accent-primary);"></i>
-        <div><div class="setting-row__label">Chrome — Windows 11</div><div class="setting-row__hint">Tunis, Tunisie • Actif maintenant</div></div>
+        <div><div class="setting-row__label">Chrome â€”Â Windows 11</div><div class="setting-row__hint">Tunis, Tunisie ââ‚¬Ã‚Â¢ Actif maintenant</div></div>
       </div>
       <span class="badge badge-success">Actuel</span>
     </div>
     <div class="setting-row">
       <div class="setting-row__info" style="display:flex;align-items:center;gap:var(--space-3);">
         <i data-lucide="smartphone" style="width:20px;height:20px;color:var(--text-tertiary);"></i>
-        <div><div class="setting-row__label">Safari — iPhone 15</div><div class="setting-row__hint">Tunis, Tunisie • Il y a 3 heures</div></div>
+        <div><div class="setting-row__label">Safari â€”Â iPhone 15</div><div class="setting-row__hint">Tunis, Tunisie ââ‚¬Ã‚Â¢ Il y a 3 heures</div></div>
       </div>
       <button class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);">Révoquer</button>
     </div>
@@ -251,5 +258,17 @@ document.addEventListener('DOMContentLoaded', function() {
       if (tab) tab.classList.add('active');
     });
   });
+  // AI Agent Toggle Logic
+  const aiSw = document.getElementById('front-ai-agent-toggle');
+  if (aiSw) {
+    const isVisible = localStorage.getItem('aiAgentVisible') === 'true';
+    if (isVisible) aiSw.classList.add('active');
+    
+    aiSw.addEventListener('click', function() {
+      const active = aiSw.classList.toggle('active');
+      localStorage.setItem('aiAgentVisible', active);
+      window.dispatchEvent(new CustomEvent('toggleAIAgent', { detail: { show: active } }));
+    });
+  }
 });
 </script>

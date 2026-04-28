@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Aptus — Panneau d'administration. Gérez les utilisateurs, offres, formations et statistiques.">
-  <title><?php echo isset($pageTitle) ? $pageTitle . ' — Aptus Admin' : 'Aptus Admin'; ?></title>
+  <meta name="description" content="Aptus — Panneau d'administration. Gérez les utilisateurs, offres, formations et statistiques.">
+  <title><?php echo isset($pageTitle) ? $pageTitle . ' — Aptus Admin' : 'Aptus Admin'; ?></title>
 
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,14 +21,18 @@
 
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+  <!-- AI Agent Widget -->
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/ai_agent.css">
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent_ext.js"></script>
 </head>
 <body>
 
   <div class="backoffice">
 
-    <!-- ═══════════════════════════════════════════
+    <!-- ═══════════════════════════════════════════
          LEFT SIDEBAR
-         ═══════════════════════════════════════════ -->
+         ═══════════════════════════════════════════ -->
     <aside class="sidebar" id="sidebar">
       <!-- Logo -->
       <div class="sidebar__header">
@@ -80,9 +84,9 @@
       </div>
     </aside>
 
-    <!-- ═══════════════════════════════════════════
+    <!-- ═══════════════════════════════════════════
          TOP HEADER BAR
-         ═══════════════════════════════════════════ -->
+         ═══════════════════════════════════════════ -->
     <header class="back-topbar" id="back-topbar">
       <!-- Sidebar Toggle -->
       <button class="back-topbar__toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
@@ -139,9 +143,9 @@
       </div>
     </header>
 
-    <!-- ═══════════════════════════════════════════
+    <!-- ═══════════════════════════════════════════
          MAIN CONTENT
-         ═══════════════════════════════════════════ -->
+         ═══════════════════════════════════════════ -->
     <main class="back-main" id="main-content">
       <div class="back-content">
         <?php

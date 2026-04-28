@@ -1,4 +1,4 @@
-<?php $pageTitle = "Paramètres"; ?>
+ÃƒÂ¯Ã‚Â»Ã‚Â¿<?php $pageTitle = "Paramètres"; ?>
 
 <?php
 if (!isset($content)) {
@@ -58,7 +58,7 @@ if (!isset($content)) {
   </button>
 </div>
 
-<!-- ═══ GENERAL ═══ -->
+<!-- ââ€¢ÂÃ‚Âââ€¢ÂÃ‚Âââ€¢ÂÃ‚Â GENERAL ââ€¢ÂÃ‚Âââ€¢ÂÃ‚Âââ€¢ÂÃ‚Â -->
 <div class="settings-section active" id="tab-general">
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="globe" style="width:20px;height:20px;color:var(--accent-primary);"></i> Site Web</div>
@@ -81,7 +81,7 @@ if (!isset($content)) {
         <select class="select">
           <option selected>Français</option>
           <option>English</option>
-          <option>العربية</option>
+          <option>ÃƒÆ’Ã‹Å“Ãƒâ€šÃ‚Â§ÃƒÆ’ââ€žÂ¢âââ€šÂ¬Ã…Â¾ÃƒÆ’Ã‹Å“Ãƒâ€šÃ‚Â¹ÃƒÆ’Ã‹Å“Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‹Å“Ãƒâ€šÃ‚Â¨ÃƒÆ’ââ€žÂ¢Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‹Å“Ãƒâ€šÃ‚Â©</option>
         </select>
       </div>
       <div class="form-group">
@@ -98,7 +98,7 @@ if (!isset($content)) {
   </div>
 </div>
 
-<!-- ═══ PLATFORM ═══ -->
+<!-- ââ€¢ÂÃ‚Âââ€¢ÂÃ‚Âââ€¢ÂÃ‚Â PLATFORM ââ€¢ÂÃ‚Âââ€¢ÂÃ‚Âââ€¢ÂÃ‚Â -->
 <div class="settings-section" id="tab-platform">
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="settings" style="width:20px;height:20px;color:var(--accent-secondary);"></i> Fonctionnalités</div>
@@ -123,14 +123,18 @@ if (!isset($content)) {
       <div class="toggle-row__info"><div class="toggle-row__label">Veille du Marché</div><div class="toggle-row__hint">Afficher les tendances et statistiques du marché</div></div>
       <div class="toggle-sw active" onclick="this.classList.toggle('active')"></div>
     </div>
-    <div class="toggle-row">
+        <div class="toggle-row">
+      <div class="toggle-row__info"><div class="toggle-row__label">Assistant d'accessibilité IA</div><div class="toggle-row__hint">Afficher le widget de l'assistant IA sur tout le site</div></div>
+      <div id="ai-agent-toggle-sw" class="toggle-sw"></div>
+    </div>
+<div class="toggle-row">
       <div class="toggle-row__info"><div class="toggle-row__label">Matching IA</div><div class="toggle-row__hint">Activer le matching intelligent entre candidats et offres</div></div>
       <div class="toggle-sw active" onclick="this.classList.toggle('active')"></div>
     </div>
   </div>
 </div>
 
-<!-- ═══ EMAIL ═══ -->
+<!-- ââ€¢ÂÃ‚Âââ€¢ÂÃ‚Âââ€¢ÂÃ‚Â EMAIL ââ€¢ÂÃ‚Âââ€¢ÂÃ‚Âââ€¢ÂÃ‚Â -->
 <div class="settings-section" id="tab-email">
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="mail" style="width:20px;height:20px;color:var(--accent-primary);"></i> Serveur SMTP</div>
@@ -172,7 +176,7 @@ if (!isset($content)) {
   </div>
 </div>
 
-<!-- ═══ SECURITY ═══ -->
+<!-- ââ€¢ÂÃ‚Âââ€¢ÂÃ‚Âââ€¢ÂÃ‚Â SECURITY ââ€¢ÂÃ‚Âââ€¢ÂÃ‚Âââ€¢ÂÃ‚Â -->
 <div class="settings-section" id="tab-security">
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="shield" style="width:20px;height:20px;color:var(--accent-primary);"></i> Politique de sécurité</div>
@@ -188,7 +192,7 @@ if (!isset($content)) {
       </div>
     </div>
     <div class="toggle-row" style="margin-top:var(--space-4);">
-      <div class="toggle-row__info"><div class="toggle-row__label">Forcer la 2FA pour les admins</div><div class="toggle-row__hint">Exiger l'authentification à deux facteurs</div></div>
+      <div class="toggle-row__info"><div class="toggle-row__label">Forcer la 2FA pour les admins</div><div class="toggle-row__hint">Exiger l'authentification àÃ‚Â  deux facteurs</div></div>
       <div class="toggle-sw" onclick="this.classList.toggle('active')"></div>
     </div>
     <div class="toggle-row">
@@ -198,7 +202,7 @@ if (!isset($content)) {
   </div>
 </div>
 
-<!-- ═══ MAINTENANCE ═══ -->
+<!-- ââ€¢ÂÃ‚Âââ€¢ÂÃ‚Âââ€¢ÂÃ‚Â MAINTENANCE ââ€¢ÂÃ‚Âââ€¢ÂÃ‚Âââ€¢ÂÃ‚Â -->
 <div class="settings-section" id="tab-maintenance">
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="wrench" style="width:20px;height:20px;color:var(--stat-orange);"></i> Mode Maintenance</div>
@@ -235,5 +239,17 @@ document.addEventListener('DOMContentLoaded', function() {
       if (tab) tab.classList.add('active');
     });
   });
+  // AI Agent Toggle Logic
+  const aiSw = document.getElementById('ai-agent-toggle-sw');
+  if (aiSw) {
+    const isVisible = localStorage.getItem('aiAgentVisible') === 'true';
+    if (isVisible) aiSw.classList.add('active');
+    
+    aiSw.addEventListener('click', function() {
+      const active = aiSw.classList.toggle('active');
+      localStorage.setItem('aiAgentVisible', active);
+      window.dispatchEvent(new CustomEvent('toggleAIAgent', { detail: { show: active } }));
+    });
+  }
 });
 </script>

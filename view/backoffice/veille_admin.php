@@ -557,7 +557,7 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
             <div>
                 <h3 style="margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
                     <i data-lucide="line-chart" style="color: var(--accent-primary);"></i>
-                    🔮 Intelligent Market Forecast
+                    🔮 Prévisions Intelligentes du Marché
                 </h3>
                 <p style="color: var(--text-secondary); font-size: 14px; max-width: 600px;">
                     Notre IA analyse vos rapports historiques par secteur pour prédire les tendances futures des salaires et de la demande sur les 6 prochains mois.
@@ -573,14 +573,14 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
                 </div>
             </div>
             <button type="button" class="btn btn-sm btn-ai-sparkle" onclick="loadAIForecast(true)" id="btn-refresh-forecast">
-                <i data-lucide="refresh-cw" style="width:14px;height:14px;margin-right:6px;"></i> Update Predictions
+                <i data-lucide="refresh-cw" style="width:14px;height:14px;margin-right:6px;"></i> Actualiser
             </button>
         </div>
 
         <div id="forecast-chart-container" style="width: 100%; height: 300px; margin-top: 24px; background: rgba(255,255,255,0.02); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
             <div id="forecast-placeholder" style="text-align: center; color: var(--text-tertiary);">
                 <i data-lucide="sparkles" style="width:48px; height:48px; margin-bottom: 12px; opacity: 0.3;"></i>
-                <p>Sélectionnez un secteur ou cliquez sur "Update Predictions".</p>
+                <p>Sélectionnez un secteur ou cliquez sur "Actualiser".</p>
             </div>
             <div id="echarts-forecast" style="width: 100%; height: 100%; display: none;"></div>
         </div>
@@ -1909,7 +1909,7 @@ async function loadAIForecast(forceRefresh = false) {
 
     const originalContent = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width:14px;height:14px;margin-right:6px;"></i> Predicting...';
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width:14px;height:14px;margin-right:6px;"></i> Prédiction en cours...';
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     try {
@@ -1948,16 +1948,16 @@ function renderForecastChart(forecastData, chartEl, placeholder) {
 
     const option = {
         tooltip: { trigger: 'axis' },
-        legend: { data: ['Predicted Salary (TND)', 'Predicted Demand (1-10)'], bottom: 0, textStyle: { color: isDark ? '#fff' : '#333' } },
+        legend: { data: ['Salaire Prédit (TND)', 'Demande Prédite (1-10)'], bottom: 0, textStyle: { color: isDark ? '#fff' : '#333' } },
         grid: { top: 40, left: 50, right: 50, bottom: 60 },
         xAxis: { type: 'category', data: months, axisLabel: { color: isDark ? '#94a3b8' : '#64748b' } },
         yAxis: [
-            { type: 'value', name: 'Salary', axisLabel: { color: isDark ? '#94a3b8' : '#64748b' } },
-            { type: 'value', name: 'Demand', max: 10, position: 'right', axisLabel: { color: isDark ? '#94a3b8' : '#64748b' } }
+            { type: 'value', name: 'Salaire', axisLabel: { color: isDark ? '#94a3b8' : '#64748b' } },
+            { type: 'value', name: 'Demande', max: 10, position: 'right', axisLabel: { color: isDark ? '#94a3b8' : '#64748b' } }
         ],
         series: [
             {
-                name: 'Predicted Salary (TND)',
+                name: 'Salaire Prédit (TND)',
                 type: 'line',
                 smooth: true,
                 data: salaries,
@@ -1965,7 +1965,7 @@ function renderForecastChart(forecastData, chartEl, placeholder) {
                 areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(99, 102, 241, 0.3)' }, { offset: 1, color: 'transparent' }]) }
             },
             {
-                name: 'Predicted Demand (1-10)',
+                name: 'Demande Prédite (1-10)',
                 type: 'bar',
                 yAxisIndex: 1,
                 data: demands,
