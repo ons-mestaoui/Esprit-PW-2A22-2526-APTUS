@@ -590,7 +590,7 @@ if (!isset($content)) {
 
         <div class="modal-field">
             <label for="t-nom">Nom complet <span class="req">*</span></label>
-            <input type="text" id="t-nom" placeholder="Ex : Dr. Sami Ouali" maxlength="100">
+            <input type="text" id="t-nom" placeholder="Ex : Dr. Sami Ouali">
         </div>
         <div class="modal-field">
             <label for="t-email">Adresse email <span class="req">*</span></label>

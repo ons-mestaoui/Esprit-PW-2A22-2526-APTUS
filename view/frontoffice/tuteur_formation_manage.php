@@ -126,7 +126,7 @@ if (!isset($content)) {
                 <form id="addResourceForm" onsubmit="addResource(event)">
                     <div style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Type</label>
-                        <select name="type" id="resource_type" required onchange="toggleResourceInput()" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary);">
+                        <select name="type" id="resource_type" onchange="toggleResourceInput()" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary);">
                             <option value="video">Vidéo (Lien YouTube, Vimeo...)</option>
                             <option value="pdf">Document PDF (Fichier)</option>
                             <option value="quiz">Quiz Externe (Google Forms, Typeform...)</option>
@@ -134,7 +134,7 @@ if (!isset($content)) {
                     </div>
                     <div style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Titre</label>
-                        <input type="text" name="titre" required placeholder="Ex: Chapitre 1 - Introduction" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary);">
+                        <input type="text" name="titre" id="resource_titre" placeholder="Ex: Chapitre 1 - Introduction" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary);">
                     </div>
                     <div id="url_container" style="margin-bottom: 1.5rem;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">URL de la ressource</label>
@@ -186,19 +186,13 @@ if (!isset($content)) {
 
     function toggleResourceInput() {
         const type = document.getElementById('resource_type').value;
-        const urlInput = document.getElementById('url_input');
-        const fileInput = document.getElementById('file_input');
         
         if (type === 'pdf') {
             document.getElementById('url_container').style.display = 'none';
             document.getElementById('file_container').style.display = 'block';
-            urlInput.removeAttribute('required');
-            fileInput.setAttribute('required', 'required');
         } else {
             document.getElementById('url_container').style.display = 'block';
             document.getElementById('file_container').style.display = 'none';
-            fileInput.removeAttribute('required');
-            urlInput.setAttribute('required', 'required');
         }
     }
 
@@ -237,6 +231,37 @@ if (!isset($content)) {
 
     function addResource(e) {
         e.preventDefault();
+
+        // --- Contrôle de saisie JS (pas de HTML5 required) ---
+        const type = document.getElementById('resource_type').value;
+        const titre = document.getElementById('resource_titre').value.trim();
+        const urlInput = document.getElementById('url_input');
+        const fileInput = document.getElementById('file_input');
+
+        if (!titre) {
+            aptusAlert('Le titre de la ressource est obligatoire.', 'error');
+            document.getElementById('resource_titre').style.borderColor = '#ef4444';
+            return;
+        }
+        document.getElementById('resource_titre').style.borderColor = '';
+
+        if (type === 'pdf') {
+            if (!fileInput.files || fileInput.files.length === 0) {
+                aptusAlert('Veuillez sélectionner un fichier PDF.', 'error');
+                fileInput.style.borderColor = '#ef4444';
+                return;
+            }
+            fileInput.style.borderColor = '';
+        } else {
+            if (!urlInput.value.trim()) {
+                aptusAlert('L\'URL de la ressource est obligatoire.', 'error');
+                urlInput.style.borderColor = '#ef4444';
+                return;
+            }
+            urlInput.style.borderColor = '';
+        }
+        // --- Fin contrôle de saisie ---
+
         const form = e.target;
         const formData = new FormData(form);
         formData.append('action', 'add_resource');
@@ -248,11 +273,11 @@ if (!isset($content)) {
             if (data.success) {
                 window.location.reload();
             } else {
-                alert('Erreur: ' + (data.message || 'Erreur inconnue'));
+                aptusAlert('Erreur: ' + (data.message || 'Erreur inconnue'), 'error');
             }
         })
         .catch(err => {
-            alert('Erreur réseau / serveur.');
+            aptusAlert('Erreur réseau / serveur.', 'error');
             console.error(err);
         });
     }

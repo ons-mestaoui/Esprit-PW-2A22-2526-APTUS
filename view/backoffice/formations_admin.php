@@ -372,7 +372,7 @@ if (!isset($content)) {
                         <label class="form-label">Date de début <span class="required-star">*</span></label>
                         <div class="input-validated-wrap" style="position:relative;">
                             <input type="date" class="input iv-field" name="date_formation" id="af-date"
-                                   min="<?php echo date('Y-m-d'); ?>" data-min="1" data-label="Date de début">
+                                   data-min-date="<?php echo date('Y-m-d'); ?>" data-min="1" data-label="Date de début">
                             <span class="iv-status" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:none;"></span>
                         </div>
                         <span class="iv-msg" id="af-date-msg" style="display:none;font-size:.78rem;color:#ef4444;margin-top:4px;display:block;"></span>
@@ -740,8 +740,8 @@ if (!isset($content)) {
             valid = val !== '';
         } else if (input.type === 'date') {
             valid = val !== '' && !isNaN(Date.parse(val));
-            if (valid && input.hasAttribute('min')) {
-                valid = val >= input.getAttribute('min');
+            if (valid && input.dataset.minDate) {
+                valid = val >= input.dataset.minDate;
             }
         } else {
             valid = val.length >= min;

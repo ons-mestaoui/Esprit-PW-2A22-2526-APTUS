@@ -52,7 +52,7 @@ if (!isset($content)) {
 </div>
 
 <div class="card-flat p-4">
-    <form action="../../controller/traitement_edit.php" method="POST" enctype="multipart/form-data" class="auth-form" style="max-width: 600px;">
+    <form action="../../controller/traitement_edit.php" method="POST" enctype="multipart/form-data" class="auth-form" style="max-width: 600px; margin: 0 auto;">
         <input type="hidden" name="id_formation" value="<?php echo $formation['id_formation']; ?>">
 
         <div class="form-group">
@@ -102,7 +102,7 @@ if (!isset($content)) {
             <div class="form-group">
                 <label class="form-label">Date de début <span class="required-star">*</span></label>
                 <div class="input-validated-wrap" style="position:relative;">
-                    <input type="date" class="input iv-field" name="date_formation" id="ef-date" min="<?php echo date('Y-m-d'); ?>" data-min="1" data-label="Date de début"
+                    <input type="date" class="input iv-field" name="date_formation" id="ef-date" data-min-date="<?php echo date('Y-m-d'); ?>" data-min="1" data-label="Date de début"
                         value="<?php echo date('Y-m-d', strtotime($formation['date_formation'])); ?>">
                     <span class="iv-status" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:none;"></span>
                 </div>
@@ -220,8 +220,8 @@ if (!isset($content)) {
             valid = val !== '';
         } else if (input.type === 'date') {
             valid = val !== '' && !isNaN(Date.parse(val));
-            if (valid && input.hasAttribute('min')) {
-                valid = val >= input.getAttribute('min');
+            if (valid && input.dataset.minDate) {
+                valid = val >= input.dataset.minDate;
             }
         } else {
             valid = val.length >= min;
