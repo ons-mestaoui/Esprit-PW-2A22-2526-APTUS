@@ -186,8 +186,8 @@ class FormationController
         if (empty($descriptionText)) {
             throw new Exception("La description est obligatoire.");
         }
-        if (strlen($descriptionText) < 20) {
-            throw new Exception("La description doit contenir au moins 20 caractères.");
+        if (strlen($descriptionText) < 10) {
+            throw new Exception("La description doit contenir au moins 10 caractères.");
         }
 
         // Domaine : obligatoire
@@ -256,9 +256,9 @@ class FormationController
         try {
             $query = $db->prepare("
                 INSERT INTO Formation 
-                (titre, description, domaine, niveau, duree, date_formation, image_base64, id_tuteur, is_online, lien_api_room, prerequis_id, date_fin) 
+                (titre, description, domaine, niveau, duree, date_formation, image_base64, id_tuteur, is_online, lien_api_room, prerequis_id, date_fin, statut) 
                 VALUES 
-                (:titre, :description, :domaine, :niveau, :duree, :date_formation, :image_base64, :id_tuteur, :is_online, :lien_api_room, :prerequis_id, :date_fin)
+                (:titre, :description, :domaine, :niveau, :duree, :date_formation, :image_base64, :id_tuteur, :is_online, :lien_api_room, :prerequis_id, :date_fin, 'active')
             ");
             $query->execute([
                 'titre' => $formation->getTitre(),

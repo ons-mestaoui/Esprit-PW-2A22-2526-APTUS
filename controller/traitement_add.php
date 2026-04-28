@@ -4,9 +4,14 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/FormationController.php';
 require_once __DIR__ . '/../model/Formation.php';
 
-// Ce fichier traite le formulaire d'ajout (POST uniquement)
-// Il crée l'objet Formation et appelle addFormation() du contrôleur
-// Si la validation échoue, l'exception est attrapée et stockée en session
+// Détection AJAX : si appelé via fetch(), on répond en JSON directement
+// Si appelé via formulaire classique, on redirige comme avant
+$isAjax = (
+    !empty($_SERVER['HTTP_X_REQUESTED_WITH']) ||
+    (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
+    (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], 'formations_admin') !== false)
+);
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $formationC = new FormationController();
 
@@ -38,15 +43,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $prereq_val,
             !empty($_POST['date_fin']) ? $_POST['date_fin'] : null
         );
-        
+
         $formationC->addFormation($f);
-        $_SESSION['flash_success'] = "Formation ajoutée avec succès.";
-        header('Location: ../view/backoffice/formations_admin.php');
+
+        // Réponse JSON directe pour AJAX (pas de redirection)
+        header('Content-Type: application/json');
+        echo json_encode(['type' => 'success', 'message' => 'Formation ajoutée avec succès !']);
+
     } catch (Exception $e) {
-        // Si validateFormation() lance une exception, on la récupère ici
-        // et on la met dans la session pour l'afficher via SweetAlert
-        $_SESSION['flash_error'] = "Erreur de validation : " . $e->getMessage();
-        header('Location: ../view/backoffice/formations_admin.php');
+        header('Content-Type: application/json');
+        echo json_encode(['type' => 'error', 'message' => $e->getMessage()]);
     }
     exit();
 }

@@ -816,7 +816,6 @@ if (!isset($content)) {
 
             const formData = new FormData(document.getElementById('add-formation-form'));
             fetch('../../controller/traitement_add.php', { method: 'POST', body: formData })
-            .then(() => fetch('../../controller/check_flash.php'))
             .then(r => r.json())
             .then(data => {
                 btnCreate.disabled = false;
