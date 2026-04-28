@@ -18,33 +18,25 @@ if (!$tpl) die("Template non trouvé");
 // Since the template code we provided uses specific IDs, we'll replace placeholders manually in the HTML
 $html = $tpl['structureHtml'];
 
-$fields = [
-    'preview-nomComplet' => $cv['nomComplet'],
-    'preview-titrePoste' => $cv['titrePoste'],
-    'preview-infoContact' => $cv['infoContact'],
-    'preview-resume' => $cv['resume'],
-    'preview-experience' => $cv['experience'],
-    'preview-competences' => $cv['competences'],
-    'preview-formation' => $cv['formation'],
-    'preview-langues' => $cv['langues']
-];
+// Handle basic info formatting
+$parts = array_map('trim', explode('|', $cv['infoContact'] ?? ''));
+$email = $parts[0] ?? '';
+$phone = $parts[1] ?? '';
+$location = $parts[2] ?? '';
+$contactStr = implode(' | ', array_filter([$email, $phone, $location]));
 
-// Simple DOM replacement via string for the print view
-foreach($fields as $idAttr => $val) {
-    // We search for the ID in the HTML and inject the value. 
-    // This is a bit rough but works for standard templates.
-    // A better way is using DOMDocument but might be overkill for this task.
-    $valHtml = nl2br(htmlspecialchars($val));
-    $html = preg_replace('/id="' . $idAttr . '"([^>]*)>.*?<\/div>/is', 'id="' . $idAttr . '"$1>' . $valHtml . '</div>', $html);
-}
-
-// Handle photo
-if (!empty($cv['urlPhoto'])) {
-    $html = preg_replace('/id="preview-photo"([^>]*)src="[^"]*"/', 'id="preview-photo"$1 src="' . $cv['urlPhoto'] . '" style="display:block;"', $html);
-} else {
-    $html = preg_replace('/id="preview-photo"/', 'id="preview-photo" style="display:none;"', $html);
-}
-
+// JSON payload for the CV data
+$cvPayload = json_encode([
+    'nomComplet' => $cv['nomComplet'],
+    'titrePoste' => $cv['titrePoste'],
+    'infoContact' => $contactStr,
+    'resume' => $cv['resume'],
+    'experience' => $cv['experience'],
+    'competences' => str_replace(',', ' • ', $cv['competences']),
+    'formation' => $cv['formation'],
+    'langues' => $cv['langues'],
+    'urlPhoto' => $cv['urlPhoto'] ?? ''
+]);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -59,12 +51,53 @@ if (!empty($cv['urlPhoto'])) {
             body { -webkit-print-color-adjust: exact; }
         }
         /* Injection of dynamic color */
-        #cv-preview-content { --cv-accent: <?php echo $cv['couleurTheme']; ?>; }
+        #cv-preview-content { --cv-accent: <?php echo htmlspecialchars($cv['couleurTheme']); ?>; }
     </style>
 </head>
-<body onload="window.print()">
+<body>
     <div id="cv-preview-content">
         <?php echo $html; ?>
     </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const d = <?php echo $cvPayload; ?>;
+            const setVal = (sel, val, isHtml = false) => { 
+                if(!val) return;
+                document.querySelectorAll(sel).forEach(e => {
+                    if (isHtml) e.innerHTML = val; else e.innerText = val;
+                });
+            };
+            
+            // Standard dynamic injection logic
+            setVal('.cv-name, #preview-nomComplet, h1', d.nomComplet);
+            setVal('.cv-title, #preview-titrePoste, h2', d.titrePoste);
+            setVal('.summary-text, #preview-resume, .summary, .cv-summary', d.resume, true);
+            setVal('#preview-experience, .cv-exp, .experience-list, .cv-experience', d.experience, true);
+            setVal('#preview-competences, .cv-skills, .skills-list, .cv-competences', d.competences, true);
+            setVal('#preview-langues, .cv-languages, .languages-list, .cv-langues', d.langues, true);
+            setVal('#preview-formation, .cv-edu, .education-list, .cv-formation', d.formation, true);
+            
+            if (d.infoContact) {
+                const clean = d.infoContact.split('|').map(s => s.trim()).join('<br>');
+                setVal('.contact-info, #preview-infoContact, .cv-contact, .contact-details', clean, true);
+            }
+            if (d.urlPhoto) { 
+                const pi = document.querySelectorAll('#preview-photo, .cv-photo img, .profile-img'); 
+                pi.forEach(i => { i.src = d.urlPhoto; i.style.display = 'block'; }); 
+                const pt = document.querySelectorAll('#photo-text, .photo-text');
+                pt.forEach(i => i.style.display = 'none');
+                const hp = document.querySelector('.header-photo');
+                if (hp && !hp.querySelector('img')) {
+                    hp.innerHTML = '<img src=\"' + d.urlPhoto + '\" style=\"width:100%;height:100%;object-fit:cover;border-radius:8px;\">';
+                }
+            }
+            
+            // Print automatically after injection is complete and images load
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        });
+    </script>
 </body>
 </html>
