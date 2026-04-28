@@ -57,6 +57,11 @@ class candidatureC {
             }
         }
 
+        if (!empty($criteres['offre_id'])) {
+            $sql .= " AND c.id_offre = :offre_id";
+            $params['offre_id'] = $criteres['offre_id'];
+        }
+
         if (!empty($criteres['q'])) {
             $sql .= " AND (c.nom LIKE :q OR c.prenom LIKE :q)";
             $params['q'] = '%' . $criteres['q'] . '%';

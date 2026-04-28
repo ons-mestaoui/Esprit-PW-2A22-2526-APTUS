@@ -2,7 +2,12 @@
 
 <?php
 require_once '../../controller/candidatureC.php';
+require_once '../../controller/offreC.php';
 $candidatureC = new candidatureC();
+$offreC = new offreC();
+
+// Récupération des offres de l'entreprise (ou toutes les offres pour l'instant)
+$listeOffresDisponibles = $offreC->afficherOffres();
 
 // Traitement du changement de statut
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_statut'])) {
@@ -21,6 +26,9 @@ if (!empty($_GET['status'])) {
 }
 if (!empty($_GET['q'])) {
     $criteres['q'] = $_GET['q'];
+}
+if (!empty($_GET['offre_id'])) {
+    $criteres['offre_id'] = intval($_GET['offre_id']);
 }
 $listeCandidatures = $candidatureC->filtrerCandidatures($criteres);
 $count = $listeCandidatures->rowCount();
@@ -44,22 +52,24 @@ if (!isset($content)) {
 <div class="hr-layout" style="grid-template-columns: 300px 1fr;">
   <!-- ═══ SIDEBAR (Gauche) ═══ -->
   <aside class="hr-sidebar">
-    <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
-        <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">Filtrer par poste</h4>
-        <select class="input" id="filter-post" style="width: 100%; cursor: pointer;">
-            <option>Tous les postes</option>
-            <option>Senior Full Stack Developer</option>
-            <option>Data Engineer</option>
-            <option>UI/UX Designer</option>
-            <option>Product Manager</option>
-        </select>
-    </div>
-    
-    <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid var(--border-color);">
-        <form method="GET" action="hr_candidatures.php" style="margin: 0;">
-            <?php if (!empty($_GET['q'])): ?>
-                <input type="hidden" name="q" value="<?php echo htmlspecialchars($_GET['q']); ?>">
-            <?php endif; ?>
+    <form method="GET" action="hr_candidatures.php" style="margin: 0;">
+        <?php if (!empty($_GET['q'])): ?>
+            <input type="hidden" name="q" value="<?php echo htmlspecialchars($_GET['q']); ?>">
+        <?php endif; ?>
+        
+        <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+            <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">Filtrer par poste</h4>
+            <select class="input" name="offre_id" style="width: 100%; cursor: pointer;" onchange="this.form.submit()">
+                <option value="">Tous les postes</option>
+                <?php while($o = $listeOffresDisponibles->fetch(PDO::FETCH_ASSOC)): ?>
+                    <option value="<?php echo $o['id_offre']; ?>" <?php echo (isset($_GET['offre_id']) && $_GET['offre_id'] == $o['id_offre']) ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($o['titre']); ?>
+                    </option>
+                <?php endwhile; ?>
+            </select>
+        </div>
+        
+        <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid var(--border-color);">
             <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">Statut</h4>
             <div style="display: flex; flex-direction: column; gap: 1.25rem;">
                 <?php $current_status = $_GET['status'] ?? ''; ?>
@@ -80,8 +90,8 @@ if (!isset($content)) {
                     Refusé
                 </label>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
   </aside>
 
   <!-- ═══ MAIN CONTENT (Droite) ═══ -->

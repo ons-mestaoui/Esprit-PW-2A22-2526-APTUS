@@ -335,7 +335,7 @@ if (!isset($content)) {
 
                 <div class="hr-post-card__actions">
                     <a href="hr_posts.php?action=edit&id=<?php echo $offreItem['id_offre']; ?>" class="btn-icon" title="Éditer"><i data-lucide="pencil"></i></a>
-                    <button class="btn-icon" title="Candidats"><i data-lucide="users"></i></button>
+                    <a href="hr_candidatures.php?offre_id=<?php echo $offreItem['id_offre']; ?>" class="btn-icon" title="Candidats"><i data-lucide="users"></i></a>
                     <button type="button" onclick="confirmDelete(<?php echo $offreItem['id_offre']; ?>, '<?php echo htmlspecialchars(addslashes($offreItem['titre'] ?? '')); ?>')" class="btn-icon btn-icon--danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
                 </div>
             </div>
