@@ -109,18 +109,30 @@ if (!isset($content)) {
 
 <div class="jitsi-container">
     <div class="ia-status-bar">
-        <div>
-            <i data-lucide="video" style="width:16px;height:16px;vertical-align:middle;"></i> Salle Virtuelle : <b><?php echo htmlspecialchars($room_name); ?></b>
+        <!-- Bouton Retour -->
+        <a href="formations_my.php" 
+           style="display:flex; align-items:center; gap:6px; color:var(--text-secondary); text-decoration:none; font-size:0.82rem; font-weight:600; padding:4px 10px; border-radius:8px; border:1px solid var(--border-color); transition: all 0.2s;"
+           onmouseover="this.style.background='var(--bg-surface)'; this.style.color='var(--text-primary)'"
+           onmouseout="this.style.background='transparent'; this.style.color='var(--text-secondary)'">
+            <i data-lucide="arrow-left" style="width:14px;height:14px;"></i> Mes Formations
+        </a>
+
+        <!-- Nom de la salle (centré) -->
+        <div style="font-size:0.85rem;">
+            <i data-lucide="video" style="width:16px;height:16px;vertical-align:middle;"></i> 
+            Salle Virtuelle : <b><?php echo htmlspecialchars($room_name); ?></b>
         </div>
+
+        <!-- Statut IA / Contrôles Tuteur -->
         <?php if ($role !== 'tuteur'): ?>
-            <div title="Analyse cognitive IA en Edge Computing">
+            <div title="Analyse cognitive IA en Edge Computing" style="font-size:0.82rem;">
                 <i data-lucide="brain-circuit" style="width:16px;height:16px;vertical-align:middle;color:var(--accent-primary);"></i> 
-                Agent Aptus actif — État : <span id="emotion-indicator">Chargement...</span>
+                Agent Aptus actif — État : <span id="emotion-indicator" style="font-weight:700; color:var(--accent-primary);">Chargement...</span>
             </div>
         <?php else: ?>
             <div style="color:var(--text-secondary); display:flex; align-items:center; gap:1rem;">
                 <div><i data-lucide="shield" style="width:16px;height:16px;vertical-align:middle;"></i> Mode Tuteur</div>
-                <button onclick="showClassEmotions()" class="btn btn-sm" style="background:var(--accent-primary); color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px;">
+                <button onclick="showClassEmotions()" class="btn btn-sm" style="background:linear-gradient(135deg,#6366f1,#8b5cf6); color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(99,102,241,0.3);">
                     <i data-lucide="brain-circuit" style="width:14px;height:14px;"></i> Bilan IA de la classe
                 </button>
             </div>

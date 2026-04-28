@@ -801,19 +801,55 @@ if (!isset($content)) {
             const fields = document.querySelectorAll('#add-formation-form .iv-field');
             let allOk = true;
             fields.forEach(f => { if (!ivValidate(f)) allOk = false; });
-            
-            // Vérifier aussi Quill (description)
+
             const hiddenDesc = document.querySelector('#hidden-description');
             hiddenDesc.value = quill.root.innerHTML.trim();
             if (quill.getText().trim().length < 10) {
-                aptusAlert('Veuillez saisir une description plus détaillée (min. 10 caractères).', 'error');
+                showModalError('Veuillez saisir une description plus détaillée (min. 10 caractères).');
                 allOk = false;
             }
+            if (!allOk) return;
 
-            if (allOk) {
-                document.getElementById('add-formation-form').submit();
-            }
+            // AJAX — modal reste ouvert jusqu'au résultat
+            btnCreate.disabled = true;
+            btnCreate.innerHTML = '⏳ Création en cours...';
+
+            const formData = new FormData(document.getElementById('add-formation-form'));
+            fetch('../../controller/traitement_add.php', { method: 'POST', body: formData })
+            .then(() => fetch('../../controller/check_flash.php'))
+            .then(r => r.json())
+            .then(data => {
+                btnCreate.disabled = false;
+                btnCreate.innerHTML = 'Créer la formation';
+                if (data.type === 'success') {
+                    closeModals();
+                    aptusAlert(data.message || 'Formation créée avec succès !', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showModalError(data.message || 'Erreur lors de la création.');
+                }
+            })
+            .catch(err => {
+                btnCreate.disabled = false;
+                btnCreate.innerHTML = 'Créer la formation';
+                showModalError('Erreur réseau : ' + err.message);
+            });
         });
+    }
+
+    function showModalError(msg) {
+        let banner = document.getElementById('modal-error-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'modal-error-banner';
+            banner.style.cssText = 'background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:10px 14px;border-radius:10px;font-size:0.85rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:8px;';
+            banner.innerHTML = '⚠️ <span id="modal-error-text"></span>';
+            const modalBody = document.querySelector('#add-formation-modal .modal-body');
+            modalBody.insertBefore(banner, modalBody.firstChild);
+        }
+        document.getElementById('modal-error-text').textContent = msg;
+        banner.style.display = 'flex';
+        document.querySelector('#add-formation-modal .modal-body').scrollTop = 0;
     }
 
     // Fix: Trigger modal with transition

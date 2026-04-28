@@ -29,7 +29,10 @@ if (!isset($content)) {
         
         if ($match) {
             $dateFormation = isset($f['date_formation']) ? new DateTime($f['date_formation']) : new DateTime();
-            $f['est_passee'] = $dateFormation < $maintenant;
+            // Normaliser à minuit : une formation d'aujourd'hui ou future → S'inscrire
+            $dateFormation->setTime(0, 0, 0);
+            $aujourdhui = new DateTime(); $aujourdhui->setTime(0, 0, 0);
+            $f['est_passee'] = $dateFormation < $aujourdhui;
             $formations[] = $f;
         }
     }

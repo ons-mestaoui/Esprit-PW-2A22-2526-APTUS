@@ -465,8 +465,11 @@ if (!isset($content)) {
                 <?php else: ?>
                     <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: auto;">
                         <?php if ($cours['is_online'] && $isAvailable): ?>
-                            <a href="jitsi_room.php?id_formation=<?php echo $cours['id_formation']; ?>&url=<?php echo urlencode($cours['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn"
-                                style="background: var(--accent-info); color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:8px;">📹
+                            <a href="jitsi_room.php?id_formation=<?php echo $cours['id_formation']; ?>&url=<?php echo urlencode($cours['lien_api_room'] ?? '#'); ?>" class="btn"
+                                style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:8px; font-weight:600; box-shadow: 0 4px 15px rgba(99,102,241,0.3); transition: all 0.2s;"
+                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(99,102,241,0.4)'"
+                                onmouseout="this.style.transform=''
+                                ; this.style.boxShadow='0 4px 15px rgba(99,102,241,0.3)'">📹
                                 Rejoindre la Room</a>
                         <?php endif; ?>
 
