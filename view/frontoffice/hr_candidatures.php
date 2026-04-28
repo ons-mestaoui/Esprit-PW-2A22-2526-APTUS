@@ -3,7 +3,26 @@
 <?php
 require_once '../../controller/candidatureC.php';
 $candidatureC = new candidatureC();
-$listeCandidatures = $candidatureC->afficherCandidatures();
+
+// Traitement du changement de statut
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_statut'])) {
+    $id_cand = intval($_POST['id_candidature']);
+    $statut = $_POST['update_statut'];
+    if (in_array($statut, ['Accepté', 'Refusé'])) {
+        $candidatureC->updateStatut($id_cand, $statut);
+    }
+    header('Location: hr_candidatures.php');
+    exit();
+}
+
+$criteres = [];
+if (!empty($_GET['status'])) {
+    $criteres['status'] = $_GET['status'];
+}
+if (!empty($_GET['q'])) {
+    $criteres['q'] = $_GET['q'];
+}
+$listeCandidatures = $candidatureC->filtrerCandidatures($criteres);
 $count = $listeCandidatures->rowCount();
 
 if (!isset($content)) {
@@ -38,6 +57,9 @@ if (!isset($content)) {
     
     <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid var(--border-color);">
         <form method="GET" action="hr_candidatures.php" style="margin: 0;">
+            <?php if (!empty($_GET['q'])): ?>
+                <input type="hidden" name="q" value="<?php echo htmlspecialchars($_GET['q']); ?>">
+            <?php endif; ?>
             <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">Statut</h4>
             <div style="display: flex; flex-direction: column; gap: 1.25rem;">
                 <?php $current_status = $_GET['status'] ?? ''; ?>
@@ -115,7 +137,9 @@ if (!isset($content)) {
              data-nom="<?php echo htmlspecialchars($nomComplet); ?>"
              data-email="<?php echo htmlspecialchars($cand['email']); ?>"
              data-offre="<?php echo htmlspecialchars($titreOffre); ?>"
-             data-date="<?php echo htmlspecialchars($dateCand); ?>">
+             data-date="<?php echo htmlspecialchars($dateCand); ?>"
+             data-statut="<?php echo htmlspecialchars($cand['statut']); ?>"
+             data-question="<?php echo htmlspecialchars($cand['question_offre'] ?? 'Aucune question spécifiée.'); ?>">
              <?php echo $cand['reponses_ques']; ?>
         </div>
         <div class="candidate-card__header" style="display: flex; gap: 1rem; align-items: flex-start;">
@@ -130,9 +154,14 @@ if (!isset($content)) {
             <div style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 0.4rem;">Déposé le <?php echo $dateCand; ?></div>
           </div>
           <div>
-            <span class="badge badge-<?php echo ($cand['statut'] === 'accepte') ? 'success' : (($cand['statut'] === 'refuse') ? 'danger' : 'warning'); ?>" style="padding: 0.4rem 0.8rem; border-radius: 8px;">
-              <?php echo ucfirst(htmlspecialchars($cand['statut'])); ?>
-            </span>
+            <span class="badge badge-<?php 
+                $st = strtolower($cand['statut']);
+                if (strpos($st, 'accept') !== false) echo 'success';
+                elseif (strpos($st, 'refus') !== false) echo 'danger';
+                else echo 'warning';
+              ?>" style="padding: 0.4rem 0.8rem; border-radius: 8px;">
+                <?php echo htmlspecialchars($cand['statut']); ?>
+              </span>
           </div>
         </div>
 
@@ -143,8 +172,6 @@ if (!isset($content)) {
           <button class="btn btn-primary" style="flex: 1; padding: 0.6rem; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onclick="event.stopPropagation(); openDetailsModal(null, <?php echo $cand['id_candidature']; ?>)">
             <i data-lucide="file-text" style="width:16px;height:16px;"></i> Voir Détails & CV
           </button>
-          <button class="btn btn-success" style="padding: 0.6rem; width: 42px;" title="Shortlister"><i data-lucide="check" style="width:18px;height:18px;"></i></button>
-          <button class="btn btn-ghost" style="padding: 0.6rem; width: 42px; border: 1px solid var(--border-color);" title="Refuser"><i data-lucide="x" style="width:18px;height:18px;color:#ef4444;"></i></button>
         </div>
       </div>
       <?php endforeach; ?>
@@ -174,9 +201,25 @@ if (!isset($content)) {
               <span style="display:flex; align-items:center; gap:0.4rem;"><i data-lucide="calendar" style="width:16px;height:16px;"></i> <span id="det-modal-date"></span></span>
           </div>
       </div>
-      <button onclick="closeDetailsModal()" style="background: none; border: none; cursor: pointer; color: var(--text-tertiary);">
-        <i data-lucide="x" style="width:28px;height:28px;"></i>
-      </button>
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <form method="POST" action="hr_candidatures.php" id="form-shortlister" style="margin:0;">
+              <input type="hidden" name="id_candidature" id="action-cand-id-1" value="">
+              <input type="hidden" name="update_statut" value="Accepté">
+              <button type="submit" class="btn btn-success" style="padding: 0.5rem 1rem; display:flex; align-items:center; gap:0.4rem; font-size:0.85rem; color:white; background:#10b981; border:none; border-radius:8px; cursor:pointer;" title="Shortlister">
+                  <i data-lucide="check" style="width:16px;height:16px;"></i> Shortlister
+              </button>
+          </form>
+          <form method="POST" action="hr_candidatures.php" id="form-refuser" style="margin:0;">
+              <input type="hidden" name="id_candidature" id="action-cand-id-2" value="">
+              <input type="hidden" name="update_statut" value="Refusé">
+              <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; display:flex; align-items:center; gap:0.4rem; font-size:0.85rem; color:white; background:#ef4444; border:none; border-radius:8px; cursor:pointer;" title="Refuser">
+                  <i data-lucide="x" style="width:16px;height:16px;"></i> Refuser
+              </button>
+          </form>
+          <button onclick="closeDetailsModal()" style="background: none; border: none; cursor: pointer; color: var(--text-tertiary); margin-left: 0.5rem;">
+            <i data-lucide="x" style="width:28px;height:28px;"></i>
+          </button>
+      </div>
     </div>
     
     <!-- Corps du modal (2 colonnes) -->
@@ -198,6 +241,9 @@ if (!isset($content)) {
                 <h4 style="font-size: 1.05rem; color: var(--text-primary); margin: 0 0 1rem 0; font-weight: 700; display:flex; align-items:center; gap:0.5rem; flex-shrink: 0;">
                     <i data-lucide="message-square" style="width:20px;height:20px;color:var(--accent-primary);"></i> Motivations & Réponses
                 </h4>
+                <div id="det-modal-question" style="padding: 1rem 1.5rem; background: rgba(79, 70, 229, 0.05); border-left: 4px solid var(--accent-primary); border-radius: 0 8px 8px 0; color: var(--text-primary); font-weight: 600; font-style: italic; margin-bottom: 1rem; font-size: 0.95rem; flex-shrink: 0;">
+                    <!-- Question -->
+                </div>
                 <div id="det-modal-reponses" style="padding: 1.5rem; background: var(--bg-body); border-radius: 12px; color: var(--text-secondary); line-height: 1.7; border: 1px solid var(--border-color); flex: 1; overflow-y: auto;">
                     <!-- Content -->
                 </div>
@@ -210,9 +256,6 @@ if (!isset($content)) {
                 <h4 style="font-size: 1.05rem; color: var(--text-primary); margin: 0; font-weight: 700; display:flex; align-items:center; gap:0.5rem;">
                     <i data-lucide="file-text" style="width:20px;height:20px;color:var(--accent-primary);"></i> Curriculum Vitae
                 </h4>
-                <button onclick="printCV()" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.8rem; font-size: 0.85rem;" id="print-cv-btn">
-                    <i data-lucide="printer" style="width:16px;height:16px;"></i> Imprimer
-                </button>
             </div>
             <div style="flex: 1; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: #fff; position: relative; display: flex; flex-direction: column;" id="cv-container">
                 <iframe id="cv-viewer-iframe" style="width: 100%; height: 100%; flex: 1; border: none; display: block;"></iframe>
@@ -364,12 +407,17 @@ function openDetailsModal(event, id) {
     const email = dataDiv.getAttribute('data-email');
     const offre = dataDiv.getAttribute('data-offre');
     const date = dataDiv.getAttribute('data-date');
+    const statut = dataDiv.getAttribute('data-statut');
+    const question = dataDiv.getAttribute('data-question');
     const reponses = dataDiv.innerHTML;
     
     document.getElementById('det-modal-nom').innerText = nom;
     document.getElementById('det-modal-email').innerText = email;
     document.getElementById('det-modal-offre').innerText = offre;
     document.getElementById('det-modal-date').innerText = "Déposée le " + date;
+    
+    const questionContainer = document.getElementById('det-modal-question');
+    questionContainer.innerText = question;
     
     const reponsesContainer = document.getElementById('det-modal-reponses');
     if (reponses.trim() === '') {
@@ -381,21 +429,50 @@ function openDetailsModal(event, id) {
     // Load CV
     const cvInput = document.getElementById('cv-data-' + id);
     const iframe = document.getElementById('cv-viewer-iframe');
-    const printBtn = document.getElementById('print-cv-btn');
     
     if (cvInput && cvInput.value) {
         iframe.src = cvInput.value;
-        printBtn.style.display = 'flex';
     } else {
         iframe.src = "";
         iframe.contentDocument?.write("<body style='font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100%;color:#888;'>Aucun CV disponible</body>");
-        printBtn.style.display = 'none';
     }
     
     const overlay = document.getElementById('details-modal-overlay');
     overlay.classList.add('active');
     const modal = overlay.querySelector('.modal');
     if (modal) modal.classList.add('active');
+    
+    // Mettre à jour les formulaires d'action avec l'ID de la candidature
+    const btnShort = document.getElementById('form-shortlister').querySelector('button');
+    const btnRefuse = document.getElementById('form-refuser').querySelector('button');
+    document.getElementById('action-cand-id-1').value = id;
+    document.getElementById('action-cand-id-2').value = id;
+
+    // Bloquer les boutons si déjà traité
+    const statutNormalised = (statut || "").trim().toLowerCase();
+    const isAlreadyProcessed = statutNormalised.includes('accept') || statutNormalised.includes('refus');
+
+    if (isAlreadyProcessed) {
+        btnShort.disabled = true;
+        btnRefuse.disabled = true;
+        btnShort.style.opacity = '0.5';
+        btnRefuse.style.opacity = '0.5';
+        btnShort.style.cursor = 'not-allowed';
+        btnRefuse.style.cursor = 'not-allowed';
+        btnShort.title = "Déjà traité (" + statut + ")";
+        btnRefuse.title = "Déjà traité (" + statut + ")";
+    } else {
+        btnShort.disabled = false;
+        btnRefuse.disabled = false;
+        btnShort.style.opacity = '1';
+        btnRefuse.style.opacity = '1';
+        btnShort.style.cursor = 'pointer';
+        btnRefuse.style.cursor = 'pointer';
+        btnShort.title = "Shortlister";
+        btnRefuse.title = "Refuser";
+    }
+    
+    if (window.lucide) lucide.createIcons();
 }
 
 function closeDetailsModal() {
@@ -404,16 +481,6 @@ function closeDetailsModal() {
     const modal = overlay.querySelector('.modal');
     if (modal) modal.classList.remove('active');
     document.getElementById('cv-viewer-iframe').src = "";
-}
-
-function printCV() {
-    const iframe = document.getElementById('cv-viewer-iframe');
-    if (iframe.src && iframe.src.includes('application/pdf')) {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-    } else if (iframe.src) {
-        alert("L'impression directe n'est supportée que pour les fichiers PDF.");
-    }
 }
 
 // ═══ DYNAMIC AJAX SEARCH (CANDIDATES) ═══

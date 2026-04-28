@@ -263,4 +263,47 @@ class offreC{
         exit;
     }
 
+    // ----- NOUVELLE METHODE POUR LES STATISTIQUES -----
+    public function getOffresStatsMensuel() {
+        $db = config::getConnexion();
+        try {
+            $sql = "SELECT MONTH(date_publication) as mois, COUNT(*) as nb_offres 
+                    FROM offreemploi 
+                    WHERE date_publication >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                    GROUP BY MONTH(date_publication)
+                    ORDER BY MONTH(date_publication)";
+            $stmt = $db->query($sql);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Map the months to their names
+            $monthsMap = [
+                1 => 'Jan', 2 => 'Fév', 3 => 'Mar', 4 => 'Avr', 
+                5 => 'Mai', 6 => 'Jun', 7 => 'Jul', 8 => 'Aoû', 
+                9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Déc'
+            ];
+            
+            // Initialize the last 6 months with 0
+            $stats = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $monthNum = (int)date('n', strtotime("-$i months"));
+                $stats[$monthNum] = [
+                    'label' => $monthsMap[$monthNum],
+                    'value' => 0
+                ];
+            }
+            
+            // Fill with real data
+            foreach ($results as $row) {
+                $m = (int)$row['mois'];
+                if (isset($stats[$m])) {
+                    $stats[$m]['value'] = (int)$row['nb_offres'];
+                }
+            }
+            
+            return array_values($stats);
+            
+        } catch (Exception $e) {
+            return [];
+        }
+    }
 }

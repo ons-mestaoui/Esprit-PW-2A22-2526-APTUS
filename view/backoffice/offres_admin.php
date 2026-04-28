@@ -170,6 +170,7 @@ if (!isset($content)) {
         $listeOffres = $offreC->afficherOffres();
     }
     $count = $listeOffres->rowCount();
+    $monthlyStats = $offreC->getOffresStatsMensuel();
   ?>
 
 
@@ -201,11 +202,17 @@ if (!isset($content)) {
     </div>
     <div class="stat-card animate-on-scroll">
       <div>
-        <div class="stat-card__label">Taux de conversion</div>
-        <div class="stat-card__value">12.3%</div>
-        <div class="stat-card__trend down"><i data-lucide="trending-down" style="width:14px;height:14px;"></i> -0.5%</div>
+        <div class="stat-card__label">Candidatures reçues</div>
+        <div class="stat-card__value">
+          <?php 
+            require_once '../../controller/candidatureC.php';
+            $candController = new candidatureC();
+            echo $candController->afficherCandidatures()->rowCount();
+          ?>
+        </div>
+        <div class="stat-card__trend up"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> à jour</div>
       </div>
-      <div class="stat-card__icon orange"><i data-lucide="target" style="width:22px;height:22px;"></i></div>
+      <div class="stat-card__icon orange"><i data-lucide="users" style="width:22px;height:22px;"></i></div>
     </div>
   </div>
 
@@ -536,14 +543,8 @@ if (!isset($content)) {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   if(typeof AptusCharts !== 'undefined' && document.getElementById('posts-monthly-chart')) {
-      AptusCharts.bar('posts-monthly-chart', [
-        { label: 'Jan', value: 156 },
-        { label: 'Fév', value: 198 },
-        { label: 'Mar', value: 234 },
-        { label: 'Avr', value: 189 },
-        { label: 'Mai', value: 267 },
-        { label: 'Jun', value: 240 },
-      ], { barColor: 'var(--chart-1)', height: 250 });
+      const monthlyData = <?php echo json_encode($monthlyStats ?? []); ?>;
+      AptusCharts.bar('posts-monthly-chart', monthlyData, { barColor: 'var(--chart-1)', height: 250 });
 
       AptusCharts.donut('category-donut-chart', [
         { label: 'Offres d\'emploi', value: <?php echo isset($count) ? $count : 0; ?> },

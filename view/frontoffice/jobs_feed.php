@@ -1,4 +1,4 @@
-﻿<?php 
+<?php 
 $pageTitle = "Browse Jobs"; 
 $pageCSS = "feeds.css"; 
 
@@ -9,6 +9,19 @@ require_once '../../model/candidature.php';
 $offreC = new offreC();
 $candidatureC = new candidatureC();
 
+// Marquer les notifications comme lues (AJAX)
+if (isset($_GET['mark_read'])) {
+    $candidatureC->markNotificationsRead(1); // ID candidat par défaut
+    echo 'ok';
+    exit();
+}
+
+// Supprimer une notification (AJAX)
+if (isset($_GET['delete_notif'])) {
+    $candidatureC->deleteNotification(intval($_GET['delete_notif']));
+    echo 'ok';
+    exit();
+}
 // --- TRAITEMENT DU FORMULAIRE DE CANDIDATURE ---
 $cand_errors = [];
 $cand_data = [];
@@ -58,7 +71,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])
         // Pour l'id_candidat, on met 1 par défaut pour le moment (ou null s'il n'est pas connecté)
         $id_candidat = 1; 
         
-        $nouvelleCandidature = new candidature($id_candidat, $id_offre, $nom, $prenom, $email, $date_candidature, $reponses, $cv_cand_base64, null, 'en_attente');
+        // VÉRIFIER SI DÉJÀ POSTULÉ
+        if ($candidatureC->hasAlreadyApplied($id_candidat, $id_offre)) {
+            header("Location: jobs_feed.php?error=already_applied");
+            exit();
+        }
+        
+        $nouvelleCandidature = new candidature($id_candidat, $id_offre, $nom, $prenom, $email, $date_candidature, $reponses, $cv_cand_base64, null, 'En attente');
         $candidatureC->addCandidature($nouvelleCandidature);
         
         // Redirection pour éviter la soumission en double
@@ -134,6 +153,24 @@ if (!isset($content)) {
   </h1>
   <p class="page-header__subtitle">Trouvez l'offre qui correspond à votre profil</p>
 </div>
+
+<?php if (isset($_GET['error']) && $_GET['error'] === 'already_applied'): ?>
+    <div id="already-applied-alert" style="margin: 0 2rem 2rem 2rem; padding: 1rem 1.5rem; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 12px; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 12px rgba(245, 101, 101, 0.08);">
+        <div style="width: 28px; height: 28px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #f56565; border: 2px solid #f56565; flex-shrink: 0;">
+            <i data-lucide="alert-circle" style="width: 16px; height: 16px;"></i>
+        </div>
+        <p style="color: #c53030; font-weight: 500; margin: 0; font-size: 0.95rem;">Vous avez déjà postulé à cette offre.</p>
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['success']) && $_GET['success'] === 'applied'): ?>
+    <div id="applied-success-alert" style="margin: 0 2rem 2rem 2rem; padding: 1rem 1.5rem; background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 12px; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 12px rgba(72, 187, 120, 0.08);">
+        <div style="width: 28px; height: 28px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #48bb78; border: 2px solid #48bb78; flex-shrink: 0;">
+            <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+        </div>
+        <p style="color: #276749; font-weight: 500; margin: 0; font-size: 0.95rem;">Votre candidature a été envoyée avec succès !</p>
+    </div>
+<?php endif; ?>
 
 <!-- Banner Maps (Coming soon) -->
 <div class="promo-banner">
@@ -513,6 +550,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    // Auto-hide alerts after 3 seconds
+    setTimeout(() => {
+        ['already-applied-alert', 'applied-success-alert'].forEach(id => {
+            const alert = document.getElementById(id);
+            if (alert) {
+                alert.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-10px)';
+                setTimeout(() => alert.remove(), 600);
+            }
+        });
+    }, 3000);
 });
 </script>
 
