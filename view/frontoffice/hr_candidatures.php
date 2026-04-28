@@ -35,27 +35,7 @@ if (!isset($content)) {
             <option>Product Manager</option>
         </select>
     </div>
-
-
-
-    <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
-        <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">Trier par</h4>
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <label class="custom-radio">
-                <input type="radio" name="sort-cand" checked>
-                <span>Score de Match</span>
-            </label>
-            <label class="custom-radio">
-                <input type="radio" name="sort-cand">
-                <span>Date de dépôt</span>
-            </label>
-            <label class="custom-radio">
-                <input type="radio" name="sort-cand">
-                <span>Ordre alphabétique</span>
-            </label>
-        </div>
-    </div>
-
+    
     <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid var(--border-color);">
         <form method="GET" action="hr_candidatures.php" style="margin: 0;">
             <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">Statut</h4>
@@ -127,7 +107,17 @@ if (!isset($content)) {
           $dateCand = date('d/m/Y', strtotime($cand['date_candidature']));
           $idCand = $cand['id_candidature'];
       ?>
-      <div class="candidate-card animate-on-scroll" id="candidate-<?php echo $idCand; ?>" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem; transition: all 0.3s ease; display: flex; flex-direction: column; gap: 1rem;">
+      <div class="candidate-card animate-on-scroll" id="candidate-<?php echo $idCand; ?>" 
+           style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem; transition: all 0.3s ease; display: flex; flex-direction: column; gap: 1rem; cursor: pointer;"
+           onclick="openDetailsModal(event, <?php echo $idCand; ?>)">
+           
+        <div id="details-data-<?php echo $idCand; ?>" style="display:none;" 
+             data-nom="<?php echo htmlspecialchars($nomComplet); ?>"
+             data-email="<?php echo htmlspecialchars($cand['email']); ?>"
+             data-offre="<?php echo htmlspecialchars($titreOffre); ?>"
+             data-date="<?php echo htmlspecialchars($dateCand); ?>">
+             <?php echo $cand['reponses_ques']; ?>
+        </div>
         <div class="candidate-card__header" style="display: flex; gap: 1rem; align-items: flex-start;">
           <div class="avatar avatar-lg" style="width: 56px; height: 56px; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.25rem; box-shadow: 0 4px 12px rgba(168, 100, 228, 0.2);">
             <?php echo $initials; ?>
@@ -149,8 +139,9 @@ if (!isset($content)) {
 
 
         <div class="candidate-card__actions" style="display: flex; gap: 0.75rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-          <button class="btn btn-primary" style="flex: 1; padding: 0.6rem; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onclick="alert('Téléchargement du CV...')">
-            <i data-lucide="file-text" style="width:16px;height:16px;"></i> Voir CV
+          <textarea id="cv-data-<?php echo $cand['id_candidature']; ?>" style="display:none;"><?php echo htmlspecialchars($cand['cv__cand'] ?? $cand['cv_cand'] ?? ''); ?></textarea>
+          <button class="btn btn-primary" style="flex: 1; padding: 0.6rem; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onclick="event.stopPropagation(); openDetailsModal(null, <?php echo $cand['id_candidature']; ?>)">
+            <i data-lucide="file-text" style="width:16px;height:16px;"></i> Voir Détails & CV
           </button>
           <button class="btn btn-success" style="padding: 0.6rem; width: 42px;" title="Shortlister"><i data-lucide="check" style="width:18px;height:18px;"></i></button>
           <button class="btn btn-ghost" style="padding: 0.6rem; width: 42px; border: 1px solid var(--border-color);" title="Refuser"><i data-lucide="x" style="width:18px;height:18px;color:#ef4444;"></i></button>
@@ -168,6 +159,68 @@ if (!isset($content)) {
           </div>
       <?php endif; ?>
     </div>
+  </div>
+</div>
+
+<!-- Modal Unifiée de la Candidature -->
+<div class="modal-overlay" id="details-modal-overlay">
+  <div class="modal" style="max-width: 1200px; width: 95%; padding: 2rem; border-radius: 16px; background: var(--bg-card); box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; height: 90vh;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; flex-shrink: 0;">
+      <div>
+          <h2 id="det-modal-nom" style="font-size: 1.6rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem 0;">Nom</h2>
+          <div style="display: flex; gap: 1.25rem; color: var(--text-tertiary); font-size: 0.95rem;">
+              <span style="display:flex; align-items:center; gap:0.4rem;"><i data-lucide="mail" style="width:16px;height:16px;"></i> <span id="det-modal-email"></span></span>
+              <span style="display:flex; align-items:center; gap:0.4rem;"><i data-lucide="calendar" style="width:16px;height:16px;"></i> <span id="det-modal-date"></span></span>
+          </div>
+      </div>
+      <button onclick="closeDetailsModal()" style="background: none; border: none; cursor: pointer; color: var(--text-tertiary);">
+        <i data-lucide="x" style="width:28px;height:28px;"></i>
+      </button>
+    </div>
+    
+    <!-- Corps du modal (2 colonnes) -->
+    <div style="display: flex; flex: 1; gap: 2rem; overflow: hidden;">
+        
+        <!-- Colonne Gauche : Détails et Motivations -->
+        <div style="flex: 0 0 40%; display: flex; flex-direction: column; overflow-y: auto; padding-right: 0.5rem;">
+            <div style="margin-bottom: 1.5rem; padding: 1.25rem; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 1rem; flex-shrink: 0;">
+                <div style="width: 40px; height: 40px; background: rgba(79, 70, 229, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="briefcase" style="width:20px;height:20px;color:var(--accent-primary);"></i>
+                </div>
+                <div>
+                    <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin: 0 0 0.25rem 0; font-weight: 700; letter-spacing: 0.05em;">Offre concernée</h4>
+                    <div id="det-modal-offre" style="font-size: 1.15rem; color: var(--text-primary); font-weight: 700;"></div>
+                </div>
+            </div>
+            
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <h4 style="font-size: 1.05rem; color: var(--text-primary); margin: 0 0 1rem 0; font-weight: 700; display:flex; align-items:center; gap:0.5rem; flex-shrink: 0;">
+                    <i data-lucide="message-square" style="width:20px;height:20px;color:var(--accent-primary);"></i> Motivations & Réponses
+                </h4>
+                <div id="det-modal-reponses" style="padding: 1.5rem; background: var(--bg-body); border-radius: 12px; color: var(--text-secondary); line-height: 1.7; border: 1px solid var(--border-color); flex: 1; overflow-y: auto;">
+                    <!-- Content -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne Droite : CV -->
+        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-shrink: 0;">
+                <h4 style="font-size: 1.05rem; color: var(--text-primary); margin: 0; font-weight: 700; display:flex; align-items:center; gap:0.5rem;">
+                    <i data-lucide="file-text" style="width:20px;height:20px;color:var(--accent-primary);"></i> Curriculum Vitae
+                </h4>
+                <button onclick="printCV()" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.8rem; font-size: 0.85rem;" id="print-cv-btn">
+                    <i data-lucide="printer" style="width:16px;height:16px;"></i> Imprimer
+                </button>
+            </div>
+            <div style="flex: 1; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: #fff; position: relative; display: flex; flex-direction: column;" id="cv-container">
+                <iframe id="cv-viewer-iframe" style="width: 100%; height: 100%; flex: 1; border: none; display: block;"></iframe>
+            </div>
+        </div>
+        
+    </div>
+    
   </div>
 </div>
 
@@ -297,6 +350,72 @@ function setViewMode(mode) {
     localStorage.setItem('hr_candidates_view_mode', mode);
 }
 
+// ═══ DETAILS MODAL LOGIC (UNIFIED) ═══
+function openDetailsModal(event, id) {
+    if (event && event.target.closest('button') && !event.target.closest('.btn-primary')) {
+        // Ignore clicks on reject/accept buttons, but allow clicks on the row or "Voir CV" button
+        return;
+    }
+    
+    const dataDiv = document.getElementById('details-data-' + id);
+    if (!dataDiv) return;
+    
+    const nom = dataDiv.getAttribute('data-nom');
+    const email = dataDiv.getAttribute('data-email');
+    const offre = dataDiv.getAttribute('data-offre');
+    const date = dataDiv.getAttribute('data-date');
+    const reponses = dataDiv.innerHTML;
+    
+    document.getElementById('det-modal-nom').innerText = nom;
+    document.getElementById('det-modal-email').innerText = email;
+    document.getElementById('det-modal-offre').innerText = offre;
+    document.getElementById('det-modal-date').innerText = "Déposée le " + date;
+    
+    const reponsesContainer = document.getElementById('det-modal-reponses');
+    if (reponses.trim() === '') {
+        reponsesContainer.innerHTML = "<em style='color:var(--text-tertiary);'>Aucune motivation fournie.</em>";
+    } else {
+        reponsesContainer.innerHTML = reponses;
+    }
+
+    // Load CV
+    const cvInput = document.getElementById('cv-data-' + id);
+    const iframe = document.getElementById('cv-viewer-iframe');
+    const printBtn = document.getElementById('print-cv-btn');
+    
+    if (cvInput && cvInput.value) {
+        iframe.src = cvInput.value;
+        printBtn.style.display = 'flex';
+    } else {
+        iframe.src = "";
+        iframe.contentDocument?.write("<body style='font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100%;color:#888;'>Aucun CV disponible</body>");
+        printBtn.style.display = 'none';
+    }
+    
+    const overlay = document.getElementById('details-modal-overlay');
+    overlay.classList.add('active');
+    const modal = overlay.querySelector('.modal');
+    if (modal) modal.classList.add('active');
+}
+
+function closeDetailsModal() {
+    const overlay = document.getElementById('details-modal-overlay');
+    overlay.classList.remove('active');
+    const modal = overlay.querySelector('.modal');
+    if (modal) modal.classList.remove('active');
+    document.getElementById('cv-viewer-iframe').src = "";
+}
+
+function printCV() {
+    const iframe = document.getElementById('cv-viewer-iframe');
+    if (iframe.src && iframe.src.includes('application/pdf')) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+    } else if (iframe.src) {
+        alert("L'impression directe n'est supportée que pour les fichiers PDF.");
+    }
+}
+
 // ═══ DYNAMIC AJAX SEARCH (CANDIDATES) ═══
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('ajax-search-candidates');
@@ -348,6 +467,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedMode = localStorage.getItem('hr_candidates_view_mode');
     if (savedMode === 'list') {
         setViewMode('list');
+    }
+    
+    // Fermeture du modal Détails au clic à l'extérieur
+    const detailsOverlay = document.getElementById('details-modal-overlay');
+    if (detailsOverlay) {
+        detailsOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDetailsModal();
+            }
+        });
     }
 });
 </script>

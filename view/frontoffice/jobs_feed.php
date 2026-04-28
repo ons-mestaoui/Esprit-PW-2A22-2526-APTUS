@@ -1,4 +1,4 @@
-<?php 
+﻿<?php 
 $pageTitle = "Browse Jobs"; 
 $pageCSS = "feeds.css"; 
 
@@ -609,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
 
       <div style="display:flex; justify-content:flex-end; margin-top:2rem;">
-        <button type="submit" name="submit_application" style="padding: 0.6rem 2rem; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); color: white; border:none; border-radius: 6px; font-weight: 600; cursor:pointer; box-shadow:0 4px 10px rgba(168,100,228,0.3);">Suivant</button>
+        <button type="submit" name="submit_application" style="padding: 0.6rem 2rem; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); color: white; border:none; border-radius: 6px; font-weight: 600; cursor:pointer; box-shadow:0 4px 10px rgba(168,100,228,0.3);">Envoyer</button>
       </div>
     </form>
   </div>
