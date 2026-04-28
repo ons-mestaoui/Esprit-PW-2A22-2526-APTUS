@@ -10,16 +10,38 @@ $offreC = new offreC();
 $candidatureC = new candidatureC();
 
 // --- TRAITEMENT DU FORMULAIRE DE CANDIDATURE ---
+$cand_errors = [];
+$cand_data = [];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])) {
     $id_offre = $_POST['id_offre'] ?? null;
-    $nom = $_POST['nom'] ?? '';
-    $prenom = $_POST['prenom'] ?? '';
-    $email = $_POST['email'] ?? '';
-    $reponses = $_POST['reponses_ques'] ?? '';
+    $nom = trim($_POST['nom'] ?? '');
+    $prenom = trim($_POST['prenom'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $reponses = trim($_POST['reponses_ques'] ?? '');
+    $offer_title = $_POST['offer_title'] ?? '';
+    $offer_question = $_POST['offer_question'] ?? '';
     $date_candidature = date('Y-m-d');
     
-    // Pour l'id_candidat, on met 1 par défaut pour le moment (ou null s'il n'est pas connecté)
-    $id_candidat = 1; 
+    // PHP VALIDATION
+    if (empty($nom)) {
+        $cand_errors['nom'] = "Le nom est obligatoire.";
+    }
+    if (empty($prenom)) {
+        $cand_errors['prenom'] = "Le prénom est obligatoire.";
+    }
+    if (empty($email)) {
+        $cand_errors['email'] = "L'email est obligatoire.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $cand_errors['email'] = "Le format de l'email est invalide.";
+    }
+    
+    $reponses_text = strip_tags(str_replace('&nbsp;', ' ', $reponses));
+    if (empty(trim($reponses_text))) {
+        $cand_errors['reponses'] = "La réponse est obligatoire.";
+    } elseif (mb_strlen(trim($reponses_text)) < 10) {
+        $cand_errors['reponses'] = "La réponse doit contenir au moins 10 caractères.";
+    }
     
     // Gérer l'upload du CV
     $cv_cand_base64 = null;
@@ -28,17 +50,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])
         $file_type = mime_content_type($file_tmp);
         $file_data = file_get_contents($file_tmp);
         $cv_cand_base64 = 'data:' . $file_type . ';base64,' . base64_encode($file_data);
+    } else {
+        $cand_errors['cv_cand'] = "Le CV est obligatoire.";
     }
     
-    // On ignore le statut et note d'après le constructeur (ou on met des valeurs mock si le constructeur les exige)
-    // constructeur actuel : __construct($id_candidat, $id_offre, $nom, $prenom, $email, $date_candidature, $reponses_ques, $cv_cand, $note, $statut)
-    $nouvelleCandidature = new candidature($id_candidat, $id_offre, $nom, $prenom, $email, $date_candidature, $reponses, $cv_cand_base64, null, 'en_attente');
-    
-    $candidatureC->addCandidature($nouvelleCandidature);
-    
-    // Redirection pour éviter la soumission en double
-    header("Location: jobs_feed.php?success=applied");
-    exit();
+    if (empty($cand_errors)) {
+        // Pour l'id_candidat, on met 1 par défaut pour le moment (ou null s'il n'est pas connecté)
+        $id_candidat = 1; 
+        
+        $nouvelleCandidature = new candidature($id_candidat, $id_offre, $nom, $prenom, $email, $date_candidature, $reponses, $cv_cand_base64, null, 'en_attente');
+        $candidatureC->addCandidature($nouvelleCandidature);
+        
+        // Redirection pour éviter la soumission en double
+        header("Location: jobs_feed.php?success=applied");
+        exit();
+    } else {
+        $cand_data = [
+            'id_offre' => $id_offre,
+            'offer_title' => $offer_title,
+            'offer_question' => $offer_question,
+            'nom' => $nom,
+            'prenom' => $prenom,
+            'email' => $email,
+            'reponses_ques' => $reponses
+        ];
+    }
 }
 
 $criteres = [];
@@ -444,7 +480,6 @@ function openApplyModal() {
     // Mettre l'ID de l'offre dans le form
     document.getElementById('apply-id-offre').value = currentOfferId;
     
-    // Mettre à jour le titre et la question du modal
     var titleEl = document.getElementById('apply-modal-title');
     if (titleEl) {
         titleEl.innerText = "Nouvelle Candidature - " + currentOfferTitle;
@@ -453,6 +488,9 @@ function openApplyModal() {
     if (questionEl) {
         questionEl.innerText = currentOfferQuestion;
     }
+
+    document.getElementById('apply-offer-title').value = currentOfferTitle;
+    document.getElementById('apply-offer-question').value = currentOfferQuestion;
 
     // Ouvrir le nouveau modal
     var applyOverlay = document.getElementById('apply-modal');
@@ -523,41 +561,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- Formulaire -->
     <form id="apply-form" method="POST" action="jobs_feed.php" enctype="multipart/form-data">
-      <input type="hidden" name="id_offre" id="apply-id-offre" value="">
+      <input type="hidden" name="id_offre" id="apply-id-offre" value="<?php echo htmlspecialchars($cand_data['id_offre'] ?? ''); ?>">
+      <input type="hidden" name="offer_title" id="apply-offer-title" value="<?php echo htmlspecialchars($cand_data['offer_title'] ?? ''); ?>">
+      <input type="hidden" name="offer_question" id="apply-offer-question" value="<?php echo htmlspecialchars($cand_data['offer_question'] ?? ''); ?>">
       
       <div style="display: flex; gap: 2rem;">
         <!-- Colonne Gauche -->
         <div style="flex:0 0 32%;">
             <div style="margin-bottom: 1.5rem;">
                 <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.5rem;">Nom de famille <span style="color:#e94560;">*</span></label>
-                <input type="text" name="nom" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid var(--border-color); border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:var(--bg-input); color:var(--text-primary);" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='var(--border-color)'">
+                <input type="text" name="nom" value="<?php echo htmlspecialchars($cand_data['nom'] ?? ''); ?>" style="width:100%; padding: 0.65rem 1rem; border: 1px solid <?php echo isset($cand_errors['nom']) ? '#e94560' : 'var(--border-color)'; ?>; border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:var(--bg-input); color:var(--text-primary);" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="if(!this.value) this.style.borderColor='<?php echo isset($cand_errors['nom']) ? '#e94560' : 'var(--border-color)'; ?>'">
+                <?php if(isset($cand_errors['nom'])): ?><span style="color:#e94560; font-size:0.8rem; margin-top:0.25rem; display:block;"><?php echo $cand_errors['nom']; ?></span><?php endif; ?>
             </div>
             
             <div style="margin-bottom: 1.5rem;">
                 <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.5rem;">Prénom <span style="color:#e94560;">*</span></label>
-                <input type="text" name="prenom" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid var(--border-color); border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:var(--bg-input); color:var(--text-primary);" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='var(--border-color)'">
+                <input type="text" name="prenom" value="<?php echo htmlspecialchars($cand_data['prenom'] ?? ''); ?>" style="width:100%; padding: 0.65rem 1rem; border: 1px solid <?php echo isset($cand_errors['prenom']) ? '#e94560' : 'var(--border-color)'; ?>; border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:var(--bg-input); color:var(--text-primary);" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="if(!this.value) this.style.borderColor='<?php echo isset($cand_errors['prenom']) ? '#e94560' : 'var(--border-color)'; ?>'">
+                <?php if(isset($cand_errors['prenom'])): ?><span style="color:#e94560; font-size:0.8rem; margin-top:0.25rem; display:block;"><?php echo $cand_errors['prenom']; ?></span><?php endif; ?>
             </div>
 
             <div style="margin-bottom: 1.5rem;">
                 <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.5rem;">Adresse Email <span style="color:#e94560;">*</span></label>
-                <input type="email" name="email" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid var(--border-color); border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:var(--bg-input); color:var(--text-primary);" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='var(--border-color)'">
+                <input type="text" name="email" value="<?php echo htmlspecialchars($cand_data['email'] ?? ''); ?>" style="width:100%; padding: 0.65rem 1rem; border: 1px solid <?php echo isset($cand_errors['email']) ? '#e94560' : 'var(--border-color)'; ?>; border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:var(--bg-input); color:var(--text-primary);" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="if(!this.value) this.style.borderColor='<?php echo isset($cand_errors['email']) ? '#e94560' : 'var(--border-color)'; ?>'">
+                <?php if(isset($cand_errors['email'])): ?><span style="color:#e94560; font-size:0.8rem; margin-top:0.25rem; display:block;"><?php echo $cand_errors['email']; ?></span><?php endif; ?>
             </div>
             
-            <div style="margin-bottom: 1.5rem; padding: 1.25rem 1rem; border: 1px dashed var(--border-color); border-radius: 8px; background: var(--bg-secondary); text-align: center;">
+            <div style="margin-bottom: 1.5rem; padding: 1.25rem 1rem; border: 1px dashed <?php echo isset($cand_errors['cv_cand']) ? '#e94560' : 'var(--border-color)'; ?>; border-radius: 8px; background: var(--bg-secondary); text-align: center;">
                 <i data-lucide="file-up" style="width:24px;height:24px;color:var(--text-tertiary); margin-bottom: 0.5rem;"></i>
                 <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Téléchargez votre CV (PDF, DOCX)</p>
-                <input type="file" name="cv_cand" accept=".pdf,.doc,.docx" required style="max-width: 100%; font-size:0.8rem; outline:none; color:var(--text-primary);">
+                <input type="file" name="cv_cand" accept=".pdf,.doc,.docx" style="max-width: 100%; font-size:0.8rem; outline:none; color:var(--text-primary);">
+                <?php if(isset($cand_errors['cv_cand'])): ?><span style="color:#e94560; font-size:0.8rem; margin-top:0.5rem; display:block;"><?php echo $cand_errors['cv_cand']; ?></span><?php endif; ?>
             </div>
         </div>
 
         <!-- Colonne Droite -->
         <div style="flex:1;">
-            <div style="height: 100%; border: 1px solid var(--border-color); border-radius: 10px; padding: 1.5rem; background: var(--bg-primary); box-shadow: 0 4px 15px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
+            <div style="height: 100%; border: 1px solid <?php echo isset($cand_errors['reponses']) ? '#e94560' : 'var(--border-color)'; ?>; border-radius: 10px; padding: 1.5rem; background: var(--bg-primary); box-shadow: 0 4px 15px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
                 <label id="apply-modal-question-label" style="display:block; font-size:0.9rem; font-weight:700; color:var(--text-secondary); margin-bottom:1rem; text-align:center; letter-spacing:0.5px; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">Vos Motivations</label>
                 
                 <div style="margin-bottom: 0; flex:1; display:flex; flex-direction:column; min-height:180px;">
-                    <input type="hidden" name="reponses_ques" id="hidden_reponses_ques">
-                    <div id="quill-editor" style="flex:1; background: var(--bg-input); font-size:1rem; color:var(--text-primary);"></div>
+                    <input type="hidden" name="reponses_ques" id="hidden_reponses_ques" value="<?php echo htmlspecialchars($cand_data['reponses_ques'] ?? ''); ?>">
+                    <div id="quill-editor" style="flex:1; background: var(--bg-input); font-size:1rem; color:var(--text-primary);"><?php echo $cand_data['reponses_ques'] ?? ''; ?></div>
+                    <?php if(isset($cand_errors['reponses'])): ?><span style="color:#e94560; font-size:0.8rem; margin-top:0.5rem; display:block;"><?php echo $cand_errors['reponses']; ?></span><?php endif; ?>
                 </div>
             </div>
         </div>
@@ -579,11 +624,35 @@ function closeApplyModal() {
         var modal = overlay.querySelector('.modal');
         if (modal) modal.classList.remove('active');
     }
+    
+    // Si on quitte le modal et qu'il y avait des erreurs de validation PHP, on recharge la page pour les nettoyer
+    <?php if (!empty($cand_errors) || $_SERVER['REQUEST_METHOD'] === 'POST'): ?>
+    window.location.href = window.location.pathname + window.location.search;
+    <?php endif; ?>
 }
 
-// Ensure close clicking outside applies to the new modal too if needed
-// Or it's already handled by CSS if there's no JS specifically binding it
+// Ensure close clicking outside applies to the modals
+document.addEventListener('DOMContentLoaded', function() {
+    var applyOverlay = document.getElementById('apply-modal');
+    if (applyOverlay) {
+        applyOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeApplyModal();
+            }
+        });
+    }
 
+    var detailsOverlay = document.getElementById('offer-details-modal');
+    if (detailsOverlay) {
+        detailsOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                var modal = this.querySelector('.modal');
+                if (modal) modal.classList.remove('active');
+            }
+        });
+    }
+});
 document.addEventListener('DOMContentLoaded', function() {
     var lucideScript = document.createElement('script');
     lucideScript.src = "https://unpkg.com/lucide@latest";
@@ -622,6 +691,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    // Re-open apply modal if there are PHP validation errors
+    <?php if(!empty($cand_errors)): ?>
+        currentOfferId = "<?php echo addslashes($cand_data['id_offre'] ?? ''); ?>";
+        currentOfferTitle = "<?php echo addslashes($cand_data['offer_title'] ?? ''); ?>";
+        currentOfferQuestion = "<?php echo addslashes($cand_data['offer_question'] ?? ''); ?>";
+        openApplyModal();
+    <?php endif; ?>
 });
 
 // ═══ DYNAMIC AJAX SEARCH (JOBS FEED - MVC) ═══
