@@ -62,6 +62,14 @@ switch ($action) {
         echo json_encode(['success' => $success]);
         break;
 
+    case 'get_ai_alerts':
+        require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
+        $controller = new TuteurDashboardController();
+        $id_tuteur = $_GET['tuteur_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 1;
+        $alerts = $controller->getRecentAIAlerts((int)$id_tuteur);
+        echo json_encode(['success' => true, 'alerts' => $alerts]);
+        break;
+
     case 'add_resource':
         require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
         $controller = new TuteurDashboardController();

@@ -205,4 +205,61 @@ class TuteurDashboardController
             'taux' => $taux
         ];
     }
+    /**
+     * RÉEL TEMPS : Récupérer les alertes IA basées sur les émotions récentes
+     * Scanne les émotions des 15 dernières minutes pour les formations du tuteur
+     */
+    public function getRecentAIAlerts($id_tuteur)
+    {
+        $db = config::getConnexion();
+        try {
+            $query = "
+                SELECT re.*, f.titre as formation_titre, u.nom as etudiant_nom
+                FROM rapport_emotions re
+                JOIN formation f ON re.id_formation = f.id_formation
+                JOIN utilisateur u ON re.id_candidat = u.id
+                WHERE f.id_tuteur = :id_tuteur
+                AND re.date_detection >= (NOW() - INTERVAL 15 MINUTE)
+                ORDER BY re.date_detection DESC
+            ";
+            $stmt = $db->prepare($query);
+            $stmt->execute(['id_tuteur' => $id_tuteur]);
+            $emotions = $stmt->fetchAll();
+
+            $alerts = [];
+            $grouped = [];
+
+            // On groupe par étudiant et formation
+            foreach ($emotions as $e) {
+                $key = $e['id_candidat'] . '_' . $e['id_formation'];
+                if (!isset($grouped[$key])) {
+                    $grouped[$key] = [
+                        'nom' => $e['etudiant_nom'],
+                        'formation' => $e['formation_titre'],
+                        'emotions' => []
+                    ];
+                }
+                $grouped[$key]['emotions'][] = $e['emotion_detectee'];
+            }
+
+            // Logique d'alerte : Si confusion ou tristesse > 3 occurrences en 15 min
+            foreach ($grouped as $data) {
+                $counts = array_count_values($data['emotions']);
+                $confusionCount = ($counts['Confusion'] ?? 0) + ($counts['Triste'] ?? 0) + ($counts['Colère'] ?? 0);
+                
+                if ($confusionCount >= 3) {
+                    $alerts[] = [
+                        'type' => 'critical',
+                        'message' => "L'IA détecte une difficulté majeure pour <strong>" . $data['nom'] . "</strong> sur le cours <em>" . $data['formation'] . "</em>.",
+                        'conseil' => "L'élève semble perdu ou frustré. Essayez de lui envoyer un message privé ou de faire une pause explicative.",
+                        'icon' => 'alert-circle'
+                    ];
+                }
+            }
+
+            return $alerts;
+        } catch (Exception $e) {
+            return [];
+        }
+    }
 }

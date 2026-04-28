@@ -233,6 +233,66 @@ if (!isset($content)) {
         background: #f3e8ff;
         color: #a855f7;
     }
+
+    /* AI Alerts Styling */
+    .ai-alerts-container {
+        margin-bottom: 2rem;
+        perspective: 1000px;
+    }
+
+    .ai-alert-card {
+        background: linear-gradient(135deg, #fff5f5, #fff);
+        border: 1px solid #fee2e2;
+        border-left: 4px solid #ef4444;
+        padding: 1.25rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+        animation: slideInRight 0.5s ease forwards;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+
+    @keyframes slideInRight {
+        from { transform: translateX(30px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    .ai-alert-card__title {
+        color: #991b1b;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 0.5rem;
+    }
+
+    .ai-alert-card__message {
+        font-size: 0.85rem;
+        line-height: 1.4;
+        color: #4b5563;
+        margin-bottom: 0.75rem;
+    }
+
+    .ai-alert-card__advice {
+        background: rgba(239, 68, 68, 0.05);
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-style: italic;
+        color: #7f1d1d;
+        border: 1px dashed rgba(239, 68, 68, 0.2);
+    }
+
+    .pulse-ai {
+        animation: pulse-red 2s infinite;
+    }
+
+    @keyframes pulse-red {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.7; }
+        100% { transform: scale(1); opacity: 1; }
+    }
 </style>
 
 <div class="tuteur-dashboard-header">
@@ -272,6 +332,21 @@ if (!isset($content)) {
 
     <!-- LISTE LATERALE -->
     <div class="sidebar-list">
+        <!-- CONCEPT 3 : DÉTECTEUR IA EN TEMPS RÉEL -->
+        <div id="ai-alerts-live" class="ai-alerts-container">
+            <h3 class="mb-3 d-flex align-items-center gap-2" style="color: #ef4444; font-size: 1rem;">
+                <i data-lucide="brain-circuit" class="pulse-ai" style="width:20px; height:20px;"></i>
+                AI Live Alerts
+                <span class="badge" style="background: #fee2e2; color: #ef4444; font-size: 0.65rem; padding: 2px 6px;">LIVE</span>
+            </h3>
+            <div id="alerts-wrapper">
+                <!-- Les alertes seront injectées ici par JS -->
+                <div style="padding: 1rem; border: 1px dashed var(--border-color); border-radius: 12px; text-align: center; opacity: 0.5;">
+                    <p style="font-size: 0.75rem;">Analyse émotionnelle en cours...</p>
+                </div>
+            </div>
+        </div>
+
         <h3 class="mb-2 d-flex align-items-center gap-2">
             <i data-lucide="list-checks" style="color:var(--accent-primary);"></i>
             Mes Assignations
@@ -404,5 +479,50 @@ if (!isset($content)) {
             }
         });
         calendar.render();
+
+        // ── SYSTÈME DE DÉTECTION IA TEMPS RÉEL ───────────────────
+        const alertsWrapper = document.getElementById('alerts-wrapper');
+        const tuteurId = <?php echo $id_tuteur; ?>;
+
+        function fetchAIAlerts() {
+            fetch(`ajax_handler.php?action=get_ai_alerts&tuteur_id=${tuteurId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.alerts.length > 0) {
+                        renderAlerts(data.alerts);
+                    } else if (data.success && data.alerts.length === 0) {
+                        alertsWrapper.innerHTML = `
+                            <div style="padding: 1rem; border: 1px dashed var(--border-color); border-radius: 12px; text-align: center; opacity: 0.5;">
+                                <p style="font-size: 0.75rem;">Tout va bien. Aucune anomalie détectée par l'IA.</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(err => console.error("Erreur Polling IA:", err));
+        }
+
+        function renderAlerts(alerts) {
+            let html = '';
+            alerts.forEach(alert => {
+                html += `
+                    <div class="ai-alert-card">
+                        <div class="ai-alert-card__title">
+                            <i data-lucide="alert-triangle" style="width:16px;height:16px;"></i>
+                            ALERTE CRITIQUE
+                        </div>
+                        <div class="ai-alert-card__message">${alert.message}</div>
+                        <div class="ai-alert-card__advice">
+                            <strong>Conseil IA :</strong> ${alert.advice || alert.conseil}
+                        </div>
+                    </div>
+                `;
+            });
+            alertsWrapper.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // Démarrer le polling toutes les 30 secondes
+        fetchAIAlerts();
+        setInterval(fetchAIAlerts, 30000);
     });
 </script>
