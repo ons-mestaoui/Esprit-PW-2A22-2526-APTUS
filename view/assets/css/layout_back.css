@@ -56,6 +56,15 @@
   opacity: 0;
   width: 0;
 }
+.sidebar.collapsed .sidebar__header {
+  padding: var(--space-4) 0;
+  justify-content: center;
+}
+.sidebar.collapsed .sidebar__logo-icon {
+  width: 48px;
+  height: 48px;
+  margin-left: 0;
+}
 
 /* ── Sidebar Navigation ──────────────────────── */
 .sidebar__nav {
@@ -82,8 +91,8 @@
   cursor: pointer;
 }
 .sidebar-link i {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
 }
 .sidebar-link span {
@@ -93,6 +102,15 @@
 .sidebar.collapsed .sidebar-link span {
   opacity: 0;
   width: 0;
+}
+.sidebar.collapsed .sidebar-link {
+  justify-content: center;
+  padding: var(--space-3) 0;
+}
+.sidebar.collapsed .sidebar-link i {
+  width: 28px;
+  height: 28px;
+  margin-left: 0;
 }
 
 .sidebar-link:hover {
@@ -169,6 +187,15 @@
 .sidebar.collapsed .sidebar__logout span {
   opacity: 0;
   width: 0;
+}
+.sidebar.collapsed .sidebar__logout {
+  justify-content: center;
+  padding: var(--space-3) 0;
+}
+.sidebar.collapsed .sidebar__logout i {
+  width: 28px;
+  height: 28px;
+  margin-left: 0;
 }
 
 /* ── Top Header Bar ──────────────────────────── */

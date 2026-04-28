@@ -43,29 +43,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $query->fetch();
 
             if ($user && password_verify($password, $user['motDePasse'])) {
-                // Check if account is verified
-                if (isset($user['est_verifie']) && $user['est_verifie'] == 0) {
-                    $error = "Veuillez vérifier votre adresse email avant de vous connecter. Un lien d'activation vous a été envoyé.";
-                } else {
-                    $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
-                    $_SESSION['nom'] = $user['nom'];
-                    $_SESSION['prenom'] = $user['prenom'] ?? '';
+                // Connexion réussie : on simplifie et on connecte directement l'utilisateur
+                $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
+                $_SESSION['nom'] = $user['nom'];
+                $_SESSION['prenom'] = $user['prenom'] ?? '';
                 $_SESSION['role'] = $user['role'];
 
-                // Redirection basée sur le rôle (insensible à la casse par sécurité)
-                $role = strtolower($user['role']);
-                if ($role === 'admin') {
-                    header("Location: ../backoffice/dashboard.php");
-                } elseif ($role === 'candidat') {
-                    header("Location: jobs_feed.php");
-                } elseif ($role === 'entreprise') {
-                    header("Location: hr_posts.php");
-                } else {
-                    // Par défaut si rôle inconnu
-                    header("Location: landing.php");
-                }
+                // Redirection simple basée sur le rôle
+                $roleRoutes = [
+                    'admin' => '../backoffice/dashboard.php',
+                    'candidat' => 'jobs_feed.php',
+                    'entreprise' => 'hr_posts.php'
+                ];
+                $roleKey = strtolower($user['role']);
+                
+                header("Location: " . ($roleRoutes[$roleKey] ?? 'landing.php'));
                 exit();
-                } // End est_verifie check
             } else {
                 $error = "Email ou mot de passe incorrect.";
             }

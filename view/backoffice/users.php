@@ -6,17 +6,35 @@ $utilisateurC = new UtilisateurC();
 // Variables from URL or Form
 $action = isset($_GET['action']) ? $_GET['action'] : 'list';
 $id_edit = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$sort = isset($_GET['sort']) ? $_GET['sort'] : '';
+$order = isset($_GET['order']) && $_GET['order'] === 'desc' ? 'DESC' : 'ASC';
 $userToEdit = null;
 
 // Handle Delete (GET)
 if ($action === 'delete' && $id_edit > 0) {
-    $utilisateurC->deleteUtilisateur($id_edit);
-    header('Location: users.php');
-    exit();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    try {
+        $isDeletingSelf = (isset($_SESSION['id_utilisateur']) && $_SESSION['id_utilisateur'] == $id_edit);
+        
+        $utilisateurC->deleteUtilisateur($id_edit);
+        
+        if ($isDeletingSelf) {
+            session_destroy();
+            header('Location: ../frontoffice/login.php');
+            exit();
+        }
+        
+        header('Location: users.php');
+        exit();
+    } catch (Exception $e) {
+        $error = $e->getMessage();
+    }
 }
 
-$error = "";
-$success = "";
+if (!isset($error)) $error = "";
+if (!isset($success)) $success = "";
 
 // Handle Add / Update (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -96,10 +114,24 @@ if ($action === 'edit' && $id_edit > 0) {
 // On utilise un LEFT JOIN pour obtenir les informations des deux tables (utilisateur et profil)
 // même si l'entrée dans la table profil n'existe pas encore.
 try {
+    $order_sql = "ORDER BY u.id_utilisateur ASC"; // Default
+    if ($sort === 'role') {
+        $order_sql = "ORDER BY u.role $order, u.id_utilisateur DESC";
+    } elseif ($sort === 'nom') {
+        $order_sql = "ORDER BY u.nom $order, u.id_utilisateur DESC";
+    } elseif ($sort === 'id') {
+        $order_sql = "ORDER BY u.id_utilisateur $order";
+    } elseif ($sort === 'date') {
+        $order_sql = "ORDER BY p.dateCreation $order, u.id_utilisateur DESC";
+    } elseif ($sort === 'email') {
+        $order_sql = "ORDER BY u.email $order, u.id_utilisateur DESC";
+    }
+
     $db = config::getConnexion();
-    $usersListe = $db->query("SELECT u.*, p.linkedin, p.dateCreation, p.dateMiseAJour 
+    $usersListe = $db->query("SELECT u.*, p.linkedin, p.photo, p.dateCreation, p.dateMiseAJour 
                               FROM utilisateur u 
-                              LEFT JOIN profil p ON u.id_utilisateur = p.id_utilisateur")->fetchAll();
+                              LEFT JOIN profil p ON u.id_utilisateur = p.id_utilisateur 
+                              $order_sql")->fetchAll();
 } catch (Exception $e) {
     $usersListe = $utilisateurC->listerUtilisateurs(); // Fallback
 }
@@ -117,8 +149,41 @@ if (!isset($content)) {
       <h1>Utilisateurs</h1>
       <p>Gérez les comptes candidats, entreprises et administrateurs</p>
     </div>
-    <div class="flex gap-3">
+    <div class="flex gap-3" style="align-items: center;">
       <?php if ($action !== 'add' && $action !== 'edit'): ?>
+      <div class="search-box" style="position: relative;">
+          <input type="text" id="userSearchInput" class="input" placeholder="Rechercher un utilisateur..." style="padding-left: 36px; border-radius: 8px; width: 250px;">
+          <i data-lucide="search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-secondary);"></i>
+      </div>
+      <div class="filter-box">
+          <select id="roleFilterInput" class="select" style="border-radius: 8px; height: 100%;">
+              <option value="">Tous les rôles</option>
+              <option value="Admin">Admin</option>
+              <option value="Entreprise">Entreprise</option>
+              <option value="Candidat">Candidat</option>
+          </select>
+      </div>
+      <div class="sort-box">
+          <select onchange="if(this.value){ window.location.href='?'+this.value; } else { window.location.href='users.php'; }" class="select" style="border-radius: 8px; height: 100%;">
+              <option value="">Trier par défaut</option>
+              <optgroup label="Par date d'inscription">
+                <option value="sort=id&order=desc" <?php echo ($sort === 'id' && $order === 'DESC') ? 'selected' : ''; ?>>Plus récents</option>
+                <option value="sort=id&order=asc" <?php echo ($sort === 'id' && $order === 'ASC') ? 'selected' : ''; ?>>Plus anciens</option>
+              </optgroup>
+              <optgroup label="Par nom">
+                <option value="sort=nom&order=asc" <?php echo ($sort === 'nom' && $order === 'ASC') ? 'selected' : ''; ?>>Nom (A-Z)</option>
+                <option value="sort=nom&order=desc" <?php echo ($sort === 'nom' && $order === 'DESC') ? 'selected' : ''; ?>>Nom (Z-A)</option>
+              </optgroup>
+              <optgroup label="Par email">
+                <option value="sort=email&order=asc" <?php echo ($sort === 'email' && $order === 'ASC') ? 'selected' : ''; ?>>Email (A-Z)</option>
+                <option value="sort=email&order=desc" <?php echo ($sort === 'email' && $order === 'DESC') ? 'selected' : ''; ?>>Email (Z-A)</option>
+              </optgroup>
+              <optgroup label="Par rôle">
+                <option value="sort=role&order=desc" <?php echo ($sort === 'role' && $order === 'DESC') ? 'selected' : ''; ?>>Rôle (A-Z)</option>
+                <option value="sort=role&order=asc" <?php echo ($sort === 'role' && $order === 'ASC') ? 'selected' : ''; ?>>Rôle (Z-A)</option>
+              </optgroup>
+          </select>
+      </div>
       <a href="users.php?action=add" class="btn btn-primary" id="add-user-btn">
         <i data-lucide="user-plus" style="width:18px;height:18px;"></i>
         Ajouter
@@ -202,6 +267,11 @@ if (!isset($content)) {
 </div>
 <?php else: ?>
 <!-- ═══ Users Table ═══ -->
+<?php if (!empty($error)): ?>
+    <div class="alert alert-danger" style="color:red; margin-bottom:15px; padding:10px; border:1px solid red; background:#ffeaea; border-radius:5px;">
+        <?php echo htmlspecialchars($error); ?>
+    </div>
+<?php endif; ?>
 <div class="card-flat" style="overflow:hidden;">
   <table class="data-table">
     <thead>
@@ -209,7 +279,12 @@ if (!isset($content)) {
         <th>ID</th>
         <th>Utilisateur</th>
         <th>Email</th>
-        <th>Rôle</th>
+        <th>
+            <a href="?sort=role&order=<?php echo $sort === 'role' && $order === 'ASC' ? 'desc' : 'asc'; ?>" style="color:inherit; text-decoration:none; display:flex; align-items:center; gap:4px;" title="Trier par rôle">
+                Rôle 
+                <i data-lucide="arrow-up-down" style="width:14px;height:14px;"></i>
+            </a>
+        </th>
         <th>Téléphone / LinkedIn</th>
         <th>Création / Maj</th>
         <th>Actions</th>
@@ -222,9 +297,15 @@ if (!isset($content)) {
             <td class="text-secondary">#<?php echo htmlspecialchars($u['id_utilisateur']); ?></td>
             <td>
               <div class="flex items-center gap-3">
-                <div class="avatar avatar-sm avatar-initials" style="width:32px;height:32px;font-size:11px;">
-                    <?php echo htmlspecialchars(substr($u['prenom'], 0, 1) . substr($u['nom'], 0, 1)); ?>
-                </div>
+                <?php if (!empty($u['photo'])): ?>
+                    <div class="avatar avatar-sm" style="width:32px;height:32px;border-radius:50%;overflow:hidden;">
+                        <img src="<?php echo htmlspecialchars($u['photo']); ?>" alt="Photo" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                <?php else: ?>
+                    <div class="avatar avatar-sm avatar-initials" style="width:32px;height:32px;font-size:11px;">
+                        <?php echo htmlspecialchars(substr($u['prenom'], 0, 1) . substr($u['nom'], 0, 1)); ?>
+                    </div>
+                <?php endif; ?>
                 <span class="fw-medium"><?php echo htmlspecialchars($u['nom'] . ' ' . $u['prenom']); ?></span>
               </div>
             </td>
@@ -292,7 +373,7 @@ if (!isset($content)) {
     
     <div style="display:flex; gap:16px; width:100%;">
       <button type="button" onclick="document.getElementById('generalDeleteModal').style.display='none';" style="flex:1; padding:12px; border-radius:8px; border:1px solid var(--border-color, #e2e8f0); background:transparent; font-weight:600; color:var(--text-primary, #1e293b); cursor:pointer; font-size:15px; transition:all 0.2s;">Annuler</button>
-      <a id="deleteModalConfirmBtn" href="#" style="flex:1; padding:12px; border-radius:8px; border:none; background:#ef4444; font-weight:600; color:#ffffff; cursor:pointer; font-size:15px; transition:all 0.2s; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Oui, Supprimer</a>
+      <button type="button" id="deleteModalConfirmBtn" style="flex:1; padding:12px; border-radius:8px; border:none; background:#ef4444; font-weight:600; color:#ffffff; cursor:pointer; font-size:15px; transition:all 0.2s; display:inline-flex; align-items:center; justify-content:center;">Oui, Supprimer</button>
     </div>
   </div>
 </div>
@@ -300,8 +381,75 @@ if (!isset($content)) {
 <script>
 function confirmDelete(url, itemName) {
     document.getElementById('deleteModalText').innerText = "Êtes-vous sûr de vouloir supprimer " + itemName + " ? Cette action est irréversible.";
-    document.getElementById('deleteModalConfirmBtn').href = url;
+    document.getElementById('deleteModalConfirmBtn').onclick = function() {
+        window.location.href = url;
+    };
     document.getElementById('generalDeleteModal').style.display = 'flex';
     return false; // prevent default link behavior
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('userSearchInput');
+    const roleFilterInput = document.getElementById('roleFilterInput');
+
+    // Get current sort mode from PHP
+    const currentSort = "<?php echo htmlspecialchars($sort); ?>";
+
+    function filterTable() {
+        const searchText = searchInput ? searchInput.value.toLowerCase() : '';
+        const roleFilter = roleFilterInput ? roleFilterInput.value.toLowerCase() : '';
+        const tableRows = document.querySelectorAll('.data-table tbody tr');
+        
+        tableRows.forEach(row => {
+            // Ignore empty state row
+            if (row.cells.length === 1) return;
+            
+            // Extract and clean up text for accurate matching
+            const idText = row.querySelector('td:nth-child(1)') ? row.querySelector('td:nth-child(1)').textContent.replace('#', '').trim().toLowerCase() : '';
+            
+            // For the name, extract specifically from the span to ignore the avatar initials
+            const userNameSpan = row.querySelector('td:nth-child(2) span.fw-medium');
+            const userNameText = userNameSpan ? userNameSpan.textContent.trim().toLowerCase() : '';
+            
+            const userEmailText = row.querySelector('td:nth-child(3)') ? row.querySelector('td:nth-child(3)').textContent.trim().toLowerCase() : '';
+            const roleCellText = row.querySelector('td:nth-child(4)') ? row.querySelector('td:nth-child(4)').textContent.trim().toLowerCase() : '';
+            
+            // For date, extract just the creation date string part
+            const dateSpan = row.querySelector('td:nth-child(6) span:first-child');
+            const dateText = dateSpan ? dateSpan.textContent.replace('Créé:', '').replace('créé:', '').trim().toLowerCase() : '';
+            
+            let matchesSearch = false;
+            
+            if (searchText === '') {
+                matchesSearch = true;
+            } else if (currentSort === 'email') {
+                matchesSearch = userEmailText.startsWith(searchText);
+            } else if (currentSort === 'nom') {
+                matchesSearch = userNameText.startsWith(searchText);
+            } else if (currentSort === 'id') {
+                matchesSearch = idText.startsWith(searchText);
+            } else if (currentSort === 'date') {
+                matchesSearch = dateText.startsWith(searchText);
+            } else {
+                // Default fallback (or if sort is 'role')
+                matchesSearch = userNameText.startsWith(searchText) || userEmailText.startsWith(searchText);
+            }
+            
+            const matchesRole = roleFilter === '' || roleCellText.includes(roleFilter);
+            
+            if (matchesSearch && matchesRole) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('keyup', filterTable);
+    }
+    if (roleFilterInput) {
+        roleFilterInput.addEventListener('change', filterTable);
+    }
+});
 </script>

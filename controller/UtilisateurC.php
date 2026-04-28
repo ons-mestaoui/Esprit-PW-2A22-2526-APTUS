@@ -75,7 +75,24 @@ class UtilisateurC {
     public function deleteUtilisateur($id) {
         $db = config::getConnexion();
         try {
-            // Supprimer d'abord les entrées dépendantes pour éviter les erreurs de contrainte de clé étrangère
+            // D'abord, gérer les dépendances profondes pour éviter les erreurs de clés étrangères
+            // 1. Candidat
+            $db->prepare("DELETE FROM candidatures WHERE id_candidat = :id")->execute(['id' => $id]);
+            $db->prepare("DELETE FROM cv WHERE id_candidat = :id")->execute(['id' => $id]);
+            $db->prepare("DELETE FROM inscription WHERE id_candidat = :id")->execute(['id' => $id]);
+            
+            // 2. Entreprise
+            // Supprimer d'abord les candidatures liées aux offres de l'entreprise
+            $db->prepare("DELETE FROM candidatures WHERE id_offre IN (SELECT id_offre FROM offreemploi WHERE id_entreprise = :id)")->execute(['id' => $id]);
+            $db->prepare("DELETE FROM offreemploi WHERE id_entreprise = :id")->execute(['id' => $id]);
+
+            // 3. Admin
+            $db->prepare("DELETE FROM rapport_marche WHERE id_admin = :id")->execute(['id' => $id]);
+
+            // 4. Formation (détacher le tuteur plutôt que de supprimer la formation)
+            $db->prepare("UPDATE formation SET id_tuteur = NULL WHERE id_tuteur = :id")->execute(['id' => $id]);
+
+            // Supprimer ensuite les entrées directement liées à l'utilisateur
             $db->prepare("DELETE FROM profil WHERE id_utilisateur = :id")->execute(['id' => $id]);
             $db->prepare("DELETE FROM candidat WHERE id_candidat = :id")->execute(['id' => $id]);
             $db->prepare("DELETE FROM entreprise WHERE id_entreprise = :id")->execute(['id' => $id]);
@@ -87,7 +104,7 @@ class UtilisateurC {
                 'id' => $id
             ]);
         } catch (Exception $e) {
-            die('Erreur: ' . $e->getMessage());
+            throw new Exception('Erreur lors de la suppression : ' . $e->getMessage());
         }
     }
 

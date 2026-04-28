@@ -131,11 +131,7 @@ if ($userId) {
         <i data-lucide="menu"></i>
       </button>
 
-      <!-- Search -->
-      <div class="back-topbar__search">
-        <i data-lucide="search" style="width:18px;height:18px;"></i>
-        <input type="text" class="input" id="admin-search" placeholder="Rechercher des candidats, entreprises, formations...">
-      </div>
+      <!-- Search (Removed) -->
 
       <!-- Actions -->
       <div class="back-topbar__actions">
