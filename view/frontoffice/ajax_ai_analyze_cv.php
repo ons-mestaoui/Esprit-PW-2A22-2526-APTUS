@@ -2,6 +2,7 @@
 header('Content-Type: application/json');
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
+set_time_limit(300); // Prevent PHP from timing out before cURL does
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'Method Not Allowed']);

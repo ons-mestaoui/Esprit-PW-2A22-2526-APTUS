@@ -96,4 +96,39 @@ class CVC
         $query = $db->prepare('DELETE FROM cv WHERE id_cv = :id');
         $query->execute(['id' => $id]);
     }
+
+    public function getTotalCVs()
+    {
+        $db = config::getConnexion();
+        try {
+            $query = $db->query('SELECT COUNT(*) as total FROM cv');
+            $result = $query->fetch();
+            return $result['total'];
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getCVGrowth()
+    {
+        $db = config::getConnexion();
+        try {
+            $currMonth = $db->query('SELECT COUNT(*) FROM cv WHERE MONTH(dateCreation) = MONTH(CURRENT_DATE()) AND YEAR(dateCreation) = YEAR(CURRENT_DATE())')->fetchColumn();
+            $lastMonth = $db->query('SELECT COUNT(*) FROM cv WHERE dateCreation >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 MONTH) AND dateCreation < DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH)')->fetchColumn();
+            return ['current' => $currMonth, 'last' => $lastMonth];
+        } catch (Exception $e) {
+            return ['current' => 0, 'last' => 0];
+        }
+    }
+
+    public function getRecentCVAdditionsCount()
+    {
+        $db = config::getConnexion();
+        try {
+            $query = $db->query('SELECT COUNT(*) FROM cv WHERE dateCreation >= DATE_SUB(NOW(), INTERVAL 7 DAY)');
+            return $query->fetchColumn();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
 }

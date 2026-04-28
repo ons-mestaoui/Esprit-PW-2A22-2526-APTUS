@@ -1427,16 +1427,30 @@ async function startAIAudit() {
     document.getElementById('ai-audit-prompt').style.display = 'none';
     document.getElementById('ai-audit-scanner').style.display = 'block';
     
-    // Fake progress text
+    // Fake progress text (Looping for longer generation)
     const progText = document.getElementById('audit-status-text');
     const progBar = document.getElementById('audit-progress');
-    const steps = ['Lecture du contenu du CV...', 'Analyse du score ATS...', 'Vérification des mots-clés...', 'Compilation du rapport final...'];
+    const steps = [
+        "Lecture du contenu du CV...", 
+        "Analyse du score ATS...", 
+        "Vérification des mots-clés...", 
+        "L'IA (Llama 3.2 Rapide) réfléchit intensément...",
+        "Génération des recommandations détaillées...",
+        "Veuillez patienter (génération ultra-rapide en cours)..."
+    ];
     let stepIndex = 0;
     const interval = setInterval(() => {
         stepIndex++;
-        if(stepIndex < steps.length) progText.textContent = steps[stepIndex];
-        progBar.style.width = (20 + (stepIndex * 20)) + '%';
-    }, 2000);
+        if (stepIndex >= steps.length) {
+            stepIndex = 3; // Loop back to 'L'IA réfléchit'
+        }
+        progText.textContent = steps[stepIndex];
+        // Pseudo-progress bar that slows down but never quite stops until done
+        const currentWidth = parseFloat(progBar.style.width || 0);
+        if (currentWidth < 95) {
+            progBar.style.width = (currentWidth + (95 - currentWidth) * 0.1) + '%';
+        }
+    }, 3000);
 
     // Build massive string
     const cvTextData = `

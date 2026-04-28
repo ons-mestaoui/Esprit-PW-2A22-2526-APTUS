@@ -5,8 +5,10 @@ $pageCSS = "cv.css";
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../model/Template.php';
 require_once __DIR__ . '/../../controller/TemplateC.php';
+require_once __DIR__ . '/../../controller/CVC.php';
 
 $tc = new TemplateC();
+$cvc = new CVC();
 
 // --- CRUD Actions ---
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
@@ -17,6 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
 
 $dbTemplates = $tc->listeTemplates();
 $totalTemplates = count($dbTemplates);
+
+// --- Stats Aggregation ---
+$newTemplatesMonth = $tc->getNewTemplatesThisMonth();
+$usageStats = $tc->getTemplateUsageStats();
+$typeUsageStats = $tc->getTemplateUsageByType(); // New: Usage by Free vs Premium
+$mostUsedTemplate = !empty($usageStats) ? $usageStats[0] : ['nom' => 'Aucun', 'usage_count' => 0];
+
+$totalCVs = $cvc->getTotalCVs();
+$growth = $cvc->getCVGrowth();
+$cvTrend = $growth['last'] > 0 ? round((($growth['current'] - $growth['last']) / $growth['last']) * 100) : 0;
+$recentAdditions = $cvc->getRecentCVAdditionsCount();
 
 if (!isset($content)) {
     $content = __FILE__;
@@ -39,59 +52,97 @@ if (!isset($content)) {
   </div>
 </div>
 
-<!-- ═══ Layout Restructuration: Stats & Chart Top, Table Full Below ═══ -->
-<div class="grid gap-6 mb-8" style="grid-template-columns: repeat(12, 1fr);">
-  <!-- Stats Section (Left 8 columns) -->
-  <div style="grid-column: span 8;">
-      <div class="grid grid-2 gap-6 stagger h-full">
-          <div class="stat-card animate-on-scroll">
-            <div>
-              <div class="stat-card__label">Total Templates</div>
-              <div class="stat-card__value"><?php echo $totalTemplates; ?></div>
-              <div class="stat-card__trend up">
-                <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +3 ce mois
-              </div>
-            </div>
-            <div class="stat-card__icon purple"><i data-lucide="layout-template" style="width:22px;height:22px;"></i></div>
-          </div>
-          <div class="stat-card animate-on-scroll">
-            <div>
-              <div class="stat-card__label">Plus utilisé</div>
-              <div class="stat-card__value" style="font-size:var(--fs-md);">Tech Stack</div>
-              <div class="stat-card__trend up">
-                <i data-lucide="trending-up" style="width:14px;height:14px;"></i> 1,240 utilisations
-              </div>
-            </div>
-            <div class="stat-card__icon teal"><i data-lucide="star" style="width:22px;height:22px;"></i></div>
-          </div>
-          <div class="stat-card animate-on-scroll">
-            <div>
-              <div class="stat-card__label">CVs générés</div>
-              <div class="stat-card__value">8,432</div>
-              <div class="stat-card__trend up">
-                <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +18% ce mois
-              </div>
-            </div>
-            <div class="stat-card__icon blue"><i data-lucide="file-check" style="width:22px;height:22px;"></i></div>
-          </div>
-          <div class="stat-card animate-on-scroll">
-            <div>
-              <div class="stat-card__label">Ajouts récents</div>
-              <div class="stat-card__value">3</div>
-              <div class="stat-card__trend">
-                <span class="text-tertiary">Cette semaine</span>
-              </div>
-            </div>
-            <div class="stat-card__icon orange"><i data-lucide="clock" style="width:22px;height:22px;"></i></div>
-          </div>
+<!-- ═══ Layout Restructuration: Stats Full Width Row ═══ -->
+<div class="grid grid-4 gap-6 mb-8 stagger">
+    <div class="stat-card animate-on-scroll">
+      <div>
+        <div class="stat-card__label">Total Templates</div>
+        <div class="stat-card__value"><?php echo $totalTemplates; ?></div>
+        <div class="stat-card__trend up">
+          <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +<?php echo $newTemplatesMonth; ?> ce mois
+        </div>
       </div>
-  </div>
+      <div class="stat-card__icon purple"><i data-lucide="layout-template" style="width:22px;height:22px;"></i></div>
+    </div>
+    
+    <div class="stat-card animate-on-scroll">
+      <div>
+        <div class="stat-card__label">Plus utilisé</div>
+        <div class="stat-card__value" style="font-size:1.4rem;"><?php echo htmlspecialchars($mostUsedTemplate['nom']); ?></div>
+        <div class="stat-card__trend up">
+          <i data-lucide="trending-up" style="width:14px;height:14px;"></i> <?php echo number_format($mostUsedTemplate['usage_count']); ?> utilisations
+        </div>
+      </div>
+      <div class="stat-card__icon teal"><i data-lucide="star" style="width:22px;height:22px;"></i></div>
+    </div>
+    
+    <div class="stat-card animate-on-scroll">
+      <div>
+        <div class="stat-card__label">CVs générés</div>
+        <div class="stat-card__value"><?php echo number_format($totalCVs); ?></div>
+        <div class="stat-card__trend <?php echo $cvTrend >= 0 ? 'up' : 'down'; ?>">
+          <i data-lucide="<?php echo $cvTrend >= 0 ? 'trending-up' : 'trending-down'; ?>" style="width:14px;height:14px;"></i> 
+          <?php echo ($cvTrend >= 0 ? '+' : '') . $cvTrend; ?>% ce mois
+        </div>
+      </div>
+      <div class="stat-card__icon blue"><i data-lucide="file-check" style="width:22px;height:22px;"></i></div>
+    </div>
+    
+    <div class="stat-card animate-on-scroll">
+      <div>
+        <div class="stat-card__label">Ajouts récents</div>
+        <div class="stat-card__value"><?php echo $recentAdditions; ?></div>
+        <div class="stat-card__trend">
+          <span class="text-tertiary">Ces 7 derniers jours</span>
+        </div>
+      </div>
+      <div class="stat-card__icon orange"><i data-lucide="clock" style="width:22px;height:22px;"></i></div>
+    </div>
+</div>
 
-  <!-- Chart Section (Right 4 columns) -->
-  <div class="card" style="grid-column: span 4; height: 100%;">
-    <h4 class="text-sm fw-semibold mb-6">Top Templates utilisés</h4>
-    <div id="template-usage-chart" style="min-height: 200px;"></div>
-  </div>
+<!-- ═══ Charts Row: Dual Perspective ═══ -->
+<div class="grid gap-6 mb-8" style="grid-template-columns: repeat(12, 1fr);">
+    <!-- Bar Chart (Top Usage) -->
+    <div class="card animate-on-scroll" style="grid-column: span 8;">
+        <div class="flex items-center justify-between mb-6">
+            <h4 class="text-sm fw-semibold">Popularité des Templates</h4>
+            <div class="text-xs text-secondary">Basé sur le volume de création</div>
+        </div>
+        <div id="template-usage-chart" style="min-height: 250px; width: 100%;"></div>
+    </div>
+
+    <!-- Donut Chart (Free vs Premium) -->
+    <div class="card animate-on-scroll" style="grid-column: span 4;">
+        <h4 class="text-sm fw-semibold mb-6">Répartition par Type</h4>
+        <div class="flex items-center" style="min-height: 200px;">
+            <div id="template-type-usage-donut" style="width: 150px; height: 150px;"></div>
+            <div class="flex-1 ml-8 flex flex-col gap-6">
+                <?php 
+                $totalUsage = array_sum(array_column($typeUsageStats, 'usage_count'));
+                // Sort to ensure Gratuit is first
+                usort($typeUsageStats, function($a, $b) { return $a['estPremium'] - $b['estPremium']; });
+                
+                foreach ($typeUsageStats as $stat): 
+                    $pct = $totalUsage > 0 ? round(($stat['usage_count'] / $totalUsage) * 100) : 0;
+                    $label = $stat['estPremium'] ? 'Premium' : 'Gratuit';
+                    $color = $stat['estPremium'] ? 'var(--accent-primary)' : 'var(--accent-secondary)';
+                ?>
+                <div class="flex flex-col">
+                    <div class="flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <span style="width:12px;height:12px;border-radius:4px;background:<?php echo $color; ?>;"></span>
+                            <span class="text-sm fw-semibold text-high-contrast"><?php echo $label; ?></span>
+                        </span>
+                        <span class="text-xs text-secondary fw-medium"><?php echo $stat['usage_count']; ?> CVs</span>
+                    </div>
+                    <div class="text-lg fw-bold mt-1" style="color: <?php echo $color; ?>; padding-left: 20px;">
+                        <?php echo $pct; ?>%
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ═══ Table Section Full Width ═══ -->
@@ -225,13 +276,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Chart initialization
   if (typeof AptusCharts !== 'undefined') {
-      AptusCharts.bar('template-usage-chart', [
-        { label: 'Tech Stack', value: 1240 },
-        { label: 'Exec Pro', value: 980 },
-        { label: 'Créatif', value: 856 },
-        { label: 'Modern', value: 723 },
-        { label: 'Data', value: 654 },
-      ], { barColor: 'var(--chart-1)', height: 220 });
+      const usageData = <?php echo json_encode(array_map(function($s) { 
+          return ['label' => $s['nom'], 'value' => (int)$s['usage_count']]; 
+      }, $usageStats)); ?>;
+      
+      AptusCharts.bar('template-usage-chart', usageData, { barColor: 'var(--chart-1)', height: 220 });
+  }
+
+  // Donut Chart: Free vs Premium
+  if (typeof AptusCharts !== 'undefined') {
+      const typeData = <?php 
+          // Re-sort for the chart to match legend order
+          usort($typeUsageStats, function($a, $b) { return $a['estPremium'] - $b['estPremium']; });
+          echo json_encode(array_map(function($s) { 
+              return [
+                  'label' => $s['estPremium'] ? 'Premium' : 'Gratuit', 
+                  'value' => (int)$s['usage_count'],
+                  'color' => $s['estPremium'] ? 'var(--accent-primary)' : 'var(--accent-secondary)'
+              ]; 
+          }, $typeUsageStats)); 
+      ?>;
+      
+      AptusCharts.donut('template-type-usage-donut', typeData, {
+          size: 160,
+          strokeWidth: 25,
+          centerValue: '<?php echo number_format($totalCVs); ?>',
+          centerLabel: 'CVs'
+      });
   }
 });
 
@@ -244,4 +315,20 @@ async function deleteTemplate(id, name) {
         window.location.href = `cv_templates_admin.php?action=delete&id=${id}`;
     }
 }
+
+// --- Live Search ---
+document.getElementById('admin-template-search')?.addEventListener('input', function(e) {
+    const term = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('.data-table tbody tr');
+    let found = 0;
+    
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const matches = text.includes(term);
+        row.style.display = matches ? '' : 'none';
+        if(matches) found++;
+    });
+    
+    // Optional: show "No results" row if found === 0
+});
 </script>

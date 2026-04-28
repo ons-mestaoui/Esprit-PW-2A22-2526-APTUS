@@ -3,8 +3,8 @@
 class AIController {
     
     private string $ollamaEndpoint = 'http://127.0.0.1:11434/api/generate';
-    // Le modèle de polish est changé pour llama3.2:3b comme demandé
-    private string $model = 'llama3.2:3b';
+    // Le modèle de polish est changé pour llama3.1:8b comme demandé
+    private string $model = 'llama3.1:8b';
 
     public function polishText(string $text, string $context): string {
         if (empty(trim($text))) {
@@ -73,21 +73,26 @@ class AIController {
             return json_encode(['error' => 'Texte du CV vide.']);
         }
 
-        $prompt = "Tu es un auditeur ATS impitoyable et un expert en recrutement. Fais une analyse EXTRÊMEMENT DÉTAILLÉE du CV suivant. " .
-                  "Traque particulièrement les erreurs de logique (ex: la même langue répétée avec des niveaux différents), les manques de précision, et l'absence de résultats chiffrés. " .
+        $prompt = "Tu es un auditeur ATS impitoyable et un expert en recrutement. Fais une analyse EXTRÊMEMENT DÉTAILLÉE mais TRÈS CONCISE du CV suivant. " .
+                  "Traque particulièrement les erreurs de logique (ex: langue répétée), les manques de précision, et l'absence de résultats chiffrés. " .
+                  "Règle absolue : Sois TRÈS CONCIS. Chaque argument ou critique doit faire MAXIMUM 15 mots. " .
                   "Tu DOIS retourner EXCLUSIVEMENT un objet JSON valide (sans aucun texte avant ou après), et il doit respecter ce schéma exact : " .
                   "{" .
                   "\"score_ats\": 85, " .
-                  "\"points_forts\": [\"Argument détaillé 1\", \"Argument détaillé 2\", \"Argument détaillé 3\"], " .
-                  "\"points_faibles\": [\"Critique détaillée 1 expliquant comment corriger\", \"Critique détaillée 2 signalant une erreur de logique\", \"Critique détaillée 3\", \"Critique détaillée 4\"]" .
-                  "}. Le score_ats est un entier entre 0 et 100. Trouve au moins 4 points faibles très spécifiques. " .
+                  "\"points_forts\": [\"Argument court 1\", \"Argument court 2\"], " .
+                  "\"points_faibles\": [\"Critique courte 1\", \"Critique courte 2\", \"Critique courte 3\"]" .
+                  "}. Le score_ats est un entier entre 0 et 100. Trouve au moins 3 points faibles très spécifiques. " .
                   "Voici le CV à auditer :\n\n" . $cvText;
 
         $payload = json_encode([
-            "model" => "mistral", // L'analyse d'audit utilise explicitement le modèle plus puissant "mistral"
+            "model" => "llama3.2:3b", // Modèle le plus léger et rapide disponible
             "prompt" => $prompt,
             "stream" => false,
-            "format" => "json"
+            "format" => "json",
+            "options" => [
+                "num_predict" => 350,
+                "temperature" => 0.3
+            ]
         ]);
 
         $ch = curl_init($this->ollamaEndpoint);

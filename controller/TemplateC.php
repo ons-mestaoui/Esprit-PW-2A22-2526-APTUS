@@ -163,4 +163,66 @@ class TemplateC
             return 0;
         }
     }
+
+    public function getTemplateUsageStats()
+    {
+        $db = config::getConnexion();
+        try {
+            $query = $db->query('
+                SELECT t.nom, COUNT(c.id_cv) as usage_count 
+                FROM templates t 
+                LEFT JOIN cv c ON t.id_template = c.id_template 
+                GROUP BY t.id_template, t.nom 
+                ORDER BY usage_count DESC 
+                LIMIT 5
+            ');
+            return $query->fetchAll();
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    public function getNewTemplatesThisMonth()
+    {
+        $db = config::getConnexion();
+        try {
+            $query = $db->query('SELECT COUNT(*) as total FROM templates WHERE MONTH(dateCreation) = MONTH(CURRENT_DATE()) AND YEAR(dateCreation) = YEAR(CURRENT_DATE())');
+            $result = $query->fetch();
+            return $result['total'];
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getTemplateTypeStats()
+    {
+        $db = config::getConnexion();
+        try {
+            $query = $db->query('SELECT estPremium, COUNT(*) as count FROM templates GROUP BY estPremium');
+            return $query->fetchAll();
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    public function getTemplateUsageByType()
+    {
+        $db = config::getConnexion();
+        try {
+            // Utiliser une sous-requête pour garantir un groupement propre des types
+            $query = $db->query('
+                SELECT usage_type as estPremium, COUNT(*) as usage_count
+                FROM (
+                    SELECT IFNULL(t.estPremium, 0) as usage_type
+                    FROM cv c
+                    LEFT JOIN templates t ON c.id_template = t.id_template
+                ) as sub
+                GROUP BY usage_type
+                ORDER BY usage_type ASC
+            ');
+            return $query->fetchAll();
+        } catch (Exception $e) {
+            return [];
+        }
+    }
 }
