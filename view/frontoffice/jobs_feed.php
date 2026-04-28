@@ -1,4 +1,4 @@
-﻿<?php 
+<?php 
 $pageTitle = "Browse Jobs"; 
 $pageCSS = "feeds.css"; 
 
@@ -99,128 +99,308 @@ if (!isset($content)) {
   <p class="page-header__subtitle">Trouvez l'offre qui correspond à votre profil</p>
 </div>
 
-<!-- ═══ FILTER BAR ═══ -->
-<div class="job-filter-bar mb-6" id="job-filters" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-  <!-- Group 1: Search -->
-  <div class="input-icon-wrapper search-input" style="flex:1; min-width: 300px; position: relative; display: flex; align-items: center;">
-    <i data-lucide="search" style="width:16px;height:16px;"></i>
-    <input type="text" class="input" id="job-search" name="q" autocomplete="off" placeholder="Mot-clé, poste..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" style="flex: 1;">
-    <div id="job-search-spinner" style="position: absolute; right: 1rem; display: none;">
-      <div class="spinner-border" style="width: 18px; height: 18px; border: 2px solid rgba(168, 100, 228, 0.2); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+<!-- Banner Maps (Coming soon) -->
+<div class="promo-banner">
+  <div style="display: flex; gap: 1rem; align-items: center;">
+    <div style="color: #0ea5e9;">
+      <i data-lucide="map-pin" style="width: 24px; height: 24px;"></i>
+    </div>
+    <div>
+      <h3 class="promo-banner__title">Découvrez les Offres Proches de Chez Vous</h3>
+      <p class="promo-banner__desc">Ne cherchez plus au hasard. Affichez les opportunités à proximité de votre domicile pour faciliter votre quotidien.</p>
     </div>
   </div>
-  <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-
-  <!-- Group 2: Location & Mode -->
-  <div class="input-icon-wrapper" style="width: 180px;">
-    <i data-lucide="map-pin" style="width:16px;height:16px;"></i>
-    <input type="text" class="input" id="job-location" placeholder="Localisation...">
-  </div>
-
-  <div class="mode-toggle" id="mode-toggle" style="flex-shrink: 0;">
-    <button class="mode-toggle__option active" data-mode="all">Tout</button>
-    <button class="mode-toggle__option" data-mode="remote">À distance</button>
-    <button class="mode-toggle__option" data-mode="onsite">Sur site</button>
-    <button class="mode-toggle__option" data-mode="hybrid">Hybride</button>
-  </div>
-
-  <!-- Group 3: Sorting Options -->
-  <form method="GET" action="jobs_feed.php" style="display:flex; gap: 0.5rem; flex-shrink: 0;">
-    <select class="select" id="job-sort-date" name="sort_date" style="width: 140px;" onchange="this.form.submit()">
-      <option value="">Date de pub.</option>
-      <option value="DESC" <?php echo (isset($_GET['sort_date']) && $_GET['sort_date'] === 'DESC') ? 'selected' : ''; ?>>Plus récent ↓</option>
-      <option value="ASC" <?php echo (isset($_GET['sort_date']) && $_GET['sort_date'] === 'ASC') ? 'selected' : ''; ?>>Plus ancien ↑</option>
-    </select>
-    
-    <select class="select" id="job-sort-salary" name="sort_salaire" style="width: 140px;" onchange="this.form.submit()">
-      <option value="">Salaire</option>
-      <option value="ASC" <?php echo (isset($_GET['sort_salaire']) && $_GET['sort_salaire'] === 'ASC') ? 'selected' : ''; ?>>Croissant ↑</option>
-      <option value="DESC" <?php echo (isset($_GET['sort_salaire']) && $_GET['sort_salaire'] === 'DESC') ? 'selected' : ''; ?>>Décroissant ↓</option>
-    </select>
-  </form>
+  <button type="button" style="background: linear-gradient(90deg, #0ea5e9 0%, #9333ea 100%); color: white; border: none; border-radius: 6px; padding: 0.6rem 1.25rem; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; white-space: nowrap; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.25);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(147, 51, 234, 0.35)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(147, 51, 234, 0.25)';">
+    Afficher Maps <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+  </button>
 </div>
 
-<!-- Results Info -->
-<div class="results-info mb-4">
-  <strong><?php echo $count; ?></strong> results found
-</div>
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
-<!-- ═══ JOB CARDS GRID ═══ -->
-<div class="job-cards-grid stagger" id="jobs-container">
-  <?php foreach ($listeOffres as $offreItem): ?>
-    <div class="job-card animate-on-scroll" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-      <?php if (!empty($offreItem['img_post'])): ?>
-        <div style="height: 160px; background-image: url('<?php echo htmlspecialchars($offreItem['img_post']); ?>'); background-size: cover; background-position: center; border-bottom: 1px solid var(--border-color);"></div>
-      <?php else: ?>
-        <div style="height: 6px; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));"></div>
+<div class="hr-layout" style="grid-template-columns: 260px 1fr;">
+  <!-- ═══ SIDEBAR (Gauche) ═══ -->
+  <aside class="hr-sidebar">
+
+    <!-- Filter: Type de poste -->
+    <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+      <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">TYPE DE POSTE</h4>
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <label class="filter-type-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: var(--accent-primary); font-weight: 600; transition: all 0.2s;" onclick="handleSidebarFilter(this, 'type')">
+              <input type="radio" name="filter_type" value="all" checked style="position:absolute; opacity:0; width:0; height:0;">
+              Tout
+          </label>
+          <label class="filter-type-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: var(--text-secondary); font-weight: 500; transition: all 0.2s;" onclick="handleSidebarFilter(this, 'type')">
+              <input type="radio" name="filter_type" value="À distance" style="position:absolute; opacity:0; width:0; height:0;">
+              À distance
+          </label>
+          <label class="filter-type-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: var(--text-secondary); font-weight: 500; transition: all 0.2s;" onclick="handleSidebarFilter(this, 'type')">
+              <input type="radio" name="filter_type" value="Sur site" style="position:absolute; opacity:0; width:0; height:0;">
+              Sur site
+          </label>
+          <label class="filter-type-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: var(--text-secondary); font-weight: 500; transition: all 0.2s;" onclick="handleSidebarFilter(this, 'type')">
+              <input type="radio" name="filter_type" value="Hybride" style="position:absolute; opacity:0; width:0; height:0;">
+              Hybride
+          </label>
+      </div>
+    </div>
+
+    <!-- Date de publication -->
+    <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+      <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">DATE DE PUBLICATION</h4>
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <label class="filter-date-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: var(--accent-primary); font-weight: 600; transition: all 0.2s;" onclick="handleDateFilter(this)">
+              <input type="radio" name="filter_date" value="" checked style="position:absolute; opacity:0; width:0; height:0;">
+              Tout
+          </label>
+          <label class="filter-date-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: var(--text-secondary); font-weight: 500; transition: all 0.2s;" onclick="handleDateFilter(this)">
+              <input type="radio" name="filter_date" value="DESC" style="position:absolute; opacity:0; width:0; height:0;">
+              Plus récent
+          </label>
+          <label class="filter-date-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: var(--text-secondary); font-weight: 500; transition: all 0.2s;" onclick="handleDateFilter(this)">
+              <input type="radio" name="filter_date" value="ASC" style="position:absolute; opacity:0; width:0; height:0;">
+              Plus ancien
+          </label>
+      </div>
+    </div>
+
+    <!-- Salaire Range Slider -->
+    <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+      <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">SALAIRE</h4>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <span id="salary-min-label" style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">0 TND</span>
+        <span style="color: var(--text-tertiary); font-size: 0.85rem;">—</span>
+        <span id="salary-max-label" style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">10 000 TND</span>
+      </div>
+      <div class="range-slider-container" style="position: relative; height: 36px; margin-bottom: 0.5rem;">
+        <div class="range-slider-track" style="position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: var(--bg-tertiary); border-radius: 4px; transform: translateY(-50%);"></div>
+        <div id="range-slider-fill" style="position: absolute; top: 50%; height: 4px; background: var(--accent-primary); border-radius: 4px; transform: translateY(-50%); left: 0%; right: 0%;"></div>
+        <input type="range" id="salary-min-range" min="0" max="10000" value="0" step="100"
+               style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-appearance: none; appearance: none; background: transparent; pointer-events: none; margin: 0; z-index: 2;"
+               oninput="updateSalaryRange()">
+        <input type="range" id="salary-max-range" min="0" max="10000" value="10000" step="100"
+               style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-appearance: none; appearance: none; background: transparent; pointer-events: none; margin: 0; z-index: 3;"
+               oninput="updateSalaryRange()">
+      </div>
+      <style>
+        /* Range slider thumb styling */
+        #salary-min-range::-webkit-slider-thumb,
+        #salary-max-range::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: var(--accent-primary);
+          border: 3px solid var(--bg-card);
+          box-shadow: 0 2px 8px rgba(107, 52, 163, 0.35);
+          cursor: pointer;
+          pointer-events: all;
+          position: relative;
+          z-index: 5;
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        #salary-min-range::-webkit-slider-thumb:hover,
+        #salary-max-range::-webkit-slider-thumb:hover {
+          transform: scale(1.2);
+          box-shadow: 0 3px 12px rgba(107, 52, 163, 0.5);
+        }
+        #salary-min-range::-moz-range-thumb,
+        #salary-max-range::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: var(--accent-primary);
+          border: 3px solid var(--bg-card);
+          box-shadow: 0 2px 8px rgba(107, 52, 163, 0.35);
+          cursor: pointer;
+          pointer-events: all;
+        }
+        #salary-min-range::-webkit-slider-runnable-track,
+        #salary-max-range::-webkit-slider-runnable-track {
+          height: 4px;
+          background: transparent;
+        }
+        #salary-min-range::-moz-range-track,
+        #salary-max-range::-moz-range-track {
+          height: 4px;
+          background: transparent;
+        }
+      </style>
+      <script>
+        var salaryDebounce;
+        function updateSalaryRange() {
+            let minVal = parseInt(document.getElementById('salary-min-range').value);
+            let maxVal = parseInt(document.getElementById('salary-max-range').value);
+            
+            // Prevent crossover
+            if (minVal > maxVal) {
+                const target = event.target;
+                if (target.id === 'salary-min-range') {
+                    minVal = maxVal;
+                    target.value = minVal;
+                } else {
+                    maxVal = minVal;
+                    target.value = maxVal;
+                }
+            }
+            
+            // Update labels
+            document.getElementById('salary-min-label').textContent = minVal.toLocaleString('fr-FR') + ' TND';
+            document.getElementById('salary-max-label').textContent = maxVal.toLocaleString('fr-FR') + ' TND';
+            
+            // Update fill bar
+            const minPercent = (minVal / 10000) * 100;
+            const maxPercent = (maxVal / 10000) * 100;
+            document.getElementById('range-slider-fill').style.left = minPercent + '%';
+            document.getElementById('range-slider-fill').style.right = (100 - maxPercent) + '%';
+            
+            // Debounced search
+            clearTimeout(salaryDebounce);
+            salaryDebounce = setTimeout(() => {
+                fetchJobsSearch(document.getElementById('job-search').value);
+            }, 400);
+        }
+      </script>
+    </div>
+
+    <script>
+    var currentDateSort = '';
+
+    function handleSidebarFilter(labelElement, category) {
+        const radio = labelElement.querySelector('input[type="radio"]');
+        if(radio) radio.checked = true;
+
+        const selector = '.filter-type-label';
+        document.querySelectorAll(selector).forEach(lbl => {
+            lbl.style.color = 'var(--text-secondary)';
+            lbl.style.fontWeight = '500';
+        });
+        labelElement.style.color = 'var(--accent-primary)';
+        labelElement.style.fontWeight = '600';
+
+        currentModeFilter = radio.value;
+        fetchJobsSearch(document.getElementById('job-search').value);
+    }
+
+    function handleDateFilter(labelElement) {
+        const radio = labelElement.querySelector('input[type="radio"]');
+        if(radio) radio.checked = true;
+
+        document.querySelectorAll('.filter-date-label').forEach(lbl => {
+            lbl.style.color = 'var(--text-secondary)';
+            lbl.style.fontWeight = '500';
+        });
+        labelElement.style.color = 'var(--accent-primary)';
+        labelElement.style.fontWeight = '600';
+
+        currentDateSort = radio.value;
+        fetchJobsSearch(document.getElementById('job-search').value);
+    }
+    </script>
+  </aside>
+
+  <!-- ═══ MAIN CONTENT (Droite) ═══ -->
+  <div>
+    <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem;">
+      <div class="results-info" style="background: var(--bg-card); padding: 0.75rem 1.25rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; align-items: center; gap: 0.6rem; color: var(--text-primary); font-weight: 500; font-size: 0.95rem; white-space: nowrap;">
+        <span style="color: #0ea5e9; font-weight: 700; font-size: 1.1rem;"><?php echo $count; ?></span>
+        <span>offres trouvées</span>
+      </div>
+
+      <!-- ═══ BARRE DE RECHERCHE DYNAMIQUE ═══ -->
+      <div style="flex: 1; background: var(--bg-card); border-radius: 20px; padding: 0.5rem 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid var(--border-color);">
+          <div style="display: flex; align-items: center; gap: 1rem; margin: 0;">
+              <div style="flex: 1; position: relative; display: flex; align-items: center;">
+                  <i data-lucide="search" style="position: absolute; left: 1.25rem; width: 20px; height: 20px; color: var(--text-tertiary);"></i>
+                  <input type="text" id="job-search" name="q" autocomplete="off" placeholder="Rechercher une offre..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" 
+                         style="width: 100%; padding: 0.75rem 1rem 0.75rem 3.5rem; border: 1px solid var(--border-color); border-radius: 14px; font-size: 1rem; outline: none; transition: all 0.2s; background: var(--bg-secondary); color: var(--text-primary);"
+                         onfocus="this.style.borderColor='var(--accent-primary)'; this.style.background='var(--bg-card)';" 
+                         onblur="this.style.borderColor='var(--border-color)'; this.style.background='var(--bg-secondary)';"
+                         class="search-input-field">
+              </div>
+              <div id="job-search-spinner" style="display: none;">
+                  <div class="spinner-border text-primary" role="status" style="width: 24px; height: 24px; border: 3px solid rgba(168, 100, 228, 0.2); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+              </div>
+          </div>
+      </div>
+    </div>
+
+    <!-- ═══ JOB CARDS GRID ═══ -->
+    <div class="job-cards-grid stagger" id="jobs-container">
+      <?php foreach ($listeOffres as $offreItem): ?>
+        <div class="job-card animate-on-scroll" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+          <?php if (!empty($offreItem['img_post'])): ?>
+            <div style="height: 140px; background-image: url('<?php echo htmlspecialchars($offreItem['img_post']); ?>'); background-size: cover; background-position: center; position: relative;">
+          <?php else: ?>
+            <div style="height: 80px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+               <i data-lucide="image" style="width: 32px; height: 32px; color: var(--text-secondary); opacity: 0.5;"></i>
+          <?php endif; ?>
+               <div style="position: absolute; top: 12px; right: 12px;">
+                   <span class="badge badge-info" style="box-shadow: 0 4px 12px rgba(0,0,0,0.1);"><?php echo htmlspecialchars($offreItem['type'] ?? 'Sur site'); ?></span>
+               </div>
+            </div>
+          <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column;">
+            <div class="job-card__header" style="margin-bottom: 0.75rem;">
+              <div class="job-card__company-logo">
+                <i data-lucide="building" style="width:20px;height:20px;color:var(--accent-primary);"></i>
+              </div>
+              <div class="job-card__title-group">
+                <h3 class="job-card__title"><?php echo htmlspecialchars($offreItem['titre'] ?? ''); ?></h3>
+                <span class="job-card__company"><?php echo htmlspecialchars($offreItem['nom_entreprise'] ?? 'Entreprise Inconnue'); ?> • <?php echo htmlspecialchars($offreItem['domaine'] ?? ''); ?></span>
+              </div>
+            </div>
+            <p class="job-card__description" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; font-size: 0.85rem; margin-bottom: 0.75rem;"><?php echo htmlspecialchars($offreItem['description'] ?? ''); ?></p>
+            <div class="job-card__tags" style="margin-bottom: 0.75rem;">
+              <span class="job-card__tag" title="Compétences"><i data-lucide="award" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['competences_requises'] ?? ''); ?></span>
+              <span class="job-card__tag" title="Expérience"><i data-lucide="clock" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['experience_requise'] ?? ''); ?></span>
+              <span class="job-card__tag" title="Salaire"><i data-lucide="banknote" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['salaire'] ?? ''); ?> TND</span>
+            </div>
+            <div class="job-card__footer">
+              <span class="job-card__date">
+                <i data-lucide="calendar" style="width:12px;height:12px;"></i> <?php echo htmlspecialchars($offreItem['date_publication'] ?? ''); ?>
+              </span>
+              <button type="button" class="btn btn-sm" style="background: linear-gradient(90deg, #4fb5ff 0%, #a864e4 50%, #d85ab2 100%); border: none; color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';" onclick="openOfferModal(<?php echo htmlspecialchars(json_encode([
+                  'id' => $offreItem['id_offre'],
+                  'titre' => $offreItem['titre'],
+                  'nom_entreprise' => $offreItem['nom_entreprise'] ?? 'Entreprise Inconnue',
+                  'domaine' => $offreItem['domaine'],
+                  'description' => $offreItem['description'],
+                  'competences' => $offreItem['competences_requises'],
+                  'experience' => $offreItem['experience_requise'],
+                  'salaire' => $offreItem['salaire'],
+                  'question' => $offreItem['question'] ?? 'Décrivez succinctement votre parcours et vos motivations...',
+                  'date_pub' => $offreItem['date_publication'],
+                  'img_post' => $offreItem['img_post'] ?? ''
+              ])); ?>)">
+                <i data-lucide="eye" style="width:14px;height:14px;"></i> Voir détails
+              </button>
+            </div>
+          </div>
+        </div>
+      <?php endforeach; ?>
+      
+      <?php if ($count == 0): ?>
+        <div class="empty-state text-center" style="padding: 3rem; background: var(--surface-1); border-radius: 12px; grid-column: 1 / -1;">
+            <p>Aucune offre trouvée pour le moment.</p>
+        </div>
       <?php endif; ?>
-      <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
-      <div class="job-card__header">
-        <div class="job-card__company-logo">
-        <i data-lucide="building" style="width:20px;height:20px;color:var(--accent-primary);"></i>
-      </div>
-      <div class="job-card__title-group">
-        <h3 class="job-card__title"><?php echo htmlspecialchars($offreItem['titre'] ?? ''); ?></h3>
-        <span class="job-card__company"><?php echo htmlspecialchars($offreItem['nom_entreprise'] ?? 'Entreprise Inconnue'); ?> • <?php echo htmlspecialchars($offreItem['domaine'] ?? ''); ?></span>
-      </div>
-      <span class="badge badge-info job-card__type-badge">Job</span>
-    </div>
-    <p class="job-card__description" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;"><?php echo htmlspecialchars($offreItem['description'] ?? ''); ?></p>
-    <div class="job-card__tags">
-      <span class="job-card__tag" title="Compétences"><i data-lucide="award" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['competences_requises'] ?? ''); ?></span>
-      <span class="job-card__tag" title="Expérience"><i data-lucide="clock" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['experience_requise'] ?? ''); ?></span>
-      <span class="job-card__tag" title="Salaire"><i data-lucide="banknote" style="width:14px;height:14px;"></i> <?php echo htmlspecialchars($offreItem['salaire'] ?? ''); ?> TND</span>
-    </div>
-    <div class="job-card__footer">
-      <span class="job-card__date">
-        <i data-lucide="calendar" style="width:12px;height:12px;"></i> Publié: <?php echo htmlspecialchars($offreItem['date_publication'] ?? ''); ?>
-      </span>
-      <button type="button" class="btn btn-sm" style="background: linear-gradient(90deg, #4fb5ff 0%, #a864e4 50%, #d85ab2 100%); border: none; color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';" onclick="openOfferModal(<?php echo htmlspecialchars(json_encode([
-          'id' => $offreItem['id_offre'],
-          'titre' => $offreItem['titre'],
-          'nom_entreprise' => $offreItem['nom_entreprise'] ?? 'Entreprise Inconnue',
-          'domaine' => $offreItem['domaine'],
-          'description' => $offreItem['description'],
-          'competences' => $offreItem['competences_requises'],
-          'experience' => $offreItem['experience_requise'],
-          'salaire' => $offreItem['salaire'],
-          'question' => $offreItem['question'] ?? 'Décrivez succinctement votre parcours et vos motivations...',
-          'date_pub' => $offreItem['date_publication'],
-          'img_post' => $offreItem['img_post'] ?? ''
-      ])); ?>)">
-        <i data-lucide="eye" style="width:14px;height:14px;"></i> Voir détails
-      </button>
-    </div>
     </div>
   </div>
-  <?php endforeach; ?>
-  
-  <?php if ($count == 0): ?>
-    <div class="empty-state text-center" style="padding: 3rem; background: var(--surface-1); border-radius: 12px; grid-column: 1 / -1;">
-        <p>Aucune offre trouvée pour le moment.</p>
-    </div>
-  <?php endif; ?>
-</div>
-
-<!-- Pagination -->
-<div class="pagination">
-  <button class="pagination__btn">&laquo;</button>
-  <button class="pagination__btn active">1</button>
-  <button class="pagination__btn">2</button>
-  <button class="pagination__btn">3</button>
-  <button class="pagination__btn">&raquo;</button>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Mode toggle interaction
-  document.querySelectorAll('.mode-toggle__option').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.mode-toggle__option').forEach(function(b) { b.classList.remove('active'); });
-      this.classList.add('active');
-    });
-  });
+  // Mode toggle interaction is now handled by handleModeToggle
 });
+
+var currentModeFilter = 'all';
+
+function handleModeToggle(btn, typeValue) {
+    document.querySelectorAll('.mode-toggle__option').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentModeFilter = typeValue;
+    fetchJobsSearch(document.getElementById('job-search').value);
+}
 
 var currentOfferId = null;
 var currentOfferTitle = '';
@@ -334,14 +514,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- ═══ Modal Formulaire de Candidature ═══ -->
 <div class="modal-overlay" id="apply-modal">
-<div class="modal" style="max-width:1150px; padding: 2.5rem; border-radius: 12px; background: #ffffff; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);">
+<div class="modal" style="max-width:1150px; padding: 2.5rem; border-radius: 12px; background: var(--bg-card); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);">
     
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2.5rem; border-bottom: 1px solid #f0f0f0; padding-bottom: 1rem;">
-        <h2 id="apply-modal-title" style="font-size:1.6rem; font-weight:700; color:#1a1a2e; margin:0;">Nouvelle Candidature</h2>
-        <button type="button" onclick="closeApplyModal()" style="background:none; border:none; cursor:pointer; color:#999;"><i data-lucide="x" style="width:24px;height:24px;"></i></button>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+        <h2 id="apply-modal-title" style="font-size:1.6rem; font-weight:700; color:var(--text-primary); margin:0;">Nouvelle Candidature</h2>
+        <button type="button" onclick="closeApplyModal()" style="background:none; border:none; cursor:pointer; color:var(--text-tertiary);"><i data-lucide="x" style="width:24px;height:24px;"></i></button>
     </div>
 
-    <!-- Formulaire (aspect sérieux, bords fins) -->
+    <!-- Formulaire -->
     <form id="apply-form" method="POST" action="jobs_feed.php" enctype="multipart/form-data">
       <input type="hidden" name="id_offre" id="apply-id-offre" value="">
       
@@ -349,35 +529,35 @@ document.addEventListener('DOMContentLoaded', function() {
         <!-- Colonne Gauche -->
         <div style="flex:0 0 32%;">
             <div style="margin-bottom: 1.5rem;">
-                <label style="display:block; font-size:0.85rem; font-weight:600; color:#4a4a68; margin-bottom:0.5rem;">Nom de famille <span style="color:#e94560;">*</span></label>
-                <input type="text" name="nom" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:#fafafa;" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='#e0e0e0'">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.5rem;">Nom de famille <span style="color:#e94560;">*</span></label>
+                <input type="text" name="nom" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid var(--border-color); border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:var(--bg-input); color:var(--text-primary);" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='var(--border-color)'">
             </div>
             
             <div style="margin-bottom: 1.5rem;">
-                <label style="display:block; font-size:0.85rem; font-weight:600; color:#4a4a68; margin-bottom:0.5rem;">Prénom <span style="color:#e94560;">*</span></label>
-                <input type="text" name="prenom" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:#fafafa;" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='#e0e0e0'">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.5rem;">Prénom <span style="color:#e94560;">*</span></label>
+                <input type="text" name="prenom" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid var(--border-color); border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:var(--bg-input); color:var(--text-primary);" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='var(--border-color)'">
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label style="display:block; font-size:0.85rem; font-weight:600; color:#4a4a68; margin-bottom:0.5rem;">Adresse Email <span style="color:#e94560;">*</span></label>
-                <input type="email" name="email" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:#fafafa;" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='#e0e0e0'">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.5rem;">Adresse Email <span style="color:#e94560;">*</span></label>
+                <input type="email" name="email" required style="width:100%; padding: 0.65rem 1rem; border: 1px solid var(--border-color); border-radius: 6px; font-size:0.95rem; outline:none; transition:border 0.2s; background:var(--bg-input); color:var(--text-primary);" onfocus="this.style.borderColor='var(--accent-primary)'" onblur="this.style.borderColor='var(--border-color)'">
             </div>
             
-            <div style="margin-bottom: 1.5rem; padding: 1.25rem 1rem; border: 1px dashed #d0d0e0; border-radius: 8px; background: #fafafa; text-align: center;">
-                <i data-lucide="file-up" style="width:24px;height:24px;color:#a0a0b0; margin-bottom: 0.5rem;"></i>
-                <p style="font-size: 0.75rem; color: #666; margin-bottom: 0.75rem;">Téléchargez votre CV (PDF, DOCX)</p>
-                <input type="file" name="cv_cand" accept=".pdf,.doc,.docx" required style="max-width: 100%; font-size:0.8rem; outline:none;">
+            <div style="margin-bottom: 1.5rem; padding: 1.25rem 1rem; border: 1px dashed var(--border-color); border-radius: 8px; background: var(--bg-secondary); text-align: center;">
+                <i data-lucide="file-up" style="width:24px;height:24px;color:var(--text-tertiary); margin-bottom: 0.5rem;"></i>
+                <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Téléchargez votre CV (PDF, DOCX)</p>
+                <input type="file" name="cv_cand" accept=".pdf,.doc,.docx" required style="max-width: 100%; font-size:0.8rem; outline:none; color:var(--text-primary);">
             </div>
         </div>
 
-        <!-- Colonne Droite (Façon panneau map dans le screenshot) -->
+        <!-- Colonne Droite -->
         <div style="flex:1;">
-            <div style="height: 100%; border: 1px solid #f0f0f5; border-radius: 10px; padding: 1.5rem; background: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
-                <label id="apply-modal-question-label" style="display:block; font-size:0.9rem; font-weight:700; color:#4a4a68; margin-bottom:1rem; text-align:center; letter-spacing:0.5px; border-bottom:1px solid #f0f0f5; padding-bottom:0.75rem;">Vos Motivations</label>
+            <div style="height: 100%; border: 1px solid var(--border-color); border-radius: 10px; padding: 1.5rem; background: var(--bg-primary); box-shadow: 0 4px 15px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
+                <label id="apply-modal-question-label" style="display:block; font-size:0.9rem; font-weight:700; color:var(--text-secondary); margin-bottom:1rem; text-align:center; letter-spacing:0.5px; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">Vos Motivations</label>
                 
                 <div style="margin-bottom: 0; flex:1; display:flex; flex-direction:column; min-height:180px;">
                     <input type="hidden" name="reponses_ques" id="hidden_reponses_ques">
-                    <div id="quill-editor" style="flex:1; background: #fdfdfd; font-size:1rem;"></div>
+                    <div id="quill-editor" style="flex:1; background: var(--bg-input); font-size:1rem; color:var(--text-primary);"></div>
                 </div>
             </div>
         </div>
@@ -466,6 +646,21 @@ function fetchJobsSearch(query) {
     formData.append('query', query);
     formData.append('only_active', '1');
     
+    if (currentModeFilter && currentModeFilter !== 'all') {
+        formData.append('filter_type', currentModeFilter);
+    }
+
+    const salaryMin = document.getElementById('salary-min-range');
+    const salaryMax = document.getElementById('salary-max-range');
+    if (salaryMin && salaryMax) {
+        formData.append('salary_min', salaryMin.value);
+        formData.append('salary_max', salaryMax.value);
+    }
+
+    if (currentDateSort) {
+        formData.append('sort_date', currentDateSort);
+    }
+    
     fetch('ajax_offres.php', {
         method: 'POST',
         body: formData
@@ -491,7 +686,7 @@ function updateJobsGrid(offres) {
     if (!container) return;
     
     if (resultsInfo) {
-        resultsInfo.innerHTML = `<strong>${offres.length}</strong> results found`;
+        resultsInfo.innerHTML = `<span style="color: #0ea5e9; font-weight: 700; font-size: 1.1rem;">${offres.length}</span><span>offres trouvées</span>`;
     }
     
     if (offres.length === 0) {
@@ -510,9 +705,9 @@ function updateJobsGrid(offres) {
         const salaire = escapeHtml(String(o.salaire || ''));
         const datePub = o.date_publication || '';
         const imgPost = o.img_post || '';
+        const typePost = o.type || 'Sur site';
         const question = o.question || 'Décrivez succinctement votre parcours et vos motivations...';
         
-        // Données JSON pour le modal
         const modalData = JSON.stringify({
             id: o.id_offre,
             titre: o.titre,
@@ -529,15 +724,20 @@ function updateJobsGrid(offres) {
         
         let imgSection = '';
         if (imgPost) {
-            imgSection = `<div style="height: 160px; background-image: url('${imgPost}'); background-size: cover; background-position: center; border-bottom: 1px solid var(--border-color);"></div>`;
+            imgSection = `<div style="height: 140px; background-image: url('${imgPost}'); background-size: cover; background-position: center; position: relative;">`;
         } else {
-            imgSection = `<div style="height: 6px; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));"></div>`;
+            imgSection = `<div style="height: 80px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+               <i data-lucide="image" style="width: 32px; height: 32px; color: var(--text-secondary); opacity: 0.5;"></i>`;
         }
         
         html += `<div class="job-card animate-on-scroll" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
             ${imgSection}
-            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
-                <div class="job-card__header">
+               <div style="position: absolute; top: 12px; right: 12px;">
+                   <span class="badge badge-info" style="box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${escapeHtml(typePost)}</span>
+               </div>
+            </div>
+            <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column;">
+                <div class="job-card__header" style="margin-bottom: 0.75rem;">
                     <div class="job-card__company-logo">
                         <i data-lucide="building" style="width:20px;height:20px;color:var(--accent-primary);"></i>
                     </div>
@@ -545,17 +745,16 @@ function updateJobsGrid(offres) {
                         <h3 class="job-card__title">${titre}</h3>
                         <span class="job-card__company">${entreprise} • ${domaine}</span>
                     </div>
-                    <span class="badge badge-info job-card__type-badge">Job</span>
                 </div>
-                <p class="job-card__description" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${description}</p>
-                <div class="job-card__tags">
+                <p class="job-card__description" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; font-size: 0.85rem; margin-bottom: 0.75rem;">${description}</p>
+                <div class="job-card__tags" style="margin-bottom: 0.75rem;">
                     <span class="job-card__tag" title="Compétences"><i data-lucide="award" style="width:14px;height:14px;"></i> ${competences}</span>
                     <span class="job-card__tag" title="Expérience"><i data-lucide="clock" style="width:14px;height:14px;"></i> ${experience}</span>
                     <span class="job-card__tag" title="Salaire"><i data-lucide="banknote" style="width:14px;height:14px;"></i> ${salaire} TND</span>
                 </div>
                 <div class="job-card__footer">
                     <span class="job-card__date">
-                        <i data-lucide="calendar" style="width:12px;height:12px;"></i> Publié: ${datePub}
+                        <i data-lucide="calendar" style="width:12px;height:12px;"></i> ${datePub}
                     </span>
                     <button type="button" class="btn btn-sm" style="background: linear-gradient(90deg, #4fb5ff 0%, #a864e4 50%, #d85ab2 100%); border: none; color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';" onclick='openOfferModal(${modalData})'>
                         <i data-lucide="eye" style="width:14px;height:14px;"></i> Voir détails

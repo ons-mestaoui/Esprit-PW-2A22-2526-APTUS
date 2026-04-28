@@ -4,7 +4,7 @@ class offreC{
     public function ajouterOffre($offre){
         $db = config::getConnexion();
         try{
-            $query = $db->prepare("INSERT INTO offreemploi (id_entreprise, titre, description, domaine, competences_requises, experience_requise, salaire, question, date_publication, date_expir, statut, img_post) VALUES (1, :titre, :description, :domaine, :competences_requises, :experience_requise, :salaire, :question, :date_publication, :date_expir, 'Actif', :img_post)");
+            $query = $db->prepare("INSERT INTO offreemploi (id_entreprise, titre, description, domaine, competences_requises, experience_requise, salaire, question, date_publication, date_expir, statut, img_post, type) VALUES (1, :titre, :description, :domaine, :competences_requises, :experience_requise, :salaire, :question, :date_publication, :date_expir, 'Actif', :img_post, :type)");
             $query->execute([
                 'titre' => $offre->getTitre(),
                 'description' => $offre->getDescription(),
@@ -15,7 +15,8 @@ class offreC{
                 'question' => $offre->getQuestion(),
                 'date_publication' => $offre->getDatePublication(),
                 'date_expir' => $offre->getDateExpir(),
-                'img_post' => $offre->getImgPost()
+                'img_post' => $offre->getImgPost(),
+                'type' => $offre->getType()
             ]); 
         }catch (Exception $e){
             echo 'Erreur: '.$e->getMessage();
@@ -110,9 +111,9 @@ class offreC{
         try{
             // img_post est inclus s'il n'est pas null, sinon on garde l'ancien (à gérer côté vue ou ici, plus propre ici)
             if ($offre->getImgPost() !== null) {
-                $query = $db->prepare("UPDATE offreemploi SET titre=:titre, description=:description, domaine=:domaine, competences_requises=:competences_requises, experience_requise=:experience_requise, salaire=:salaire, question=:question, date_publication=:date_publication, date_expir=:date_expir, img_post=:img_post WHERE id_offre=:id_offre");
+                $query = $db->prepare("UPDATE offreemploi SET titre=:titre, description=:description, domaine=:domaine, competences_requises=:competences_requises, experience_requise=:experience_requise, salaire=:salaire, question=:question, date_publication=:date_publication, date_expir=:date_expir, img_post=:img_post, type=:type WHERE id_offre=:id_offre");
             } else {
-                $query = $db->prepare("UPDATE offreemploi SET titre=:titre, description=:description, domaine=:domaine, competences_requises=:competences_requises, experience_requise=:experience_requise, salaire=:salaire, question=:question, date_publication=:date_publication, date_expir=:date_expir WHERE id_offre=:id_offre");
+                $query = $db->prepare("UPDATE offreemploi SET titre=:titre, description=:description, domaine=:domaine, competences_requises=:competences_requises, experience_requise=:experience_requise, salaire=:salaire, question=:question, date_publication=:date_publication, date_expir=:date_expir, type=:type WHERE id_offre=:id_offre");
             }
             
             $params = [
@@ -125,7 +126,8 @@ class offreC{
                 'salaire' => $offre->getSalaire(),
                 'question' => $offre->getQuestion(),
                 'date_publication' => $offre->getDatePublication(),
-                'date_expir' => $offre->getDateExpir()
+                'date_expir' => $offre->getDateExpir(),
+                'type' => $offre->getType()
             ];
 
             if ($offre->getImgPost() !== null) {
@@ -157,7 +159,7 @@ class offreC{
     }
 
     // ═══ RECHERCHE DYNAMIQUE AJAX (RETOURNE UN ARRAY POUR JSON) ═══
-    public function rechercherOffresAjax(string $keyword, bool $onlyActive = false, string $filterStatus = ''): array {
+    public function rechercherOffresAjax(string $keyword, bool $onlyActive = false, string $filterStatus = '', string $filterType = '', ?int $salaryMin = null, ?int $salaryMax = null, string $sortDate = ''): array {
         $db = config::getConnexion();
         try {
             $sql = "SELECT o.*, u.nom as nom_entreprise,
@@ -173,7 +175,20 @@ class offreC{
                 $sql .= " AND o.statut = :statut";
                 $params['statut'] = $filterStatus;
             }
-            $sql .= " ORDER BY o.date_publication DESC";
+            if (!empty($filterType) && $filterType !== 'all') {
+                $sql .= " AND o.type = :type";
+                $params['type'] = $filterType;
+            }
+            if ($salaryMin !== null) {
+                $sql .= " AND CAST(o.salaire AS UNSIGNED) >= :salary_min";
+                $params['salary_min'] = $salaryMin;
+            }
+            if ($salaryMax !== null) {
+                $sql .= " AND CAST(o.salaire AS UNSIGNED) <= :salary_max";
+                $params['salary_max'] = $salaryMax;
+            }
+            $dateOrder = ($sortDate === 'ASC') ? 'ASC' : 'DESC';
+            $sql .= " ORDER BY o.date_publication $dateOrder";
             
             $req = $db->prepare($sql);
             $req->execute($params);
@@ -193,6 +208,15 @@ class offreC{
             $query = trim($_POST['query'] ?? '');
             $onlyActive = isset($_POST['only_active']) && $_POST['only_active'] === '1';
             $filterStatus = $_POST['filter_status'] ?? '';
+            $filterType = $_POST['filter_type'] ?? '';
+            $salaryMin = isset($_POST['salary_min']) && $_POST['salary_min'] !== '' ? (int)$_POST['salary_min'] : null;
+            $salaryMax = isset($_POST['salary_max']) && $_POST['salary_max'] !== '' ? (int)$_POST['salary_max'] : null;
+            // Reset salary filter if full range
+            if ($salaryMin === 0 && $salaryMax === 10000) {
+                $salaryMin = null;
+                $salaryMax = null;
+            }
+            $sortDate = $_POST['sort_date'] ?? '';
             
             if ($query === '') {
                 // Si vide, retourner toutes les offres
@@ -209,12 +233,25 @@ class offreC{
                     $sql .= " AND o.statut = :statut";
                     $params['statut'] = $filterStatus;
                 }
-                $sql .= " ORDER BY o.date_publication DESC, o.id_offre DESC";
+                if (!empty($filterType) && $filterType !== 'all') {
+                    $sql .= " AND o.type = :type";
+                    $params['type'] = $filterType;
+                }
+                if ($salaryMin !== null) {
+                    $sql .= " AND CAST(o.salaire AS UNSIGNED) >= :salary_min";
+                    $params['salary_min'] = $salaryMin;
+                }
+                if ($salaryMax !== null) {
+                    $sql .= " AND CAST(o.salaire AS UNSIGNED) <= :salary_max";
+                    $params['salary_max'] = $salaryMax;
+                }
+                $dateOrder = ($sortDate === 'ASC') ? 'ASC' : 'DESC';
+                $sql .= " ORDER BY o.date_publication $dateOrder, o.id_offre DESC";
                 $req = $db->prepare($sql);
                 $req->execute($params);
                 $results = $req->fetchAll(PDO::FETCH_ASSOC);
             } else {
-                $results = $this->rechercherOffresAjax($query, $onlyActive, $filterStatus);
+                $results = $this->rechercherOffresAjax($query, $onlyActive, $filterStatus, $filterType, $salaryMin, $salaryMax, $sortDate);
             }
             
             echo json_encode(['success' => true, 'results' => $results]);

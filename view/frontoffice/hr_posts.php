@@ -61,7 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'salaire' => $salaire,
         'question' => $question,
         'date_publication' => $date_pub,
-        'date_expir' => $date_exp
+        'date_expir' => $date_exp,
+        'type' => trim($_POST['type'] ?? 'Sur site')
     ];
 
     // ---- RULES PHP ----
@@ -107,7 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $question, 
             $date_pub, 
             $date_exp,
-            $img_post_base64
+            $img_post_base64,
+            $form_data['type']
         );
         
         if (isset($_POST['submit_add'])) {
@@ -165,48 +167,74 @@ if (!isset($content)) {
 
     <!-- ═══ appel fonction filtre_statut ═══ -->
     <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
-      <form method="GET" action="hr_posts.php" style="margin: 0;">
+      <form id="filter-form" method="GET" action="hr_posts.php" style="margin: 0;">
           <?php if(!empty($_GET['q'])): ?>
               <input type="hidden" name="q" value="<?php echo htmlspecialchars($_GET['q']); ?>">
           <?php endif; ?>
+          
+          <!-- Filter: Statut -->
           <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">STATUT</h4>
           <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-              <label class="filter-status-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (empty($_GET['filter_status']) || $_GET['filter_status'] === 'Tous statuts') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (empty($_GET['filter_status']) || $_GET['filter_status'] === 'Tous statuts') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'Tous statuts')">
+              <label class="filter-status-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (empty($_GET['filter_status']) || $_GET['filter_status'] === 'Tous statuts') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (empty($_GET['filter_status']) || $_GET['filter_status'] === 'Tous statuts') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'status')">
                   <input type="radio" name="filter_status" value="Tous statuts" <?php echo (empty($_GET['filter_status']) || $_GET['filter_status'] === 'Tous statuts') ? 'checked' : ''; ?> style="position:absolute; opacity:0; width:0; height:0;">
                   Tous
               </label>
-              <label class="filter-status-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'Actif')">
+              <label class="filter-status-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'status')">
                   <input type="radio" name="filter_status" value="Actif" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Actif') ? 'checked' : ''; ?> style="position:absolute; opacity:0; width:0; height:0;">
                   Actif
               </label>
-              <label class="filter-status-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'Expiré')">
+              <label class="filter-status-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'status')">
                   <input type="radio" name="filter_status" value="Expiré" <?php echo (isset($_GET['filter_status']) && $_GET['filter_status'] === 'Expiré') ? 'checked' : ''; ?> style="position:absolute; opacity:0; width:0; height:0;">
                   Expiré
               </label>
           </div>
+      </div>
+
+      <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+          <!-- Filter: Type -->
+          <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">TYPE DE POSTE</h4>
+          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+              <label class="filter-type-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (empty($_GET['filter_type']) || $_GET['filter_type'] === 'all') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (empty($_GET['filter_type']) || $_GET['filter_type'] === 'all') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'type')">
+                  <input type="radio" name="filter_type" value="all" <?php echo (empty($_GET['filter_type']) || $_GET['filter_type'] === 'all') ? 'checked' : ''; ?> style="position:absolute; opacity:0; width:0; height:0;">
+                  Tout
+              </label>
+              <label class="filter-type-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_type']) && $_GET['filter_type'] === 'À distance') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_type']) && $_GET['filter_type'] === 'À distance') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'type')">
+                  <input type="radio" name="filter_type" value="À distance" <?php echo (isset($_GET['filter_type']) && $_GET['filter_type'] === 'À distance') ? 'checked' : ''; ?> style="position:absolute; opacity:0; width:0; height:0;">
+                  À distance
+              </label>
+              <label class="filter-type-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_type']) && $_GET['filter_type'] === 'Sur site') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_type']) && $_GET['filter_type'] === 'Sur site') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'type')">
+                  <input type="radio" name="filter_type" value="Sur site" <?php echo (isset($_GET['filter_type']) && $_GET['filter_type'] === 'Sur site') ? 'checked' : ''; ?> style="position:absolute; opacity:0; width:0; height:0;">
+                  Sur site
+              </label>
+              <label class="filter-type-label" style="cursor: pointer; display: block; font-size: 1.1rem; color: <?php echo (isset($_GET['filter_type']) && $_GET['filter_type'] === 'Hybride') ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; font-weight: <?php echo (isset($_GET['filter_type']) && $_GET['filter_type'] === 'Hybride') ? '600' : '500'; ?>; transition: all 0.2s;" onclick="handleFilterClick(this, 'type')">
+                  <input type="radio" name="filter_type" value="Hybride" <?php echo (isset($_GET['filter_type']) && $_GET['filter_type'] === 'Hybride') ? 'checked' : ''; ?> style="position:absolute; opacity:0; width:0; height:0;">
+                  Hybride
+              </label>
+          </div>
+      </div>
+      
+      <script>
+      function handleFilterClick(labelElement, category) {
+          // Set the radio button to checked
+          const radio = labelElement.querySelector('input[type="radio"]');
+          if(radio) radio.checked = true;
           
-          <script>
-          function handleFilterClick(labelElement, value) {
-              // Set the radio button to checked
-              const radio = labelElement.querySelector('input[type="radio"]');
-              if(radio) radio.checked = true;
-              
-              // Update colors
-              document.querySelectorAll('.filter-status-label').forEach(lbl => {
-                  lbl.style.color = 'var(--text-secondary)';
-                  lbl.style.fontWeight = '500';
-              });
-              labelElement.style.color = 'var(--accent-primary)';
-              labelElement.style.fontWeight = '600';
-              
-              // Trigger search
-              const searchInput = document.getElementById('ajax-search-input');
-              const query = searchInput ? searchInput.value : '';
-              fetchHrPostsSearch(query);
-          }
-          </script>
+          // Update colors for the specific category
+          const selector = category === 'status' ? '.filter-status-label' : '.filter-type-label';
+          document.querySelectorAll(selector).forEach(lbl => {
+              lbl.style.color = 'var(--text-secondary)';
+              lbl.style.fontWeight = '500';
+          });
+          labelElement.style.color = 'var(--accent-primary)';
+          labelElement.style.fontWeight = '600';
+          
+          // Trigger search
+          const searchInput = document.getElementById('ajax-search-input');
+          const query = searchInput ? searchInput.value : '';
+          fetchHrPostsSearch(query);
+      }
+      </script>
       </form>
-    </div>
     </aside>
   <?php endif; ?>
 
@@ -269,7 +297,7 @@ if (!isset($content)) {
             <div style="height: 80px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%); position: relative; display: flex; align-items: center; justify-content: center;">
                <i data-lucide="image" style="width: 32px; height: 32px; color: var(--text-secondary); opacity: 0.5;"></i>
           <?php endif; ?>
-               <div style="position: absolute; top: 12px; right: 12px;">
+               <div style="position: absolute; top: 12px; right: 12px;" class="image-status-badge">
                     <?php if (isset($offreItem['statut']) && $offreItem['statut'] === 'Expiré'): ?>
                         <span class="badge badge-danger" style="box-shadow: 0 4px 12px rgba(0,0,0,0.1);">Expiré</span>
                     <?php else: ?>
@@ -406,6 +434,15 @@ if (!isset($content)) {
                                 <label class="form-label" for="salaire">Salaire (TND)</label>
                                 <input type="text" class="input <?php echo isset($errors['salaire']) ? 'has-error' : ''; ?>" name="salaire" id="salaire" placeholder="ex: 2000" value="<?php echo htmlspecialchars(val('salaire', $form_data, $offreEdit)); ?>">
                             </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="type">Type de poste</label>
+                            <?php $currentType = val('type', $form_data, $offreEdit, 'Sur site'); ?>
+                            <select class="input" name="type" id="type" style="cursor: pointer;">
+                                <option value="Sur site" <?php echo $currentType === 'Sur site' ? 'selected' : ''; ?>>Sur site</option>
+                                <option value="À distance" <?php echo $currentType === 'À distance' ? 'selected' : ''; ?>>À distance</option>
+                                <option value="Hybride" <?php echo $currentType === 'Hybride' ? 'selected' : ''; ?>>Hybride</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -588,7 +625,16 @@ if (!isset($content)) {
 }
 
 .hr-posts-grid.view-list .hr-post-card > div:first-child {
-    display: none !important; /* Hide image */
+    display: block !important;
+    width: 140px !important;
+    height: 100% !important;
+    min-height: 90px !important;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-color);
+}
+
+.hr-posts-grid.view-list .image-status-badge {
+    display: none !important;
 }
 
 .hr-posts-grid.view-list .hr-post-card__content {
@@ -777,9 +823,14 @@ function fetchHrPostsSearch(query) {
     formData.append('action', 'search_offres');
     formData.append('query', query);
     
-    const checkedRadio = document.querySelector('input[name="filter_status"]:checked');
-    if (checkedRadio) {
-        formData.append('filter_status', checkedRadio.value);
+    const checkedStatus = document.querySelector('input[name="filter_status"]:checked');
+    if (checkedStatus) {
+        formData.append('filter_status', checkedStatus.value);
+    }
+
+    const checkedType = document.querySelector('input[name="filter_type"]:checked');
+    if (checkedType) {
+        formData.append('filter_type', checkedType.value);
     }
     
     fetch('ajax_offres.php', {

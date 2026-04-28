@@ -59,7 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'salaire' => $salaire,
         'question' => $question,
         'date_publication' => $date_pub,
-        'date_expir' => $date_exp
+        'date_expir' => $date_exp,
+        'type' => trim($_POST['type'] ?? 'Sur site')
     ];
 
     // ---- RULES PHP ----
@@ -105,7 +106,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $question, 
             $date_pub, 
             $date_exp,
-            $img_post_base64
+            $img_post_base64,
+            $form_data['type']
         );
         
         if (isset($_POST['submit_add'])) {
@@ -403,6 +405,15 @@ if (!isset($content)) {
                                     <span style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> <?php echo $errors['experience_requise']; ?></span>
                                 <?php endif; ?>
                             </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Type de poste</label>
+                            <?php $currentType = val('type', $form_data, $offreEdit, 'Sur site'); ?>
+                            <select class="input" name="type" style="height: 52px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-secondary); cursor: pointer;">
+                                <option value="Sur site" <?php echo $currentType === 'Sur site' ? 'selected' : ''; ?>>Sur site</option>
+                                <option value="À distance" <?php echo $currentType === 'À distance' ? 'selected' : ''; ?>>À distance</option>
+                                <option value="Hybride" <?php echo $currentType === 'Hybride' ? 'selected' : ''; ?>>Hybride</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label" style="font-weight: 600; margin-bottom: 0.6rem; display: block;">Description du poste <span style="color: #ef4444;">*</span></label>
