@@ -219,8 +219,8 @@ class TuteurDashboardController
                 JOIN formation f ON re.id_formation = f.id_formation
                 JOIN utilisateur u ON re.id_candidat = u.id
                 WHERE f.id_tuteur = :id_tuteur
-                AND re.date_detection >= (NOW() - INTERVAL 15 MINUTE)
-                ORDER BY re.date_detection DESC
+                AND re.date_mesure >= (NOW() - INTERVAL 15 MINUTE)
+                ORDER BY re.date_mesure DESC
             ";
             $stmt = $db->prepare($query);
             $stmt->execute(['id_tuteur' => $id_tuteur]);
