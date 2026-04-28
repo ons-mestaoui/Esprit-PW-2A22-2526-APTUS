@@ -219,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="candidat-date">Date de naissance</label>
             <div class="input-icon-wrapper">
               <i data-lucide="calendar" style="width:18px;height:18px;"></i>
-              <input type="text" class="input" id="candidat-date" name="date_naissance" placeholder="AAAA-MM-JJ">
+              <input type="date" class="input" id="candidat-date" name="date_naissance" placeholder="AAAA-MM-JJ">
             </div>
           </div>
           <div class="form-group">

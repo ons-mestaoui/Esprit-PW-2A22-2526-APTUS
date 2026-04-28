@@ -63,7 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $utilisateur = new Utilisateur($id_utilisateur, $nom, $prenom, $email, $motDePasse, $role, $telephone);
 
         if ($formAction === 'add') {
-            $last_id = $utilisateurC->addUtilisateur($utilisateur);
+            $result = $utilisateurC->addUtilisateur($utilisateur);
+            $last_id = isset($result['id']) ? $result['id'] : null;
             if ($last_id) {
                 include_once __DIR__ . '/../../controller/ProfilC.php';
                 $profilC = new ProfilC();

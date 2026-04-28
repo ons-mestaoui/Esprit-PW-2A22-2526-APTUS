@@ -207,8 +207,6 @@ if ($userId) {
     <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
   <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
-  <script>lucide.createIcons();</script>
-
   <!-- ═══════════════════════════════════════════
        ACCESSIBILITY GESTURE CONTROL (MediaPipe)
        ═══════════════════════════════════════════ -->
@@ -228,6 +226,7 @@ if ($userId) {
   </button>
 
   <script type="module" src="/aptus_first_official_version/view/assets/js/a11y-hand-control.js"></script>
+  <script>lucide.createIcons();</script>
 
 </body>
 </html>

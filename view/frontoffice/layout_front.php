@@ -245,7 +245,6 @@ if ($userId) {
     <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
   <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
-  <script>lucide.createIcons();</script>
 
   <!-- ═══════════════════════════════════════════
        ACCESSIBILITY GESTURE CONTROL (MediaPipe)
@@ -268,6 +267,7 @@ if ($userId) {
   <!-- Load MediaPipe Tasks Vision & Our Custom A11Y Script -->
   <!-- Note: We use type="module" for our custom script because MediaPipe Tasks Vision uses ES Modules -->
   <script type="module" src="/aptus_first_official_version/view/assets/js/a11y-hand-control.js"></script>
+  <script>lucide.createIcons();</script>
 
 </body>
 

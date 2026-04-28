@@ -94,13 +94,6 @@
           <div class="role-desc">Recrutez les meilleurs talents et déposez vos offres.</div>
         </a>
 
-        <a href="signup_admin.php" class="role-card">
-          <div class="role-icon" style="color: var(--accent-tertiary);">
-            <i data-lucide="shield" style="width:24px;height:24px;"></i>
-          </div>
-          <div class="role-title">Admin</div>
-          <div class="role-desc">Gérez la plateforme, les utilisateurs et les statistiques.</div>
-        </a>
       </div>
 
       <!-- Footer -->

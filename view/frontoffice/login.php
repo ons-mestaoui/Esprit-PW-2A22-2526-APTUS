@@ -42,7 +42,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $query->execute(['email' => $email]);
             $user = $query->fetch();
 
-            if ($user && password_verify($password, $user['motDePasse'])) {
+            $passwordOk = false;
+            if ($user) {
+                if (password_verify($password, $user['motDePasse'])) {
+                    $passwordOk = true;
+                } elseif ($password === $user['motDePasse']) {
+                    // Plaintext match (e.g. admin manually inserted via database)
+                    $passwordOk = true;
+                    // Auto-hash and update the password for future logins
+                    $newHash = password_hash($password, PASSWORD_DEFAULT);
+                    $updateQuery = $db->prepare("UPDATE utilisateur SET motDePasse = :hash WHERE id_utilisateur = :id");
+                    $updateQuery->execute(['hash' => $newHash, 'id' => $user['id_utilisateur']]);
+                }
+            }
+
+            if ($passwordOk) {
                 // Connexion réussie : on simplifie et on connecte directement l'utilisateur
                 $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
                 $_SESSION['nom'] = $user['nom'];
@@ -339,15 +353,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               </div>
             </a>
 
-            <a href="signup_admin.php" class="role-card-mini">
-              <div class="role-icon" style="color: var(--accent-tertiary);">
-                <i data-lucide="shield"></i>
-              </div>
-              <div class="role-info">
-                <h4>Admin</h4>
-                <p>Gérez la plateforme Aptus.</p>
-              </div>
-            </a>
           </div>
 
           <a href="landing.php" class="back-to-site" style="margin-top: var(--space-8);">

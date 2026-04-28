@@ -227,7 +227,7 @@ if (!isset($content)) {
           <label class="form-label">Date de naissance</label>
           <div class="input-icon-wrapper">
             <i data-lucide="calendar" style="width:18px;height:18px;"></i>
-            <input type="text" name="date_naissance" class="input" value="<?php echo htmlspecialchars($profil['dateNaissance'] ?? ''); ?>" placeholder="AAAA-MM-JJ">
+            <input type="date" name="date_naissance" class="input" value="<?php echo htmlspecialchars($profil['dateNaissance'] ?? ''); ?>" placeholder="AAAA-MM-JJ">
           </div>
         </div>
         <div class="form-group">

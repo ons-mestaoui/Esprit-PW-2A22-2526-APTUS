@@ -39,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ville = $_POST['ville'] ?? '';
     $pays = $_POST['pays'] ?? '';
     $bio = $_POST['bio'] ?? '';
+    $linkedin = $_POST['linkedin'] ?? '';
 
     if (empty($raison_sociale) || empty($email)) {
         $error = "Veuillez remplir les champs obligatoires (Raison sociale, Email).";
