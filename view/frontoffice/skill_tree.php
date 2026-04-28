@@ -50,6 +50,7 @@ if (!isset($content)) {
 ?>
 
 <!-- Import Force Graph & Confetti -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://unpkg.com/force-graph"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
@@ -244,6 +245,11 @@ function switchView(view) {
 function initGraph() {
     graph = ForceGraph()(document.getElementById('neural-graph'))
         .graphData(gData)
+        // --- GRAVITY PULL : Keeps all neurons anchored to the center ---
+        .d3Force('center', d3.forceCenter(0, 0).strength(1))
+        .d3Force('charge', d3.forceManyBody().strength(-150))
+        .d3Force('radial', d3.forceRadial(80, 0, 0).strength(0.08))
+        // ----------------------------------------------------------------
         .nodeRelSize(6)
         .nodeLabel('name')
         .nodeCanvasObject((node, ctx, globalScale) => {
