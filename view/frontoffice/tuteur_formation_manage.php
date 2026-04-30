@@ -61,7 +61,7 @@ if (!isset($content)) {
     <!-- ONGLET ETUDIANTS -->
     <div id="content-students">
         <div style="background: var(--bg-surface); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
-            <h3 style="margin-bottom: 1.5rem; color: var(--text-primary);">Validation Manuelle de Progression</h3>
+            <h3 style="margin-bottom: 1.5rem; color: var(--text-primary);">Suivi de la Progression des Étudiants</h3>
             <?php if (empty($students)): ?>
                 <p style="color: var(--text-secondary);">Aucun étudiant n'est inscrit à cette formation.</p>
             <?php else: ?>
@@ -70,8 +70,8 @@ if (!isset($content)) {
                         <tr style="border-bottom: 1px solid var(--border-color); text-align: left; color: var(--text-secondary);">
                             <th style="padding: 1rem;">Étudiant</th>
                             <th style="padding: 1rem;">Statut</th>
-                            <th style="padding: 1rem;">Progression</th>
-                            <th style="padding: 1rem; text-align: right;">Action</th>
+                            <th style="padding: 1rem;">Progression (Auto)</th>
+                            <th style="padding: 1rem; text-align: right;">Bilan Cognitif</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -93,14 +93,9 @@ if (!isset($content)) {
                                 </div>
                             </td>
                             <td style="padding: 1rem; text-align: right;">
-                                <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;">
-                                    <button onclick="showStudentEmotions(<?php echo $s['id_user']; ?>, '<?php echo addslashes($s['nom_etudiant']); ?>')" class="btn" style="padding: 0.25rem 0.5rem; background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 1px solid #6366f1; white-space: nowrap;" title="Bilan FaceAPI">
-                                        🧠 Bilan IA
-                                    </button>
-                                    <button onclick="updateProg(<?php echo $s['id_user']; ?>, Math.max(0, parseInt(document.getElementById('prog-text-<?php echo $s['id_user']; ?>').innerText) - 20))" class="btn" style="padding: 0.25rem 0.5rem; background: var(--bg-tertiary); color: var(--text-primary);">-20%</button>
-                                    <button onclick="updateProg(<?php echo $s['id_user']; ?>, Math.min(100, parseInt(document.getElementById('prog-text-<?php echo $s['id_user']; ?>').innerText) + 20))" class="btn" style="padding: 0.25rem 0.5rem; background: var(--bg-tertiary); color: var(--text-primary);">+20%</button>
-                                    <button onclick="updateProg(<?php echo $s['id_user']; ?>, 100)" class="btn btn-primary" style="padding: 0.25rem 0.75rem;">100%</button>
-                                </div>
+                                <button onclick="showStudentEmotions(<?php echo $s['id_user']; ?>, '<?php echo addslashes($s['nom_etudiant']); ?>')" class="btn" style="padding: 0.4rem 0.8rem; background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 1px solid #6366f1; white-space: nowrap; border-radius: 8px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#6366f1'; this.style.color='white';" onmouseout="this.style.background='rgba(99, 102, 241, 0.1)'; this.style.color='#6366f1';">
+                                    🧠 Bilan IA
+                                </button>
                             </td>
                         </tr>
                         <?php endforeach; ?>
