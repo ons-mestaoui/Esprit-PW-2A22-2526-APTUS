@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/../config.php';
 
-// En haut du fichier, on inclut le fichier des clés secrètes
 $keys_path = __DIR__ . '/../api_keys.php';
 if (file_exists($keys_path)) {
     require_once $keys_path;
@@ -11,224 +10,169 @@ if (file_exists($keys_path)) {
 
 class AIController
 {
-    private $apiKey;
+    private $groqKeys = [];
+    private $geminiKey = '';
 
     public function __construct()
     {
-        $this->apiKey = defined('GROQ_API_KEY') ? GROQ_API_KEY : '';
+        if (defined('GROQ_API_KEYS')) $this->groqKeys = GROQ_API_KEYS;
+        if (defined('GEMINI_API_KEY')) $this->geminiKey = GEMINI_API_KEY;
     }
 
-    public function generateSyllabus($titre, $domaine, $niveau)
+    /**
+     * SYSTÈME DE FAILOVER HYBRIDE (GROQ -> GEMINI)
+     */
+    private function callAI($data, $timeout = 30)
     {
-        if (empty($this->apiKey)) {
-            return json_encode(['success' => false, 'message' => 'Clé API Groq manquante.']);
+        // 1. Tenter avec GROQ (Rotation des clés)
+        foreach ($this->groqKeys as $key) {
+            $res = $this->requestGroq($data, $key, $timeout);
+            if ($res['success']) return $res;
         }
 
-        $endpoint = "https://api.groq.com/openai/v1/chat/completions";
-
-        $prompt = "Tu es un expert en pédagogie pour la plateforme Aptus AI. 
-        Génère un syllabus détaillé pour une formation intitulée '$titre' dans le domaine '$domaine' pour un niveau '$niveau'. 
-        
-        RÉPONDS UNIQUEMENT AU FORMAT JSON avec la structure suivante :
-        {
-            \"syllabus\": [
-                {\"chapitre\": \"Nom du chapitre 1\", \"description\": \"Contenu court du chapitre\", \"duree\": \"1h30\"},
-                ...
-            ],
-            \"resume_global\": \"Une courte introduction captivante pour le cours.\"
+        // 2. Tenter avec GEMINI (Fallback ultime)
+        if (!empty($this->geminiKey)) {
+            return $this->requestGemini($data, $this->geminiKey, $timeout);
         }
-        
-        Ne rajoute aucune phrase avant ou après le JSON. Sois professionnel et précis.";
 
-        $data = [
-            "model" => "llama-3.3-70b-versatile",
-            "messages" => [
-                [
-                    "role" => "user",
-                    "content" => $prompt
-                ]
-            ],
-            "temperature" => 0.7,
-            "response_format" => ["type" => "json_object"]
-        ];
+        return ['success' => false, 'message' => 'Toutes les APIs (Groq & Gemini) ont échoué.'];
+    }
 
-        $ch = curl_init($endpoint);
+    private function requestGroq($data, $key, $timeout) {
+        $ch = curl_init("https://api.groq.com/openai/v1/chat/completions");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $this->apiKey
-        ]);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Authorization: Bearer ' . $key]);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         $response = curl_exec($ch);
-        if (curl_errno($ch)) {
-            return json_encode(['success' => false, 'message' => 'Erreur de connexion : ' . curl_error($ch)]);
-        }
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        $result = json_decode($response, true);
-
-        if (isset($result['choices'][0]['message']['content'])) {
-            $aiText = $result['choices'][0]['message']['content'];
-            $decoded = json_decode($aiText, true);
-
-            if ($decoded) {
-                return json_encode([
-                    'success' => true,
-                    'data' => $decoded
-                ]);
-            } else {
-                return json_encode(['success' => false, 'message' => 'L\'IA n\'a pas renvoyé un JSON valide.', 'raw' => $aiText]);
-            }
+        if ($httpCode === 200 && $response) {
+            $json = json_decode($response, true);
+            return ['success' => true, 'content' => $json['choices'][0]['message']['content'] ?? ''];
         }
-
-        if (isset($result['error']['message'])) {
-            return json_encode(['success' => false, 'message' => 'Erreur API Groq : ' . $result['error']['message']]);
-        }
-
-        return json_encode(['success' => false, 'message' => 'Erreur de réponse de l\'IA.', 'raw' => $result]);
+        return ['success' => false];
     }
-    public function analyzeStudentEmotions($stats)
-    {
-        if (empty($this->apiKey)) {
-            return json_encode(['success' => false, 'message' => 'Clé API Groq manquante.']);
-        }
 
-        $endpoint = "https://api.groq.com/openai/v1/chat/completions";
+    private function requestGemini($data, $key, $timeout) {
+        // Adaptation du format OpenAI vers Gemini
+        $prompt = "";
+        foreach($data['messages'] as $m) { $prompt .= $m['content'] . "\n"; }
 
-        $prompt = "Tu es un Agent IA expert en pédagogie et psychologie cognitive. 
-        Ton rôle est d'analyser les statistiques faciales d'un étudiant pendant un cours en ligne et de donner 3 conseils ultra-courts et actionnables au professeur pour l'aider à mieux l'accompagner.
-        Voici le bilan de la session de l'étudiant : " . json_encode($stats) . "
-        Rédige ton analyse en répondant UNIQUEMENT sous la forme d'un JSON valide avec la structure suivante :
-        {
-            \"analyse_globale\": \"Un court paragraphe résumant l'état de l'étudiant\",
-            \"conseils\": [\"Conseil 1\", \"Conseil 2\", \"Conseil 3\"]
-        }
-        Ne rajoute aucun texte avant ou après le JSON.";
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $key;
+        $body = [ "contents" => [[ "parts" => [[ "text" => $prompt ]] ]] ];
 
-        $data = [
-            "model" => "llama-3.3-70b-versatile",
-            "messages" => [
-                [
-                    "role" => "system",
-                    "content" => "Tu es un assistant IA qui ne répond strictment qu'en JSON."
-                ],
-                [
-                    "role" => "user",
-                    "content" => $prompt
-                ]
-            ],
-            "temperature" => 0.5,
-            "response_format" => ["type" => "json_object"]
-        ];
-
-        $ch = curl_init($endpoint);
+        $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $this->apiKey
-        ]);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         $response = curl_exec($ch);
-        if (curl_errno($ch)) {
-            return json_encode(['success' => false, 'message' => 'Erreur de connexion : ' . curl_error($ch)]);
-        }
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        $result = json_decode($response, true);
-
-        if (isset($result['choices'][0]['message']['content'])) {
-            $aiText = $result['choices'][0]['message']['content'];
-            $decoded = json_decode($aiText, true);
-
-            if ($decoded) {
-                return json_encode([
-                    'success' => true,
-                    'data' => $decoded
-                ]);
-            } else {
-                return json_encode(['success' => false, 'message' => 'L\'IA n\'a pas renvoyé un JSON valide.', 'raw' => $aiText]);
-            }
+        if ($httpCode === 200 && $response) {
+            $json = json_decode($response, true);
+            $text = $json['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            // Nettoyage si Gemini ajoute des backticks ```json
+            $text = preg_replace('/^```json\s*|```$/', '', trim($text));
+            return ['success' => true, 'content' => $text];
         }
-
-        if (isset($result['error']['message'])) {
-            return json_encode(['success' => false, 'message' => 'Erreur API Groq : ' . $result['error']['message']]);
-        }
-
-        return json_encode(['success' => false, 'message' => 'Erreur de réponse de l\'IA.', 'raw' => $result]);
+        return ['success' => false, 'message' => 'Gemini Error: ' . $httpCode];
     }
 
-    public function appendSyllabus($id_formation, $html_content)
-    {
+    // --- MÉTHODES MÉTIER ---
+
+    public function generateSyllabus($titre, $domaine, $niveau) {
+        $data = [
+            "model" => "llama-3.3-70b-versatile",
+            "messages" => [[ "role" => "user", "content" => "Expert Aptus AI. Génère syllabus JSON pour '$titre' ($domaine, $niveau). Structure: {syllabus:[{chapitre,description,duree}],resume_global}. Strict JSON." ]],
+            "temperature" => 0.7, "response_format" => ["type" => "json_object"]
+        ];
+        $res = $this->callAI($data);
+        return $res['success'] ? $res['content'] : json_encode(['success'=>false, 'message'=>$res['message']]);
+    }
+
+    public function analyzeStudentEmotions($stats) {
+        $data = [
+            "model" => "llama-3.3-70b-versatile",
+            "messages" => [[ "role" => "user", "content" => "Analyse emotions JSON: " . json_encode($stats) . ". Structure: {emotions_predominantes, conseils:[3 conseils actionnables]}." ]],
+            "temperature" => 0.6, "response_format" => ["type" => "json_object"]
+        ];
+        $res = $this->callAI($data);
+        return $res['success'] ? $res['content'] : json_encode(['success'=>false, 'message'=>$res['message']]);
+    }
+
+    public function selfHealingSyllabus($titre) {
+        $data = [
+            "model" => "llama-3.3-70b-versatile",
+            "messages" => [[ "role" => "user", "content" => "Veille Aptus AI. Nouveautés mois actuel pour '$titre'. JSON: {has_update:bool, headline, content}." ]],
+            "temperature" => 0.4, "response_format" => ["type" => "json_object"]
+        ];
+        $res = $this->callAI($data, 15);
+        if (!$res['success']) return json_encode(['success'=>false, 'has_update'=>false]);
+        $aiData = json_decode($res['content'], true);
+        return json_encode([
+            'success' => true,
+            'has_update' => !empty($aiData['has_update']),
+            'headline' => $aiData['headline'] ?? '',
+            'content' => $aiData['content'] ?? ''
+        ]);
+    }
+
+    public function generateCrashCourse($prompt, $catalogue) {
+        $ctx = ""; foreach($catalogue as $f) $ctx .= "- {$f['titre']} (ID:{$f['id_formation']})\n";
+        $data = [
+            "model" => "llama-3.3-70b-versatile",
+            "messages" => [[ "role" => "user", "content" => "RAG Aptus AI. Catalogue:\n$ctx\nBesoin: '$prompt'. Génère Crash Course 30min JSON: {title, subtitle, estimated_time, modules:[{formation_id, formation_titre, chapitre, objectif, duree}], conseil_final}." ]],
+            "temperature" => 0.6, "response_format" => ["type" => "json_object"]
+        ];
+        $res = $this->callAI($data);
+        if (!$res['success']) return json_encode(['success'=>false, 'message'=>$res['message']]);
+        return json_encode(['success'=>true, 'data'=>json_decode($res['content'],true)]);
+    }
+
+    public function generateCourseFactory($prompt) {
+        $data = [
+            "model" => "llama-3.3-70b-versatile",
+            "messages" => [["role"=>"system","content"=>"Strict JSON Output"],["role"=>"user","content"=>"Génère formation complète JSON pour: '$prompt'. Structure: {titre, domaine, niveau, duree, description_courte, prerequis, description_riche, modules:[{titre,description,duree}], tags:[]}."]],
+            "temperature" => 0.7, "response_format" => ["type" => "json_object"]
+        ];
+        $res = $this->callAI($data);
+        if (!$res['success']) return json_encode(['success'=>false, 'message'=>$res['message']]);
+        return json_encode(['success'=>true, 'data'=>json_decode($res['content'],true)]);
+    }
+
+    // DB Helpers
+    public function appendSyllabus($id, $html) {
         try {
             $db = config::getConnexion();
-            $stmt = $db->prepare("SELECT description FROM formation WHERE id_formation = :id");
-            $stmt->execute(['id' => $id_formation]);
-            $row = $stmt->fetch();
+            $s = $db->prepare("SELECT description FROM formation WHERE id_formation = :id"); $s->execute(['id'=>$id]);
+            $row = $s->fetch();
             if ($row) {
                 $desc = $row['description'];
-                
-                // Si un syllabus existe déjà, on le remplace
-                if (strpos($desc, '<!-- AI_SYLLABUS_START -->') !== false) {
-                    $desc = preg_replace('/<!-- AI_SYLLABUS_START -->.*?<!-- AI_SYLLABUS_END -->/s', $html_content, $desc);
-                } else {
-                    // Sinon on l'insère avant les ressources ou à la fin
-                    if (strpos($desc, '<!-- APTUS_RESOURCES:') !== false) {
-                        $desc = str_replace('<!-- APTUS_RESOURCES:', $html_content . '<!-- APTUS_RESOURCES:', $desc);
-                    } else {
-                        $desc .= $html_content;
-                    }
+                if (strpos($desc, '<!-- AI_SYLLABUS_START -->') !== false) $desc = preg_replace('/<!-- AI_SYLLABUS_START -->.*?<!-- AI_SYLLABUS_END -->/s', $html, $desc);
+                else {
+                    if (strpos($desc, '<!-- APTUS_RESOURCES:') !== false) $desc = str_replace('<!-- APTUS_RESOURCES:', $html . '<!-- APTUS_RESOURCES:', $desc);
+                    else $desc .= $html;
                 }
-                
-                $stmtU = $db->prepare("UPDATE formation SET description = :desc WHERE id_formation = :id");
-                $success = $stmtU->execute(['desc' => $desc, 'id' => $id_formation]);
-                return json_encode(['success' => $success]);
+                $u = $db->prepare("UPDATE formation SET description = :desc WHERE id_formation = :id");
+                return json_encode(['success' => $u->execute(['desc'=>$desc, 'id'=>$id])]);
             }
-            return json_encode(['success' => false]);
-        } catch (Exception $e) {
-            return json_encode(['success' => false, 'message' => 'Erreur DB: ' . $e->getMessage()]);
-        }
+        } catch (Exception $e) { return json_encode(['success'=>false]); }
+        return json_encode(['success'=>false]);
     }
 
-    public function getEmotionStats($id_candidat, $id_formation)
-    {
+    public function saveStudentEmotion($id_c, $id_f, $em) {
         try {
             $db = config::getConnexion();
-            if ($id_candidat > 0) {
-                $stmt = $db->prepare("SELECT emotion_detectee, COUNT(*) as count FROM rapport_emotions WHERE id_candidat = :id_candidat AND id_formation = :id_formation GROUP BY emotion_detectee");
-                $stmt->execute(['id_candidat' => $id_candidat, 'id_formation' => $id_formation]);
-            } else {
-                $stmt = $db->prepare("SELECT emotion_detectee, COUNT(*) as count FROM rapport_emotions WHERE id_formation = :id_formation GROUP BY emotion_detectee");
-                $stmt->execute(['id_formation' => $id_formation]);
-            }
-            $stats = $stmt->fetchAll();
-            return json_encode(['success' => true, 'stats' => $stats]);
-        } catch (Exception $e) {
-            return json_encode(['success' => false, 'message' => 'Erreur DB: ' . $e->getMessage()]);
-        }
-    }
-
-    public function saveStudentEmotion($id_candidat, $id_formation, $emotion)
-    {
-        if (!$id_candidat || !$emotion) {
-            return json_encode(['success' => false, 'message' => 'Données manquantes']);
-        }
-        try {
-            $pdo = config::getConnexion();
-            $stmt = $pdo->prepare("INSERT INTO rapport_emotions (id_candidat, id_formation, emotion_detectee) VALUES (:id_candidat, :id_formation, :emotion)");
-            $stmt->execute([
-                'id_candidat' => $id_candidat,
-                'id_formation' => $id_formation,
-                'emotion' => $emotion
-            ]);
-            return json_encode(['success' => true, 'message' => 'Emotion sauvegardée']);
-        } catch (Exception $e) {
-            return json_encode(['success' => false, 'message' => 'Erreur DB: ' . $e->getMessage()]);
-        }
+            $s = $db->prepare("INSERT INTO rapport_emotions (id_candidat, id_formation, emotion_detectee) VALUES (:c, :f, :e)");
+            return json_encode(['success' => $s->execute(['c'=>$id_c, 'f'=>$id_f, 'e'=>$em])]);
+        } catch (Exception $e) { return json_encode(['success'=>false]); }
     }
 }

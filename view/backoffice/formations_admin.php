@@ -319,7 +319,18 @@ if (!isset($content)) {
 <div class="modal-overlay" id="add-formation-modal">
     <div class="modal" style="max-width:640px;">
         <div class="modal-header">
-            <h3>Nouvelle Formation</h3>
+            <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                <h3>Nouvelle Formation</h3>
+                <button type="button" id="btn-course-factory" onclick="openCourseFactory()"
+                        style="padding:0.4rem 1rem; border-radius:10px; border:none; cursor:pointer; font-size:0.82rem; font-weight:700;
+                               background: var(--gradient-primary); color:white;
+                               box-shadow:0 4px 12px rgba(107,52,163,0.35); display:flex; align-items:center; gap:0.4rem;
+                               transition:transform 0.2s, box-shadow 0.2s;"
+                        onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(107,52,163,0.45)';"
+                        onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(107,52,163,0.35)';">
+                    ✨ Générer avec Aptus AI
+                </button>
+            </div>
             <button class="modal-close btn-icon" type="button" onclick="closeModals()"><i data-lucide="x" style="width:20px;height:20px;"></i></button>
         </div>
         <div class="modal-body">
@@ -464,7 +475,70 @@ if (!isset($content)) {
 .iv-status.invalid{ color: #ef4444; display:inline-flex !important; }
 .iv-msg           { display:none; }
 .iv-msg.show      { display:block !important; }
+
+/* ── Course Factory Modal ── */
+#modal-course-factory {
+    position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px);
+    z-index:10000; align-items:center; justify-content:center; padding:1rem;
+}
+.factory-modal-body {
+    background:var(--bg-card); border:1px solid var(--border-color); border-radius:20px;
+    padding:2rem; width:100%; max-width:520px; box-shadow:0 30px 80px rgba(0,0,0,0.3);
+}
+.factory-prompt-area {
+    width:100%; padding:0.9rem 1.1rem; border-radius:12px;
+    border:2px solid var(--border-color); background:var(--bg-surface);
+    color:var(--text-primary); font-size:0.95rem; outline:none; resize:vertical;
+    min-height:80px; transition:border-color 0.2s; box-sizing:border-box;
+}
+.factory-prompt-area:focus { border-color:#f59e0b; }
+.factory-quick-tag {
+    display:inline-flex; align-items:center; padding:0.3rem 0.75rem; border-radius:999px;
+    font-size:0.78rem; font-weight:600; border:1px solid var(--border-color);
+    background:var(--bg-surface); color:var(--text-secondary); cursor:pointer; transition:all 0.15s;
+}
+.factory-quick-tag:hover { border-color:#f59e0b; color:#f59e0b; background:rgba(245,158,11,0.07); }
 </style>
+
+<!-- ═══════════════════════════════════════════════════════════
+     COURSE FACTORY MODAL
+     ═══════════════════════════════════════════════════════════ -->
+<div id="modal-course-factory" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); z-index:10000; align-items:center; justify-content:center; padding:1rem;">
+    <div class="factory-modal-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+            <div>
+                <div style="font-size:0.7rem; font-weight:800; letter-spacing:0.1em; color:#f59e0b; text-transform:uppercase; margin-bottom:0.25rem;">✨ Course Factory &mdash; Aptus AI</div>
+                <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:var(--text-primary);">Générer une formation en 1 clic</h3>
+            </div>
+            <button onclick="closeCourseFactory()" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:1.5rem;line-height:1;">×</button>
+        </div>
+
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin:0 0 1rem; line-height:1.6;">
+            Décrivez la formation souhaitée. L'IA va générer et <strong>pré-remplir automatiquement</strong> tous les champs du formulaire.
+        </p>
+
+        <textarea id="factory-prompt" class="factory-prompt-area"
+                  placeholder="Ex: Crée une formation intermédiaire sur le Cloud Computing avec 4 modules..."></textarea>
+
+        <div style="margin:0.75rem 0; display:flex; flex-wrap:wrap; gap:0.4rem;">
+            <span class="factory-quick-tag" onclick="setFactoryPrompt('Formation débutant Python avec 3 modules pratiques')">🐍 Python Débutant</span>
+            <span class="factory-quick-tag" onclick="setFactoryPrompt('Formation avancée Cybersécurité avec 5 modules')">🔒 Cybersécurité</span>
+            <span class="factory-quick-tag" onclick="setFactoryPrompt('Formation intermédiaire Cloud Computing 4 modules')">☁️ Cloud AWS</span>
+            <span class="factory-quick-tag" onclick="setFactoryPrompt('Formation Marketing Digital pour entrepreneurs, 6 modules')">📈 Marketing Digital</span>
+            <span class="factory-quick-tag" onclick="setFactoryPrompt('Formation IA & Machine Learning niveau expert, 5 modules')">🤖 IA & ML</span>
+        </div>
+
+        <div id="factory-status" style="display:none; font-size:0.82rem; color:var(--text-secondary); text-align:center; padding:0.5rem;"></div>
+
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1.25rem;">
+            <button onclick="closeCourseFactory()" class="btn btn-secondary" style="padding:0.65rem 1.4rem; border-radius:12px;">Annuler</button>
+            <button id="btn-factory-generate" onclick="runCourseFactory()" style="padding:0.65rem 1.6rem; border-radius:12px; border:none; cursor:pointer; font-weight:700; font-size:0.9rem;
+                    background: linear-gradient(135deg,#f59e0b,#f97316); color:white; box-shadow:0 4px 14px rgba(245,158,11,0.4); display:flex; align-items:center; gap:0.5rem;">
+                <span>✨</span> <span id="factory-btn-text">Générer avec Llama-3</span>
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
     // ── Quill Editor ────────────────────────────────────────────
@@ -917,4 +991,137 @@ if (!isset($content)) {
     if (filterDomaine) filterDomaine.addEventListener('change', performSearch);
     if (filterNiveau) filterNiveau.addEventListener('change', performSearch);
     if (resetBtn) resetBtn.addEventListener('click', resetFilters);
+
+    // ══════════════════════════════════════════════════════════════
+    // COURSE FACTORY — Génération IA en 1 clic
+    // ══════════════════════════════════════════════════════════════
+    function openCourseFactory() {
+        document.getElementById('modal-course-factory').style.display = 'flex';
+        setTimeout(() => document.getElementById('factory-prompt').focus(), 100);
+    }
+    function closeCourseFactory() {
+        document.getElementById('modal-course-factory').style.display = 'none';
+        document.getElementById('factory-status').style.display = 'none';
+    }
+    function setFactoryPrompt(text) {
+        document.getElementById('factory-prompt').value = text;
+        document.getElementById('factory-prompt').focus();
+    }
+
+    function runCourseFactory() {
+        const prompt = document.getElementById('factory-prompt').value.trim();
+        if (!prompt) {
+            document.getElementById('factory-status').textContent = '⚠️ Veuillez décrire la formation souhaitée.';
+            document.getElementById('factory-status').style.display = 'block';
+            return;
+        }
+
+        const btnText = document.getElementById('factory-btn-text');
+        const btn = document.getElementById('btn-factory-generate');
+        const status = document.getElementById('factory-status');
+
+        btn.disabled = true;
+        btnText.textContent = 'Génération en cours...';
+        status.textContent = '🤖 Llama-3 crée votre formation...';
+        status.style.display = 'block';
+        status.style.color = 'var(--accent-primary)';
+
+        const fd = new FormData();
+        fd.append('action', 'generate_course_factory');
+        fd.append('prompt', prompt);
+
+        fetch('ajax_handler.php', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btnText.textContent = 'Générer avec Llama-3';
+
+            if (!data.success || !data.data) {
+                status.textContent = '⚠️ ' + (data.message || 'Erreur lors de la génération.');
+                status.style.color = '#ef4444';
+                return;
+            }
+
+            const d = data.data;
+
+            // ── PRÉ-REMPLISSAGE DU FORMULAIRE PRINCIPAL ──
+            // Titre
+            const titreField = document.getElementById('af-titre');
+            if (titreField && d.titre) {
+                titreField.value = d.titre;
+                titreField.dispatchEvent(new Event('input'));
+            }
+
+            // Domaine
+            const domaineField = document.getElementById('af-domaine');
+            if (domaineField && d.domaine) {
+                domaineField.value = d.domaine;
+                domaineField.dispatchEvent(new Event('input'));
+            }
+
+            // Niveau
+            const niveauField = document.querySelector('#add-formation-form select[name="niveau"]');
+            if (niveauField && d.niveau) {
+                const opts = Array.from(niveauField.options);
+                const match = opts.find(o => o.value.toLowerCase() === d.niveau.toLowerCase());
+                if (match) niveauField.value = match.value;
+            }
+
+            // Durée
+            const dureeField = document.querySelector('#add-formation-form input[name="duree"]');
+            if (dureeField && d.duree) dureeField.value = d.duree;
+
+            // Description riche dans Quill.js
+            if (window.quill && d.description_riche) {
+                // Construire le contenu complet : description + modules
+                let richContent = d.description_riche || '';
+
+                if (d.prerequis) {
+                    richContent += `<h2>Prérequis</h2><p>${d.prerequis}</p>`;
+                }
+
+                if (d.modules && d.modules.length > 0) {
+                    richContent += '<h2>📚 Plan du cours</h2><ol>';
+                    d.modules.forEach(m => {
+                        richContent += `<li><strong>${m.titre || 'Module'}</strong> (${m.duree || ''})<br>${m.description || ''}</li>`;
+                    });
+                    richContent += '</ol>';
+                }
+
+                if (d.tags && d.tags.length > 0) {
+                    richContent += `<p><em>🏷️ Tags : ${d.tags.join(', ')}</em></p>`;
+                }
+
+                quill.root.innerHTML = richContent;
+                document.getElementById('hidden-description').value = richContent;
+            }
+
+            // Fermer le modal factory et ouvrir le formulaire principal
+            closeCourseFactory();
+
+            // Ouvrir le modal principal si pas déjà ouvert
+            const mainModal = document.getElementById('add-formation-modal');
+            if (mainModal) {
+                mainModal.style.display = 'flex';
+                setTimeout(() => mainModal.classList.add('active'), 10);
+                mainModal.scrollTop = 0;
+            }
+
+            // Notification de succès
+            aptusAlert('✨ Formation générée ! Vérifiez et complétez les champs restants (Tuteur, Date) puis sauvegardez.', 'success');
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btnText.textContent = 'Générer avec Llama-3';
+            status.textContent = '⚠️ Erreur réseau : ' + err.message;
+            status.style.color = '#ef4444';
+        });
+    }
+
+    // Fermer le modal factory avec Escape
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            closeCourseFactory();
+        }
+    });
 </script>

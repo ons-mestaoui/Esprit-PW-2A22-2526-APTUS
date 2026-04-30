@@ -52,6 +52,56 @@ switch ($action) {
     // --------------------------------------------------------
     // CONCEPT 4 : Tuteur Dashboard - Gestion de progression et ressources
     // --------------------------------------------------------
+    // --------------------------------------------------------
+    // CONCEPT INNOVATION 1 : Smart Dwell Time — Progression Algorithmique
+    // Le PHP valide mathématiquement le temps de lecture avant d'incrémenter.
+    // --------------------------------------------------------
+    case 'update_dwell_progression':
+        require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
+        $controller   = new TuteurDashboardController();
+        $id_formation = (int)($_POST['id_formation'] ?? 0);
+        $id_user      = (int)($_POST['id_user'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 0);
+        $mode         = $_POST['mode'] ?? 'dwell'; // 'chapter' ou 'dwell'
+        $new_prog     = (int)($_POST['new_prog'] ?? 0);
+
+        // Lire la progression actuelle pour ne jamais régresser
+        $db_local = config::getConnexion();
+        $stmt_cur = $db_local->prepare("SELECT progression FROM inscription WHERE id_formation=:f AND id_user=:u LIMIT 1");
+        $stmt_cur->execute(['f' => $id_formation, 'u' => $id_user]);
+        $current = (int)($stmt_cur->fetchColumn() ?? 0);
+
+        if ($mode === 'chapter') {
+            // ── MODE A : Chapitres ──────────────────────────────────
+            // La progression envoyée = (chapitre_index+1 / total) * 100
+            // On fait confiance à la valeur (elle est calculée côté PHP au rendu)
+            $final = max($current, min(100, $new_prog));
+
+        } else {
+            // ── MODE B : Dwell Time avec validation mathématique ────
+            $dwell_seconds = (int)($_POST['dwell_seconds'] ?? 0);
+            $word_count    = (int)($_POST['word_count'] ?? 0);
+
+            // Plancher 180 secondes (3 min) même pour les courts textes
+            $min_required  = max(180, ($word_count > 0) ? ($word_count / 4.17) : 180);
+            $ratio         = ($dwell_seconds > 0) ? min($dwell_seconds / $min_required, 1.0) : 0;
+            $calc_prog     = (int)round($ratio * 100);
+
+            // On prend le MAX entre ce que le client dit et ce que le calcul donne
+            // (protection anti-triche : on prend le minimum des deux)
+            $validated = min($new_prog, $calc_prog);
+            $final     = max($current, $validated);
+        }
+
+        $success = $controller->updateProgression($id_formation, $id_user, $final);
+        echo json_encode([
+            'success'     => $success,
+            'progression' => $final,
+            'mode'        => $mode
+        ]);
+        break;
+
+
+    // ─── Ancienne route (rétro-compatibilité tuteur, si toujours utilisée) ───
     case 'update_progression':
         require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
         $controller = new TuteurDashboardController();
@@ -108,6 +158,53 @@ switch ($action) {
         $domaine = $_POST['domaine'] ?? '';
         $niveau = $_POST['niveau'] ?? '';
         echo $controller->generateSyllabus($titre, $domaine, $niveau);
+        break;
+
+    // --------------------------------------------------------
+    // CONCEPT INNOVATION 2 : Self-Healing Syllabus
+    // --------------------------------------------------------
+    case 'self_healing_syllabus':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
+        $titre_cours = $_GET['titre'] ?? $_POST['titre'] ?? '';
+        if (empty($titre_cours)) {
+            echo json_encode(['success' => false, 'has_update' => false, 'message' => 'Titre manquant.']);
+        } else {
+            echo $controller->selfHealingSyllabus($titre_cours);
+        }
+        break;
+
+    // --------------------------------------------------------
+    // CONCEPT INNOVATION 3 : Generative Learning Path (RAG)
+    // --------------------------------------------------------
+    case 'generate_crash_course':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        require_once __DIR__ . '/../../controller/FormationController.php';
+        $aiC = new AIController();
+        $formC = new FormationController();
+        $user_prompt = $_POST['prompt'] ?? '';
+        if (empty($user_prompt)) {
+            echo json_encode(['success' => false, 'message' => 'Requête vide.']);
+            break;
+        }
+        // RAG : On injecte tout le catalogue dans le contexte
+        $catalogue_raw = $formC->listerFormations();
+        $catalogue = ($catalogue_raw instanceof PDOStatement) ? $catalogue_raw->fetchAll() : ($catalogue_raw ?? []);
+        echo $aiC->generateCrashCourse($user_prompt, $catalogue);
+        break;
+
+    // --------------------------------------------------------
+    // CONCEPT INNOVATION 4 : Course Factory (Admin 1-Clic)
+    // --------------------------------------------------------
+    case 'generate_course_factory':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
+        $prompt = $_POST['prompt'] ?? '';
+        if (empty($prompt)) {
+            echo json_encode(['success' => false, 'message' => 'Prompt vide.']);
+        } else {
+            echo $controller->generateCourseFactory($prompt);
+        }
         break;
 
     case 'append_ai_syllabus':
