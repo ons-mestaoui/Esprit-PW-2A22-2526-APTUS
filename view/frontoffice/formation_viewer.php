@@ -28,11 +28,10 @@ $min_read_seconds  = max(180, (int)round($word_count / 4.17));
 $has_chapters      = !empty($resources);
 $total_chapters    = $has_chapters ? count($resources) : 0;
 
-// Charger la progression actuelle depuis la BDD
-$db_prog = config::getConnexion();
-$stmt_p  = $db_prog->prepare("SELECT progression FROM inscription WHERE id_formation=:f AND id_user=:u LIMIT 1");
-$stmt_p->execute(['f' => $id_formation, 'u' => $id_user]);
-$current_progression = (int)($stmt_p->fetchColumn() ?? 0);
+// Charger la progression actuelle depuis la BDD (via le Controller)
+require_once __DIR__ . '/../../controller/InscriptionController.php';
+$inscriC = new InscriptionController();
+$current_progression = $inscriC->getCurrentProgression($id_formation, $id_user);
 
 if (!isset($content)) {
     $content = __FILE__;

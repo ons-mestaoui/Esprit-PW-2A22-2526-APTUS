@@ -92,6 +92,27 @@ class InscriptionController
         }
     }
 
+    // Récupère la progression actuelle d'un étudiant pour une formation
+    public function getCurrentProgression($id_formation, $id_user)
+    {
+        $db = config::getConnexion();
+        try {
+            $stmt = $db->prepare("SELECT progression FROM inscription WHERE id_formation = :f AND id_user = :u LIMIT 1");
+            $stmt->execute(['f' => $id_formation, 'u' => $id_user]);
+            $res = $stmt->fetchColumn();
+            return $res ? (int)$res : 0;
+        } catch (Exception $e) {
+            try {
+                $stmt = $db->prepare("SELECT progression FROM Inscription WHERE id_formation = :f AND id_user = :u LIMIT 1");
+                $stmt->execute(['f' => $id_formation, 'u' => $id_user]);
+                $res = $stmt->fetchColumn();
+                return $res ? (int)$res : 0;
+            } catch (Exception $e2) {
+                return 0;
+            }
+        }
+    }
+
     // Récupère les formations auxquelles un candidat est inscrit
     // On fait une jointure pour avoir aussi les infos de la formation et du tuteur
     public function listerMesFormations($id_user)

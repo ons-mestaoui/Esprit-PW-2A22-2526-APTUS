@@ -65,10 +65,9 @@ switch ($action) {
         $new_prog     = (int)($_POST['new_prog'] ?? 0);
 
         // Lire la progression actuelle pour ne jamais régresser
-        $db_local = config::getConnexion();
-        $stmt_cur = $db_local->prepare("SELECT progression FROM inscription WHERE id_formation=:f AND id_user=:u LIMIT 1");
-        $stmt_cur->execute(['f' => $id_formation, 'u' => $id_user]);
-        $current = (int)($stmt_cur->fetchColumn() ?? 0);
+        require_once __DIR__ . '/../../controller/InscriptionController.php';
+        $inscriC = new InscriptionController();
+        $current = $inscriC->getCurrentProgression($id_formation, $id_user);
 
         if ($mode === 'chapter') {
             // ── MODE A : Chapitres ──────────────────────────────────
