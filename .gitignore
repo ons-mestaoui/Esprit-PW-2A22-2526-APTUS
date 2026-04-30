@@ -1,0 +1,9 @@
+.env
+ai_debug.log
+scratch_debug_stats.php
+test_ai.php
+test_dump.json
+test_dump2.json
+test_dump.php
+db_update_ai.php
+.gemini/

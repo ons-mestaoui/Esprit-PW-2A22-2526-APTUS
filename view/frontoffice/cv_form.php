@@ -63,6 +63,65 @@ if (!isset($content)) {
 }
 ?>
 
+<style>
+    /* Premium Audit Dashboard V3 */
+    .ats-score-badge {
+        width: 110px;
+        height: 110px;
+        background: #ef4444 !important; /* Force Red as requested */
+        color: white !important;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+        font-weight: 800;
+        box-shadow: 0 12px 25px rgba(239, 68, 68, 0.4);
+        flex-shrink: 0;
+    }
+    .audit-card-v3 {
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 20px;
+        border: 1px solid #e2e8f0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .audit-card-v3.strengths { border-left: 6px solid #10b981; }
+    .audit-card-v3.weaknesses { border-left: 6px solid #f59e0b; }
+    
+    .audit-card-v3 .card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .audit-card-v3 h4 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+    .audit-card-v3.strengths h4 { color: #10b981; }
+    .audit-card-v3.weaknesses h4 { color: #f59e0b; }
+    
+    .audit-card-v3 ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .audit-card-v3 li {
+        margin-bottom: 15px;
+        color: #475569;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        padding-left: 0;
+        position: relative;
+    }
+    .audit-card-v3 li:last-child { margin-bottom: 0; }
+</style>
+
 <script>
     const INITIAL_DATA = <?php echo json_encode($cv); ?>;
     const CV_ID = <?php echo $cv_id ? (int)$cv_id : 'null'; ?>;
@@ -250,7 +309,8 @@ if (!isset($content)) {
                 <div id="input-summary" contenteditable="true" class="form-control" 
                      style="padding: 15px; padding-bottom:45px; height:auto; min-height:120px; overflow-y:auto; background:white; line-height:1.6;"
                      oninput="syncField({id:'input-summary', value:this.innerHTML})"></div>
-                <button type="button" class="btn-ai-premium" onclick="optimizeWithAI('input-summary', 'summary', this)" style="bottom:12px; right:12px; position:absolute;">
+
+                <button type="button" class="btn-ai-premium" onclick="openAIPolishModal('input-summary', 'summary', this)" style="bottom:12px; right:12px; position:absolute;">
                     <i data-lucide="sparkles" style="width:14px;height:14px;"></i> <span>Polish via IA</span>
                 </button>
             </div>
@@ -347,36 +407,71 @@ if (!isset($content)) {
         <div style="margin: 2rem 0;">
             <i data-lucide="scan-line" style="width: 70px; height: 70px; color: var(--accent-primary); animation: scanPulse 1.5s infinite;"></i>
         </div>
-        <h3 style="margin-bottom:0.5rem;">Audit par Mistral IA en cours...</h3>
+        <h3 id="audit-main-title" style="margin-bottom:0.5rem;">Audit IA en cours...</h3>
         <p id="audit-status-text" style="color:var(--text-tertiary); font-family:monospace; margin-bottom: 2rem;">Lecture du contenu du CV...</p>
         <div style="background:var(--bg-secondary); height:6px; border-radius:3px; overflow:hidden;">
             <div id="audit-progress" style="width:10%; height:100%; background:linear-gradient(90deg, #10b981, #3b82f6); transition:width 0.4s ease;"></div>
         </div>
     </div>
 
-    <!-- Étape 3 : Le Dashboard -->
-    <div id="ai-audit-dashboard" class="aptus-modal-content" style="display:none; max-width: 600px; text-align:left;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+    <!-- Étape 3 : Le Dashboard V3 -->
+    <div id="ai-audit-dashboard" class="aptus-modal-content" style="display:none; max-width: 750px; text-align:left; border-radius: 24px; padding: 40px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 35px; gap: 20px;">
             <div>
-                <h2 style="font-size:1.6rem; display:flex; align-items:center; gap:8px;"><i data-lucide="bar-chart-2" style="color:var(--accent-primary);"></i> Rapport d'Audit ATS</h2>
+                <h2 style="font-size:2.2rem; font-weight:800; display:flex; align-items:center; gap:15px; color:#1e293b; margin:0;">
+                    <i data-lucide="bar-chart-2" style="color:var(--accent-primary); width:36px; height:36px;"></i> Rapport d'Audit ATS
+                </h2>
+                <p style="color:#64748b; margin-top:8px; font-size:1.1rem; font-weight:500;">
+                    Score de compatibilité avec les systèmes ATS de recrutement
+                </p>
             </div>
-            <div class="ats-score-circle" id="ats-score-circle">
+            <div class="ats-score-badge" id="ats-score-circle">
                 <span id="ats-score-value">0</span>%
             </div>
         </div>
         
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-height:400px; overflow-y:auto; padding-right:5px;">
-            <div class="audit-card strengths">
-                <h4 style="color:#10b981; display:flex; align-items:center; gap:6px; margin-bottom:10px;"><i data-lucide="check-circle" style="width:16px;"></i> Points Forts</h4>
-                <ul id="ats-strengths" style="margin:0; padding-left:20px; color:var(--text-secondary); font-size:0.9rem; line-height:1.5;"></ul>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom:35px;">
+            <div class="audit-card-v3 strengths">
+                <div class="card-header">
+                    <i data-lucide="check-circle" style="width:24px; height:24px; color:#10b981;"></i>
+                    <h4>Points Forts</h4>
+                </div>
+                <ul id="ats-strengths" style="padding-left:0;"></ul>
             </div>
-            <div class="audit-card weaknesses">
-                <h4 style="color:#f59e0b; display:flex; align-items:center; gap:6px; margin-bottom:10px;"><i data-lucide="alert-circle" style="width:16px;"></i> À Améliorer</h4>
-                <ul id="ats-weaknesses" style="margin:0; padding-left:20px; color:var(--text-secondary); font-size:0.9rem; line-height:1.5;"></ul>
+            <div class="audit-card-v3 weaknesses">
+                <div class="card-header">
+                    <i data-lucide="alert-circle" style="width:24px; height:24px; color:#f59e0b;"></i>
+                    <h4>À Améliorer</h4>
+                </div>
+                <ul id="ats-weaknesses" style="padding-left:0;"></ul>
             </div>
         </div>
 
-        <button class="btn-modal-confirm" style="width:100%; margin-top: 2rem;" onclick="window.location.href='cv_my.php'">Terminer et aller à Mes CVs</button>
+        <button class="btn-modal-confirm" style="width:100%; padding: 18px; font-size: 1.15rem; border-radius: 16px; background: #6D3AB7; box-shadow: 0 8px 20px rgba(109, 58, 183, 0.3); font-weight: 700;" onclick="window.location.href='cv_my.php'">
+            Terminer et aller à Mes CVs
+        </button>
+    </div>
+</div>
+
+<!-- MODALE IA POLISH -->
+<div id="ai-polish-modal" class="aptus-modal-overlay">
+    <div class="aptus-modal-content" style="max-width: 450px; text-align: center;">
+        <div class="modal-icon-circle" style="background: rgba(107, 52, 163, 0.1); color: var(--accent-primary); margin: 0 auto 1.5rem auto; display:flex; align-items:center; justify-content:center;">
+            <i data-lucide="sparkles" style="width: 40px; height: 40px;"></i>
+        </div>
+        <h2 style="font-size:1.5rem; margin-bottom:0.5rem;">Optimisation IA</h2>
+        <p style="color:var(--text-secondary); margin-bottom:1.5rem; font-size:0.9rem;">
+            Comment souhaitez-vous améliorer votre texte ?
+        </p>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <button class="btn-modal-confirm" onclick="applyAIPolish('correct')" style="display:flex; align-items:center; justify-content:center; gap:10px;">
+                <i data-lucide="languages" style="width:18px;"></i> Correction Linguistique
+            </button>
+            <button class="btn-modal-confirm" onclick="applyAIPolish('polish')" style="background: var(--gradient-primary); display:flex; align-items:center; justify-content:center; gap:10px;">
+                <i data-lucide="sparkles" style="width:18px;"></i> Reformuler Professionnellement
+            </button>
+            <button class="btn-secondary-cv" style="border:none; margin-top:5px;" onclick="closeAIPolishModal()">Annuler</button>
+        </div>
     </div>
 </div>
 
@@ -398,14 +493,17 @@ $receiverScript = '
         position: relative;
         z-index: 10;
     }
+    /* Reset margins for consistent spacing across templates */
+    h1, h2, h3, h4, h5, h6, p, ul, ol, li { margin: 0; padding: 0; }
+    
     /* Universal Template Support - Ensuring complex items look good in all templates */
-    .item { margin-bottom: 25px; width: 100%; text-align: left; }
-    .item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; gap: 15px; flex-wrap: wrap; text-align: left; }
-    .item-title { font-weight: 700; font-size: 1.1rem; color: #0f172a; flex: 1; }
-    .item-date { color: #64748b; font-size: 0.85rem; font-style: normal; white-space: nowrap; font-weight: 500; }
-    .item-company { font-weight: 600; margin: 0 0 8px 0; color: var(--cv-accent, #2563eb); font-size: 0.95rem; text-align: left; }
-    .item-desc { margin: 8px 0 0 18px; padding: 0; list-style-type: disc; text-align: left; }
-    .item-desc li { margin-bottom: 4px; color: #334155; line-height: 1.5; }
+    .item { margin-bottom: 12px; width: 100%; text-align: left; }
+    .item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0px; gap: 10px; flex-wrap: wrap; text-align: left; }
+    .item-title { font-weight: 700; font-size: 1.05rem; color: #0f172a; flex: 1; margin: 0; }
+    .item-date { color: #64748b; font-size: 0.8rem; font-style: normal; white-space: nowrap; font-weight: 500; }
+    .item-company { font-weight: 600; margin: 0; color: var(--cv-accent, #2563eb); font-size: 0.9rem; text-align: left; line-height: 1.2; }
+    .item-desc { margin: 4px 0 0 15px; padding: 0; list-style-type: disc; text-align: left; }
+    .item-desc li { margin-bottom: 2px; color: #334155; line-height: 1.4; font-size: 0.85rem; }
     
     .skill-pill { 
         display: inline-block; 
@@ -874,14 +972,34 @@ window.addEventListener('load', () => {
 });
 
 function toggleDyslexiaMode(enabled) {
-    if (enabled) document.body.classList.add('dyslexia-mode');
-    else document.body.classList.remove('dyslexia-mode');
+    const styleId = "dyslexia-style-parent";
+    let existing = document.getElementById(styleId);
+    
+    if (enabled) {
+        document.body.classList.add('dyslexia-mode');
+        if (!existing) {
+            const style = document.createElement("style");
+            style.id = styleId;
+            style.innerHTML = `
+                @import url('https://cdn.jsdelivr.net/npm/opendyslexic@1.0.3/dist/opendyslexic.css');
+                body.dyslexia-mode * { 
+                    font-family: 'OpenDyslexic', sans-serif !important; 
+                    line-height: 1.6 !important;
+                    letter-spacing: 0.03em !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    } else {
+        document.body.classList.remove('dyslexia-mode');
+        if (existing) existing.remove();
+    }
     
     const ifrm = document.getElementById('template-preview-frame');
     if (ifrm && ifrm.contentWindow) {
         ifrm.contentWindow.postMessage({ type: 'toggle-dyslexia', enabled: enabled }, '*');
     }
-    setTimeout(scaleIframe, 100);
+    setTimeout(scaleIframe, 150);
 }
 
 function showToast(msg, icon = 'info') {
@@ -1172,7 +1290,8 @@ function renderRoles() {
                 </div>
                 <div style="position:relative;">
                     <textarea class="achievement-text" id="exp-desc-${i}-${j}" placeholder="Décrivez vos missions..." oninput="currentRoles[${i}].achievements[${j}].text=this.value; syncExperience();" style="width:100%; min-height:80px; padding-bottom:35px;">${a.text}</textarea>
-                    <button type="button" class="btn-ai-premium" onclick="optimizeWithAI('exp-desc-${i}-${j}', 'experience', this)" style="position:absolute; bottom:5px; right:5px; padding:2px 8px; font-size:0.7rem;">
+                    
+                    <button type="button" class="btn-ai-premium" onclick="openAIPolishModal('exp-desc-${i}-${j}', 'experience', this)" style="position:absolute; bottom:5px; right:5px; padding:2px 8px; font-size:0.7rem;">
                         <i data-lucide="sparkles" style="width:10px;"></i> <span>Polish</span>
                     </button>
                 </div>
@@ -1424,38 +1543,39 @@ async function saveCV() {
 }
 
 async function startAIAudit() {
+    if (!AUDIT_CV_ID) {
+        alert("Veuillez sauvegarder votre CV au moins une fois avant de lancer l'audit.");
+        return;
+    }
     document.getElementById('ai-audit-prompt').style.display = 'none';
     document.getElementById('ai-audit-scanner').style.display = 'block';
+    document.getElementById('audit-main-title').textContent = "Analyse Groq Cloud en cours...";
     
     // Fake progress text (Looping for longer generation)
     const progText = document.getElementById('audit-status-text');
     const progBar = document.getElementById('audit-progress');
     const steps = [
-        "Lecture du contenu du CV...", 
-        "Analyse du score ATS...", 
-        "Vérification des mots-clés...", 
-        "L'IA (Llama 3.2 Rapide) réfléchit intensément...",
-        "Génération des recommandations détaillées...",
-        "Veuillez patienter (génération ultra-rapide en cours)..."
+        "Connexion au Cloud sécurisé...", 
+        "Analyse IA par Groq Cloud...", 
+        "Optimisation du score ATS...", 
+        "Finalisation du rapport..."
     ];
     let stepIndex = 0;
     const interval = setInterval(() => {
         stepIndex++;
-        if (stepIndex >= steps.length) {
-            stepIndex = 3; // Loop back to 'L'IA réfléchit'
+        if (stepIndex < steps.length) {
+            progText.textContent = steps[stepIndex];
         }
-        progText.textContent = steps[stepIndex];
-        // Pseudo-progress bar that slows down but never quite stops until done
         const currentWidth = parseFloat(progBar.style.width || 0);
-        if (currentWidth < 95) {
-            progBar.style.width = (currentWidth + (95 - currentWidth) * 0.1) + '%';
+        if (currentWidth < 98) {
+            progBar.style.width = (currentWidth + (98 - currentWidth) * 0.3) + '%';
         }
-    }, 3000);
+    }, 800);
 
     // Build massive string
     const cvTextData = `
 Titre visé: ${document.getElementById('input-title').value.trim()}
-Résumé: ${document.getElementById('input-summary').value.trim()}
+Résumé: ${document.getElementById('input-summary').innerText.trim()}
 Expériences: ${document.getElementById('input-experience').value}
 Formation: ${document.getElementById('input-education').value}
 Compétences: ${document.getElementById('input-skills').value}
@@ -1480,10 +1600,7 @@ Compétences: ${document.getElementById('input-skills').value}
             // Lancer l'animation dynamique du score
             animateATSScore(r.score_ats || 0, 'ats-score-value');
             
-            circle.className = 'ats-score-circle'; // reset
-            if (r.score_ats >= 80) circle.classList.add('green');
-            else if (r.score_ats >= 50) circle.classList.add('orange');
-            else circle.classList.add('red');
+            circle.className = 'ats-score-badge';
 
             const sList = document.getElementById('ats-strengths');
             sList.innerHTML = '';
@@ -1504,20 +1621,44 @@ Compétences: ${document.getElementById('input-skills').value}
         }
     } catch(err) {
         clearInterval(interval);
-        alert("Erreur réseau (Ollama local injoignable).");
+        console.error("AI Audit Error:", err);
+        alert("Erreur lors de l'appel à l'IA : " + err.message + "\nVérifiez votre connexion internet.");
         window.location.href = 'cv_my.php';
     }
 }
 
     // ==========================================
-    // IA Polish Integration (Ollama Local)
+    // IA Polish Integration (Ollama Mistral 7b)
     // ==========================================
-    async function optimizeWithAI(inputId, context, btnElement) {
+    let pendingAI = { inputId: null, context: null, btn: null };
+
+    function openAIPolishModal(inputId, context, btnElement) {
+        pendingAI = { inputId, context, btn: btnElement };
+        const modal = document.getElementById('ai-polish-modal');
+        if (modal) {
+            modal.classList.add('active');
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+
+    function closeAIPolishModal() {
+        const modal = document.getElementById('ai-polish-modal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    function applyAIPolish(mode) {
+        closeAIPolishModal();
+        if (pendingAI.inputId) {
+            optimizeWithAI(pendingAI.inputId, pendingAI.context, pendingAI.btn, mode);
+        }
+    }
+
+    async function optimizeWithAI(inputId, context, btnElement, mode = 'polish') {
         const inputField = document.getElementById(inputId);
-        const textRaw = inputField.value.trim();
-        
+        const textRaw = inputField.value ? inputField.value.trim() : inputField.innerText.trim();
+
         if (!textRaw) {
-            alert("Veuillez saisir un texte brouillon à améliorer d'abord.");
+            showToast("Veuillez saisir un texte brouillon d'abord.", 'alert-circle');
             return;
         }
 
@@ -1539,32 +1680,35 @@ Compétences: ${document.getElementById('input-skills').value}
             const response = await fetch('ajax_ai_polish.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: textRaw, context: finalContext })
+                body: JSON.stringify({ text: textRaw, context: finalContext, mode: mode })
             });
 
             const data = await response.json();
 
             if (data.success) {
-                // Update textarea with AI polished text
-                inputField.value = data.polished_text;
-                // Force sync update to the template iframe
+                // Update textarea or div
+                if(inputField.tagName === 'TEXTAREA') {
+                    inputField.value = data.polished_text;
+                } else {
+                    inputField.innerText = data.polished_text;
+                }
+                
+                // Force sync update
                 syncField(inputField);
-                // Trigger visual feedback on textarea
+                
+                showToast(mode === 'correct' ? "Texte corrigé !" : "Texte optimisé !", 'check-circle');
+                
+                // Visual feedback
                 inputField.style.transition = 'box-shadow 0.3s ease, background 0.3s ease';
-                inputField.style.boxShadow = 'inset 0 0 0 2px rgba(107, 52, 163, 0.5)';
-                inputField.style.background = 'rgba(107, 52, 163, 0.03)';
-                setTimeout(() => {
-                    inputField.style.boxShadow = '';
-                    inputField.style.background = '';
-                }, 1500);
+                inputField.style.boxShadow = 'inset 0 0 0 2px rgba(16, 185, 129, 0.5)';
+                setTimeout(() => { inputField.style.boxShadow = ''; }, 1500);
             } else {
-                alert("Erreur de l'IA : " + (data.error || "Erreur inconnue."));
+                showToast(data.error || "Erreur inconnue.", 'alert-triangle');
             }
         } catch (error) {
             console.error("Erreur dans l'IA Polish:", error);
-            alert("Erreur côté client : l'application n'a pas pu traiter la réponse.");
+            showToast("Erreur de connexion à Ollama.", 'alert-octagon');
         } finally {
-            // Restore UI
             btnElement.classList.remove('ai-loading');
             spanText.textContent = originalText;
             btnElement.disabled = false;

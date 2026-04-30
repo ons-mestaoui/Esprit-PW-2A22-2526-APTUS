@@ -10,8 +10,9 @@ $input = json_decode(file_get_contents('php://input'), true);
 
 $text = $input['text'] ?? '';
 $context = $input['context'] ?? '';
+$mode = $input['mode'] ?? 'polish'; // 'correct' ou 'polish'
 
-if (empty(trim($text)) || empty($context)) {
+if (empty(trim($text))) {
     echo json_encode(['success' => false, 'error' => 'Le texte à améliorer est vide.']);
     exit;
 }
@@ -19,7 +20,7 @@ if (empty(trim($text)) || empty($context)) {
 require_once __DIR__ . '/../../controller/AIController.php';
 
 $ai = new AIController();
-$polishedText = $ai->polishText($text, $context);
+$polishedText = $ai->polishText($text, $context, $mode);
 
 if (strpos($polishedText, '[Erreur') === 0) {
     echo json_encode(['success' => false, 'error' => $polishedText]);

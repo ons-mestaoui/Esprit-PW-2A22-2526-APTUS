@@ -168,7 +168,7 @@ $isPremium = $template ? $template['estPremium'] : 0;
                     <label class="form-label" for="tpl-html" style="font-size: 15px; margin:0;">Code Structure (HTML/CSS) *</label>
                     <span class="text-xs" style="color:var(--text-tertiary);">Rendu en temps réel possible via le bouton à droite</span>
                 </div>
-                <textarea class="textarea" id="tpl-html" name="structureHtml" placeholder="Écrivez le code source HTML/CSS du CV ici..." style="font-family: 'Fira Code', monospace; line-height: 1.5; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); color: #cbd5e1; flex-grow: 1; min-height: 400px; padding:15px; font-size:13px; resize:vertical;"><?php echo $htmlVal; ?></textarea>
+                <textarea class="textarea" id="tpl-html" name="structureHtml" placeholder="Écrivez le code source HTML/CSS du CV ici..." style="font-family: 'Fira Code', monospace; line-height: 1.5; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); flex-grow: 1; min-height: 400px; padding:15px; font-size:13px; resize:vertical;"><?php echo $htmlVal; ?></textarea>
             </div>
         </div>
 
