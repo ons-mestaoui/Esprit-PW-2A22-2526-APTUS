@@ -78,7 +78,7 @@ $estPassee = !empty($f['est_passee']);
           <?php echo $tuteur; ?>
         </span>
         <?php if ($estPassee): ?>
-            <button class="btn" style="background: #e2e8f0; color: #64748b; font-size:0.78rem; padding:.35rem .85rem; border: none; cursor: not-allowed; font-weight: 600;" aria-disabled="true" title="Le délai d'inscription est dépassé">
+            <button class="btn" style="background: var(--bg-tertiary); color: var(--text-tertiary); font-size:0.78rem; padding:.35rem .85rem; border: none; cursor: not-allowed; font-weight: 600;" aria-disabled="true" title="Le délai d'inscription est dépassé">
                 🔒 Clôturé
             </button>
         <?php else: ?>

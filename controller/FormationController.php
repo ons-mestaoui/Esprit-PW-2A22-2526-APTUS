@@ -25,7 +25,8 @@ class FormationController
                 ");
                 return $liste;
             } catch (Exception $e) {
-                if ($table === end($tables_utilisateurs)) throw new Exception('Erreur SQL: ' . $e->getMessage());
+                if ($table === end($tables_utilisateurs))
+                    throw new Exception('Erreur SQL: ' . $e->getMessage());
             }
         }
     }
@@ -100,7 +101,7 @@ class FormationController
     {
         $db = config::getConnexion();
         $events = [];
-        
+
         try {
             $liste = $db->query("
                 SELECT f.id_formation, f.titre, f.date_formation, f.is_online,
@@ -126,7 +127,7 @@ class FormationController
         }
 
         // Same palette as the admin sidebar so colors match
-        $palette = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ec4899','#8b5cf6','#14b8a6','#ef4444'];
+        $palette = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#ef4444'];
         // Build a deterministic tuteur→color map from the fetched data
         $tuteurColorMap = [];
         $paletteIdx = 0;
@@ -139,25 +140,25 @@ class FormationController
         }
 
         foreach ($formations as $f) {
-            $tid       = $f['id_tuteur'];
-            $color     = isset($tuteurColorMap[$tid]) ? $tuteurColorMap[$tid] : '#6366f1';
-            $dateBase  = substr($f['date_formation'], 0, 10); // YYYY-MM-DD
+            $tid = $f['id_tuteur'];
+            $color = isset($tuteurColorMap[$tid]) ? $tuteurColorMap[$tid] : '#6366f1';
+            $dateBase = substr($f['date_formation'], 0, 10); // YYYY-MM-DD
 
             $events[] = [
-                'id'              => 'f_' . $f['id_formation'],
-                'title'           => $f['tuteur_nom'] . ' — ' . $f['titre'],
-                'start'           => $dateBase . 'T09:00:00',
-                'end'             => $dateBase . 'T10:00:00',
+                'id' => 'f_' . $f['id_formation'],
+                'title' => $f['tuteur_nom'] . ' — ' . $f['titre'],
+                'start' => $dateBase . 'T09:00:00',
+                'end' => $dateBase . 'T10:00:00',
                 'backgroundColor' => $color,
-                'borderColor'     => $color,
-                'extendedProps'   => [
-                    'id_tuteur'   => $tid,
-                    'tuteur_nom'  => $f['tuteur_nom'],
-                    'titre'       => $f['titre'],
-                    'type'        => 'formation',
-                    'lieu'        => $f['is_online'] ? 'En ligne' : 'Présentiel',
-                    'domaine'     => $f['domaine'],
-                    'niveau'      => $f['niveau'],
+                'borderColor' => $color,
+                'extendedProps' => [
+                    'id_tuteur' => $tid,
+                    'tuteur_nom' => $f['tuteur_nom'],
+                    'titre' => $f['titre'],
+                    'type' => 'formation',
+                    'lieu' => $f['is_online'] ? 'En ligne' : 'Présentiel',
+                    'domaine' => $f['domaine'],
+                    'niveau' => $f['niveau'],
                 ]
             ];
         }
@@ -302,7 +303,8 @@ class FormationController
             // Supprimer les enregistrements enfants pour éviter une erreur de contrainte de clé étrangère
             try {
                 $db->prepare("DELETE FROM rapport_emotions WHERE id_formation = :id")->execute(['id' => $id]);
-            } catch(Exception $e) {}
+            } catch (Exception $e) {
+            }
 
             $query = $db->prepare("DELETE FROM Formation WHERE id_formation = :id");
             $query->execute(['id' => $id]);
@@ -518,7 +520,7 @@ class FormationController
         // Si cette formation a un prérequis, on remonte la chaîne récursivement
         if (!empty($formation['prerequis_id'])) {
             $prerequisChain = $this->getSkillTree(
-                (int)$formation['prerequis_id'],
+                (int) $formation['prerequis_id'],
                 $id_user,
                 $depth + 1
             );
@@ -529,7 +531,7 @@ class FormationController
         // Calcul de l'état de débloquage pour l'UI
         // Une formation est débloquée si son prérequis direct est complété (100%)
         if (!empty($formation['prerequis_id'])) {
-            $prereq = $this->getFormationWithPrerequisite((int)$formation['prerequis_id'], $id_user);
+            $prereq = $this->getFormationWithPrerequisite((int) $formation['prerequis_id'], $id_user);
             $formation['is_unlocked'] = ($prereq && $prereq['ma_progression'] >= 100);
         } else {
             // Pas de prérequis = toujours accessible
@@ -567,14 +569,14 @@ class FormationController
             $trees = [];
             foreach ($roots as $root) {
                 // Pour chaque racine, on cherche les formations qui en dépendent (direct)
-                $children = $this->getChildrenOf((int)$root['id_formation'], $id_user);
+                $children = $this->getChildrenOf((int) $root['id_formation'], $id_user);
                 if (!empty($children)) {
                     // On construit un arbre simple : racine + ses enfants
-                    $rootFormation = $this->getFormationWithPrerequisite((int)$root['id_formation'], $id_user);
+                    $rootFormation = $this->getFormationWithPrerequisite((int) $root['id_formation'], $id_user);
                     if ($rootFormation) {
                         $rootFormation['is_unlocked'] = true;
                         $trees[] = [
-                            'root'     => $rootFormation,
+                            'root' => $rootFormation,
                             'children' => $children
                         ];
                     }
@@ -608,7 +610,7 @@ class FormationController
 
             $children = [];
             foreach ($childIds as $row) {
-                $child = $this->getFormationWithPrerequisite((int)$row['id_formation'], $id_user);
+                $child = $this->getFormationWithPrerequisite((int) $row['id_formation'], $id_user);
                 if ($child) {
                     $child['is_unlocked'] = ($parentFormation && $parentFormation['ma_progression'] >= 100);
                     $children[] = $child;
@@ -680,26 +682,26 @@ class FormationController
                 FROM Formation f 
                 LEFT JOIN utilisateur u ON f.id_tuteur = u.id 
                 WHERE 1=1";
-        
+
         $params = [];
-        
+
         if (!empty($search)) {
             $sql .= " AND (f.titre LIKE :search OR f.domaine LIKE :search OR f.description LIKE :search)";
             $params['search'] = '%' . $search . '%';
         }
-        
+
         if (!empty($domaine)) {
             $sql .= " AND f.domaine = :domaine";
             $params['domaine'] = $domaine;
         }
-        
+
         if (!empty($niveau)) {
             $sql .= " AND f.niveau = :niveau";
             $params['niveau'] = $niveau;
         }
-        
+
         $sql .= " ORDER BY f.date_formation DESC";
-        
+
         $query = $db->prepare($sql);
         $query->execute($params);
         return $query->fetchAll();

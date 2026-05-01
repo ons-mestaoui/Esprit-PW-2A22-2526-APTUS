@@ -28,12 +28,12 @@ if (!isset($content)) {
 <style>
     .swal-ai-custom {
         border-radius: 20px !important;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-        border: 1px solid #e5e7eb !important;
+        box-shadow: var(--shadow-xl) !important;
+        border: 1px solid var(--border-color) !important;
     }
     .badge-info {
-        background: #ebf5ff;
-        color: #3b82f6;
+        background: var(--accent-info-light);
+        color: var(--accent-info);
         padding: 4px 10px;
         border-radius: 20px;
         font-weight: 600;
@@ -93,7 +93,7 @@ if (!isset($content)) {
                                 </div>
                             </td>
                             <td style="padding: 1rem; text-align: right;">
-                                <button onclick="showStudentEmotions(<?php echo $s['id_user']; ?>, '<?php echo addslashes($s['nom_etudiant']); ?>')" class="btn" style="padding: 0.4rem 0.8rem; background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 1px solid #6366f1; white-space: nowrap; border-radius: 8px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#6366f1'; this.style.color='white';" onmouseout="this.style.background='rgba(99, 102, 241, 0.1)'; this.style.color='#6366f1';">
+                                <button onclick="showStudentEmotions(<?php echo $s['id_user']; ?>, '<?php echo addslashes($s['nom_etudiant']); ?>')" class="btn" style="padding: 0.4rem 0.8rem; background: var(--accent-info-light); color: var(--accent-info); border: 1px solid var(--accent-info); white-space: nowrap; border-radius: 8px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='var(--accent-info)'; this.style.color='white';" onmouseout="this.style.background='var(--accent-info-light)'; this.style.color='var(--accent-info)';">
                                     🧠 Bilan IA
                                 </button>
                             </td>
@@ -476,7 +476,7 @@ if (!isset($content)) {
             width: '600px',
             showConfirmButton: true,
             confirmButtonText: 'Fermer',
-            confirmButtonColor: '#3b82f6',
+            confirmButtonColor: 'var(--accent-primary)',
             background: 'var(--bg-card)',
             color: 'var(--text-primary)',
             customClass: { popup: 'swal-ai-custom' },

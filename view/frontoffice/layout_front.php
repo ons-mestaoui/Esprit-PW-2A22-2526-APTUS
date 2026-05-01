@@ -110,7 +110,7 @@
         }
         .notif-panel__head {
           padding: 1rem 1.25rem;
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: var(--gradient-primary);
           display: flex; align-items: center; justify-content: space-between;
         }
         .notif-panel__head h5 {
@@ -235,7 +235,7 @@
                     </button>
                 </div>
             </div>
-            <div id="dnd-banner" style="display:none; background: #fffbeb; border-bottom:1px solid #fef3c7; padding: 6px 15px; font-size: 11px; color: #92400e; font-weight: 600; text-align: center;">
+            <div id="dnd-banner" style="display:none; background: var(--accent-warning-light); border-bottom:1px solid var(--accent-warning); padding: 6px 15px; font-size: 11px; color: var(--accent-warning); font-weight: 600; text-align: center;">
                 <i data-lucide="moon" style="width:12px; vertical-align:middle;"></i> Mode Silence actif (Seul l'urgent s'affiche)
             </div>
             <div class="notif-panel__body" id="notif-items">
@@ -589,7 +589,7 @@
                 href = '/aptus_first_official_version/view/frontoffice/' + href;
             }
             
-            const urgentStyle = isUrgent ? 'border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.02);' : '';
+            const urgentStyle = isUrgent ? 'border-left: 4px solid var(--accent-tertiary); background: var(--accent-tertiary-light); opacity: 0.95;' : '';
 
             html += `
             <a href="${href}" class="notif-item unread" onclick="markOneRead(${n.id}, this)" style="${urgentStyle}">

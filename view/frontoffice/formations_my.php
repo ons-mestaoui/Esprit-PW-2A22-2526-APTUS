@@ -117,7 +117,7 @@ if (!isset($content)) {
     }
 
     .mini-stat-card__value.green {
-        color: #10b981;
+        color: var(--accent-info);
     }
 
     .mini-stat-card__value.purple {
@@ -453,7 +453,7 @@ if (!isset($content)) {
                 <?php elseif ($cours['progression'] == 100 || $cours['statut'] === 'Terminée'): ?>
                     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <div
-                            style="background: rgba(139, 92, 246, 0.1); color: var(--primary-purple); padding: 0.75rem; border-radius: 10px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
+                            style="background: var(--accent-primary-light); color: var(--accent-primary); padding: 0.75rem; border-radius: 10px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
                             <span style="font-size: 1.3rem;">🎓</span> Badge "<?php echo htmlspecialchars($cours['niveau']); ?>" Acquis !
                         </div>
                         <a href="certificate.php?f_id=<?php echo $cours['id_formation']; ?>" target="_blank" 
@@ -466,10 +466,9 @@ if (!isset($content)) {
                     <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: auto;">
                         <?php if ($cours['is_online'] && $isAvailable): ?>
                             <a href="jitsi_room.php?id_formation=<?php echo $cours['id_formation']; ?>&url=<?php echo urlencode($cours['lien_api_room'] ?? '#'); ?>" class="btn"
-                                style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:8px; font-weight:600; box-shadow: 0 4px 15px rgba(99,102,241,0.3); transition: all 0.2s;"
-                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(99,102,241,0.4)'"
-                                onmouseout="this.style.transform=''
-                                ; this.style.boxShadow='0 4px 15px rgba(99,102,241,0.3)'">📹
+                                style="background: var(--gradient-primary); color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:8px; font-weight:600; box-shadow: var(--shadow-md); transition: all 0.2s;"
+                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='var(--shadow-lg)'"
+                                onmouseout="this.style.transform=''; this.style.boxShadow='var(--shadow-md)'">📹
                                 Rejoindre la Room</a>
                         <?php endif; ?>
 

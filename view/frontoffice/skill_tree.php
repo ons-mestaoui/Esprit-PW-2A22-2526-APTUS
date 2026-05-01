@@ -56,23 +56,23 @@ if (!isset($content)) {
 
 <style>
 .skill-tree-page { max-width: 1200px; margin: 0 auto; padding: 1rem 0 4rem; }
-.skill-tree-hero { background: white; border: 1px solid var(--border-color); border-radius: 20px; padding: 2rem; margin-bottom: 2.5rem; position: relative; }
+.skill-tree-hero { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 2rem; margin-bottom: 2.5rem; position: relative; }
 .skill-tree-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--gradient-primary); border-radius: 20px 20px 0 0; }
 
 /* Switcher */
-.view-switcher { display: flex; gap: 0.5rem; margin-bottom: 2rem; background: #f1f5f9; padding: 0.4rem; border-radius: 14px; width: fit-content; }
-.switch-btn { padding: 0.6rem 1.2rem; border-radius: 10px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 700; transition: 0.3s; background: transparent; color: #64748b; display: flex; align-items: center; gap: 0.5rem; }
-.switch-btn.active { background: white; color: var(--primary-cyan); box-shadow: var(--shadow-md); }
+.view-switcher { display: flex; gap: 0.5rem; margin-bottom: 2rem; background: var(--bg-secondary); padding: 0.4rem; border-radius: 14px; width: fit-content; }
+.switch-btn { padding: 0.6rem 1.2rem; border-radius: 10px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 700; transition: 0.3s; background: transparent; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem; }
+.switch-btn.active { background: var(--bg-card); color: var(--primary-cyan); box-shadow: var(--shadow-md); }
 
 /* Timeline */
 .timeline { position: relative; padding-left: 2.5rem; margin-top: 1rem; }
-.timeline::before { content: ''; position: absolute; left: 0.9rem; top: 0.5rem; bottom: 0; width: 2px; background: #e2e8f0; }
+.timeline::before { content: ''; position: absolute; left: 0.9rem; top: 0.5rem; bottom: 0; width: 2px; background: var(--border-color); }
 .timeline-node { position: relative; margin-bottom: 1.5rem; }
-.timeline-card { background: white; border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; transition: transform 0.2s, box-shadow 0.2s; }
+.timeline-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; transition: transform 0.2s, box-shadow 0.2s; }
 .timeline-card:hover { transform: translateX(4px); box-shadow: var(--shadow-sm); }
-.timeline-dot { position: absolute; left: -2.15rem; top: 1.25rem; width: 1.25rem; height: 1.25rem; border-radius: 50%; background: #e2e8f0; border: 3px solid white; z-index: 5; box-shadow: 0 0 0 1px #cbd5e1; }
-.timeline-dot--done { background: #10b981; border-color: #d1fae5; box-shadow: 0 0 0 1px #10b981; }
-.timeline-dot--unlocked { background: var(--primary-cyan); border-color: #e0f2fe; box-shadow: 0 0 0 1px var(--primary-cyan); }
+.timeline-dot { position: absolute; left: -2.15rem; top: 1.25rem; width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--bg-secondary); border: 3px solid var(--bg-card); z-index: 5; box-shadow: 0 0 0 1px var(--border-color); }
+.timeline-dot--done { background: #10b981; border-color: var(--bg-card); box-shadow: 0 0 0 1px #10b981; }
+.timeline-dot--unlocked { background: var(--primary-cyan); border-color: var(--bg-card); box-shadow: 0 0 0 1px var(--primary-cyan); }
 
 /* Obsidian Map Container */
 #view-map-container { 
@@ -89,12 +89,12 @@ if (!isset($content)) {
     bottom: 1.5rem; 
     right: 1.5rem; 
     width: 320px; 
-    background: rgba(255, 255, 255, 0.95); 
+    background: var(--bg-card); 
     backdrop-filter: blur(10px);
     border: 1px solid var(--border-color); 
     padding: 1.5rem; 
     border-radius: 20px; 
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
+    box-shadow: var(--shadow-xl); 
     display: none; 
     z-index: 100;
 }
@@ -109,14 +109,14 @@ if (!isset($content)) {
     z-index: 10;
 }
 .control-btn {
-    width: 40px; height: 40px; border-radius: 10px; background: white; border: 1px solid #e2e8f0; 
-    display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b;
+    width: 40px; height: 40px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border-color); 
+    display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-secondary);
 }
 </style>
 
 <div class="skill-tree-page">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">     
-        <a href="formations_catalog.php" class="cta-back" style="text-decoration: none; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+        <a href="formations_catalog.php" class="cta-back" style="text-decoration: none; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
             <i data-lucide="arrow-left" style="width: 16px;"></i> Retour
         </a>
         <div class="view-switcher">
@@ -131,9 +131,9 @@ if (!isset($content)) {
 
     <!-- HUD Progression -->
     <div class="skill-tree-hero">
-        <h1 style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">🧠 Réseau de Compétences</h1>
+        <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">🧠 Réseau de Compétences</h1>
         <div style="display: flex; align-items: center; gap: 1rem;">
-            <div style="flex: 1; height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden;">    
+            <div style="flex: 1; height: 8px; background: var(--bg-secondary); border-radius: 10px; overflow: hidden;">    
                 <div style="width: <?php echo $globalPercent; ?>%; height: 100%; background: var(--gradient-primary);"></div>
             </div>
             <span style="font-weight: 800; color: var(--primary-cyan);"><?php echo $globalPercent; ?>%</span>  
@@ -151,8 +151,8 @@ if (!isset($content)) {
                 <div class="timeline-node">
                     <div class="timeline-dot <?php echo $isDone ? 'timeline-dot--done' : ($isUnlocked ? 'timeline-dot--unlocked' : ''); ?>"></div>
                     <div class="timeline-card <?php echo !$isUnlocked ? 'timeline-card--locked' : ''; ?>">     
-                        <h3 style="font-size: 1.1rem; font-weight: 800;"><?php echo htmlspecialchars($step['titre']); ?></h3>
-                        <p style="color: #64748b; font-size: 0.85rem; margin: 0.5rem 0 1rem;"><?php echo htmlspecialchars(substr(strip_tags($step['description'] ?? ''), 0, 100)); ?>...</p>
+                        <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);"><?php echo htmlspecialchars($step['titre']); ?></h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.5rem 0 1rem;"><?php echo htmlspecialchars(substr(strip_tags($step['description'] ?? ''), 0, 100)); ?>...</p>
                         <?php if ($isUnlocked): ?>
                             <a href="formation_detail.php?id=<?php echo $step['id_formation']; ?>" class="btn btn-primary btn-sm">Continuer</a>
                         <?php else: ?>
@@ -165,7 +165,7 @@ if (!isset($content)) {
         <?php elseif ($viewMode === 'all' && !empty($allTrees)): ?>
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
             <?php foreach ($allTrees as $tree): ?>
-                <div style="background: white; border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; transition: transform 0.2s, box-shadow 0.2s;" class="card-formation-hover">
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; transition: transform 0.2s, box-shadow 0.2s;" class="card-formation-hover">
                     <h4 style="font-size: 0.75rem; color: var(--primary-cyan); text-transform: uppercase; margin-bottom: 1rem; font-weight: 800; display: flex; align-items: center; gap: 0.4rem;">
                         <i data-lucide="network" style="width: 14px; height: 14px;"></i> <?php echo htmlspecialchars($tree['root']['domaine']); ?>
                     </h4>
@@ -173,8 +173,8 @@ if (!isset($content)) {
                         <?php echo htmlspecialchars($tree['root']['titre']); ?>
                     </h3>
                     
-                    <div style="background: #f8fafc; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
-                        <p style="font-size: 0.8rem; color: #64748b; font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase;">Étapes du parcours :</p>
+                    <div style="background: var(--bg-secondary); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase;">Étapes du parcours :</p>
                         <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
                             <?php $nodes = array_merge([$tree['root']], $tree['children']);
                             foreach ($nodes as $index => $node): 
@@ -210,8 +210,8 @@ if (!isset($content)) {
         </div>
         <div id="neural-graph"></div>
         <div id="map-hud" class="map-hud">
-            <h4 id="hud-title" style="font-weight: 800; margin-bottom: 0.5rem; color: #0f172a;"></h4>
-            <p id="hud-desc" style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;"></p>
+            <h4 id="hud-title" style="font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary);"></h4>
+            <p id="hud-desc" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;"></p>
             <div id="hud-action"></div>
         </div>
     </div>

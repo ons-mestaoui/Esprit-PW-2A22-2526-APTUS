@@ -114,24 +114,24 @@ if (!isset($content)) {
             </div>
             <?php if (isset($errorMsg)): ?>
                 <div
-                    style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; text-align:center;">
+                    style="background: var(--accent-tertiary-light); color: var(--accent-tertiary); padding: 1rem; border-radius: 12px; margin-bottom: 1rem; text-align:center; border: 1px solid var(--accent-tertiary);">
                     <?php echo $errorMsg; ?>
                 </div>
             <?php endif; ?>
             <?php if ($userRole === 'Tuteur' && $formation['id_tuteur'] == $id_user): ?>
-                <div style="background: rgba(52, 152, 219, 0.1); color: #3498db; padding: 1.5rem; border-radius: 12px; text-align: center; border: 1px solid rgba(52, 152, 219, 0.3);">
+                <div style="background: var(--accent-info-light); color: var(--accent-info); padding: 1.5rem; border-radius: 12px; text-align: center; border: 1px solid var(--accent-info);">
                     <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">👨‍🏫 Vue Tuteur</div>
                     <p style="font-size: 0.9rem; margin-bottom: 1.5rem;">Vous êtes le formateur assigné à ce module.</p>
                     <div style="display: flex; gap: 1rem;">
-                        <a href="tuteur_dashboard.php" class="btn" style="flex:1; background: var(--bg-card); border: 1px solid #3498db; color: #3498db; text-decoration: none; padding: 0.75rem; border-radius: 8px; font-weight: 600;">Mon Dashboard</a>
+                        <a href="tuteur_dashboard.php" class="btn" style="flex:1; background: var(--bg-card); border: 1px solid var(--accent-info); color: var(--accent-info); text-decoration: none; padding: 0.75rem; border-radius: 8px; font-weight: 600;">Mon Dashboard</a>
                         <?php if($formation['is_online']): ?>
-                            <a href="<?php echo htmlspecialchars($formation['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn" style="flex:1; background: #3498db; color: white; text-decoration: none; padding: 0.75rem; border-radius: 8px; font-weight: 600;">Lancer la Room</a>
+                            <a href="<?php echo htmlspecialchars($formation['lien_api_room'] ?? '#'); ?>" target="_blank" class="btn" style="flex:1; background: var(--accent-info); color: white; text-decoration: none; padding: 0.75rem; border-radius: 8px; font-weight: 600;">Lancer la Room</a>
                         <?php endif; ?>
                     </div>
                 </div>
             <?php elseif (isset($isInscribed) && $isInscribed): ?>
                 <div
-                    style="background: rgba(16, 185, 129, 0.1); color: #059669; padding: 1.5rem; border-radius: 12px; text-align: center; border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: 1rem;">
+                    style="background: var(--accent-secondary-light); color: var(--accent-secondary); padding: 1.5rem; border-radius: 12px; text-align: center; border: 1px solid var(--accent-secondary); margin-bottom: 1rem;">
                     <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">✅ Vous êtes déjà inscrit !
                     </div>
                     <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1.5rem;">Vous pouvez retrouver cette formation

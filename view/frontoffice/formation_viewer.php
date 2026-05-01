@@ -42,8 +42,8 @@ if (!isset($content)) {
 
 <!-- ══ Aptus Market Update ════════════════════════════════════ -->
 <div id="aptus-market-update" style="display:none;margin-bottom:1.5rem;border-radius:var(--radius-lg);padding:1.25rem 1.5rem;
-     background:linear-gradient(135deg, rgba(0,163,218,0.08) 0%, rgba(107,52,163,0.06) 100%);
-     border:1px solid rgba(107,52,163,0.25); box-shadow:0 4px 24px rgba(107,52,163,0.08);">
+     background: var(--accent-primary-light);
+     border:1px solid var(--accent-primary); box-shadow: var(--shadow-sm);">
     <div style="display:flex;align-items:flex-start;gap:1rem;">
         <div style="width:40px;height:40px;flex-shrink:0;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;
                     background:var(--gradient-primary);font-size:1.1rem;">✨</div>
@@ -90,9 +90,9 @@ if (!isset($content)) {
         <?php echo $current_progression; ?>%
     </div>
     <div id="dwell-badge" style="display:<?php echo $current_progression >= 100 ? 'inline-flex' : 'none'; ?>;font-size:0.75rem;padding:0.25rem 0.85rem;
-         border-radius:var(--radius-full);background:rgba(16,185,129,0.1);color:#10b981;font-weight:700;
-         border:1px solid rgba(16,185,129,0.25);align-items:center;gap:0.3rem;">
-        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;"></span>
+         border-radius:var(--radius-full);background: var(--accent-secondary-light);color: var(--accent-secondary);font-weight: 700;
+         border:1px solid var(--accent-secondary);align-items:center;gap:0.3rem;">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background: var(--accent-secondary);"></span>
         <?php echo $has_chapters ? 'Cours terminé' : 'Lecture prouvée'; ?>
     </div>
 </div>
@@ -137,15 +137,15 @@ if (!isset($content)) {
                      data-chapter-id="<?php echo htmlspecialchars($res['id'] ?? $idx); ?>"
                      data-chapter-pct="<?php echo $chapter_pct_threshold; ?>"
                      style="display:flex;align-items:center;gap:1rem;
-                            background:<?php echo $is_done ? 'rgba(16,185,129,0.04)' : 'var(--bg-card)'; ?>;
-                            border:1px solid <?php echo $is_done ? 'rgba(16,185,129,0.3)' : 'var(--border-color)'; ?>;
+                            background:<?php echo $is_done ? 'var(--accent-secondary-light)' : 'var(--bg-card)'; ?>;
+                            border:1px solid <?php echo $is_done ? 'var(--accent-secondary)' : 'var(--border-color)'; ?>;
                             border-radius:var(--radius-md);padding:1rem 1.25rem;
                             transition:var(--transition-base);">
 
                     <!-- Numéro / Check -->
                     <div style="width:34px;height:34px;border-radius:var(--radius-full);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;
-                                background:<?php echo $is_done ? 'rgba(16,185,129,0.12)' : 'var(--accent-primary-light)'; ?>;
-                                color:<?php echo $is_done ? '#10b981' : 'var(--accent-primary)'; ?>;">
+                                background:<?php echo $is_done ? 'var(--accent-secondary-light)' : 'var(--accent-primary-light)'; ?>;
+                                color:<?php echo $is_done ? 'var(--accent-secondary)' : 'var(--accent-primary)'; ?>;">
                         <?php echo $is_done ? '✓' : ($idx + 1); ?>
                     </div>
 
@@ -170,7 +170,7 @@ if (!isset($content)) {
                        style="flex-shrink:0;padding:0.45rem 1rem;border-radius:var(--radius-sm);font-size:0.82rem;font-weight:700;text-decoration:none;
                               transition:var(--transition-fast);
                               <?php if ($is_done): ?>
-                                  background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.25);
+                                   background: var(--accent-secondary-light);color: var(--accent-secondary);border:1px solid var(--accent-secondary);
                               <?php else: ?>
                                   background:var(--gradient-primary);color:white;border:none;box-shadow:0 2px 8px rgba(107,52,163,0.3);
                               <?php endif; ?>"
@@ -187,7 +187,7 @@ if (!isset($content)) {
 
 <!-- ══ Chatbot ═══════════════════════════════════════════════ -->
 <style>
-.chat-fab{position:fixed;bottom:2rem;right:2rem;z-index:9999;width:60px;height:60px;border-radius:50%;background:var(--gradient-primary);border:none;cursor:pointer;box-shadow:0 8px 25px rgba(99,102,241,0.4);display:flex;align-items:center;justify-content:center;transition:transform 0.3s;color:white;font-size:24px;}
+.chat-fab{position:fixed;bottom:2rem;right:2rem;z-index:9999;width:60px;height:60px;border-radius:50%;background:var(--gradient-primary);border:none;cursor:pointer;box-shadow: var(--shadow-lg);display:flex;align-items:center;justify-content:center;transition:transform 0.3s;color:white;font-size:24px;}
 .chat-fab:hover{transform:scale(1.1);}
 .chat-window{position:fixed;bottom:6rem;right:2rem;z-index:9998;width:380px;max-height:500px;border-radius:16px;background:var(--bg-card);border:1px solid var(--border-color);box-shadow:0 20px 60px rgba(0,0,0,0.15);display:none;flex-direction:column;overflow:hidden;}
 .chat-window.open{display:flex;animation:chatSlideUp 0.3s ease;}
