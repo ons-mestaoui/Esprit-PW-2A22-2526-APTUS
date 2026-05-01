@@ -173,7 +173,6 @@ if (!isset($content)) {
         initSTT();
 
         api.addEventListener('videoConferenceLeft', () => {
-            console.log("Session terminée. Nettoyage...");
             
             // 🗄️ SÉCURITÉ 2 : Consolidation & Purge (Point 2)
             <?php if ($role === 'tuteur'): ?>

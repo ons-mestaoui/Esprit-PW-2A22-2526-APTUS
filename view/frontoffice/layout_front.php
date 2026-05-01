@@ -658,6 +658,7 @@
         synth: window.speechSynthesis,
         isSpeaking: false,
         isUniversalMode: false,
+        currentText: '',
         
         toggleUniversal: function() {
             this.isUniversalMode = !this.isUniversalMode;
@@ -694,21 +695,47 @@
         },
         
         speak: function(text, btn = null) {
+            // TOGGLE: Si on clique pendant que ça lit le même texte, on arrête.
+            if (this.synth.speaking && this.currentText === text) {
+                this.synth.cancel();
+                this.isSpeaking = false;
+                this.currentText = '';
+                if (btn) btn.innerHTML = '<i data-lucide="volume-2" style="width:16px;"></i>';
+                lucide.createIcons();
+                return;
+            }
+
             this.synth.cancel(); // Stop previous speech
             if (text.length === 0) return;
+            this.currentText = text;
 
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'fr-FR';
-            utterance.rate = 1.0;
+            
+            // Sélection d'une voix plus naturelle (moins robotique)
+            const voices = this.synth.getVoices();
+            const frVoices = voices.filter(v => v.lang.startsWith('fr'));
+            let bestVoice = frVoices.find(v => v.name.includes('Google') || v.name.includes('Premium') || v.name.includes('Natural') || v.name.includes('Hortense') || v.name.includes('Thomas'));
+            if (!bestVoice && frVoices.length > 0) bestVoice = frVoices[0];
+            
+            if (bestVoice) {
+                utterance.voice = bestVoice;
+            }
+
+            // Paramètres anti-robotiques
+            utterance.rate = 0.95; // Légèrement plus lent
+            utterance.pitch = 1.05; // Voix légèrement plus claire
 
             utterance.onstart = () => {
                 this.isSpeaking = true;
-                if (btn) btn.innerHTML = '<i data-lucide="square" style="width:16px;"></i>';
+                // Le bouton devient un carré de STOP rouge
+                if (btn) btn.innerHTML = '<i data-lucide="square" style="width:16px; color:#ef4444;"></i>';
                 lucide.createIcons();
             };
 
             utterance.onend = () => {
                 this.isSpeaking = false;
+                this.currentText = '';
                 if (btn) btn.innerHTML = '<i data-lucide="volume-2" style="width:16px;"></i>';
                 lucide.createIcons();
             };

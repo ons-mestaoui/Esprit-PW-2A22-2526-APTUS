@@ -430,7 +430,6 @@ if (!isset($content)) {
         try {
             const response = await fetch('ajax_handler.php', { method: 'POST', body: formData });
             const resultText = await response.text();
-            console.log("Raw response:", resultText);
             const data = JSON.parse(resultText);
             
             if (data.success) {
@@ -551,7 +550,6 @@ if (!isset($content)) {
         fetch('ajax_handler.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
-            console.log("AI Analysis Result:", data);
             const container = document.getElementById('ai-recommandations');
             if (data.success && data.data) {
                 const info = data.data;
