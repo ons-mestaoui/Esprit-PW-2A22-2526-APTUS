@@ -235,6 +235,16 @@ switch ($action) {
         echo $controller->appendSyllabus($id_formation, $html_content);
         break;
 
+    // --------------------------------------------------------
+    // CONCEPT 1 : PEER LEARNING (Entraide)
+    // --------------------------------------------------------
+    case 'peer_help':
+        require_once __DIR__ . '/../../controller/PeerLearningController.php';
+        $peerC = new PeerLearningController();
+        // La méthode handleAjax() s'occupe de lire les POST, vérifier la limite de 3 fois/jour et renvoyer le JSON
+        $peerC->handleAjax();
+        break;
+
     case 'delete_resource':
         require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
         $controller = new TuteurDashboardController();

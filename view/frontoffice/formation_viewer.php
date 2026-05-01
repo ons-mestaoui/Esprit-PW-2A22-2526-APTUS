@@ -44,22 +44,39 @@ if (!isset($content)) {
 ?>
 
 <!-- ══ Aptus Market Update ════════════════════════════════════ -->
-<div id="aptus-market-update" style="display:none;margin-bottom:1.5rem;border-radius:var(--radius-lg);padding:1.25rem 1.5rem;
-     background: var(--accent-primary-light);
-     border:1px solid var(--accent-primary); box-shadow: var(--shadow-sm);">
-    <div style="display:flex;align-items:flex-start;gap:1rem;">
-        <div style="width:40px;height:40px;flex-shrink:0;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;
-                    background:var(--gradient-primary);font-size:1.1rem;">✨</div>
+<style>
+@keyframes slideDownFade {
+    0% { opacity: 0; transform: translateY(-15px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes starPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(99,102,241,0.5); }
+    50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(99,102,241,0.8); }
+}
+</style>
+<div id="aptus-market-update" style="display:none;margin-bottom:1.5rem;border-radius:20px;padding:1.5rem;
+     background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.05));
+     backdrop-filter: blur(10px);
+     border:1px solid rgba(99,102,241,0.3); box-shadow: 0 10px 30px rgba(99,102,241,0.15);
+     animation: slideDownFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;">
+    <div style="display:flex;align-items:flex-start;gap:1.25rem;">
+        <div style="width:45px;height:45px;flex-shrink:0;border-radius:14px;display:flex;align-items:center;justify-content:center;
+                    background:linear-gradient(135deg, #6366f1, #8b5cf6);font-size:1.3rem; animation: starPulse 2s infinite;">🔔</div>
         <div style="flex:1;">
-            <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.12em;color:var(--accent-primary);text-transform:uppercase;margin-bottom:0.3rem;">
-                Aptus Market Update — <?php echo date('F Y'); ?>
+            <div style="font-size:0.7rem;font-weight:800;letter-spacing:0.12em;color:var(--accent-primary);text-transform:uppercase;margin-bottom:0.4rem;">
+                NOUVEAUTÉS APTUS — <?php 
+                    $mois = ['January'=>'Janvier','February'=>'Février','March'=>'Mars','April'=>'Avril','May'=>'Mai','June'=>'Juin','July'=>'Juillet','August'=>'Août','September'=>'Septembre','October'=>'Octobre','November'=>'Novembre','December'=>'Décembre']; 
+                    echo $mois[date('F')] . ' ' . date('Y'); 
+                ?>
             </div>
-            <h4 id="aptus-update-headline" style="margin:0 0 0.35rem;font-size:0.95rem;color:var(--text-primary);font-weight:700;"></h4>
-            <p  id="aptus-update-content"  style="margin:0;font-size:0.85rem;line-height:1.6;color:var(--text-secondary);"></p>
+            <h4 id="aptus-update-headline" style="margin:0 0 0.5rem;font-size:1.1rem;color:var(--text-primary);font-weight:800;"></h4>
+            <p  id="aptus-update-content"  style="margin:0;font-size:0.9rem;line-height:1.6;color:var(--text-secondary);"></p>
         </div>
         <button onclick="document.getElementById('aptus-market-update').style.display='none'"
-                style="background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:1.1rem;flex-shrink:0;padding:0.2rem;line-height:1;
-                       transition:var(--transition-fast);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-tertiary)'">×</button>
+                style="background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:1.3rem;flex-shrink:0;padding:0.2rem;line-height:1;
+                       transition:all 0.2s; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center;" 
+                onmouseover="this.style.color='white'; this.style.background='rgba(239, 68, 68, 0.8)'" 
+                onmouseout="this.style.color='var(--text-tertiary)'; this.style.background='none'">×</button>
     </div>
 </div>
 

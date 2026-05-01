@@ -182,7 +182,7 @@ if (!isset($content)) {
             navigator.sendBeacon('ajax_handler.php', fd);
             <?php endif; ?>
 
-            sendRecordingNotif();
+            // Fausse notification d'enregistrement SUPPRIMÉE
             window.location.href = "formations_my.php";
         });
 
@@ -235,13 +235,7 @@ if (!isset($content)) {
         try { recognition.start(); } catch(e){}
     }
 
-    function sendRecordingNotif() {
-        const formData = new FormData();
-        formData.append('action', 'send_recording_notif');
-        formData.append('id_formation', <?php echo $id_formation; ?>);
-        formData.append('transcript_summary', fullTranscript.substring(0, 500));
-        fetch('ajax_handler.php', { method: 'POST', body: formData, keepalive: true });
-    }
+    // La fonction sendRecordingNotif() a été supprimée d'ici (faux enregistrement).
 
     <?php if ($role !== 'tuteur'): ?>
     async function initEdgeAI() {

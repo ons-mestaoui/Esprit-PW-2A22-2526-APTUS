@@ -15,19 +15,33 @@ if (!isset($content)) {
 /* ══ Crash Course UI ══════════════════════════════════════════ */
 .crash-hero {
     text-align: center;
-    padding: 3rem 1rem 2rem;
-    background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(16,185,129,0.05) 100%);
-    border-radius: 20px;
-    border: 1px solid var(--border-color);
+    padding: 4rem 2rem 3rem;
+    background: linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(16,185,129,0.05) 100%);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.05);
     margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
 }
+.crash-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle at center, rgba(99,102,241,0.05) 0%, transparent 50%);
+    animation: rotateBg 20s linear infinite;
+    z-index: -1;
+}
+@keyframes rotateBg { 100% { transform: rotate(360deg); } }
+
 .crash-hero h1 {
-    font-size: 2.2rem; font-weight: 900;
+    font-size: 2.5rem; font-weight: 900;
     background: linear-gradient(135deg, #6366f1, #10b981);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
 }
-.crash-hero p { color: var(--text-secondary); font-size: 1.05rem; margin-bottom: 1.5rem; }
+.crash-hero p { color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 2rem; }
 .rag-search-wrap {
     display: flex; gap: 0.75rem; max-width: 680px; margin: 0 auto;
 }
@@ -45,8 +59,14 @@ if (!isset($content)) {
     display: flex; align-items: center; gap: 0.5rem;
     transition: transform 0.2s, box-shadow 0.2s;
     box-shadow: 0 4px 15px rgba(99,102,241,0.35);
+    animation: pulseGlow 2s infinite;
 }
-.rag-search-wrap button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 rgba(99,102,241,0.6); }
+    70% { box-shadow: 0 0 0 15px rgba(99,102,241,0); }
+    100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
+}
+.rag-search-wrap button:hover { transform: translateY(-2px); animation: none; box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
 .rag-search-wrap button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 /* ── Suggestions rapides ── */
@@ -101,9 +121,9 @@ if (!isset($content)) {
 
 <div class="crash-hero">
     <div style="font-size:0.75rem; font-weight:800; letter-spacing:0.12em; color:var(--accent-primary); text-transform:uppercase; margin-bottom:0.5rem;">
-        ✨ Generative Learning Path — Powered by Llama-3 + RAG
+        ✨ IA Générative (RAG) — Assistant Pédagogique
     </div>
-    <h1>Génère ton Crash Course<br>sur mesure en 5 secondes</h1>
+    <h1>Génère ton Parcours Éclair<br>sur mesure en 5 secondes</h1>
     <p>Décris ton besoin urgent. L'IA scanne tout le catalogue Aptus et crée<br>
        une mini-formation éphémère personnalisée juste pour toi.</p>
 
