@@ -11,14 +11,14 @@ class CVAnalysisService {
         return [
             [
                 'title' => 'Développeur Fullstack Senior',
-                'company' => 'Aptus Tech',
+                'domain' => 'Développement Software',
                 'match_score' => 95,
                 'location' => 'Tunis (Hybride)',
                 'salary' => '2500 - 3500 DT'
             ],
             [
                 'title' => 'Product Manager IT',
-                'company' => 'Digital Solutions',
+                'domain' => 'Management / Produit',
                 'match_score' => 82,
                 'location' => 'Remote',
                 'salary' => '3000 - 4500 DT'
@@ -45,7 +45,8 @@ class CVAnalysisService {
                         'title' => $f['nomFormation'] ?? $f['titre'] ?? 'Formation Aptus',
                         'domain' => $f['domaine'] ?? 'Expertise',
                         'duration' => $f['duree'] ?? '20h',
-                        'level' => 'Intermédiaire'
+                        'level' => 'Intermédiaire',
+                        'match_score' => rand(85, 98)
                     ];
                 }, $results);
             }
@@ -58,13 +59,15 @@ class CVAnalysisService {
                 'title' => 'Masterclass Architecture Microservices',
                 'domain' => 'Backend',
                 'duration' => '15h',
-                'level' => 'Avancé'
+                'level' => 'Avancé',
+                'match_score' => 92
             ],
             [
                 'title' => 'UI/UX Design & Psychologie Cognitive',
                 'domain' => 'Design',
                 'duration' => '12h',
-                'level' => 'Intermédiaire'
+                'level' => 'Intermédiaire',
+                'match_score' => 88
             ]
         ];
     }

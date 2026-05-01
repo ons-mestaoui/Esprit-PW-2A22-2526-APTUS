@@ -26,7 +26,6 @@ $analysis = json_decode($cv['ai_analysis'], true);
 $service = new CVAnalysisService();
 
 // Matching Logic
-// Matching Logic
 $jobMatches = $service->matchJobs($analysis['keywords'] ?? []);
 $trainingMatches = $service->matchTrainingsByDomain($analysis['suggested_training_domains'] ?? []);
 
@@ -490,12 +489,14 @@ if (!isset($content)) {
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                 <?php 
                 $topActions = array_slice($analysis['detailed_recommendations'] ?? [], 0, 3);
-                foreach ($topActions as $i => $act): ?>
+                foreach ($topActions as $i => $act): 
+                    if (!is_array($act)) continue; // Robustness check
+                ?>
                 <div style="border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 20px; position: relative; background: var(--bg-secondary);">
                     <div style="position: absolute; top: -10px; left: 20px; background: var(--bg-card); padding: 0 10px; font-weight: 900; color: var(--accent-primary);">0<?php echo $i+1; ?></div>
-                    <p style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-primary);"><?php echo htmlspecialchars($act['finding']); ?></p>
+                    <p style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-primary);"><?php echo htmlspecialchars($act['finding'] ?? ''); ?></p>
                     <div style="font-size: 0.8rem; color: #10b981; font-weight: 700; display: flex; align-items: center; gap: 5px;">
-                        <i data-lucide="trending-up" style="width:14px;"></i> Score +<?php echo ($act['impact'] === 'high' ? '15' : ($act['impact'] === 'medium' ? '8' : '3')); ?> pts
+                        <i data-lucide="trending-up" style="width:14px;"></i> Score +<?php echo (($act['impact'] ?? '') === 'high' ? '15' : (($act['impact'] ?? '') === 'medium' ? '8' : '3')); ?> pts
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -511,33 +512,32 @@ if (!isset($content)) {
         <?php 
         $recs = $analysis['detailed_recommendations'] ?? [];
         foreach ($recs as $rec): 
+            if (!is_array($rec)) continue;
             $typeClass = "type-" . ($rec['type'] ?? 'logic');
             $impactClass = "impact-" . ($rec['impact'] ?? 'medium');
             $typeLabel = str_replace('_', ' ', $rec['type'] ?? 'logic');
         ?>
         <div class="rec-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <span class="rec-type-badge <?php echo $typeClass; ?>"><?php echo $typeLabel; ?></span>
-                <span class="impact-badge <?php echo $impactClass; ?>">
-                    <i data-lucide="trending-up" style="width:14px;"></i> Impact <?php echo ucfirst($rec['impact'] ?? 'Medium'); ?>
-                </span>
-            </div>
-            
-            <div class="rec-finding">
-                <i data-lucide="search" style="width:20px; flex-shrink:0; margin-top: 2px;"></i>
-                <div>
-                    <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 4px; text-transform: uppercase;">Observation</div>
-                    <span><?php echo htmlspecialchars($rec['finding']); ?></span>
+                <div class="impact-badge <?php echo $impactClass; ?>">
+                    <i data-lucide="alert-circle" style="width:14px;"></i> Impact <?php echo ucfirst($rec['impact'] ?? 'moyen'); ?>
                 </div>
             </div>
             
+            <div class="rec-finding">
+                <i data-lucide="x-circle" style="width:18px; flex-shrink:0;"></i>
+                <div>
+                    <strong style="display:block; margin-bottom:4px;">Observation :</strong>
+                    <?php echo htmlspecialchars($rec['finding'] ?? ''); ?>
+                </div>
+            </div>
+
             <div class="rec-correction">
-                <div style="display: flex; gap: 12px;">
-                    <i data-lucide="check-circle" style="width:20px; flex-shrink:0; margin-top: 2px;"></i>
-                    <div>
-                        <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 4px; text-transform: uppercase;">Solution Stratégique</div>
-                        <span style="line-height: 1.5;"><?php echo htmlspecialchars($rec['correction']); ?></span>
-                    </div>
+                <i data-lucide="check-circle" style="width:18px; flex-shrink:0;"></i>
+                <div>
+                    <strong style="display:block; margin-bottom:4px;">Correction suggérée :</strong>
+                    <?php echo htmlspecialchars($rec['correction'] ?? ''); ?>
                 </div>
             </div>
         </div>
@@ -600,10 +600,10 @@ if (!isset($content)) {
     </h2>
     <div class="matching-grid">
         <?php foreach ($trainingMatches as $tr): 
-            $lvl = $tr['match_score'] >= 80 ? 'match-high' : ($job['match_score'] >= 50 ? 'match-medium' : 'match-low');
+            $lvlTr = ($tr['match_score'] ?? 80) >= 80 ? 'match-high' : (($tr['match_score'] ?? 80) >= 50 ? 'match-medium' : 'match-low');
         ?>
         <div class="match-card">
-            <span class="match-badge <?php echo $lvl; ?>"><?php echo $tr['match_score']; ?>% Recommandé</span>
+            <span class="match-badge <?php echo $lvlTr; ?>"><?php echo $tr['match_score'] ?? 80; ?>% Recommandé</span>
             <h3 class="match-title"><?php echo htmlspecialchars($tr['title']); ?></h3>
             <p class="match-subtitle"><?php echo htmlspecialchars($tr['domain']); ?> • Niveau <?php echo htmlspecialchars($tr['level']); ?></p>
             <div class="match-footer">
@@ -680,7 +680,7 @@ if (!isset($content)) {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             id_cv: <?php echo $cvId; ?>,
-                            cvText: `<?php echo addslashes($cv['resume'] . " " . $cv['experience'] . " " . $cv['competences']); ?>`
+                            cvText: <?php echo json_encode($cv['resume'] . " " . $cv['experience'] . " " . $cv['competences']); ?>
                         })
                     });
                     const result = await response.json();
