@@ -1,12 +1,6 @@
 <?php
-/**
- * ============================================================
- * tuteurs_admin.php — Gestion des Tuteurs (style Teams)
- * ============================================================
- * Vue back-office : affichage en grille de cartes de tuteurs,
- * avec recherche live, modal d'ajout et actions (supprimer).
- */
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/../../controller/SessionManager.php';
+SessionManager::start();
 $pageTitle = "Gestion des Tuteurs";
 
 if (!isset($content)) {
@@ -43,12 +37,12 @@ if (!isset($content)) {
 .tuteurs-header__left h1 {
     font-size: 1.6rem;
     font-weight: 800;
-    color: var(--text-primary, #0f172a);
+    color: var(--text-primary);
     margin: 0 0 0.25rem;
 }
 .tuteurs-header__left p {
     font-size: 0.85rem;
-    color: var(--text-secondary, #64748b);
+    color: var(--text-secondary);
     margin: 0;
 }
 
@@ -60,12 +54,12 @@ if (!isset($content)) {
     flex-wrap: wrap;
 }
 .tuteurs-stat {
-    background: white;
-    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 14px;
     padding: 1.1rem 1.5rem;
     min-width: 160px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: var(--shadow-sm);
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -105,16 +99,17 @@ if (!isset($content)) {
 .tuteurs-search input {
     width: 100%;
     padding: 0.65rem 0.75rem 0.65rem 2.4rem;
-    border: 1px solid var(--border-color, #e2e8f0);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     font-size: 0.9rem;
-    background: white;
+    background: var(--bg-card);
+    color: var(--text-primary);
     outline: none;
     transition: border-color .2s, box-shadow .2s;
 }
 .tuteurs-search input:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-primary-light);
 }
 .tuteurs-search__icon {
     position: absolute;
@@ -134,11 +129,11 @@ if (!isset($content)) {
 
 /* ── Carte Tuteur ── */
 .tuteur-card {
-    background: white;
-    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: var(--shadow-sm);
     transition: transform .22s ease, box-shadow .22s ease;
     display: flex;
     flex-direction: column;
@@ -177,8 +172,8 @@ if (!isset($content)) {
     transform: translateX(-50%);
     width: 52px; height: 52px;
     border-radius: 50%;
-    border: 3px solid white;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border: 3px solid var(--bg-card);
+    background: var(--gradient-primary);
     display: flex; align-items: center; justify-content: center;
     font-size: 1.1rem;
     font-weight: 800;
@@ -199,7 +194,7 @@ if (!isset($content)) {
 .tuteur-card__name {
     font-size: 1rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-primary);
     margin-bottom: 0.2rem;
     white-space: nowrap;
     overflow: hidden;
@@ -207,7 +202,7 @@ if (!isset($content)) {
 }
 .tuteur-card__specialite {
     font-size: 0.78rem;
-    color: #6366f1;
+    color: var(--accent-primary);
     font-weight: 600;
     margin-bottom: 0.5rem;
     white-space: nowrap;
@@ -245,8 +240,8 @@ if (!isset($content)) {
     margin-bottom: 1rem;
 }
 .tuteur-card__stat-item { text-align: center; }
-.tuteur-card__stat-val  { font-size: 1.15rem; font-weight: 800; color: #0f172a; }
-.tuteur-card__stat-key  { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; }
+.tuteur-card__stat-val  { font-size: 1.15rem; font-weight: 800; color: var(--text-primary); }
+.tuteur-card__stat-key  { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .05em; }
 
 /* Actions */
 .tuteur-card__actions {
@@ -290,7 +285,7 @@ if (!isset($content)) {
 
 /* ── Carte "Ajouter un tuteur" ── */
 .tuteur-card--add {
-    border: 2px dashed var(--border-color, #e2e8f0);
+    border: 2px dashed var(--border-color);
     background: transparent;
     box-shadow: none;
     cursor: pointer;
@@ -343,12 +338,13 @@ if (!isset($content)) {
     opacity: 1; pointer-events: all;
 }
 .modal-box {
-    background: white;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 22px;
     padding: 2rem;
     width: 100%;
     max-width: 500px;
-    box-shadow: 0 25px 60px rgba(0,0,0,.18);
+    box-shadow: var(--shadow-2xl);
     transform: scale(.95) translateY(20px);
     transition: transform .3s ease, opacity .3s ease;
 }
@@ -359,10 +355,10 @@ if (!isset($content)) {
     font-size: 1.25rem;
     font-weight: 800;
     margin-bottom: 0.35rem;
-    color: #0f172a;
+    color: var(--text-primary);
 }
 .modal-box .modal-sub {
-    font-size: 0.83rem; color: #64748b; margin-bottom: 1.75rem;
+    font-size: 0.83rem; color: var(--text-secondary); margin-bottom: 1.75rem;
 }
 .modal-field { margin-bottom: 1.1rem; }
 .modal-field label {
@@ -377,20 +373,21 @@ if (!isset($content)) {
 .modal-field textarea {
     width: 100%;
     padding: 0.65rem 0.9rem;
-    border: 1px solid var(--border-color, #e2e8f0);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     font-size: 0.88rem;
     transition: border-color .2s, box-shadow .2s;
     font-family: inherit;
-    background: #f8fafc;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     outline: none;
     box-sizing: border-box;
 }
 .modal-field input:focus,
 .modal-field textarea:focus {
-    border-color: #6366f1;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+    border-color: var(--accent-primary);
+    background: var(--bg-card);
+    box-shadow: 0 0 0 3px var(--accent-primary-light);
 }
 .modal-field textarea { resize: vertical; min-height: 80px; }
 .modal-actions {
@@ -694,22 +691,7 @@ function submitTuteur() {
 
 // ── Supprimer un tuteur ────────────────────────────────────
 function supprimerTuteur(id, nom) {
-    Swal.fire({
-        title: `Retirer ${nom} ?`,
-        html: `
-            <p style="color:#475569;font-size:.9rem;">
-                Si ce tuteur a des formations actives, son rôle sera simplement rétrogradé.<br>
-                Sinon, le compte sera supprimé définitivement.
-            </p>
-        `,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonText: 'Annuler',
-        confirmButtonText: '🗑 Retirer',
-    }).then(result => {
-        if (!result.isConfirmed) return;
-
+    aptusConfirmDelete(() => {
         const fd = new FormData();
         fd.append('action', 'delete');
         fd.append('id', id);
@@ -718,14 +700,14 @@ function supprimerTuteur(id, nom) {
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    Toast.fire({ icon: 'success', title: data.message });
+                    aptusAlert(data.message, 'success');
                     setTimeout(() => location.reload(), 1200);
                 } else {
-                    Toast.fire({ icon: 'error', title: data.message });
+                    aptusAlert(data.message, 'error');
                 }
             })
-            .catch(err => Toast.fire({ icon: 'error', title: err.message }));
-    });
+            .catch(err => aptusAlert(err.message, 'error'));
+    }, `Retirer le tuteur « ${nom} » ? Si ce tuteur a des formations actives, son rôle sera simplement rétrogradé.`);
 }
 
 // ── Contacter un tuteur ────────────────────────────────────
@@ -785,3 +767,4 @@ function shakeField(id, msg) {
     Toast.fire({ icon: 'error', title: msg });
 }
 </script>
+

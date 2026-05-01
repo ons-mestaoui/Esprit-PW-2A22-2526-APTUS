@@ -22,23 +22,35 @@ class TuteurDashboardController
             ";
             $stmt = $db->prepare($query);
             $stmt->execute(['id_formation' => $id_formation]);
-            return $stmt->fetchAll();
-        } catch (Exception $e) {
-            try {
-                $queryAlt = "
-                    SELECT i.id_user, i.progression, i.statut, COALESCE(u.nom, 'Anonyme') as nom_etudiant, u.email
-                    FROM Inscription i
-                    JOIN candidat c ON i.id_user = c.id
-                    LEFT JOIN User u ON i.id_user = u.id
-                    WHERE i.id_formation = :id_formation
-                    ORDER BY u.nom
-                ";
-                $stmt = $db->prepare($queryAlt);
-                $stmt->execute(['id_formation' => $id_formation]);
-                return $stmt->fetchAll();
-            } catch (Exception $e2) {
-                return [];
+            $students = $stmt->fetchAll();
+            
+            // --- SYNC SMART PROGRESSION ---
+            require_once __DIR__ . '/InscriptionController.php';
+            $inscriC = new InscriptionController();
+            $resources = $this->getResources($id_formation);
+            $total_chapters = count($resources);
+            
+            if ($total_chapters > 0) {
+                foreach ($students as &$s) {
+                    if ($s['statut'] !== 'Terminée' && $s['progression'] < 100) {
+                        // Recalcul forcer pour le tuteur seulement si non fini
+                        $s['progression'] = $inscriC->calculateSmartPercentage($s['id_user'], $id_formation, $total_chapters);
+                    } else {
+                        $s['progression'] = 100;
+                    }
+                }
+            } else {
+                // Pas de chapitres = On s'assure que la prog est à 0 si non fini
+                foreach ($students as &$s) {
+                    if ($s['statut'] !== 'Terminée') {
+                        $s['progression'] = 0;
+                    }
+                }
             }
+            return $students;
+        } catch (Exception $e) {
+            // Fallback pour compatibilité OS/Table Names
+            return [];
         }
     }
 

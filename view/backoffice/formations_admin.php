@@ -1,5 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/../../controller/SessionManager.php';
+SessionManager::start();
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controller/FormationController.php';
 require_once __DIR__ . '/../../controller/TuteurController.php';
@@ -23,7 +24,8 @@ $planningEvents  = $tuteurC->getPlanning();  // Tous les tuteurs
 $calendarEvents  = json_encode(array_merge($formationEvents, $planningEvents));
 $planningJSON    = json_encode($planningEvents);
 $tuteurColors    = [];
-$palette = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ec4899','#8b5cf6','#14b8a6','#ef4444'];
+// Color palette for tuteurs (standard Aptus vibrant colors)
+$palette = ['var(--accent-primary)', 'var(--accent-secondary)', 'var(--accent-tertiary)', 'var(--accent-warning)', 'var(--accent-info)', '#8b5cf6', '#14b8a6', '#ef4444'];
 foreach ($tuteursList as $idx => $t) {
     $tuteurColors[$t['id']] = $palette[$idx % count($palette)];
 }
@@ -56,7 +58,7 @@ if (!isset($content)) {
         </div>
 
         <?php if (isset($_GET['error']) && $_GET['error'] == 'has_inscrits'): ?>
-            <div style="color: red; margin: 0 15px; font-weight: bold;">
+            <div style="color: var(--accent-tertiary); margin: 0 15px; font-weight: bold; background: var(--accent-tertiary-light); padding: 8px 15px; border-radius: 8px; border: 1px solid var(--accent-tertiary);">
                 Erreur: Impossible de supprimer une formation qui a des étudiants inscrits.
             </div>
         <?php endif; ?>
@@ -186,7 +188,7 @@ if (!isset($content)) {
                         <td class="fw-medium">
                             <div style="display:flex; align-items:center; gap:12px;">
                                 <img src="<?php echo $f['image_base64']; ?>" alt=""
-                                    style="width:45px; height:25px; object-fit:cover; border-radius:4px; background:#eee;">
+                                    style="width:45px; height:25px; object-fit:cover; border-radius:4px; background:var(--bg-secondary);">
                                 <?php echo htmlspecialchars($f['titre']); ?>
                             </div>
                         </td>
@@ -276,8 +278,8 @@ if (!isset($content)) {
 
         <div style="margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem;">
             <label style="font-size:.8rem;font-weight:600;">Couleur de repère</label>
-            <input type="color" id="creneau-couleur" value="#f59e0b" style="width:40px;height:36px;border:1px solid var(--border-color);border-radius:8px;cursor:pointer;padding:2px;background:var(--bg-input);">
-            <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;margin-left:.5rem;">
+            <input type="color" id="creneau-couleur" value="#f59e0b" style="width:40px;height:36px;border:1px solid var(--border-color);border-radius:8px;cursor:pointer;padding:2px;background:var(--bg-card);">
+            <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;margin-left:.5rem; color: var(--text-secondary);">
                 <input type="checkbox" id="creneau-recurrent"> Récurrent (hebdomadaire)
             </label>
         </div>
@@ -346,7 +348,7 @@ if (!isset($content)) {
                                style="padding-left:36px;" data-min="3" data-label="Titre">
                         <span class="iv-status" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:none;"></span>
                     </div>
-                    <span class="iv-msg" id="af-titre-msg" style="display:none;font-size:.78rem;color:#ef4444;margin-top:4px;display:block;"></span>
+                    <span class="iv-msg" id="af-titre-msg" style="display:none;font-size:.78rem;color:var(--accent-tertiary);margin-top:4px;display:block;"></span>
                 </div>
 
                 <div class="form-group" style="padding-bottom: 25px;">
@@ -469,10 +471,10 @@ if (!isset($content)) {
 #calendar .fc-button { border-radius:8px !important; font-size:.8rem !important; }
 
 /* ── Validation champs ── */
-.iv-field.is-valid   { border-color: #10b981 !important; background: rgba(16,185,129,0.04); }
-.iv-field.is-invalid { border-color: #ef4444 !important; background: rgba(239,68,68,0.04); }
-.iv-status.valid  { color: #10b981; display:inline-flex !important; }
-.iv-status.invalid{ color: #ef4444; display:inline-flex !important; }
+.iv-field.is-valid   { border-color: var(--accent-secondary) !important; background: var(--accent-secondary-light); }
+.iv-field.is-invalid { border-color: var(--accent-tertiary) !important; background: var(--accent-tertiary-light); }
+.iv-status.valid  { color: var(--accent-secondary); display:inline-flex !important; }
+.iv-status.invalid{ color: var(--accent-tertiary); display:inline-flex !important; }
 .iv-msg           { display:none; }
 .iv-msg.show      { display:block !important; }
 
@@ -533,7 +535,7 @@ if (!isset($content)) {
         <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1.25rem;">
             <button onclick="closeCourseFactory()" class="btn btn-secondary" style="padding:0.65rem 1.4rem; border-radius:12px;">Annuler</button>
             <button id="btn-factory-generate" onclick="runCourseFactory()" style="padding:0.65rem 1.6rem; border-radius:12px; border:none; cursor:pointer; font-weight:700; font-size:0.9rem;
-                    background: linear-gradient(135deg,#f59e0b,#f97316); color:white; box-shadow:0 4px 14px rgba(245,158,11,0.4); display:flex; align-items:center; gap:0.5rem;">
+                    background: var(--gradient-primary); color:white; box-shadow: var(--shadow-glow); display:flex; align-items:center; gap:0.5rem;">
                 <span>✨</span> <span id="factory-btn-text">Générer avec Llama-3</span>
             </button>
         </div>
@@ -1030,7 +1032,7 @@ if (!isset($content)) {
         fd.append('action', 'generate_course_factory');
         fd.append('prompt', prompt);
 
-        fetch('ajax_handler.php', { method: 'POST', body: fd })
+        fetch('../frontoffice/ajax_handler.php', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(data => {
             btn.disabled = false;
@@ -1107,8 +1109,8 @@ if (!isset($content)) {
                 mainModal.scrollTop = 0;
             }
 
-            // Notification de succès
-            aptusAlert('✨ Formation générée ! Vérifiez et complétez les champs restants (Tuteur, Date) puis sauvegardez.', 'success');
+            // Focus sur le titre pour une continuité parfaite
+            if (titreField) titreField.focus();
         })
         .catch(err => {
             btn.disabled = false;

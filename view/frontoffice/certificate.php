@@ -1,9 +1,9 @@
 <?php
 // We put this in standalone mode since it's meant to be printed
-session_start();
-require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../controller/SessionManager.php';
+SessionManager::start();
 
-$id_user = $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+$id_user = SessionManager::getUserId();
 $id_formation = isset($_GET['f_id']) ? (int)$_GET['f_id'] : 0;
 
 if ($id_formation <= 0) {

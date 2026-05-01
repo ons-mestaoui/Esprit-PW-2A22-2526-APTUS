@@ -4,16 +4,17 @@ $pageTitle = "Détails de la Formation";
 if (!isset($content)) {
     require_once __DIR__ . '/../../config.php';
     require_once __DIR__ . '/../../controller/FormationController.php';
+    require_once __DIR__ . '/../../controller/SessionManager.php';
+    SessionManager::start();
 
-    // Simulate fetching the formation by ID
+    // Fetch the formation by ID
     $id = $_GET['id'] ?? 1;
     $formationC = new FormationController();
     $formation = $formationC->getFormationById($id);
 
-    // Simuler l'utilisateur (Candidat par défaut ID 10, Tuteur ID 1)
-    // Idéalement, cela viendrait de $_SESSION['user_id']
-    $id_user = (isset($_GET['role']) && $_GET['role'] == 'tuteur') ? 1 : 10;
-    $userRole = ($id_user == 1) ? 'Tuteur' : 'Candidat';
+    // Use centralized SessionManager for user identification
+    $id_user = SessionManager::getUserId();
+    $userRole = (isset($_GET['role']) && $_GET['role'] == 'tuteur') ? 'Tuteur' : 'Candidat';
 
     // === CONTRAINTE: VERIFICATION DU PREREQUIS ===
     $is_unlocked = true;

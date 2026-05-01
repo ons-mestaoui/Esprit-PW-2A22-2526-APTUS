@@ -15,10 +15,11 @@ if (isset($_GET['action']) && $_GET['action'] == 'getCalendarEvents') {
     exit();
 }
 
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/../../controller/SessionManager.php';
+SessionManager::start();
 
-// Logique flexible : on prend l'ID dans l'URL (pour tester) OU l'ID en session (pour l'intégration finale)
-$id_tuteur = $_GET['tuteur_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 1;
+// Use centralized SessionManager for tutor identification
+$id_tuteur = SessionManager::getUserId();
 
 require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
 $dashC = new TuteurDashboardController();
@@ -241,12 +242,12 @@ if (!isset($content)) {
     }
 
     .ai-alert-card {
-        background: linear-gradient(135deg, #fff5f5, #fff);
-        border: 1px solid #fee2e2;
-        border-left: 4px solid #ef4444;
+        background: var(--bg-card);
+        border: 1px solid var(--accent-tertiary);
+        border-left: 4px solid var(--accent-tertiary);
         padding: 1.25rem;
         border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+        box-shadow: var(--shadow-sm);
         animation: slideInRight 0.5s ease forwards;
         margin-bottom: 1rem;
         position: relative;
@@ -275,13 +276,13 @@ if (!isset($content)) {
     }
 
     .ai-alert-card__advice {
-        background: rgba(239, 68, 68, 0.05);
+        background: var(--bg-surface);
         padding: 0.75rem;
         border-radius: 8px;
         font-size: 0.8rem;
         font-style: italic;
-        color: #7f1d1d;
-        border: 1px dashed rgba(239, 68, 68, 0.2);
+        color: var(--text-primary);
+        border: 1px dashed var(--border-color);
     }
 
     .pulse-ai {

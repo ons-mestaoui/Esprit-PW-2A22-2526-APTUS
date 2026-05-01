@@ -18,10 +18,9 @@
  *   - Les réponses sont toujours du JSON
  */
 
-// Démarrage de session pour récupérer l'ID utilisateur
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Integration of centralized SessionManager
+require_once __DIR__ . '/../../controller/SessionManager.php';
+SessionManager::start();
 
 // En-tête JSON par défaut (peut être surchargé par le contrôleur)
 header('Content-Type: application/json');
@@ -60,7 +59,7 @@ switch ($action) {
         require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
         $controller   = new TuteurDashboardController();
         $id_formation = (int)($_POST['id_formation'] ?? 0);
-        $id_user      = (int)($_POST['id_user'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 0);
+        $id_user      = (int)($_POST['id_user'] ?? SessionManager::getUserId());
         $mode         = $_POST['mode'] ?? 'dwell'; // 'chapter' ou 'dwell'
         $new_prog     = (int)($_POST['new_prog'] ?? 0);
 
@@ -70,25 +69,36 @@ switch ($action) {
         $current = $inscriC->getCurrentProgression($id_formation, $id_user);
 
         if ($mode === 'chapter') {
-            // ── MODE A : Chapitres ──────────────────────────────────
-            // La progression envoyée = (chapitre_index+1 / total) * 100
-            // On fait confiance à la valeur (elle est calculée côté PHP au rendu)
-            $final = max($current, min(100, $new_prog));
+            // 📡 SÉCURITÉ & INTELLIGENCE : Mode Smart Progression
+            // On ne fait plus confiance au pourcentage client, on compte les chapitres vus.
+            $chapter_id = $_POST['chapter_id'] ?? 0;
+            
+            require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
+            $tuteurC = new TuteurDashboardController();
+            $resources = $tuteurC->getResources($id_formation);
+            $total_chapters = count($resources);
+
+            require_once __DIR__ . '/../../controller/InscriptionController.php';
+            $inscriC = new InscriptionController();
+            $final = $inscriC->markChapterAsViewed($id_user, $id_formation, $chapter_id, $total_chapters);
 
         } else {
             // ── MODE B : Dwell Time avec validation mathématique ────
             $dwell_seconds = (int)($_POST['dwell_seconds'] ?? 0);
             $word_count    = (int)($_POST['word_count'] ?? 0);
+            $new_prog      = (int)($_POST['new_prog'] ?? 0);
 
             // Plancher 180 secondes (3 min) même pour les courts textes
             $min_required  = max(180, ($word_count > 0) ? ($word_count / 4.17) : 180);
             $ratio         = ($dwell_seconds > 0) ? min($dwell_seconds / $min_required, 1.0) : 0;
             $calc_prog     = (int)round($ratio * 100);
 
-            // On prend le MAX entre ce que le client dit et ce que le calcul donne
-            // (protection anti-triche : on prend le minimum des deux)
             $validated = min($new_prog, $calc_prog);
             $final     = max($current, $validated);
+            
+            require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
+            $controller = new TuteurDashboardController();
+            $controller->updateProgression($id_formation, $id_user, $final);
         }
 
         $success = $controller->updateProgression($id_formation, $id_user, $final);
@@ -114,7 +124,7 @@ switch ($action) {
     case 'get_ai_alerts':
         require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
         $controller = new TuteurDashboardController();
-        $id_tuteur = $_GET['tuteur_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 1;
+        $id_tuteur = $_GET['tuteur_id'] ?? SessionManager::getUserId();
         $alerts = $controller->getRecentAIAlerts((int)$id_tuteur);
         echo json_encode(['success' => true, 'alerts' => $alerts]);
         break;
@@ -187,8 +197,8 @@ switch ($action) {
             break;
         }
         // RAG : On injecte tout le catalogue dans le contexte
-        $catalogue_raw = $formC->listerFormations();
-        $catalogue = ($catalogue_raw instanceof PDOStatement) ? $catalogue_raw->fetchAll() : ($catalogue_raw ?? []);
+        $catalogue_raw = $formC->listerFormations()->fetchAll();
+        $catalogue = $catalogue_raw;
         echo $aiC->generateCrashCourse($user_prompt, $catalogue);
         break;
 
@@ -206,7 +216,17 @@ switch ($action) {
         }
         break;
 
+    case 'generate_ai_syllabus':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
+        $titre = $_POST['titre'] ?? '';
+        $domaine = $_POST['domaine'] ?? '';
+        $niveau = $_POST['niveau'] ?? '';
+        echo $controller->generateSyllabus($titre, $domaine, $niveau);
+        break;
+
     case 'append_ai_syllabus':
+
         require_once __DIR__ . '/../../controller/AIController.php';
         $controller = new AIController();
         $id_formation = $_POST['id_formation'] ?? 0;
@@ -227,10 +247,22 @@ switch ($action) {
     case 'get_emotion_stats':
         require_once __DIR__ . '/../../controller/AIController.php';
         $controller = new AIController();
-        $id_candidat = $_POST['id_candidat'] ?? 0;
         $id_formation = $_POST['id_formation'] ?? 0;
-        
-        echo $controller->getEmotionStats($id_candidat, $id_formation);
+        echo json_encode($controller->getEmotionStats($id_formation));
+        break;
+
+    case 'analyze_student_emotions':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
+        $stats = json_decode($_POST['stats'] ?? '[]', true);
+        echo $controller->analyzeStudentEmotions($stats);
+        break;
+
+    case 'consolidate_emotions':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
+        $id_formation = $_POST['id_formation'] ?? 0;
+        echo $controller->consolidateEmotions($id_formation);
         break;
 
     case 'save_emotion':
@@ -255,7 +287,7 @@ switch ($action) {
     // NOTIFICATIONS
     // --------------------------------------------------------
     case 'get_notifications':
-        $uid = $_GET['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        $uid = $_GET['user_id'] ?? SessionManager::getUserId();
         require_once __DIR__ . '/../../controller/NotificationController.php';
         $notifC = new NotificationController();
         $notifs = $notifC->getUnreadNotifications((int)$uid);
@@ -263,7 +295,7 @@ switch ($action) {
         break;
 
     case 'mark_notifications_read':
-        $uid = $_POST['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        $uid = $_POST['user_id'] ?? SessionManager::getUserId();
         $notif_id = $_POST['notif_id'] ?? null;
         require_once __DIR__ . '/../../controller/NotificationController.php';
         $notifC = new NotificationController();
@@ -277,7 +309,7 @@ switch ($action) {
         break;
 
     case 'delete_all_notifications':
-        $uid = $_POST['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        $uid = $_POST['user_id'] ?? SessionManager::getUserId();
         require_once __DIR__ . '/../../controller/NotificationController.php';
         $notifC = new NotificationController();
         $success = $notifC->deleteAll((int)$uid);
@@ -288,7 +320,7 @@ switch ($action) {
     // CHAT HYBRIDE (Tuteur Augmenté)
     // --------------------------------------------------------
     case 'send_chat_message':
-        $sender_id = $_POST['sender_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        $sender_id = $_POST['sender_id'] ?? SessionManager::getUserId();
         $receiver_id = $_POST['receiver_id'] ?? 0;
         $formation_id = $_POST['formation_id'] ?? 0;
         $content = $_POST['content'] ?? '';
@@ -303,7 +335,7 @@ switch ($action) {
         break;
 
     case 'get_chat_history':
-        $user1 = $_GET['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        $user1 = $_GET['user_id'] ?? SessionManager::getUserId();
         $user2 = $_GET['tutor_id'] ?? 0;
         $formation_id = $_GET['formation_id'] ?? 0;
         require_once __DIR__ . '/../../controller/ChatController.php';
@@ -326,7 +358,7 @@ switch ($action) {
         break;
 
     case 'send_recording_notif':
-        $uid = $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+        $uid = SessionManager::getUserId();
         $id_formation = $_POST['id_formation'] ?? 0;
         $transcript = $_POST['transcript_summary'] ?? '';
         

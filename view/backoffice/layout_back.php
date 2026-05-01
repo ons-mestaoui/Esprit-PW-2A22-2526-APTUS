@@ -29,6 +29,10 @@
 
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+  <script>
+    // 🛡️ SÉCURITÉ : Définition de l'URL de base pour FaceAPI et AJAX
+    const APTUS_BASE_URL = window.location.origin + "/aptus_first_official_version/";
+  </script>
 </head>
 <body>
 
@@ -153,7 +157,7 @@
         <div class="modal-content" style="background:var(--bg-card); border-radius:24px; max-width:450px; text-align:center; padding: 40px 32px; position:relative; border:1px solid var(--border-color); box-shadow:var(--shadow-2xl);">
             <button class="modal-close" onclick="closeModals()" style="position:absolute; top:20px; right:20px; color:var(--text-tertiary); background:none; border:none; cursor:pointer;"><i data-lucide="x" style="width:24px;height:24px;"></i></button>
 
-            <div style="width:64px; height:64px; background:rgba(239,68,68,0.1); color:#ef4444; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+            <div style="width:64px; height:64px; background: var(--accent-tertiary-light); color: var(--accent-tertiary); border-radius: 50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; border: 1px solid var(--accent-tertiary);">
                 <i data-lucide="alert-triangle" style="width:32px;height:32px;"></i>
             </div>
 
@@ -166,7 +170,7 @@
 
                 <div style="display:flex; gap:12px; justify-content:center;">
                     <button type="button" class="btn btn-secondary" style="flex:1; border-radius:12px; padding:12px;" onclick="closeModals()">Annuler</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1; background:#ef4444; border-color:#ef4444; color:white; border-radius:12px; padding:12px; font-weight:600;">Oui, Supprimer</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1; background: var(--accent-tertiary); border-color: var(--accent-tertiary); color:white; border-radius:12px; padding:12px; font-weight:600;">Oui, Supprimer</button>
                 </div>
             </form>
         </div>
@@ -283,13 +287,15 @@
         document.getElementById('alert-msg').textContent = message;
         
         if (type === 'error') {
-            iconBox.style.background = 'rgba(239,68,68,0.1)';
-            iconBox.style.color = '#ef4444';
+            iconBox.style.background = 'var(--accent-tertiary-light)';
+            iconBox.style.color = 'var(--accent-tertiary)';
+            iconBox.style.border = '1px solid var(--accent-tertiary)';
             icon.setAttribute('data-lucide', 'x-circle');
             title.textContent = 'Erreur';
         } else {
-            iconBox.style.background = 'rgba(16,185,129,0.1)';
-            iconBox.style.color = '#10b981';
+            iconBox.style.background = 'var(--accent-secondary-light)';
+            iconBox.style.color = 'var(--accent-secondary)';
+            iconBox.style.border = '1px solid var(--accent-secondary)';
             icon.setAttribute('data-lucide', 'check-circle');
             title.textContent = 'Succès';
         }
@@ -355,3 +361,5 @@
   </script>
 </body>
 </html>
+
+

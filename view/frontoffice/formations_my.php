@@ -7,12 +7,15 @@ $pageTitle = "Mes Formations - Aptus AI";
 
 if (!isset($content)) {
     require_once __DIR__ . '/../../config.php';
+    require_once __DIR__ . '/../../controller/SessionManager.php';
     require_once __DIR__ . '/../../controller/InscriptionController.php';
+    
+    SessionManager::start();
 
     $inscriptionC = new InscriptionController();
 
-    // On prend l'ID dans l'URL (test), sinon en Session (inté), sinon 10 (fallback)
-    $id_user = $_GET['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10;
+    // Use centralized SessionManager for user identification
+    $id_user = SessionManager::getUserId();
 
     // Le contrôleur appelle le Model qui vérifie les contraintes (date, statut)
     // Le contrôleur appelle le Model qui vérifie les contraintes (date, statut)
@@ -32,7 +35,29 @@ if (!isset($content)) {
         exit();
     }
 
-    $mesCours = $inscriptionC->listerMesFormations($id_user);
+    $mesCoursRaw = $inscriptionC->listerMesFormations($id_user);
+    $mesCours = [];
+    
+    require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
+    $tuteurC = new TuteurDashboardController();
+
+    // Recalculer la progression Smart pour chaque cours (Seulement si NON terminée)
+    foreach ($mesCoursRaw as $c) {
+        if ($c['statut'] !== 'Terminée' && $c['progression'] < 100) {
+            $resources = $tuteurC->getResources($c['id_formation']);
+            if (!empty($resources)) {
+                $total_chapters = count($resources);
+                $c['progression'] = $inscriptionC->calculateSmartPercentage($id_user, $c['id_formation'], $total_chapters);
+            } else {
+                // Smart Logic : Pas de chapitres = 0% de progression réelle
+                $c['progression'] = 0;
+            }
+        } else {
+            // Sécurité : Si c'est terminé, c'est 100%
+            $c['progression'] = 100;
+        }
+        $mesCours[] = $c;
+    }
 
     // Compute stats for the welcome banner
     $totalCours = count($mesCours);

@@ -1,5 +1,8 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/../../controller/SessionManager.php';
+SessionManager::start();
+
+$id_tuteur = SessionManager::getUserId();
 $pageTitle = "Gérer la Formation - Aptus AI";
 
 require_once __DIR__ . '/../../config.php';
@@ -332,20 +335,37 @@ if (!isset($content)) {
                 const syllabus = data.data.syllabus;
                 const resume = data.data.resume_global;
                 
-                let html = `<p style="color:var(--text-secondary); margin-bottom:1.5rem;">${resume}</p>`;
-                html += `<div style="display:flex; flex-direction:column; gap:0.75rem; max-height:400px; overflow-y:auto; text-align:left;">`;
+                let html = `
+                <style>
+                    .swal-ai-custom { border-radius: 24px !important; padding: 2rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important; border: 1px solid var(--border-color); }
+                    .swal2-title { font-size: 1.5rem !important; font-weight: 800 !important; color: var(--accent-primary) !important; margin-bottom: 0.5rem !important; }
+                    .ai-chap-item { background: var(--bg-surface); padding: 1.25rem; border-radius: 14px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s ease; margin-bottom: 0.85rem; display: block; text-align: left; }
+                    .ai-chap-item:hover { border-color: var(--accent-primary); box-shadow: 0 6px 16px rgba(107, 52, 163, 0.1); transform: translateY(-2px); }
+                    .ai-chap-title { color: var(--text-primary); font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+                    .ai-chap-checkbox { width: 20px; height: 20px; accent-color: var(--accent-primary); cursor: pointer; flex-shrink: 0; }
+                    .ai-chap-desc { font-size: 0.9rem; color: var(--text-secondary); margin: 8px 0 0 32px; line-height: 1.6; }
+                    .ai-resume { font-size: 0.95rem; color: var(--text-primary); line-height: 1.6; margin-bottom: 1.5rem; text-align: left; background: linear-gradient(145deg, rgba(107,52,163,0.05) 0%, rgba(107,52,163,0.01) 100%); padding: 1.25rem; border-radius: 14px; border: 1px dashed rgba(107, 52, 163, 0.3); position: relative; }
+                    .swal2-confirm { border-radius: 12px !important; font-weight: 700 !important; padding: 0.75rem 1.5rem !important; background: var(--gradient-primary) !important; box-shadow: var(--shadow-glow) !important; }
+                    .swal2-cancel { border-radius: 12px !important; font-weight: 600 !important; padding: 0.75rem 1.5rem !important; }
+                </style>
+                <div class="ai-resume">
+                    <span style="position:absolute; top:-12px; left:16px; background:var(--bg-card); padding:0 8px; font-size:0.8rem; font-weight:700; color:var(--accent-primary);">💡 Résumé de l'IA</span>
+                    ${resume}
+                </div>
+                <div style="max-height: 420px; overflow-y: auto; padding-right: 10px; margin-right: -10px;">
+                `;
                 
                 syllabus.forEach((chap, idx) => {
                     html += `
-                        <label style="display:block; background:var(--bg-card); padding:1rem; border-radius:8px; border:1px solid var(--border-color); cursor:pointer;">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:5px;">
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <input type="checkbox" class="ai-chap-checkbox" value="${idx}" checked style="width:18px; height:18px; accent-color:var(--accent-primary);">
-                                    <strong style="color:var(--accent-primary);">#${idx+1} ${chap.chapitre}</strong>
+                        <label class="ai-chap-item">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div class="ai-chap-title">
+                                    <input type="checkbox" class="ai-chap-checkbox" value="${idx}" checked>
+                                    <span><span style="color:var(--accent-primary);">#${idx+1}</span> ${chap.chapitre}</span>
                                 </div>
-                                <span class="badge badge-info" style="font-size:0.7rem;">${chap.duree}</span>
+                                <span class="badge" style="font-size:0.75rem; font-weight:700; background:rgba(99,102,241,0.1); color:#6366f1; border:none; padding:4px 8px; border-radius:6px;">⏳ ${chap.duree}</span>
                             </div>
-                            <p style="font-size:0.85rem; margin:0; margin-left:28px; opacity:0.8;">${chap.description}</p>
+                            <p class="ai-chap-desc">${chap.description}</p>
                         </label>
                     `;
                 });

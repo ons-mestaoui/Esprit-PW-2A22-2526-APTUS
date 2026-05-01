@@ -5,6 +5,8 @@ $pageTitle = "Visionneuse de Cours - Aptus AI";
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controller/FormationController.php';
 require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
+require_once __DIR__ . '/../../controller/SessionManager.php';
+SessionManager::start();
 
 $formationC = new FormationController();
 $tuteurC    = new TuteurDashboardController();
@@ -14,7 +16,7 @@ $formation    = $formationC->getFormationById($id_formation);
 if (!$formation) die("Formation introuvable.");
 
 $resources = $tuteurC->getResources($id_formation);
-$id_user   = $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 0;
+$id_user   = SessionManager::getUserId();
 
 // ── Calcul mots & temps (pour mode dwell-time) ──────────────
 $clean_desc        = preg_replace('/<!-- APTUS_RESOURCES: .*? -->/s', '', $formation['description']);
@@ -32,6 +34,7 @@ $total_chapters    = $has_chapters ? count($resources) : 0;
 require_once __DIR__ . '/../../controller/InscriptionController.php';
 $inscriC = new InscriptionController();
 $current_progression = $inscriC->getCurrentProgression($id_formation, $id_user);
+$viewed_chapters     = $inscriC->getViewedChapters($id_user, $id_formation);
 
 if (!isset($content)) {
     $content = __FILE__;
@@ -60,7 +63,8 @@ if (!isset($content)) {
     </div>
 </div>
 
-<!-- ══ Barre de progression ════════════════════════════════════ -->
+<!-- ══ Barre de progression (Seulement si chapitres présents) ════ -->
+<?php if ($has_chapters): ?>
 <div style="background:var(--bg-card);border-radius:var(--radius-lg);padding:1.1rem 1.5rem;margin-bottom:1.5rem;
             border:1px solid var(--border-color);display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
             box-shadow:var(--shadow-sm);">
@@ -74,7 +78,7 @@ if (!isset($content)) {
         </div>
         <div style="font-size:0.75rem;color:var(--text-secondary);" id="progress-label">
             <?php if ($has_chapters): ?>
-                <strong id="chapters-done" style="color:var(--text-primary);">0</strong> / <strong style="color:var(--text-primary);"><?php echo $total_chapters; ?></strong> chapitres complétés
+                <strong id="chapters-done" style="color:var(--text-primary);"><?php echo count($viewed_chapters); ?></strong> / <strong style="color:var(--text-primary);"><?php echo $total_chapters; ?></strong> chapitres complétés
             <?php else: ?>
                 Temps estimé : <strong style="color:var(--text-primary);"><?php echo max(1,round($word_count/250)); ?> min</strong>
             <?php endif; ?>
@@ -93,9 +97,10 @@ if (!isset($content)) {
          border-radius:var(--radius-full);background: var(--accent-secondary-light);color: var(--accent-secondary);font-weight: 700;
          border:1px solid var(--accent-secondary);align-items:center;gap:0.3rem;">
         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background: var(--accent-secondary);"></span>
-        <?php echo $has_chapters ? 'Cours terminé' : 'Lecture prouvée'; ?>
+        Cours terminé
     </div>
 </div>
+<?php endif; ?>
 
 <!-- ══ Contenu Principal ════════════════════════════════════════ -->
 <div style="background:var(--bg-card);border-radius:16px;padding:2.5rem;border:1px solid var(--border-color);box-shadow:var(--shadow-sm);">
@@ -130,12 +135,11 @@ if (!isset($content)) {
             <!-- Mode Chapitres : chaque ressource = un chapitre avec badge d'état -->
             <div style="display:flex;flex-direction:column;gap:0.6rem;">
                 <?php foreach ($resources as $idx => $res):
-                    $chapter_pct_threshold = (int)round(($idx + 1) / $total_chapters * 100);
-                    $is_done = $current_progression >= $chapter_pct_threshold;
+                    $chapter_id = $res['id'] ?? $idx;
+                    $is_done = in_array($chapter_id, $viewed_chapters);
                 ?>
                 <div class="chapter-card" data-chapter-index="<?php echo $idx; ?>"
-                     data-chapter-id="<?php echo htmlspecialchars($res['id'] ?? $idx); ?>"
-                     data-chapter-pct="<?php echo $chapter_pct_threshold; ?>"
+                     data-chapter-id="<?php echo htmlspecialchars($chapter_id); ?>"
                      style="display:flex;align-items:center;gap:1rem;
                             background:<?php echo $is_done ? 'var(--accent-secondary-light)' : 'var(--bg-card)'; ?>;
                             border:1px solid <?php echo $is_done ? 'var(--accent-secondary)' : 'var(--border-color)'; ?>;
@@ -166,7 +170,7 @@ if (!isset($content)) {
                     <a href="<?php echo htmlspecialchars($res['url']); ?>"
                        <?php if ($res['type'] === 'pdf' || strpos($res['url'], 'data:') === 0): ?> download="<?php echo htmlspecialchars($res['titre']); ?>.pdf" <?php endif; ?>
                        target="_blank"
-                       onclick="markChapterOpened(<?php echo $idx; ?>, <?php echo $chapter_pct_threshold; ?>)"
+                       onclick="markChapterOpened('<?php echo $chapter_id; ?>', <?php echo $idx; ?>)"
                        style="flex-shrink:0;padding:0.45rem 1rem;border-radius:var(--radius-sm);font-size:0.82rem;font-weight:700;text-decoration:none;
                               transition:var(--transition-fast);
                               <?php if ($is_done): ?>
@@ -176,7 +180,7 @@ if (!isset($content)) {
                               <?php endif; ?>"
                        onmouseover="<?php if (!$is_done): ?>this.style.boxShadow='0 4px 14px rgba(107,52,163,0.4)';this.style.transform='translateY(-1px)';<?php endif; ?>"
                        onmouseout="this.style.boxShadow='<?php echo $is_done ? 'none' : '0 2px 8px rgba(107,52,163,0.3)'; ?>';this.style.transform='none';">
-                        <?php echo $is_done ? '✓ Relu' : 'Ouvrir →'; ?>
+                        <?php echo $is_done ? '✓ Vu' : 'Ouvrir →'; ?>
                     </a>
                 </div>
                 <?php endforeach; ?>
@@ -266,55 +270,49 @@ function sendProgressAjax(pct, mode) {
 }
 
 // ─── MODE A : CHAPITRES ────────────────────────────────────
-function markChapterOpened(idx, pct) {
+function markChapterOpened(chapterId, idx) {
     if (!HAS_CHAPTERS) return;
-    // Mise à jour visuelle immédiate
-    updateBar(pct);
-    // Mise à jour du label chapitres
-    const done = document.getElementById('chapters-done');
-    if (done) done.textContent = idx + 1;
-    // Marquer la carte comme complétée
-    const card = document.querySelector(`.chapter-card[data-chapter-index="${idx}"]`);
-    if (card) {
-        card.style.borderColor = 'rgba(16,185,129,0.4)';
-        card.style.background  = 'rgba(16,185,129,0.05)';
-        const num = card.querySelector('[style*="border-radius:50%"]');
-        if (num) { num.style.color = '#10b981'; num.style.background = 'rgba(16,185,129,0.15)'; num.textContent = '✓'; }
-        const btn = card.querySelector('a');
-        if (btn) { btn.textContent = '✓ Relu'; btn.style.color = '#10b981'; btn.style.background = 'rgba(16,185,129,0.15)'; }
-    }
-    sendProgressAjax(pct, 'chapter');
+    
+    // On envoie l'ID réel au serveur
+    const fd = new FormData();
+    fd.append('action',       'update_dwell_progression');
+    fd.append('id_formation', FORMATION_ID);
+    fd.append('id_user',      USER_ID);
+    fd.append('chapter_id',   chapterId);
+    fd.append('mode',         'chapter');
+
+    fetch('ajax_handler.php', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(d => { 
+            if (d.success) { 
+                currentProg = d.progression; 
+                updateBar(currentProg);
+                
+                // Mise à jour visuelle de la carte
+                const card = document.querySelector(`.chapter-card[data-chapter-index="${idx}"]`);
+                if (card) {
+                    card.style.borderColor = 'var(--accent-secondary)';
+                    card.style.background  = 'var(--accent-secondary-light)';
+                    const num = card.querySelector('[style*="flex-shrink:0"]');
+                    if (num) { num.style.color = 'var(--accent-secondary)'; num.style.background = 'var(--accent-secondary-light)'; num.textContent = '✓'; }
+                    const btn = card.querySelector('a');
+                    if (btn) { btn.textContent = '✓ Vu'; btn.style.color = 'var(--accent-secondary)'; btn.style.background = 'var(--accent-secondary-light)'; btn.style.border = '1px solid var(--accent-secondary)'; }
+                }
+                
+                // Compter les chapitres finis visuellement
+                const doneCount = document.querySelectorAll('.chapter-card').filter(c => c.textContent.includes('✓')).length;
+                const doneLabel = document.getElementById('chapters-done');
+                if (doneLabel) {
+                    // On recalcule dynamiquement basé sur le % renvoyé par le serveur
+                    doneLabel.textContent = Math.round((currentProg / 100) * TOTAL_CHAPTERS);
+                }
+            } 
+        });
 }
 
-// ─── MODE B : DWELL TIME (seulement si pas de chapitres) ──
+// ─── MODE B : DWELL TIME (Désactivé si on attend des chapitres) ──
 if (!HAS_CHAPTERS) {
-    let dwellSeconds  = 0;
-    let isVisible     = true;
-    let lastSentPct   = currentProg;
-
-    document.addEventListener('visibilitychange', () => { isVisible = document.visibilityState === 'visible'; });
-
-    setInterval(() => {
-        if (!isVisible) return;
-        dwellSeconds++;
-        const pct = Math.round(Math.min(dwellSeconds / MIN_READ_SEC, 1.0) * 100);
-        updateBar(pct);
-        if (dwellSeconds % 15 === 0 && pct > lastSentPct) {
-            lastSentPct = pct;
-            const fd = new FormData();
-            fd.append('action', 'update_dwell_progression');
-            fd.append('id_formation', FORMATION_ID);
-            fd.append('id_user', USER_ID);
-            fd.append('new_prog', pct);
-            fd.append('mode', 'dwell');
-            fd.append('dwell_seconds', dwellSeconds);
-            fd.append('word_count', WORD_COUNT);
-            fetch('ajax_handler.php', { method:'POST', body:fd })
-                .then(r => r.json())
-                .then(d => { if (d.success) currentProg = d.progression; })
-                .catch(() => {});
-        }
-    }, 1000);
+    // On ne fait rien : le tuteur doit d'abord ajouter du contenu pour activer la progression
 }
 
 // ─── SELF-HEALING SYLLABUS ─────────────────────────────────

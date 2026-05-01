@@ -1,7 +1,7 @@
 <?php
 // Model Formation : représente une formation dans la BDD
 // Contient uniquement les attributs, le constructeur, et les getters/setters
-// Les requêtes SQL sont dans le Controller (FormationController.php)
+// Les requêtes SQL sont dans le Controller (FormationController.php) conformément aux consignes
 class Formation
 {
     private ?int $id_formation;
@@ -47,66 +47,21 @@ class Formation
     }
 
     // Getters
-    public function getIdFormation()
-    {
-        return $this->id_formation;
-    }
-    public function getTitre()
-    {
-        return $this->titre;
-    }
-    public function getDescription()
-    {
-        return $this->description;
-    }
-    public function getDomaine()
-    {
-        return $this->domaine;
-    }
-    public function getNiveau()
-    {
-        return $this->niveau;
-    }
-    public function getDuree()
-    {
-        return $this->duree;
-    }
-    public function getDateFormation()
-    {
-        return $this->date_formation;
-    }
-    public function getImageBase64()
-    {
-        return $this->image_base64;
-    }
-    public function getIdTuteur()
-    {
-        return $this->id_tuteur;
-    }
-    public function getIsOnline()
-    {
-        return $this->is_online;
-    }
-    public function getLienApiRoom()
-    {
-        return $this->lien_api_room;
-    }
-    public function getPrerequisId()
-    {
-        return $this->prerequis_id;
-    }
-    public function getDateFin()
-    {
-        return $this->date_fin;
-    }
+    public function getIdFormation() { return $this->id_formation; }
+    public function getTitre() { return $this->titre; }
+    public function getDescription() { return $this->description; }
+    public function getDomaine() { return $this->domaine; }
+    public function getNiveau() { return $this->niveau; }
+    public function getDuree() { return $this->duree; }
+    public function getDateFormation() { return $this->date_formation; }
+    public function getImageBase64() { return $this->image_base64; }
+    public function getIdTuteur() { return $this->id_tuteur; }
+    public function getIsOnline() { return $this->is_online; }
+    public function getLienApiRoom() { return $this->lien_api_room; }
+    public function getPrerequisId() { return $this->prerequis_id; }
+    public function getDateFin() { return $this->date_fin; }
 
     // Setters
-    public function setTitre(string $titre)
-    {
-        $this->titre = $titre;
-    }
-    public function setDescription(string $description)
-    {
-        $this->description = $description;
-    }
+    public function setTitre(string $titre) { $this->titre = $titre; }
+    public function setDescription(string $description) { $this->description = $description; }
 }

@@ -91,21 +91,23 @@ class AIController
     public function generateSyllabus($titre, $domaine, $niveau) {
         $data = [
             "model" => "llama-3.3-70b-versatile",
-            "messages" => [[ "role" => "user", "content" => "Expert Aptus AI. Génère syllabus JSON pour '$titre' ($domaine, $niveau). Structure: {syllabus:[{chapitre,description,duree}],resume_global}. Strict JSON." ]],
+            "messages" => [[ "role" => "system", "content" => "Strict JSON Output" ], [ "role" => "user", "content" => "Expert Aptus AI. Génère syllabus JSON pour '$titre' ($domaine, $niveau). Structure: {syllabus:[{chapitre,description,duree}],resume_global}." ]],
             "temperature" => 0.7, "response_format" => ["type" => "json_object"]
         ];
         $res = $this->callAI($data);
-        return $res['success'] ? $res['content'] : json_encode(['success'=>false, 'message'=>$res['message']]);
+        if (!$res['success']) return json_encode(['success'=>false, 'message'=>$res['message']]);
+        return json_encode(['success'=>true, 'data'=>json_decode($res['content'],true)]);
     }
 
     public function analyzeStudentEmotions($stats) {
         $data = [
             "model" => "llama-3.3-70b-versatile",
-            "messages" => [[ "role" => "user", "content" => "Analyse emotions JSON: " . json_encode($stats) . ". Structure: {emotions_predominantes, conseils:[3 conseils actionnables]}." ]],
+            "messages" => [[ "role" => "system", "content" => "Strict JSON Output" ], [ "role" => "user", "content" => "Analyse emotions JSON: " . json_encode($stats) . ". Structure: {analyseGlobale, conseils:[3 conseils actionnables]}." ]],
             "temperature" => 0.6, "response_format" => ["type" => "json_object"]
         ];
         $res = $this->callAI($data);
-        return $res['success'] ? $res['content'] : json_encode(['success'=>false, 'message'=>$res['message']]);
+        if (!$res['success']) return json_encode(['success'=>false, 'message'=>$res['message']]);
+        return json_encode(['success'=>true, 'data'=>json_decode($res['content'],true)]);
     }
 
     public function selfHealingSyllabus($titre) {
@@ -174,5 +176,48 @@ class AIController
             $s = $db->prepare("INSERT INTO rapport_emotions (id_candidat, id_formation, emotion_detectee) VALUES (:c, :f, :e)");
             return json_encode(['success' => $s->execute(['c'=>$id_c, 'f'=>$id_f, 'e'=>$em])]);
         } catch (Exception $e) { return json_encode(['success'=>false]); }
+    }
+
+    /**
+     * 🗄️ OPTIMISATION : Consolidation des données (Point 2)
+     * Transforme des milliers de lignes en un résumé IA et purge la table.
+     */
+    public function consolidateEmotions($id_f) {
+        try {
+            $db = config::getConnexion();
+            // 1. Récupérer les stats brutes
+            $s = $db->prepare("SELECT emotion_detectee, COUNT(*) as count FROM rapport_emotions WHERE id_formation = :id GROUP BY emotion_detectee");
+            $s->execute(['id'=>$id_f]);
+            $stats = $s->fetchAll();
+            if (empty($stats)) return json_encode(['success'=>true, 'message'=>'Rien à consolider']);
+
+            // 2. Générer le résumé via IA
+            $aiRes = $this->analyzeStudentEmotions($stats);
+            $report = json_decode($aiRes, true);
+            $summary = $report['emotions_predominantes'] ?? "Session terminée.";
+
+            // 3. Sauvegarder le résumé dans la formation (ou table dédiée)
+            // Ici on l'ajoute à la description de la formation comme un "Bilan IA"
+            $html = "\n<!-- AI_CONSOLIDATED_REPORT_START -->\n<div class='ai-report'><h4>Bilan IA de la séance</h4><p>$summary</p></div>\n<!-- AI_CONSOLIDATED_REPORT_END -->";
+            $this->appendSyllabus($id_f, $html);
+
+            // 4. PURGE : On supprime les données brutes pour éviter l'obésité de la BDD
+            $d = $db->prepare("DELETE FROM rapport_emotions WHERE id_formation = :id");
+            $d->execute(['id'=>$id_f]);
+
+            return json_encode(['success'=>true]);
+        } catch (Exception $e) { return json_encode(['success'=>false, 'message'=>$e->getMessage()]); }
+    }
+
+    /**
+     * 📡 OPTIMISATION : Polling Tuteur (Point 1)
+     */
+    public function getEmotionStats($id_f) {
+        try {
+            $db = config::getConnexion();
+            $s = $db->prepare("SELECT emotion_detectee, COUNT(*) as count FROM rapport_emotions WHERE id_formation = :id GROUP BY emotion_detectee");
+            $s->execute(['id'=>$id_f]);
+            return ['success'=>true, 'stats'=>$s->fetchAll()];
+        } catch (Exception $e) { return ['success'=>false]; }
     }
 }

@@ -11,9 +11,8 @@ class InscriptionController
         $db = config::getConnexion();
         
         // 1. On récupère les infos de base (progression + titre formation)
-        // C'est le socle qui ne doit pas échouer
         $stmt = $db->prepare("
-            SELECT i.progression, f.titre, f.id_tuteur
+            SELECT i.progression, i.statut, f.titre, f.id_tuteur
             FROM inscription i
             JOIN Formation f ON i.id_formation = f.id_formation
             WHERE i.id_user = :uid AND i.id_formation = :fid
@@ -22,9 +21,8 @@ class InscriptionController
         $res = $stmt->fetch();
         
         if (!$res) {
-            // Deuxième essai avec table Inscription majuscule (casse alternative)
             $stmt = $db->prepare("
-                SELECT i.progression, f.titre, f.id_tuteur
+                SELECT i.progression, i.statut, f.titre, f.id_tuteur
                 FROM Inscription i
                 JOIN Formation f ON i.id_formation = f.id_formation
                 WHERE i.id_user = :uid AND i.id_formation = :fid
@@ -34,6 +32,11 @@ class InscriptionController
         }
 
         if (!$res) return false;
+
+        // Force 100% si le statut est terminé (Sécurité Smart Sync)
+        if ($res['statut'] === 'Terminée') {
+            $res['progression'] = 100;
+        }
 
         // 2. On essaie de récupérer le NOM du candidat (utilisateur ou candidat)
         $res['user_nom'] = 'Candidat Aptus';
@@ -91,6 +94,76 @@ class InscriptionController
             }
         }
     }
+
+    // --- ALGORITHME SMART PROGRESSION ---
+    // Recalcule la progression réelle basée sur les chapitres vus
+    public function calculateSmartPercentage($id_user, $id_formation, $total_chapters)
+    {
+        if ($total_chapters <= 0) return 0;
+        
+        $db = config::getConnexion();
+        // On récupère la liste des chapitres vus stockée en JSON dans 'commentaires' (ou une colonne libre)
+        // Alternative : on utilise une table dédiée si elle existe, sinon on reste sur une approche agile
+        try {
+            $stmt = $db->prepare("SELECT chapitres_vus FROM inscription WHERE id_user = ? AND id_formation = ?");
+            $stmt->execute([$id_user, $id_formation]);
+            $json = $stmt->fetchColumn();
+            
+            $vus = $json ? json_decode($json, true) : [];
+            if (!is_array($vus)) $vus = [];
+            
+            $count_vus = count($vus);
+            $percentage = min(100, (int)round(($count_vus / $total_chapters) * 100));
+            
+            // Mise à jour de la progression réelle en BDD
+            $this->updateProgressionValue($id_user, $id_formation, $percentage);
+            
+            return $percentage;
+        } catch (Exception $e) { return 0; }
+    }
+
+    public function markChapterAsViewed($id_user, $id_formation, $id_chapter, $total_chapters)
+    {
+        $db = config::getConnexion();
+        try {
+            // 1. Récupérer les chapitres déjà vus
+            $stmt = $db->prepare("SELECT chapitres_vus FROM inscription WHERE id_user = ? AND id_formation = ?");
+            $stmt->execute([$id_user, $id_formation]);
+            $json = $stmt->fetchColumn();
+            
+            $vus = $json ? json_decode($json, true) : [];
+            if (!is_array($vus)) $vus = [];
+            
+            // 2. Ajouter le nouveau chapitre s'il n'y est pas déjà
+            if (!in_array($id_chapter, $vus)) {
+                $vus[] = $id_chapter;
+                $new_json = json_encode($vus);
+                
+                $stmtU = $db->prepare("UPDATE inscription SET chapitres_vus = ? WHERE id_user = ? AND id_formation = ?");
+                $stmtU->execute([$new_json, $id_user, $id_formation]);
+            }
+            
+            // 3. Recalculer le pourcentage global
+            return $this->calculateSmartPercentage($id_user, $id_formation, $total_chapters);
+        } catch (Exception $e) {
+            // Si la colonne 'chapitres_vus' n'existe pas encore (fallback), on peut logger l'erreur
+            return 0;
+        }
+    }
+
+    private function updateProgressionValue($id_user, $id_formation, $percentage)
+    {
+        $db = config::getConnexion();
+        $sql = "UPDATE inscription SET progression = ? WHERE id_user = ? AND id_formation = ?";
+        $db->prepare($sql)->execute([$percentage, $id_user, $id_formation]);
+        
+        // Si 100%, on passe le statut à Terminée
+        if ($percentage >= 100) {
+            $db->prepare("UPDATE inscription SET statut = 'Terminée' WHERE id_user = ? AND id_formation = ? AND statut != 'Terminée'")
+               ->execute([$id_user, $id_formation]);
+        }
+    }
+    // -------------------------------------
 
     // Récupère la progression actuelle d'un étudiant pour une formation
     public function getCurrentProgression($id_formation, $id_user)
@@ -176,26 +249,28 @@ class InscriptionController
             $niveau = $stmtInfo->fetchColumn();
 
             if ($niveau) {
-                // Correction : le nom de la colonne est id_badge
-                $stmtB = $db->prepare("SELECT id_badge FROM badge WHERE nom = ? LIMIT 1");
-                $stmtB->execute([$niveau]);
-                $id_badge = $stmtB->fetchColumn();
-
-                if ($id_badge) {
-                    // On insère dans user_badges (on ajoute id_formation si présent dans la table)
-                    $stmtAssign = $db->prepare("INSERT IGNORE INTO user_badges (id_user, id_badge, id_formation, date_obtention) VALUES (?, ?, ?, ?)");
-                    $stmtAssign->execute([$id_user, $id_badge, $id_formation, date('Y-m-d')]);
-                }
+                require_once __DIR__ . '/BadgeController.php';
+                $badgeC = new BadgeController();
+                $badgeC->attribuerBadgeNiveau($id_user, $niveau);
             }
-            // ------------------------------------------
 
+            return true;
         } catch (Exception $e) {
-            // Fallback pour les noms de tables en majuscules/minuscules selon l'OS
-            $update = $db->prepare("UPDATE Inscription SET statut = 'Terminée', progression = 100 WHERE id_formation = ? AND id_user = ?");
-            $update->execute([$id_formation, $id_user]);
+            return false;
         }
     }
 
+    public function getViewedChapters($id_user, $id_formation)
+    {
+        $db = config::getConnexion();
+        try {
+            $stmt = $db->prepare("SELECT chapitres_vus FROM inscription WHERE id_user = ? AND id_formation = ?");
+            $stmt->execute([$id_user, $id_formation]);
+            $json = $stmt->fetchColumn();
+            $vus = $json ? json_decode($json, true) : [];
+            return is_array($vus) ? $vus : [];
+        } catch (Exception $e) { return []; }
+    }
     // Récupérer la collection de badges d'un utilisateur
     public function getMesBadges($id_user)
     {

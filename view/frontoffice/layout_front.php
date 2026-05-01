@@ -23,6 +23,10 @@
 
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+  <script>
+    // 🛡️ SÉCURITÉ : Définition de l'URL de base pour FaceAPI et AJAX
+    const APTUS_BASE_URL = window.location.origin + "/aptus_first_official_version/";
+  </script>
 
   <!-- UX Discoverability: Intro.js -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
@@ -728,3 +732,5 @@
   </button>
 </body>
 </html>
+
+

@@ -52,7 +52,7 @@ if (!isset($content)) {
 </div>
 
 <div class="card-flat p-4">
-    <form action="../../controller/traitement_edit.php" method="POST" enctype="multipart/form-data" class="auth-form" style="max-width: 600px; margin: 0 auto;">
+    <form action="../../controller/traitement_edit.php" method="POST" enctype="multipart/form-data" class="auth-form" style="max-width: 600px; margin: 0 auto;" novalidate>
         <input type="hidden" name="id_formation" value="<?php echo $formation['id_formation']; ?>">
 
         <div class="form-group">
@@ -62,7 +62,7 @@ if (!isset($content)) {
                        value="<?php echo htmlspecialchars($formation['titre']); ?>">
                 <span class="iv-status" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:none;"></span>
             </div>
-            <span class="iv-msg" id="ef-titre-msg" style="display:none;font-size:.78rem;color:#ef4444;margin-top:4px;font-weight:600;"></span>
+            <span class="iv-msg" id="ef-titre-msg" style="display:none;font-size:.78rem;color:var(--accent-tertiary);margin-top:4px;font-weight:600;"></span>
         </div>
 
         <div class="form-group" style="padding-bottom: 25px;">
@@ -234,8 +234,8 @@ if (!isset($content)) {
             statusEl.className = 'iv-status ' + (valid ? 'valid' : 'invalid');
             statusEl.style.display = 'inline-flex';
             statusEl.innerHTML = valid
-                ? '<i data-lucide="check" style="width:14px;height:14px;color:#10b981;"></i>'
-                : '<i data-lucide="alert-circle" style="width:14px;height:14px;color:#ef4444;"></i>';
+                ? '<i data-lucide="check" style="width:14px;height:14px;color:var(--accent-secondary);"></i>'
+                : '<i data-lucide="alert-circle" style="width:14px;height:14px;color:var(--accent-tertiary);"></i>';
             if (window.lucide) lucide.createIcons();
         }
 
