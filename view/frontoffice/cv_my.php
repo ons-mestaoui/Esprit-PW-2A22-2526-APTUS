@@ -84,17 +84,18 @@ if (!isset($content)) {
     border: 1px solid var(--border-color);
     border-radius: 24px;
     padding: 12px;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     position: relative;
     cursor: default;
     box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(10px);
 }
 
 .cv-miniature-card:hover {
     border-color: var(--accent-primary);
     background: var(--bg-card-hover);
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
 }
 
 .cv-miniature__preview {
@@ -331,6 +332,88 @@ if (!isset($content)) {
 .stat-box-small .label { font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
 .stat-box-small .val { font-size: 1.8rem; font-weight: 850; color: var(--text-primary); display: block; margin-top: 5px; }
 
+
+/* ── STYLISH SCROLLBAR ── */
+.stylish-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+.stylish-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 10px;
+}
+.stylish-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--gradient-primary);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+.stylish-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+}
+
+/* ── PREMIUM BUTTONS ── */
+.btn-aptus-primary {
+    background: var(--gradient-primary);
+    color: #fff !important;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: var(--transition-bounce);
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(107, 52, 163, 0.3);
+}
+
+.btn-aptus-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(107, 52, 163, 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-aptus-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color);
+    padding: 12px 25px;
+    border-radius: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: var(--transition-base);
+    cursor: pointer;
+}
+
+.btn-aptus-secondary:hover {
+    background: var(--bg-tertiary);
+    transform: translateY(-2px);
+}
+
+/* ── PREMIUM CARDS ── */
+.ai-report-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 2rem;
+    border-radius: 30px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s ease;
+    text-align: left;
+    color: var(--text-primary);
+}
+
+.ai-report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+    border-color: rgba(139, 92, 246, 0.2);
+}
 </style>
 
 <div class="dashboard-wrap">
@@ -443,7 +526,7 @@ if (!isset($content)) {
                             <i data-lucide="printer" style="width: 14px;"></i>
                         </button>
                         <?php if($aiData): ?>
-                        <button onclick="showAIAudit(<?php echo htmlspecialchars(json_encode($aiData), ENT_QUOTES); ?>)" class="btn-action-small ai" title="IA">
+                        <button onclick="showAIAudit(<?php echo htmlspecialchars(json_encode($aiData), ENT_QUOTES); ?>, <?php echo $cv['id_cv']; ?>)" class="btn-action-small ai" title="IA">
                             <i data-lucide="sparkles" style="width: 14px;"></i>
                         </button>
                         <?php endif; ?>
@@ -486,22 +569,35 @@ if (!isset($content)) {
     </div>
 </div>
 
-<!-- AI MODAL (Minimalist Site Theme) -->
-<div id="view-audit-modal" class="aptus-modal-overlay" onclick="if(event.target===this) this.classList.remove('active');">
-    <div class="aptus-modal-content" style="max-width: 600px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 30px; padding: 2.5rem;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 style="color: var(--text-primary); margin:0;"><i data-lucide="sparkles" style="color: #f59e0b; margin-right: 10px;"></i>Audit IA</h3>
-            <div style="font-size: 1.5rem; font-weight: 900; color: var(--text-primary);"><span id="view-score-value">0</span>%</div>
+<!-- AI MODAL (Centered Aptus Theme) -->
+<div id="view-audit-modal"  class="aptus-modal-overlay" onclick="if(event.target===this) this.classList.remove('active');">
+    <div class="aptus-modal-content" style="max-width: 700px; max-height: 90vh; overflow: hidden; background: #f8fafc; border: none; border-radius: 20px; padding: 0; text-align: center; position: relative;">
+        <!-- Move absolute elements outside the scrollable area if needed, or keep inside -->
+        <i data-lucide="sparkles" style="color: #f59e0b; position: absolute; top: 30px; left: 30px; width: 30px; height: 30px; z-index: 10;"></i>
+        
+        <div class="stylish-scrollbar" style="max-height: 90vh; overflow-y: auto; padding: 3.5rem;">
+            <h2 style="color: #1e293b; font-size: 2.2rem; font-weight: 800; margin-bottom: 5px;">Audit IA Stratégique</h2>
+            <div style="font-size: 3rem; font-weight: 900; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 2.5rem;"><span id="view-score-value">0</span>%</div>
+            
+            <div class="ai-report-card">
+                <h4 style="color: #10b981; font-size: 0.9rem; font-weight: 800; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase;">Points Forts</h4>
+                <div id="view-strengths" style="color: #475569; font-size: 1rem; line-height: 1.6; display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+            
+            <div class="ai-report-card">
+                <h4 style="color: #f59e0b; font-size: 0.9rem; font-weight: 800; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase;">À Améliorer</h4>
+                <div id="view-weaknesses" style="color: #475569; font-size: 1rem; line-height: 1.6; display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 2.5rem;">
+                <button id="btn-view-details" class="btn-modal-confirm" style="background: #fff; color: var(--text-primary); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); padding: 12px 20px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i data-lucide="external-link" style="width:16px;"></i> Détails Stratégiques
+                </button>
+                <button class="btn-modal-confirm" onclick="document.getElementById('view-audit-modal').classList.remove('active');" style="background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 50%, #d946ef 100%); border: none; color: #fff; padding: 12px 20px; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
+                    Fermer
+                </button>
+            </div>
         </div>
-        <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 20px; margin-bottom: 1.5rem;">
-            <h4 style="color: #10b981; font-size: 0.9rem; margin-bottom: 10px;">POINTS FORTS</h4>
-            <ul id="view-strengths" style="color: var(--text-secondary); font-size: 0.85rem; padding-left: 1rem;"></ul>
-        </div>
-        <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 20px;">
-            <h4 style="color: #f59e0b; font-size: 0.9rem; margin-bottom: 10px;">À AMÉLIORER</h4>
-            <ul id="view-weaknesses" style="color: var(--text-secondary); font-size: 0.85rem; padding-left: 1rem;"></ul>
-        </div>
-        <button class="btn btn-primary" onclick="document.getElementById('view-audit-modal').classList.remove('active');" style="width: 100%; margin-top: 2rem; border-radius: 12px; padding: 12px;">Fermer</button>
     </div>
 </div>
 
@@ -577,7 +673,7 @@ async function deleteCV(cvId) {
     if(ok) window.location.href = 'cv_delete.php?id=' + cvId;
 }
 
-function showAIAudit(r) {
+function showAIAudit(r, cvId) {
     const modal = document.getElementById('view-audit-modal');
     modal.classList.add('active');
     let start = 0;
@@ -586,12 +682,28 @@ function showAIAudit(r) {
     const timer = setInterval(() => {
         if(start >= target) { clearInterval(timer); start = target; }
         valEl.textContent = start;
-        start += 2;
-    }, 20);
+        if (start === target) return;
+        start += 1;
+    }, 15);
     const sList = document.getElementById('view-strengths'); sList.innerHTML = '';
-    (r.points_forts || []).forEach(pt => { const li = document.createElement('li'); li.textContent = pt; sList.appendChild(li); });
+    (r.points_forts || []).forEach(pt => { 
+        const div = document.createElement('div'); 
+        div.style.display = 'flex'; div.style.alignItems = 'start'; div.style.gap = '10px';
+        div.innerHTML = `<i data-lucide="check-circle-2" style="color:#10b981; width:18px; flex-shrink:0; margin-top:3px;"></i> <span>${pt}</span>`;
+        sList.appendChild(div); 
+    });
     const wList = document.getElementById('view-weaknesses'); wList.innerHTML = '';
-    (r.points_faibles || []).forEach(pt => { const li = document.createElement('li'); li.textContent = pt; wList.appendChild(li); });
+    (r.points_faibles || []).forEach(pt => { 
+        const div = document.createElement('div'); 
+        div.style.display = 'flex'; div.style.alignItems = 'start'; div.style.gap = '10px';
+        div.innerHTML = `<i data-lucide="alert-circle" style="color:#f59e0b; width:18px; flex-shrink:0; margin-top:3px;"></i> <span>${pt}</span>`;
+        wList.appendChild(div); 
+    });
+    
+    document.getElementById('btn-view-details').onclick = () => {
+        window.location.href = 'cv_audit_details.php?id=' + (cvId || '');
+    };
+    if(window.lucide) lucide.createIcons();
 }
 
 window.addEventListener('resize', () => {
