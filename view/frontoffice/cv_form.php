@@ -120,6 +120,133 @@ if (!isset($content)) {
         position: relative;
     }
     .audit-card-v3 li:last-child { margin-bottom: 0; }
+
+    /* --- ADVANCED FEATURES STYLES --- */
+    :root { --stat-teal: #10b981; }
+    
+    .aptus-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .aptus-switch input { opacity: 0; width: 0; height: 0; }
+    .aptus-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 24px; }
+    .aptus-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .aptus-slider { background-color: var(--stat-teal); }
+    input:checked + .aptus-slider:before { transform: translateX(20px); }
+    
+    .animate-spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    
+    .role-card { position: relative; transition: all 0.3s ease; }
+    .role-card:hover { border-color: var(--accent-primary); }
+    
+    .btn-ai-premium { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .btn-ai-premium:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 4px 12px rgba(107, 52, 163, 0.3); }
+    
+    .magic-fill-container:hover { border-color: var(--accent-primary); background: linear-gradient(135deg, rgba(107, 52, 163, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%); }
+
+    /* --- SOFT SKILLS CLUSTERS --- */
+    .soft-skills-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin-top: 15px;
+    }
+    .soft-skill-card {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .soft-skill-card:hover {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.04);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.1);
+    }
+    .soft-skill-card.active {
+        border-color: #10b981;
+        background: #10b981;
+        color: white;
+    }
+    .soft-skill-card i {
+        width: 24px;
+        height: 24px;
+        transition: transform 0.3s ease;
+    }
+    .soft-skill-card.active i { color: white; transform: scale(1.1); }
+    .soft-skill-card span { font-size: 0.8rem; font-weight: 700; }
+
+    .skill-suggestions-box {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    .chip-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .skill-chip {
+        padding: 6px 12px;
+        background: white;
+        border: 1px solid #cbd5e1;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .skill-chip:hover {
+        border-color: #10b981;
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.05);
+    }
+    .skill-chip.selected {
+        background: #10b981;
+        color: white;
+        border-color: #10b981;
+    }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* --- MODAL SYSTEM --- */
+    .aptus-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+    .aptus-modal-overlay.active {
+        display: flex;
+    }
+    .aptus-modal-content {
+        background: white;
+        padding: 35px;
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        width: 100%;
+        max-width: 500px;
+        position: relative;
+        animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes modalSlideIn {
+        from { transform: scale(0.9) translateY(20px); opacity: 0; }
+        to { transform: scale(1) translateY(0); opacity: 1; }
+    }
 </style>
 
 <script>
@@ -208,6 +335,39 @@ if (!isset($content)) {
         <!-- STEP 1: Personal Info -->
         <div class="step-content active" id="step-1">
             <div class="step-header"><h2>Informations Personnelles</h2></div>
+
+            <!-- MAGIC AUTO-FILL SECTION -->
+            <div class="magic-fill-container" style="background: linear-gradient(135deg, rgba(107, 52, 163, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%); border: 2px dashed var(--accent-primary); border-radius: 20px; padding: 25px; margin-bottom: 30px; position: relative; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
+                <div style="position: absolute; top: -20px; right: -20px; opacity: 0.1; transform: rotate(15deg);">
+                    <i data-lucide="sparkles" style="width: 120px; height: 120px; color: var(--accent-primary);"></i>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+                    <div style="background: var(--accent-primary); color: white; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(107, 52, 163, 0.3);">
+                        <i data-lucide="wand-2" style="width: 22px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text-primary);">Remplissage Magique IA</h3>
+                        <p style="margin:0; font-size:0.85rem; color:var(--text-tertiary);">Gagnez du temps ! Collez votre LinkedIn ou votre ancien CV.</p>
+                    </div>
+                </div>
+                
+                <div id="magic-input-area">
+                    <textarea id="magic-paste-text" class="form-control" placeholder="Collez ici le texte de votre profil LinkedIn ou le contenu de votre CV..." style="min-height: 100px; background: white; border-radius: 12px; margin-bottom: 12px; font-size: 0.9rem; line-height: 1.5;"></textarea>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn-ai-premium" id="btn-magic-fill" onclick="runMagicFill()" style="flex: 2; justify-content: center; height: 45px;">
+                            <i data-lucide="zap"></i> <span>Analyser & Remplir Tout</span>
+                        </button>
+                        <button type="button" class="btn-secondary-cv" onclick="document.getElementById('magic-paste-text').value=''" style="flex: 1; height: 45px; border-style: solid;">
+                            <i data-lucide="trash-2"></i> Effacer
+                        </button>
+                    </div>
+                </div>
+
+                <div id="magic-loading" style="display:none; text-align:center; padding: 20px 0;">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem; margin-bottom: 15px;"></div>
+                    <p style="font-weight: 700; color: var(--accent-primary); animation: pulse 1.5s infinite;">L'IA structure vos données... ✨</p>
+                </div>
+            </div>
             
             <div class="image-upload-wrapper" id="photo-upload-wrapper">
                 <i class="fa-solid fa-camera fa-2x" style="color:var(--text-tertiary);"></i>
@@ -306,9 +466,9 @@ if (!isset($content)) {
 
             <div class="form-group" style="position:relative;">
                 <label>Votre Profil Final *</label>
-                <div id="input-summary" contenteditable="true" class="form-control" 
-                     style="padding: 15px; padding-bottom:45px; height:auto; min-height:120px; overflow-y:auto; background:white; line-height:1.6;"
-                     oninput="syncField({id:'input-summary', value:this.innerHTML})"></div>
+                 <div id="input-summary" contenteditable="true" class="form-control" 
+                      style="padding: 15px; padding-bottom:45px; height:auto; min-height:120px; overflow-y:auto; background:white; line-height:1.6;"
+                      oninput="syncField(this, this.innerHTML)"></div>
 
                 <button type="button" class="btn-ai-premium" onclick="openAIPolishModal('input-summary', 'summary', this)" style="bottom:12px; right:12px; position:absolute;">
                     <i data-lucide="sparkles" style="width:14px;height:14px;"></i> <span>Polish via IA</span>
@@ -332,20 +492,76 @@ if (!isset($content)) {
 
         <!-- STEP 4: Skills (The Skill Heatmap) -->
         <div class="step-content" id="step-4">
-            <div class="step-header"><h2>Compétences</h2></div>
+            <div class="step-header">
+                <h2>Vos Compétences</h2>
+                <p class="help-text">Distinguez vos savoir-faire techniques de vos qualités humaines.</p>
+            </div>
             
-            <div class="form-group">
-                <div class="tags-container" id="skills-tags-container" style="border:none; padding:0; background:transparent;">
-                    <!-- Skills will be grouped here -->
-                </div>
-                <div style="display:flex; gap:10px; margin-top:1rem; position:relative;">
-                    <div class="input-icon-group" style="flex:1;">
-                        <i data-lucide="search"></i>
-                        <input type="text" id="input-skill-search" class="form-control" placeholder="Ajouter une compétence (ex: React, Photoshop...)" autocomplete="off" onkeydown="if(event.key==='Enter'){ event.preventDefault(); addSkillFromInput(); }">
+            <div style="display: flex; flex-direction: column; gap: 35px;">
+                <!-- TOP: Hard Skills -->
+                <div style="background: rgba(107, 52, 163, 0.02); padding: 20px; border-radius: 16px; border: 1px solid rgba(107, 52, 163, 0.1);">
+                    <h3 style="font-size:1.1rem; margin-bottom:15px; display:flex; align-items:center; gap:10px;">
+                        <i data-lucide="cpu" style="color:var(--accent-primary); width:20px;"></i> Compétences Techniques
+                    </h3>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <div style="display:flex; gap:10px; position:relative;">
+                            <div class="input-icon-group" style="flex:1;">
+                                <i data-lucide="search"></i>
+                                <input type="text" id="input-skill-search" class="form-control" placeholder="ex: React, Python, Finance, Gestion de projet..." autocomplete="off" onkeydown="if(event.key==='Enter'){ event.preventDefault(); addSkillFromInput(); }">
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <input type="hidden" id="input-skills" value="">
+
+                <!-- BOTTOM: Soft Skills Clusters -->
+                <div>
+                    <h3 style="font-size:1.1rem; margin-bottom:15px; display:flex; align-items:center; gap:10px;">
+                        <i data-lucide="heart" style="color:#10b981; width:20px;"></i> Qualités Humaines (Soft Skills)
+                    </h3>
+                    <p style="font-size: 0.85rem; color: var(--text-tertiary); margin-bottom: 15px;">Sélectionnez une catégorie ou tapez votre propre qualité :</p>
+                    
+                    <!-- Barre de recherche manuelle pour Soft Skills -->
+                    <div class="input-icon-group" style="margin-bottom: 15px;">
+                        <i data-lucide="sparkles" style="color:#10b981;"></i>
+                        <input type="text" id="input-soft-skill-search" class="form-control" placeholder="Ajouter manuellement (ex: Diplomatie, Empathie...)" autocomplete="off" onkeydown="if(event.key==='Enter'){ event.preventDefault(); addSkillFromInput(null, 'soft'); }">
+                    </div>
+
+                    <div class="soft-skills-grid">
+                        <div class="soft-skill-card" onclick="toggleSkillCluster('communication', this)">
+                            <i data-lucide="message-square" style="color:#10b981;"></i>
+                            <span>Communication</span>
+                        </div>
+                        <div class="soft-skill-card" onclick="toggleSkillCluster('leadership', this)">
+                            <i data-lucide="crown" style="color:#f59e0b;"></i>
+                            <span>Leadership</span>
+                        </div>
+                        <div class="soft-skill-card" onclick="toggleSkillCluster('organisation', this)">
+                            <i data-lucide="layers" style="color:#3b82f6;"></i>
+                            <span>Organisation</span>
+                        </div>
+                        <div class="soft-skill-card" onclick="toggleSkillCluster('adaptabilite', this)">
+                            <i data-lucide="zap" style="color:#ef4444;"></i>
+                            <span>Adaptabilité</span>
+                        </div>
+                    </div>
+
+                    <!-- Suggestions contextuelles -->
+                    <div id="soft-skill-suggestions" class="skill-suggestions-box">
+                        <p style="font-size:0.75rem; font-weight:700; color:var(--text-tertiary); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">Suggestions pour <span id="cluster-name-display" style="color:#10b981;">---</span> :</p>
+                        <div id="chips-container" class="chip-container"></div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Global Tags Container (Filtered display) -->
+            <div style="margin-top:30px; padding-top:20px; border-top:1px solid var(--border-color);">
+                <div id="skills-tags-container" class="tags-container" style="border:none; padding:0; background:transparent;">
+                    <!-- Les tags s'afficheront ici -->
+                </div>
+            </div>
+
+            <input type="hidden" id="input-skills" value="">
+            
             <div class="wizard-footer"><button class="btn-secondary-cv" onclick="goToStep(3)">Retour</button><button class="btn-primary-cv" onclick="goToStep(5)">Suivant: Formation</button></div>
         </div>
 
@@ -368,6 +584,29 @@ if (!isset($content)) {
             <button class="btn-secondary-cv" style="width:100%; border-style:dashed;" onclick="addLanguage()"><i data-lucide="plus-circle"></i> Ajouter une langue</button>
             <textarea id="input-languages" style="display:none;"></textarea>
 
+            <!-- MULTILINGUAL TRANSLATION SECTION -->
+            <div class="translation-container" style="margin-top:30px; border-top:1px solid var(--border-color); padding-top:20px;">
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom:12px; font-weight:700; color:var(--text-primary);">
+                    <i data-lucide="languages" style="color:var(--accent-primary); width:18px;"></i> Traduction Polyglotte IA
+                </label>
+                <div style="display:flex; gap:10px;">
+                    <select id="target-lang-select" class="form-control" style="flex:1; border-radius:12px; height:45px; background:var(--bg-secondary);">
+                        <option value="Anglais">🇬🇧 Anglais (UK/US)</option>
+                        <option value="Espagnol">🇪🇸 Espagnol</option>
+                        <option value="Allemand">🇩🇪 Allemand</option>
+                        <option value="Italien">🇮🇹 Italien</option>
+                        <option value="Arabe">🇹🇳 Arabe</option>
+                        <option value="Français">🇫🇷 Français</option>
+                    </select>
+                    <button type="button" class="btn-ai-premium" id="btn-translate-cv" onclick="runTranslateCV()" style="padding: 0 20px; height:45px; border-radius:12px;">
+                        <i data-lucide="refresh-cw" id="translate-icon"></i> <span id="translate-btn-text">Traduire Tout</span>
+                    </button>
+                </div>
+                <p style="font-size:0.75rem; color:var(--text-tertiary); margin-top:8px;">
+                    L'IA adapte intelligemment les termes techniques au marché cible.
+                </p>
+            </div>
+
             <div class="form-group" style="margin-top:30px; border-top:1px solid var(--border-color); padding-top:20px;">
                 <label>Couleur du thème</label>
                 <div style="display:flex; align-items:center; gap:1rem; margin-top:10px;">
@@ -380,8 +619,23 @@ if (!isset($content)) {
     </main>
 
     <!-- RIGHT: Live Preview -->
-    <aside class="builder-preview-area" id="cv-wrapper">
+    <aside class="builder-preview-area" id="cv-wrapper" style="position:relative;">
+        <!-- SMART FIT CONTROLS -->
+        <div class="smart-fit-toolbar" style="background: white; padding: 10px 15px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; border-radius: 12px 12px 0 0;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:10px; height:10px; background:#10b981; border-radius:50%; animation: pulse 2s infinite;"></div>
+                <span style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">Smart-Fit Auto</span>
+            </div>
+            <label class="aptus-switch">
+                <input type="checkbox" id="toggle-smart-fit" onchange="toggleSmartFit(this.checked)">
+                <span class="aptus-slider round"></span>
+            </label>
+        </div>
         <iframe id="template-preview-frame"></iframe>
+        
+        <div id="smart-fit-indicator" style="display:none; position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(15,23,42,0.9); color:white; padding:8px 16px; border-radius:20px; font-size:0.75rem; font-weight:600; z-index:100; pointer-events:none;">
+            <i data-lucide="shrink" style="width:14px; height:14px; vertical-align:middle; margin-right:5px;"></i> Ajustement en cours...
+        </div>
     </aside>
 </div>
 
@@ -472,6 +726,44 @@ if (!isset($content)) {
             </button>
             <button class="btn-secondary-cv" style="border:none; margin-top:5px;" onclick="closeAIPolishModal()">Annuler</button>
         </div>
+    </div>
+</div>
+
+<!-- MODALE ROI CALCULATOR -->
+<div id="ai-roi-modal" class="aptus-modal-overlay">
+    <div class="aptus-modal-content" style="max-width: 500px; text-align: left;">
+        <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px;">
+            <div class="modal-icon-circle" style="background: rgba(16, 185, 129, 0.1); color: #10b981; margin:0;">
+                <i data-lucide="trending-up" style="width: 30px; height: 30px;"></i>
+            </div>
+            <h2 style="font-size:1.4rem; margin:0;">Calculateur d'Impact (ROI)</h2>
+        </div>
+        
+        <div id="roi-step-1">
+            <p style="color:var(--text-secondary); margin-bottom:1.5rem; font-size:0.95rem; line-height:1.5;">
+                L'IA va vous aider à quantifier cette mission. Quelle est la mesure principale de votre succès ?
+            </p>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                <button class="btn-secondary-cv" onclick="selectROIMetric('Productivité / Temps')" style="font-size:0.8rem; border-style:solid; padding:10px;">⏱️ Temps / Prod</button>
+                <button class="btn-secondary-cv" onclick="selectROIMetric('Argent / Chiffre d\'affaires')" style="font-size:0.8rem; border-style:solid; padding:10px;">💰 Argent / CA</button>
+                <button class="btn-secondary-cv" onclick="selectROIMetric('Qualité / Satisfaction')" style="font-size:0.8rem; border-style:solid; padding:10px;">⭐ Qualité / CSAT</button>
+                <button class="btn-secondary-cv" onclick="selectROIMetric('Volume / Quantité')" style="font-size:0.8rem; border-style:solid; padding:10px;">📦 Volume / Qté</button>
+            </div>
+            <input type="text" id="roi-user-value" class="form-control" placeholder="Ex: 20%, 50k€, 30 personnes..." style="margin-bottom:20px;">
+            <button class="btn-modal-confirm" onclick="generateROISuggestion()" style="width:100%; background:var(--stat-teal); border:none;">Générer l'Impact ✨</button>
+        </div>
+
+        <div id="roi-step-2" style="display:none;">
+            <div style="background:var(--bg-secondary); padding:15px; border-radius:12px; border:1px solid var(--border-color); margin-bottom:20px;">
+                <p id="roi-suggestion-text" style="font-size:0.95rem; font-style:italic; color:var(--text-primary); margin:0; line-height:1.6;"></p>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-modal-confirm" onclick="applyROISuggestion()" style="flex:2;">Appliquer au CV</button>
+                <button class="btn-secondary-cv" onclick="resetROI()" style="flex:1; border-style:solid;">Recommencer</button>
+            </div>
+        </div>
+        
+        <button class="btn-secondary-cv" style="border:none; margin-top:15px; width:100%;" onclick="closeROIModal()">Annuler</button>
     </div>
 </div>
 
@@ -677,10 +969,32 @@ $templateHtml = str_ireplace('</head>', $overlayCSS . '</head>', $templateHtml);
 /* ── CV BUILDER ENGINE V3 ────────────────────────────────── */
 let currentSkills = [];
 let currentLangs = [];
-const TITLES_DB = ['Développeur Full-Stack', 'Data Scientist', 'Chef de Projet IT', 'UX Designer', 'Commercial', 'Ingénieur', 'Designer Graphique', 'Marketing Manager', 'Content Creator', 'Social Media Manager'];
-const LOCATIONS_DB = ['Paris, France', 'Tunis, Tunisie', 'Lyon, France', 'Remote', 'Casablanca, Maroc', 'Sousse, Tunisie', 'Sfax, Tunisie'];
-const LANGUAGES_DB = ['Français', 'Anglais', 'Arabe', 'Allemand', 'Espagnol', 'Italien', 'Portugais'];
-const SKILL_DB = ['PHP', 'JavaScript', 'HTML/CSS', 'React', 'Vue.js', 'Node.js', 'Python', 'SQL', 'Git', 'Agile', 'Gestion de projet', 'Communication', 'Leadership', 'Design Graphique', 'Figma', 'SEO', 'Marketing'];
+const TITLES_DB = [
+    'Développeur Full-Stack', 'Data Scientist', 'Chef de Projet IT', 'UX Designer', 'Designer Graphique',
+    'Comptable Senior', 'Analyste Financier', 'Contrôleur de Gestion', 
+    'Chef de Cuisine', 'Pâtissier', 'Maître d\'Hôtel', 
+    'Commercial Sédentaire', 'Business Developer', 'Responsable Marketing', 'Social Media Manager',
+    'Infirmier', 'Aide-Soignant', 'Pharmacien',
+    'Architecte', 'Ingénieur Civil', 'Conducteur de Travaux', 'Électricien',
+    'Avocat', 'Juriste d\'Entreprise', 'Assistant RH', 'Recruteur'
+];
+const LOCATIONS_DB = [
+    'Paris, France', 'Lyon, France', 'Marseille, France', 'Bordeaux, France', 'Lille, France',
+    'Tunis, Tunisie', 'Sousse, Tunisie', 'Sfax, Tunisie', 'Hammamet, Tunisie',
+    'Casablanca, Maroc', 'Rabat, Maroc', 'Marrakech, Maroc', 'Alger, Algérie',
+    'Genève, Suisse', 'Bruxelles, Belgique', 'Montréal, Canada', 'Québec, Canada',
+    'New York, USA', 'Londres, UK', 'Berlin, Allemagne', 'Madrid, Espagne', 'Remote / Télétravail'
+];
+const LANGUAGES_DB = ['Français', 'Anglais', 'Arabe', 'Allemand', 'Espagnol', 'Italien', 'Portugais', 'Russe', 'Chinois', 'Japonais'];
+const SKILL_DB = [
+    'PHP', 'JavaScript', 'React', 'Vue.js', 'Angular', 'Node.js', 'Python', 'SQL', 'Git', 'Docker',
+    'Photoshop', 'Illustrator', 'Figma', 'Indesign', 'Adobe Premiere',
+    'HACCP', 'Gestion des stocks', 'Cuisine Française', 'Pâtisserie fine',
+    'Audit Financier', 'Liasse Fiscale', 'SAP', 'Sage', 'IFRS', 'Fiscalité',
+    'SEO', 'Google Ads', 'Copywriting', 'CRM', 'Stratégie Marketing',
+    'AutoCAD', 'BIM', 'Gestion de chantier', 'Réglementation Thermique',
+    'Droit du Travail', 'Gestion de la Paie', 'Recrutement IT', 'Formation'
+];
 
 const TEMPLATE_HTML = <?php echo json_encode($templateHtml); ?>;
 
@@ -818,6 +1132,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateProgress();
     setupSmartAutocomplete(document.getElementById('input-skill-search'), SKILL_DB, true);
+    setupSmartAutocomplete(document.getElementById('input-soft-skill-search'), SOFT_SKILLS_DB, true); // true for isSkill but we handle type in addSkillFromInput
+    setupSmartAutocomplete(document.getElementById('input-title'), TITLES_DB);
+    setupSmartAutocomplete(document.getElementById('input-location'), LOCATIONS_DB);
+
+    // Correction linguistique auto sur perte de focus (blur)
+    document.getElementById('input-title').addEventListener('blur', function() {
+        this.value = smartLinguisticFix(this.value, 'title');
+        syncField(this);
+    });
+    document.getElementById('input-location').addEventListener('blur', function() {
+        this.value = smartLinguisticFix(this.value, 'location');
+        syncField(this);
+    });
     if (typeof lucide !== 'undefined') lucide.createIcons();
 });
 
@@ -1191,6 +1518,306 @@ function syncAllData() {
     }
 }
 
+/* ── ADVANCED FEATURES : MAGIC FILL ── */
+async function runMagicFill() {
+    const text = document.getElementById('magic-paste-text').value.trim();
+    if (!text) {
+        showToast("Veuillez coller du texte d'abord.", 'alert-circle');
+        return;
+    }
+
+    const inputArea = document.getElementById('magic-input-area');
+    const loadingArea = document.getElementById('magic-loading');
+    
+    inputArea.style.display = 'none';
+    loadingArea.style.display = 'block';
+
+    try {
+        const response = await fetch('ajax_ai_autofill.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            populateFormWithJSON(result.data);
+            showToast("CV rempli magiquement ! ✨", 'sparkles');
+            // Hide magic area after success
+            document.querySelector('.magic-fill-container').style.display = 'none';
+        } else {
+            showToast("Erreur IA : " + (result.error || "Inconnu"), 'alert-circle');
+            inputArea.style.display = 'block';
+            loadingArea.style.display = 'none';
+        }
+    } catch (e) {
+        showToast("Erreur de connexion.", 'alert-circle');
+        inputArea.style.display = 'block';
+        loadingArea.style.display = 'none';
+    }
+}
+
+function populateFormWithJSON(data) {
+    // 1. Infos de base
+    if(data.nomComplet) document.getElementById('input-name').value = data.nomComplet;
+    if(data.titrePoste) document.getElementById('input-title').value = data.titrePoste;
+    if(data.email) document.getElementById('input-email').value = data.email;
+    if(data.telephone) document.getElementById('input-phone').value = data.telephone;
+    if(data.adresse) document.getElementById('input-location').value = data.adresse;
+    
+    // 2. Résumé
+    if(data.resume) document.getElementById('input-summary').innerHTML = data.resume;
+
+    // 3. Expériences
+    if(data.experience && Array.isArray(data.experience)) {
+        currentRoles = data.experience.map(r => ({
+            role: r.role || '',
+            company: r.company || '',
+            dates: r.dates || '',
+            achievements: (r.achievements || []).map(a => ({ text: a.text || '', cat: 'Impact' }))
+        }));
+        renderRoles();
+        syncExperience();
+    }
+
+    // 4. Compétences
+    if(data.skills && Array.isArray(data.skills)) {
+        currentSkills = data.skills;
+        renderTags();
+    }
+
+    // 5. Éducation
+    if(data.education && Array.isArray(data.education)) {
+        currentDegrees = data.education.map(e => ({
+            degree: e.degree || '',
+            school: e.school || '',
+            dates: e.dates || '',
+            honors: false,
+            courses: []
+        }));
+        renderDegrees();
+        syncEducation();
+    }
+
+    // 6. Langues
+    if(data.languages && Array.isArray(data.languages)) {
+        currentLangs = data.languages.map(l => ({
+            lang: l.lang || '',
+            level: l.level || 'B1'
+        }));
+        renderLanguages();
+        syncLangs();
+    }
+
+    // Update everything
+    syncAllData();
+    updateProgress();
+}
+
+/* ── ADVANCED FEATURES : TRANSLATION ── */
+async function runTranslateCV() {
+    const lang = document.getElementById('target-lang-select').value;
+    const btn = document.getElementById('btn-translate-cv');
+    const icon = document.getElementById('translate-icon');
+    const txt = document.getElementById('translate-btn-text');
+
+    if (!confirm(`Voulez-vous traduire tout votre CV en ${lang} ? Les textes actuels seront remplacés par la version traduite.`)) return;
+
+    // Build current CV object for translation
+    const currentCV = {
+        nomComplet: document.getElementById('input-name').value,
+        titrePoste: document.getElementById('input-title').value,
+        resume: document.getElementById('input-summary').innerHTML,
+        experience: currentRoles,
+        education: currentDegrees,
+        skills: currentSkills.map(s => typeof s === 'string' ? s : s.name),
+        languages: currentLangs
+    };
+
+    btn.disabled = true;
+    icon.classList.add('animate-spin');
+    txt.textContent = 'Traduction...';
+
+    try {
+        const response = await fetch('ajax_ai_translate.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cvData: currentCV, targetLang: lang })
+        });
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            populateFormWithJSON(result.data);
+            showToast(`Traduction en ${lang} terminée ! 🌍`, 'globe');
+        } else {
+            showToast("Erreur IA : " + (result.error || "Inconnu"), 'alert-circle');
+        }
+    } catch (e) {
+        showToast("Erreur de connexion.", 'alert-circle');
+    } finally {
+        btn.disabled = false;
+        icon.classList.remove('animate-spin');
+        txt.textContent = 'Traduire Tout';
+    }
+}
+
+/* ── ADVANCED FEATURES : ROI CALCULATOR ── */
+let roiActiveRoleIdx = null;
+let roiActiveAchIdx = null;
+let roiSelectedMetric = "";
+
+function openROICalculator(roleIdx, achIdx) {
+    roiActiveRoleIdx = roleIdx;
+    roiActiveAchIdx = achIdx;
+    document.getElementById('ai-roi-modal').classList.add('active');
+    resetROI();
+}
+
+function closeROIModal() {
+    document.getElementById('ai-roi-modal').classList.remove('active');
+}
+
+function selectROIMetric(metric) {
+    roiSelectedMetric = metric;
+    showToast(`Métrique choisie : ${metric}`, 'check-circle');
+}
+
+async function generateROISuggestion() {
+    const userVal = document.getElementById('roi-user-value').value.trim();
+    const originalText = currentRoles[roiActiveRoleIdx].achievements[roiActiveAchIdx].text;
+
+    if (!userVal) {
+        showToast("Veuillez entrer une valeur (chiffre, %, etc.)", 'alert-circle');
+        return;
+    }
+
+    const btn = document.querySelector('#roi-step-1 .btn-modal-confirm');
+    btn.disabled = true;
+    btn.textContent = 'Calcul de l\'impact...';
+
+    try {
+        const response = await fetch('ajax_ai_roi.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                text: originalText, 
+                value: userVal, 
+                metric: roiSelectedMetric,
+                role: currentRoles[roiActiveRoleIdx].role
+            })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            document.getElementById('roi-suggestion-text').textContent = result.suggestion;
+            document.getElementById('roi-step-1').style.display = 'none';
+            document.getElementById('roi-step-2').style.display = 'block';
+        } else {
+            showToast("Erreur : " + result.error, 'alert-circle');
+        }
+    } catch (e) {
+        showToast("Erreur de connexion.", 'alert-circle');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Générer l\'Impact ✨';
+    }
+}
+
+function applyROISuggestion() {
+    const sug = document.getElementById('roi-suggestion-text').textContent;
+    currentRoles[roiActiveRoleIdx].achievements[roiActiveAchIdx].text = sug;
+    renderRoles();
+    syncExperience();
+    closeROIModal();
+    showToast("Impact ROI appliqué ! 📈", 'trending-up');
+}
+
+function resetROI() {
+    document.getElementById('roi-step-1').style.display = 'block';
+    document.getElementById('roi-step-2').style.display = 'none';
+    document.getElementById('roi-user-value').value = '';
+    roiSelectedMetric = "";
+}
+
+/* ── ADVANCED FEATURES : SMART-FIT AUTO ── */
+let smartFitEnabled = false;
+let smartFitBaseSpacing = 1.0;
+let smartFitBaseFont = 1.0;
+
+function toggleSmartFit(enabled) {
+    smartFitEnabled = enabled;
+    if (enabled) {
+        runSmartFit();
+        showToast("Smart-Fit activé : l'IA ajuste votre mise en page. 📏", 'shrink');
+    } else {
+        resetSmartFit();
+    }
+}
+
+function runSmartFit() {
+    if (!smartFitEnabled) return;
+    const ifrm = document.getElementById('template-preview-frame');
+    if (!ifrm || !ifrm.contentDocument) return;
+
+    const doc = ifrm.contentDocument;
+    const body = doc.body;
+    const indicator = document.getElementById('smart-fit-indicator');
+
+    // Target Height for A4 at 96dpi is roughly 1123px
+    const targetHeight = 1120; 
+    let currentHeight = body.scrollHeight;
+
+    if (currentHeight > targetHeight) {
+        indicator.style.display = 'block';
+        
+        // Recursive shrink
+        let attempts = 0;
+        let spacing = 1.0;
+        let fontSize = 1.0;
+
+        const shrink = () => {
+            if (body.scrollHeight > targetHeight && attempts < 20) {
+                spacing -= 0.05;
+                fontSize -= 0.01;
+                doc.documentElement.style.setProperty('--cv-spacing', spacing);
+                doc.documentElement.style.setProperty('--font-size-base', fontSize + 'rem');
+                
+                // Also target common template classes if they don't use variables
+                doc.querySelectorAll('.cv-section, .item, .item-desc li').forEach(el => {
+                    el.style.marginBottom = (parseFloat(getComputedStyle(el).marginBottom) * 0.9) + 'px';
+                });
+
+                attempts++;
+                setTimeout(shrink, 50);
+            } else {
+                indicator.style.display = 'none';
+                if (attempts >= 20) showToast("Ajustement maximum atteint.", 'alert-triangle');
+            }
+        };
+        shrink();
+    }
+}
+
+function resetSmartFit() {
+    const ifrm = document.getElementById('template-preview-frame');
+    if (!ifrm || !ifrm.contentDocument) return;
+    const doc = ifrm.contentDocument;
+    doc.documentElement.style.removeProperty('--cv-spacing');
+    doc.documentElement.style.removeProperty('--font-size-base');
+    // Reload iframe to clear manual styles
+    ifrm.srcdoc = TEMPLATE_HTML;
+    setTimeout(syncAllData, 100);
+}
+
+// Hook into syncAllData to auto-trigger smart fit
+const originalSyncAllData = syncAllData;
+syncAllData = function() {
+    originalSyncAllData();
+    if (smartFitEnabled) {
+        setTimeout(runSmartFit, 500); // Wait for render
+    }
+};
+
 /* ── Specific Systems (Dynamic Enhancements) ── */
 // STEP 2: Persona Architect (Profile Alchemist)
 let currentPersona = 'expert';
@@ -1294,6 +1921,9 @@ function renderRoles() {
                     <button type="button" class="btn-ai-premium" onclick="openAIPolishModal('exp-desc-${i}-${j}', 'experience', this)" style="position:absolute; bottom:5px; right:5px; padding:2px 8px; font-size:0.7rem;">
                         <i data-lucide="sparkles" style="width:10px;"></i> <span>Polish</span>
                     </button>
+                    <button type="button" class="btn-ai-premium" onclick="openROICalculator('${i}', '${j}')" style="position:absolute; bottom:5px; left:5px; padding:2px 8px; font-size:0.7rem; background:var(--stat-teal); border:none;">
+                        <i data-lucide="trending-up" style="width:10px;"></i> <span>Impact ROI</span>
+                    </button>
                 </div>
             </div>
         `).join('');
@@ -1329,33 +1959,169 @@ function syncExperience() {
 }
 
 // STEP 4: Skills Heatmap
-function addSkillFromInput(val) {
-    const input = document.getElementById('input-skill-search');
-    const v = val || input.value.trim();
-    if(v && !currentSkills.includes(v)) {
-        currentSkills.push(v);
-        if(input) input.value = '';
-        renderTags();
+const softSkillClusters = {
+    communication: ["Écoute active", "Négociation", "Prise de parole", "Communication non-verbale", "Esprit de synthèse", "Diplomatie", "Storytelling", "Rédaction professionnelle"],
+    leadership: ["Prise de décision", "Gestion d'équipe", "Délégation", "Pensée stratégique", "Motivation des troupes", "Mentoring", "Gestion de projet", "Visionnaire"],
+    organisation: ["Gestion du temps", "Rigueur", "Planification", "Priorisation", "Polyvalence", "Sens du détail", "Gestion des ressources", "Fiabilité"],
+    adaptabilite: ["Flexibilité", "Résilience", "Gestion du stress", "Apprentissage rapide", "Ouverture d'esprit", "Créativité", "Curiosité", "Auto-formation"]
+};
+
+// Base de données à plat pour l'autocomplétion Soft Skills
+const SOFT_SKILLS_DB = Object.values(softSkillClusters).flat();
+
+let activeCluster = null;
+
+function toggleSkillCluster(type, el) {
+    const box = document.getElementById('soft-skill-suggestions');
+    const container = document.getElementById('chips-container');
+    const nameDisplay = document.getElementById('cluster-name-display');
+
+    if (activeCluster === type) {
+        box.style.display = 'none';
+        activeCluster = null;
+        el.classList.remove('active');
+    } else {
+        document.querySelectorAll('.soft-skill-card').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        activeCluster = type;
+        nameDisplay.textContent = el.querySelector('span').textContent;
+        
+        container.innerHTML = '';
+        softSkillClusters[type].forEach(skill => {
+            const isSelected = currentSkills.some(s => (s.name || s) === skill);
+            const chip = document.createElement('div');
+            chip.className = `skill-chip ${isSelected ? 'selected' : ''}`;
+            chip.innerHTML = skill;
+            chip.onclick = () => {
+                if (currentSkills.some(s => (s.name || s) === skill)) {
+                    removeSkillObj(skill);
+                    chip.classList.remove('selected');
+                } else {
+                    addSkillFromInput(skill, 'soft');
+                    chip.classList.add('selected');
+                }
+            };
+            container.appendChild(chip);
+        });
+        
+        box.style.display = 'block';
     }
 }
+
+// ── MOTEUR DE CORRECTION LINGUISTIQUE (LOCAL) ──
+
+// 1. Calcul de la distance de Levenshtein (détection de fautes de frappe)
+function getLevenshteinDistance(a, b) {
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) matrix[i][j] = matrix[i - 1][j - 1];
+            else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+        }
+    }
+    return matrix[b.length][a.length];
+}
+
+// 2. Normalisation (Enlever les accents et passer en minuscule pour comparer)
+function normalizeText(text) {
+    return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+
+// 3. Correction Intelligente (Recherche la version parfaite dans la DB)
+function smartLinguisticFix(text, dbType) {
+    if (!text || text.trim().length < 2) return text;
+    
+    let db = [];
+    if (dbType === 'hard') db = SKILL_DB;
+    else if (dbType === 'soft') db = SOFT_SKILLS_DB;
+    else if (dbType === 'title') db = TITLES_DB;
+    else if (dbType === 'location') db = LOCATIONS_DB;
+
+    const inputNorm = normalizeText(text);
+    let bestMatch = null;
+    let minDistance = 3; // On ne corrige que si c'est très proche (max 2 fautes)
+
+    for (const entry of db) {
+        const entryNorm = normalizeText(entry);
+        
+        // Match exact (ignorant les accents/casse)
+        if (inputNorm === entryNorm) return entry;
+
+        // Match par distance (fautes de frappe)
+        const dist = getLevenshteinDistance(inputNorm, entryNorm);
+        if (dist < minDistance) {
+            minDistance = dist;
+            bestMatch = entry;
+        }
+    }
+
+    if (bestMatch) return bestMatch;
+
+    // Si aucun match, on applique au moins la majuscule propre
+    return text.trim().charAt(0).toUpperCase() + text.trim().slice(1);
+}
+
+function addSkillFromInput(val, type = 'hard') {
+    const hardInput = document.getElementById('input-skill-search');
+    const softInput = document.getElementById('input-soft-skill-search');
+    
+    let v = val;
+    if (!v) {
+        v = (type === 'hard') ? hardInput.value : softInput.value;
+    }
+    
+    // Correction linguistique intelligente via DB
+    v = smartLinguisticFix(v, type);
+
+    if(v) {
+        const existing = currentSkills.find(s => (s.name || s) === v);
+        if(!existing) {
+            currentSkills.push({ name: v, type: type });
+            if (!val) {
+                if (type === 'hard') hardInput.value = '';
+                else softInput.value = '';
+            }
+            renderTags();
+        }
+    }
+}
+
 function renderTags() {
     const c = document.getElementById('skills-tags-container'); if(!c) return;
     c.innerHTML = '';
     currentSkills.forEach(s => {
-        const name = typeof s === 'string' ? s : s.name;
-        const t = document.createElement('div'); t.className = 'tag-item';
+        const name = s.name || s;
+        const type = s.type || 'hard';
+        const t = document.createElement('div'); 
+        t.className = `tag-item ${type === 'soft' ? 'soft-tag' : ''}`;
+        
+        // Inline style for soft tags to ensure they stand out
+        if(type === 'soft') {
+            t.style.background = 'rgba(16, 185, 129, 0.1)';
+            t.style.borderColor = '#10b981';
+            t.style.color = '#065f46';
+        }
+        
         t.innerHTML = `<span>${name}</span><button type="button" onclick="removeSkillObj('${name}')">&times;</button>`;
         c.appendChild(t);
     });
-    const strArray = currentSkills.map(s => typeof s === 'string' ? s : s.name);
+    const strArray = currentSkills.map(s => s.name || s);
     document.getElementById('input-skills').value = strArray.join(',');
     const ifrm = document.getElementById('template-preview-frame');
     if(ifrm && ifrm.contentWindow) ifrm.contentWindow.postMessage({ type: 'cv-update', field: 'competences', value: strArray.join(' • ') }, '*');
     updateProgress();
 }
+
 function removeSkillObj(name) {
-    currentSkills = currentSkills.filter(s => (typeof s === 'string' ? s : s.name) !== name);
+    currentSkills = currentSkills.filter(s => (s.name || s) !== name);
     renderTags();
+    
+    // Update chips UI if a cluster is open
+    document.querySelectorAll('.skill-chip').forEach(chip => {
+        if (chip.textContent === name) chip.classList.remove('selected');
+    });
 }
 
 // STEP 5: Education Map
@@ -1471,15 +2237,37 @@ function setupSmartAutocomplete(inp, db, isSkill = false) {
         inp.parentElement.style.position = 'relative'; inp.parentElement.appendChild(sD);
     }
     inp.addEventListener('input', () => {
-        const v = inp.value.toLowerCase().trim(); sD.innerHTML = '';
+        const v = inp.value.toLowerCase().trim();
+        sD.innerHTML = '';
         if (v.length < 1) { sD.style.display = 'none'; return; }
-        const m = db.filter(x => x.toLowerCase().includes(v)).slice(0, 5);
+
+        // Algorithme de recherche intelligent : priorité aux mots commençant par la saisie
+        const startsWith = db.filter(x => x.toLowerCase().startsWith(v));
+        const includes = db.filter(x => x.toLowerCase().includes(v) && !x.toLowerCase().startsWith(v));
+        
+        // Fusion et limitation à 6 résultats
+        const m = [...startsWith, ...includes].slice(0, 6);
+
         if (m.length > 0) {
             m.forEach(match => {
-                const d = document.createElement('div'); d.className = 'tag-suggest-item'; d.innerHTML = match;
+                const d = document.createElement('div');
+                d.className = 'tag-suggest-item';
+                
+                // Mise en gras de la partie correspondante
+                const regex = new RegExp(`(${v})`, 'gi');
+                const highlighted = match.replace(regex, '<strong>$1</strong>');
+                d.innerHTML = highlighted;
+
                 d.onclick = () => {
-                    if (isSkill) { addSkillFromInput(match); inp.value = ''; }
-                    else { inp.value = match; inp.dispatchEvent(new Event('input')); }
+                    if (isSkill) { 
+                        const type = inp.id.includes('soft') ? 'soft' : 'hard';
+                        addSkillFromInput(match, type); 
+                        inp.value = ''; 
+                    }
+                    else { 
+                        inp.value = match; 
+                        inp.dispatchEvent(new Event('input')); // Trigger sync
+                    }
                     sD.style.display = 'none';
                 };
                 sD.appendChild(d);
@@ -1694,7 +2482,17 @@ Compétences: ${document.getElementById('input-skills').value}
                 }
                 
                 // Force sync update
-                syncField(inputField);
+                if (pendingAI.context === 'experience') {
+                    // Update the role data
+                    const ids = pendingAI.inputId.split('-'); // exp-desc-i-j
+                    const i = ids[2];
+                    const j = ids[3];
+                    currentRoles[i].achievements[j].text = data.polished_text;
+                    renderRoles();
+                    syncExperience();
+                } else {
+                    syncField(inputField);
+                }
                 
                 showToast(mode === 'correct' ? "Texte corrigé !" : "Texte optimisé !", 'check-circle');
                 

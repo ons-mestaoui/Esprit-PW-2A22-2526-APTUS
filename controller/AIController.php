@@ -55,6 +55,52 @@ class AIController {
         return $response;
     }
 
+    public function generateJSON(string $prompt, string $userInput = ""): array {
+        if (empty($this->apiKey)) {
+            throw new Exception("Clé API Groq manquante.");
+        }
+
+        $payload = json_encode([
+            "model" => $this->model,
+            "messages" => [
+                ["role" => "system", "content" => $prompt],
+                ["role" => "user", "content" => $userInput]
+            ],
+            "temperature" => 0.1,
+            "response_format" => ["type" => "json_object"]
+        ]);
+
+        $response = $this->callGroq($payload);
+        $data = json_decode($response, true);
+        
+        if (isset($data['error'])) {
+            throw new Exception($data['error']);
+        }
+
+        $content = $data['choices'][0]['message']['content'] ?? '';
+        
+        if (preg_match('/\{.*\}/s', $content, $matches)) {
+            return json_decode($matches[0], true);
+        }
+        
+        $json = json_decode($content, true);
+        if (!$json) {
+            throw new Exception("L'IA n'a pas renvoyé un JSON valide.");
+        }
+        return $json;
+    }
+
+    public function translateCV(array $cvData, string $targetLang): array {
+        $prompt = "Tu es un expert en recrutement international. Traduis le contenu de ce CV en $targetLang. 
+        IMPORTANT : 
+        1. Utilise la terminologie professionnelle correcte pour le pays cible (ex: en anglais, utilise 'Internship' pour stage).
+        2. Garde TOUTE la structure HTML (balises <strong>, <ul>, etc.) intacte.
+        3. Renvoie UNIQUEMENT l'objet JSON traduit.
+        4. Si la langue est l'Arabe, assure-toi que le texte est adapté pour une lecture de droite à gauche si nécessaire (mais garde les clés JSON en anglais).";
+
+        return $this->generateJSON($prompt, json_encode($cvData));
+    }
+
     public function analyzeCV(string $cvText, string $additionalContext = ""): string {
         if (empty(trim($cvText)) || empty($this->apiKey)) {
             return json_encode(['error' => 'Texte vide ou API Key manquante.']);
