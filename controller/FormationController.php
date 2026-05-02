@@ -125,7 +125,7 @@ class FormationController
         return $events;
     }
 
-    private function validateFormation($formation)
+    private function validateFormation($formation, $isUpdate = false)
     {
         $titre = trim($formation->getTitre());
         if (empty($titre)) throw new Exception("Le titre est obligatoire.");
@@ -139,7 +139,11 @@ class FormationController
         if (empty(trim($formation->getNiveau()))) throw new Exception("Le niveau est obligatoire.");
 
         if (empty($formation->getDateFormation())) throw new Exception("La date de formation est obligatoire.");
-        if (strtotime($formation->getDateFormation()) < strtotime(date('Y-m-d'))) throw new Exception("La date de formation ne peut pas être dans le passé.");
+        
+        // Only check if date is in the past if it's a NEW formation
+        if (!$isUpdate && strtotime($formation->getDateFormation()) < strtotime(date('Y-m-d'))) {
+            throw new Exception("La date de formation ne peut pas être dans le passé.");
+        }
 
         if (!empty($formation->getDateFin()) && !empty($formation->getDateFormation())) {
             if (strtotime($formation->getDateFin()) < strtotime($formation->getDateFormation())) throw new Exception("La date de fin ne peut pas être avant la date de début.");
@@ -158,7 +162,7 @@ class FormationController
 
     public function addFormation($formation)
     {
-        $this->validateFormation($formation);
+        $this->validateFormation($formation, false);
         $lien = $formation->getLienApiRoom();
         if ($formation->getIsOnline() == 1 && empty($lien)) {
             $lien = $this->generateJitsiLink($formation->getTitre());
@@ -218,7 +222,7 @@ class FormationController
 
     public function updateFormation($formation, $id)
     {
-        $this->validateFormation($formation);
+        $this->validateFormation($formation, true);
         $lien = $formation->getLienApiRoom();
         if ($formation->getIsOnline() == 1 && empty($lien)) {
             $lien = $this->generateJitsiLink($formation->getTitre());

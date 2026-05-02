@@ -423,6 +423,14 @@ if (!isset($content)) {
     padding: 4rem 2rem;
     opacity: .5;
 }
+
+/* ── Validation champs ── */
+.iv-field.is-valid   { border-color: var(--accent-secondary) !important; background: var(--accent-secondary-light); }
+.iv-field.is-invalid { border-color: var(--accent-tertiary) !important; background: var(--accent-tertiary-light); }
+.iv-status.valid  { color: var(--accent-secondary); display:inline-flex !important; }
+.iv-status.invalid{ color: var(--accent-tertiary); display:inline-flex !important; }
+.iv-msg           { display:none; }
+.iv-msg.show      { display:block !important; }
 </style>
 
 <!-- =====================================================
@@ -578,33 +586,57 @@ if (!isset($content)) {
      MODAL : Ajouter un tuteur
      ===================================================== -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBackdrop(event)">
-    <div class="modal-box">
-        <h2>➕ Ajouter un tuteur</h2>
-        <p class="modal-sub">
-            Créez un nouveau compte tuteur ou promouvez un utilisateur existant.<br>
-            Un accès temporaire lui sera généré automatiquement.
-        </p>
+    <div class="modal" style="max-width:500px;" onclick="event.stopPropagation();">
+        <div class="modal-header">
+            <h3>➕ Ajouter un tuteur</h3>
+            <button class="modal-close btn-icon" type="button" onclick="closeModal()"><i data-lucide="x" style="width:20px;height:20px;"></i></button>
+        </div>
+        <div class="modal-body">
+            <p class="text-sm text-secondary" style="margin-bottom:1.5rem;">
+                Créez un nouveau compte tuteur ou promouvez un utilisateur existant.<br>
+                Un accès temporaire lui sera généré automatiquement.
+            </p>
 
-        <div class="modal-field">
-            <label for="t-nom">Nom complet <span class="req">*</span></label>
-            <input type="text" id="t-nom" placeholder="Ex : Dr. Sami Ouali">
-        </div>
-        <div class="modal-field">
-            <label for="t-email">Adresse email <span class="req">*</span></label>
-            <input type="email" id="t-email" placeholder="tuteur@email.com">
-        </div>
-        <div class="modal-field">
-            <label for="t-specialite">Spécialité / Domaine</label>
-            <input type="text" id="t-specialite" placeholder="Ex : Développement Web, Data Science...">
-        </div>
-        <div class="modal-field">
-            <label for="t-bio">Biographie courte</label>
-            <textarea id="t-bio" placeholder="Présentez brièvement l'expertise du tuteur..." rows="3"></textarea>
-        </div>
+            <form id="add-tuteur-form" class="auth-form" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="t-nom">Nom complet <span class="required-star">*</span></label>
+                    <div class="input-validated-wrap" style="position:relative;">
+                        <span class="iv-icon" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-secondary);pointer-events:none;"><i data-lucide="user" style="width:16px;height:16px;"></i></span>
+                        <input type="text" class="input iv-field" id="t-nom" name="nom" placeholder="Ex : Dr. Sami Ouali" data-min="2" data-label="Nom" style="padding-left:36px;">
+                        <span class="iv-status" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:none;"></span>
+                    </div>
+                    <span class="iv-msg" id="t-nom-msg" style="display:none;font-size:.78rem;color:var(--accent-tertiary);margin-top:4px;font-weight:600;"></span>
+                </div>
 
-        <div class="modal-actions">
-            <button class="btn-modal-cancel" onclick="closeModal()">Annuler</button>
-            <button class="btn-modal-submit" id="btn-submit-tuteur" onclick="submitTuteur()">
+                <div class="form-group">
+                    <label class="form-label" for="t-email">Adresse email <span class="required-star">*</span></label>
+                    <div class="input-validated-wrap" style="position:relative;">
+                        <span class="iv-icon" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-secondary);pointer-events:none;"><i data-lucide="mail" style="width:16px;height:16px;"></i></span>
+                        <input type="email" class="input iv-field" id="t-email" name="email" placeholder="tuteur@email.com" data-type="email" data-label="Email" style="padding-left:36px;">
+                        <span class="iv-status" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:none;"></span>
+                    </div>
+                    <span class="iv-msg" id="t-email-msg" style="display:none;font-size:.78rem;color:var(--accent-tertiary);margin-top:4px;font-weight:600;"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="t-specialite">Spécialité / Domaine</label>
+                    <div class="input-validated-wrap" style="position:relative;">
+                        <span class="iv-icon" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-secondary);pointer-events:none;"><i data-lucide="briefcase" style="width:16px;height:16px;"></i></span>
+                        <input type="text" class="input iv-field" id="t-specialite" name="specialite" placeholder="Ex : Développement Web, Data Science..." data-min="0" style="padding-left:36px;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="t-bio">Biographie courte</label>
+                    <div class="input-validated-wrap" style="position:relative;">
+                        <textarea class="textarea iv-field" id="t-bio" name="bio" placeholder="Présentez brièvement l'expertise du tuteur..." rows="3" data-min="0"></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+            <button class="btn btn-primary" id="btn-submit-tuteur" onclick="submitTuteur()">
                 <span id="submit-btn-icon">✅</span>
                 <span id="submit-btn-text">Créer le tuteur</span>
             </button>
@@ -616,21 +648,99 @@ if (!isset($content)) {
      JAVASCRIPT
      ===================================================== -->
 <script>
+// ── Validation inline ───────────────────────────────────────
+function ivValidate(input) {
+    const wrap     = input.closest('.input-validated-wrap');
+    const statusEl = wrap ? wrap.querySelector('.iv-status') : null;
+    const msgEl    = document.getElementById(input.id + '-msg');
+    const min      = parseInt(input.dataset.min || 0);
+    const label    = input.dataset.label || 'Ce champ';
+    const type     = input.dataset.type || 'text';
+    const val      = input.value.trim();
+    let valid = true;
+    let errorMsg = '';
+
+    if (min > 0 && val.length === 0) {
+        valid = false;
+        errorMsg = `${label} est requis.`;
+    } else if (val.length > 0 && val.length < min) {
+        valid = false;
+        errorMsg = `Trop court (min. ${min} caractères).`;
+    } else if (type === 'email' && val.length > 0) {
+        const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+        if (!emailRegex.test(val)) {
+            valid = false;
+            errorMsg = `Email invalide.`;
+        }
+    }
+
+    input.classList.toggle('is-valid',   valid && val.length > 0);
+    input.classList.toggle('is-invalid', !valid);
+
+    if (statusEl) {
+        const hasValue = val !== '';
+        const isDirty = input.classList.contains('is-dirty');
+
+        if (hasValue || isDirty) {
+            statusEl.className = 'iv-status ' + (valid ? 'valid' : 'invalid');
+            statusEl.style.display = 'inline-flex';
+            statusEl.innerHTML = valid
+                ? '<i data-lucide="check" style="width:14px;height:14px;"></i>'
+                : '<i data-lucide="alert-circle" style="width:14px;height:14px;"></i>';
+            if (window.lucide) lucide.createIcons();
+        } else {
+            statusEl.style.display = 'none';
+        }
+    }
+    
+    if (msgEl) {
+        if (!valid) {
+            msgEl.textContent = errorMsg;
+            msgEl.style.display = 'block';
+        } else {
+            msgEl.textContent = '';
+            msgEl.style.display = 'none';
+        }
+    }
+    return valid;
+}
+
+document.querySelectorAll('.iv-field').forEach(input => {
+    ['input', 'blur', 'change'].forEach(ev => {
+        input.addEventListener(ev, () => {
+            if (ev === 'blur' || ev === 'change') input.classList.add('is-dirty');
+            ivValidate(input);
+        });
+    });
+});
+
 // ── Modal ──────────────────────────────────────────────────
 function openModal() {
-    document.getElementById('modal-overlay').classList.add('open');
-    document.getElementById('t-nom').focus();
+    document.getElementById('modal-overlay').classList.add('active');
+    document.getElementById('modal-overlay').style.display = 'flex';
+    if (window.lucide) lucide.createIcons();
+    setTimeout(() => document.getElementById('t-nom').focus(), 100);
 }
 function closeModal() {
-    document.getElementById('modal-overlay').classList.remove('open');
-    resetModalForm();
+    document.getElementById('modal-overlay').classList.remove('active');
+    setTimeout(() => {
+        document.getElementById('modal-overlay').style.display = 'none';
+        resetModalForm();
+    }, 200);
 }
 function closeModalOnBackdrop(e) {
     if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
 function resetModalForm() {
     ['t-nom','t-email','t-specialite','t-bio'].forEach(id => {
-        document.getElementById(id).value = '';
+        const el = document.getElementById(id);
+        el.value = '';
+        el.classList.remove('is-valid', 'is-invalid', 'is-dirty');
+        const msg = document.getElementById(id + '-msg');
+        if(msg) msg.style.display = 'none';
+        const wrap = el.closest('.input-validated-wrap');
+        const status = wrap ? wrap.querySelector('.iv-status') : null;
+        if(status) status.style.display = 'none';
     });
     const btn = document.getElementById('btn-submit-tuteur');
     btn.disabled = false;
@@ -642,18 +752,24 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 
 // ── Soumettre le formulaire AJAX ────────────────────────────
 function submitTuteur() {
-    const nom        = document.getElementById('t-nom').value.trim();
-    const email      = document.getElementById('t-email').value.trim();
+    const nomEl = document.getElementById('t-nom');
+    const emailEl = document.getElementById('t-email');
+    nomEl.classList.add('is-dirty');
+    emailEl.classList.add('is-dirty');
+
+    const isNomValid = ivValidate(nomEl);
+    const isEmailValid = ivValidate(emailEl);
+
+    if (!isNomValid || !isEmailValid) {
+        if (!isNomValid) nomEl.focus();
+        else emailEl.focus();
+        return;
+    }
+
+    const nom        = nomEl.value.trim();
+    const email      = emailEl.value.trim();
     const specialite = document.getElementById('t-specialite').value.trim();
     const bio        = document.getElementById('t-bio').value.trim();
-
-    // Validation front
-    if (!nom || nom.length < 2) {
-        shakeField('t-nom', 'Le nom doit contenir au moins 2 caractères.'); return;
-    }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        shakeField('t-email', 'Email invalide.'); return;
-    }
 
     // Feedback de chargement
     const btn = document.getElementById('btn-submit-tuteur');
@@ -662,7 +778,7 @@ function submitTuteur() {
     document.getElementById('submit-btn-text').textContent = 'Création en cours...';
 
     const formData = new FormData();
-    formData.append('action',     'add');
+    formData.append('action',     'add_tuteur');
     formData.append('nom',        nom);
     formData.append('email',      email);
     formData.append('specialite', specialite);
@@ -673,11 +789,13 @@ function submitTuteur() {
         .then(data => {
             closeModal();
             if (data.success) {
-                Toast.fire({ icon: 'success', title: data.message });
+                if (typeof Toast !== 'undefined') Toast.fire({ icon: 'success', title: data.message });
+                else aptusAlert(data.message, 'success');
                 // Rechargement de la page pour afficher la nouvelle carte
                 setTimeout(() => location.reload(), 1200);
             } else {
-                Toast.fire({ icon: 'error', title: data.message });
+                if (typeof Toast !== 'undefined') Toast.fire({ icon: 'error', title: data.message });
+                else aptusAlert(data.message, 'error');
                 btn.disabled = false;
                 document.getElementById('submit-btn-icon').textContent = '✅';
                 document.getElementById('submit-btn-text').textContent = 'Créer le tuteur';
@@ -685,7 +803,8 @@ function submitTuteur() {
         })
         .catch(err => {
             closeModal();
-            Toast.fire({ icon: 'error', title: 'Erreur réseau : ' + err.message });
+            if (typeof Toast !== 'undefined') Toast.fire({ icon: 'error', title: 'Erreur réseau : ' + err.message });
+            else aptusAlert('Erreur réseau : ' + err.message, 'error');
         });
 }
 
@@ -693,7 +812,7 @@ function submitTuteur() {
 function supprimerTuteur(id, nom) {
     aptusConfirmDelete(() => {
         const fd = new FormData();
-        fd.append('action', 'delete');
+        fd.append('action', 'delete_tuteur');
         fd.append('id', id);
 
         fetch('../../controller/ajax_tuteur.php', { method: 'POST', body: fd })

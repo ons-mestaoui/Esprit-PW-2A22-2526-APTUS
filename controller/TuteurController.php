@@ -107,12 +107,26 @@ class TuteurController
         if (empty($nom) || strlen($nom) < 2) {
             return ['success' => false, 'message' => 'Le nom doit contenir au moins 2 caractères.'];
         }
+        if (strlen($nom) > 100) {
+            return ['success' => false, 'message' => 'Le nom ne doit pas dépasser 100 caractères.'];
+        }
+        
         if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return ['success' => false, 'message' => 'Adresse email invalide.'];
+        }
+        if (strlen($email) > 150) {
+            return ['success' => false, 'message' => 'L\'adresse email ne doit pas dépasser 150 caractères.'];
         }
 
         $specialite = trim($data['specialite'] ?? '');
         $bio = trim($data['bio'] ?? '');
+        
+        if (strlen($specialite) > 100) {
+            return ['success' => false, 'message' => 'La spécialité ne doit pas dépasser 100 caractères.'];
+        }
+        if (strlen($bio) > 500) {
+            return ['success' => false, 'message' => 'La biographie ne doit pas dépasser 500 caractères.'];
+        }
 
         $db = config::getConnexion();
 
