@@ -464,6 +464,65 @@ if (!isset($content)) {
     </form>
   </div>
 
+  <!-- ═══ FACE ID ENROLLMENT ═══ -->
+  <div class="settings-card" id="faceid-card">
+    <div class="settings-card__title"><i data-lucide="scan-face" style="width:20px;height:20px;color:var(--accent-primary);"></i> Face ID — Reconnaissance Faciale</div>
+    <div class="settings-card__desc">Connectez-vous avec votre visage. La vérification de vivacité garantit qu'une vraie personne est présente.</div>
+    
+    <div id="faceid-status" class="setting-row">
+      <div class="setting-row__info">
+        <div class="setting-row__label" id="faceid-status-label">Chargement...</div>
+        <div class="setting-row__hint" id="faceid-status-hint">Vérification du statut Face ID</div>
+      </div>
+      <div id="faceid-actions" style="display:flex;gap:var(--space-2);"></div>
+    </div>
+  </div>
+
+  <!-- Face ID Enrollment Modal -->
+  <div id="faceid-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(6px);">
+    <div style="background:var(--bg-card); border-radius:var(--radius-xl); padding:var(--space-8); text-align:center; max-width:560px; width:95%; position:relative; box-shadow:0 25px 60px rgba(0,0,0,0.3);">
+      <button type="button" id="faceid-modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; color:var(--text-secondary); padding:4px;">
+        <i data-lucide="x" style="width:22px;height:22px;"></i>
+      </button>
+      
+      <div style="width:64px; height:64px; background:rgba(99,102,241,0.12); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto var(--space-4) auto;">
+        <i data-lucide="scan-face" style="width:32px;height:32px;color:var(--accent-primary);"></i>
+      </div>
+      
+      <h3 style="font-size:20px; font-weight:700; margin-bottom:var(--space-2);">Enregistrement Face ID</h3>
+      <p id="faceid-instruction" style="font-size:14px; color:var(--text-secondary); margin-bottom:var(--space-5);">Suivez les instructions pour enregistrer votre visage.</p>
+      
+      <!-- Progress Steps -->
+      <div id="faceid-progress" style="display:flex; justify-content:center; gap:var(--space-2); margin-bottom:var(--space-5);">
+        <div class="faceid-step" data-step="1" style="width:40px; height:4px; border-radius:2px; background:var(--border-color); transition:background 0.3s;"></div>
+        <div class="faceid-step" data-step="2" style="width:40px; height:4px; border-radius:2px; background:var(--border-color); transition:background 0.3s;"></div>
+        <div class="faceid-step" data-step="3" style="width:40px; height:4px; border-radius:2px; background:var(--border-color); transition:background 0.3s;"></div>
+        <div class="faceid-step" data-step="4" style="width:40px; height:4px; border-radius:2px; background:var(--border-color); transition:background 0.3s;"></div>
+      </div>
+      
+      <!-- Camera Container -->
+      <div id="faceid-camera-box" style="position:relative; width:100%; max-width:420px; margin:0 auto var(--space-5); border-radius:var(--radius-lg); overflow:hidden; background:#000; aspect-ratio:4/3;">
+        <video id="faceid-video" autoplay muted playsinline style="width:100%; height:100%; object-fit:cover; transform:scaleX(-1);"></video>
+        <canvas id="faceid-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; transform:scaleX(-1); pointer-events:none;"></canvas>
+        <!-- Scanning animation ring -->
+        <div id="faceid-scan-ring" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:200px; height:200px; border-radius:50%; border:3px dashed rgba(99,102,241,0.5); animation:faceid-pulse 2s infinite;"></div>
+      </div>
+      
+      <div id="faceid-result" style="display:none; padding:var(--space-3); border-radius:var(--radius-md); margin-bottom:var(--space-4); font-size:14px; font-weight:500;"></div>
+      
+      <button type="button" id="faceid-start-btn" class="btn btn-primary btn-lg" style="width:100%;">
+        <i data-lucide="camera" style="width:18px;height:18px;"></i> Démarrer l'enregistrement
+      </button>
+    </div>
+  </div>
+
+  <style>
+    @keyframes faceid-pulse {
+      0%, 100% { opacity:0.4; transform:translate(-50%,-50%) scale(1); }
+      50% { opacity:1; transform:translate(-50%,-50%) scale(1.05); }
+    }
+  </style>
+
   <div class="settings-card">
     <div class="settings-card__title"><i data-lucide="smartphone" style="width:20px;height:20px;color:var(--accent-primary);"></i> Authentification à deux facteurs</div>
     <div class="settings-card__desc">Ajoutez une couche de sécurité supplémentaire</div>
@@ -585,5 +644,166 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+});
+</script>
+
+<!-- Face ID Scripts -->
+<script src="/aptus_first_official_version/view/assets/js/face-api.min.js"></script>
+<script src="/aptus_first_official_version/view/assets/js/face-recognition.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+  const statusLabel = document.getElementById('faceid-status-label');
+  const statusHint = document.getElementById('faceid-status-hint');
+  const actionsDiv = document.getElementById('faceid-actions');
+  const modal = document.getElementById('faceid-modal');
+  const modalClose = document.getElementById('faceid-modal-close');
+  const instruction = document.getElementById('faceid-instruction');
+  const progressSteps = document.querySelectorAll('.faceid-step');
+  const videoEl = document.getElementById('faceid-video');
+  const overlayCanvas = document.getElementById('faceid-overlay');
+  const resultDiv = document.getElementById('faceid-result');
+  const startBtn = document.getElementById('faceid-start-btn');
+
+  let cancelled = false;
+  let enrolling = false;
+
+  // ── Check Face ID status ──
+  async function refreshStatus() {
+    try {
+      const res = await FaceAuth.getFaceStatus();
+      if (res.enrolled) {
+        statusLabel.textContent = 'Face ID activé';
+        statusLabel.style.color = 'var(--accent-primary)';
+        statusHint.textContent = 'Votre visage est enregistré. Vous pouvez l\'utiliser pour vous connecter.';
+        actionsDiv.innerHTML = `
+          <button class="btn btn-sm btn-secondary" id="faceid-reenroll-btn"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Réenregistrer</button>
+          <button class="btn btn-sm btn-ghost" id="faceid-remove-btn" style="color:var(--accent-tertiary);"><i data-lucide="trash-2" style="width:14px;height:14px;"></i> Supprimer</button>
+        `;
+      } else {
+        statusLabel.textContent = 'Face ID non configuré';
+        statusLabel.style.color = 'var(--text-secondary)';
+        statusHint.textContent = 'Enregistrez votre visage pour une connexion rapide et sécurisée.';
+        actionsDiv.innerHTML = `
+          <button class="btn btn-sm btn-primary" id="faceid-enroll-btn"><i data-lucide="scan-face" style="width:14px;height:14px;"></i> Configurer</button>
+        `;
+      }
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      bindActions();
+    } catch (e) {
+      statusLabel.textContent = 'Erreur de vérification';
+      statusHint.textContent = 'Impossible de vérifier le statut Face ID.';
+    }
+  }
+
+  function bindActions() {
+    const enrollBtn = document.getElementById('faceid-enroll-btn');
+    const reenrollBtn = document.getElementById('faceid-reenroll-btn');
+    const removeBtn = document.getElementById('faceid-remove-btn');
+
+    if (enrollBtn) enrollBtn.addEventListener('click', openEnrollModal);
+    if (reenrollBtn) reenrollBtn.addEventListener('click', openEnrollModal);
+    if (removeBtn) removeBtn.addEventListener('click', async function() {
+      if (confirm('Supprimer votre Face ID ?')) {
+        const res = await FaceAuth.removeFace();
+        if (res.success) refreshStatus();
+      }
+    });
+  }
+
+  // ── Open enrollment modal ──
+  async function openEnrollModal() {
+    cancelled = false;
+    enrolling = false;
+    modal.style.display = 'flex';
+    resultDiv.style.display = 'none';
+    instruction.textContent = 'Chargement des modèles d\'IA...';
+    startBtn.style.display = 'none';
+    progressSteps.forEach(s => s.style.background = 'var(--border-color)');
+
+    try {
+      await FaceAuth.loadModels();
+      await FaceAuth.startCamera(videoEl);
+      instruction.textContent = 'Caméra prête. Placez votre visage dans le cercle.';
+      startBtn.style.display = '';
+      startBtn.disabled = false;
+      startBtn.innerHTML = '<i data-lucide="camera" style="width:18px;height:18px;"></i> Démarrer l\'enregistrement';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch (e) {
+      instruction.textContent = 'Erreur : impossible d\'accéder à la caméra. Vérifiez les permissions.';
+    }
+  }
+
+  // ── Close modal ──
+  modalClose.addEventListener('click', function() {
+    cancelled = true;
+    FaceAuth.stopCamera();
+    modal.style.display = 'none';
+  });
+
+  // ── Start enrollment with liveness ──
+  startBtn.addEventListener('click', async function() {
+    if (enrolling) return;
+    enrolling = true;
+    startBtn.disabled = true;
+    startBtn.innerHTML = '<i data-lucide="loader" style="width:18px;height:18px;animation:spin 1s linear infinite;"></i> En cours...';
+    resultDiv.style.display = 'none';
+
+    const descriptor = await FaceAuth.runLivenessCheck(
+      videoEl,
+      // onStatus callback
+      function(text, step, total) {
+        instruction.textContent = text;
+        progressSteps.forEach(function(s, i) {
+          s.style.background = i < step ? 'var(--accent-primary)' : 'var(--border-color)';
+        });
+      },
+      // onCancel callback
+      function() { return cancelled; },
+      // overlay canvas
+      overlayCanvas
+    );
+
+    if (cancelled) return;
+
+    if (descriptor) {
+      instruction.textContent = 'Enregistrement en cours...';
+      const res = await FaceAuth.enrollFace(descriptor);
+
+      resultDiv.style.display = 'block';
+      if (res.success) {
+        resultDiv.style.background = 'rgba(16,185,129,0.1)';
+        resultDiv.style.color = '#10b981';
+        resultDiv.style.border = '1px solid rgba(16,185,129,0.3)';
+        resultDiv.textContent = '✅ ' + res.message;
+        setTimeout(function() {
+          FaceAuth.stopCamera();
+          modal.style.display = 'none';
+          refreshStatus();
+        }, 1500);
+      } else {
+        resultDiv.style.background = 'rgba(239,68,68,0.1)';
+        resultDiv.style.color = '#ef4444';
+        resultDiv.style.border = '1px solid rgba(239,68,68,0.3)';
+        resultDiv.textContent = '❌ ' + res.message;
+        enrolling = false;
+        startBtn.disabled = false;
+        startBtn.innerHTML = '<i data-lucide="refresh-cw" style="width:18px;height:18px;"></i> Réessayer';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }
+    } else {
+      resultDiv.style.display = 'block';
+      resultDiv.style.background = 'rgba(245,158,11,0.1)';
+      resultDiv.style.color = '#f59e0b';
+      resultDiv.style.border = '1px solid rgba(245,158,11,0.3)';
+      resultDiv.textContent = '⚠️ Vérification échouée. Assurez-vous d\'être bien éclairé et suivez les instructions.';
+      enrolling = false;
+      startBtn.disabled = false;
+      startBtn.innerHTML = '<i data-lucide="refresh-cw" style="width:18px;height:18px;"></i> Réessayer';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+  });
+
+  // ── Initial status check ──
+  refreshStatus();
 });
 </script>

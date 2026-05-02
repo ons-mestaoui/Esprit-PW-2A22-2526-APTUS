@@ -307,6 +307,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       .auth-container.right-panel-active .sign-up-container { display: block; opacity: 1; transform: none !important; }
       .auth-container.right-panel-active .sign-in-container { display: none; }
     }
+    /* ── Face ID Login Panel ── */
+    .faceid-login-panel {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-4);
+      width: 100%;
+      animation: fadeSlideIn 0.4s ease;
+    }
+    .faceid-login-panel.active { display: flex; }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .faceid-camera-container {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: #000;
+      aspect-ratio: 4/3;
+    }
+    .faceid-camera-container video {
+      width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);
+    }
+    .faceid-camera-container canvas {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); pointer-events: none;
+    }
+    .faceid-scan-ring {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 160px; height: 160px; border-radius: 50%;
+      border: 3px dashed rgba(99,102,241,0.5);
+      animation: faceid-pulse-login 2s infinite;
+    }
+    @keyframes faceid-pulse-login {
+      0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    }
+    .faceid-progress-bar {
+      display: flex; gap: var(--space-1); width: 100%; max-width: 320px;
+    }
+    .faceid-progress-bar .step {
+      flex: 1; height: 4px; border-radius: 2px; background: var(--border-color, #e2e8f0);
+      transition: background 0.3s;
+    }
+    .faceid-progress-bar .step.done { background: var(--accent-primary, #6366f1); }
+    .faceid-status-text {
+      font-size: var(--fs-sm, 14px); color: var(--text-secondary); text-align: center;
+      min-height: 20px;
+    }
+    .faceid-result-msg {
+      font-size: var(--fs-sm, 14px); padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md); text-align: center; font-weight: 500;
+      display: none; width: 100%; max-width: 320px;
+    }
+    .faceid-divider {
+      display: flex; align-items: center; gap: var(--space-3); width: 100%; margin: var(--space-2) 0;
+      color: var(--text-tertiary, #94a3b8); font-size: var(--fs-xs, 12px);
+    }
+    .faceid-divider::before, .faceid-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border-color, #e2e8f0);
+    }
+    .btn-faceid {
+      display: flex; align-items: center; justify-content: center; gap: var(--space-2);
+      width: 100%; padding: var(--space-3); border-radius: var(--radius-md);
+      border: 1.5px solid var(--border-color, #e2e8f0); background: var(--bg-secondary, #f8fafc);
+      color: var(--text-primary); font-weight: 500; font-size: var(--fs-sm, 14px);
+      cursor: pointer; transition: all 0.3s ease;
+    }
+    .btn-faceid:hover {
+      border-color: var(--accent-primary, #6366f1); background: rgba(99,102,241,0.06);
+      transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.15);
+    }
+    .btn-faceid svg, .btn-faceid i { color: var(--accent-primary, #6366f1); }
   </style>
 
   <script>
@@ -397,6 +472,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <a href="forgot_password.php" class="text-xs text-secondary" style="margin: 10px 0;">Mot de passe oublié ?</a>
           
           <button type="submit" class="btn btn-primary btn-lg w-full" style="margin-top:var(--space-2);">Se connecter</button>
+
+          <!-- Face ID Divider & Button -->
+          <div class="faceid-divider">ou</div>
+          <button type="button" class="btn-faceid" id="faceid-login-toggle">
+            <i data-lucide="scan-face" style="width:20px;height:20px;"></i>
+            Se connecter avec Face ID
+          </button>
+
+          <!-- Face ID Login Panel (hidden by default) -->
+          <div class="faceid-login-panel" id="faceid-login-panel">
+            <div class="faceid-camera-container">
+              <video id="login-faceid-video" autoplay muted playsinline></video>
+              <canvas id="login-faceid-overlay"></canvas>
+              <div class="faceid-scan-ring"></div>
+            </div>
+            <div class="faceid-progress-bar">
+              <div class="step" data-step="1"></div>
+              <div class="step" data-step="2"></div>
+              <div class="step" data-step="3"></div>
+              <div class="step" data-step="4"></div>
+            </div>
+            <div class="faceid-status-text" id="login-faceid-status">Chargement...</div>
+            <div class="faceid-result-msg" id="login-faceid-result"></div>
+            <button type="button" class="btn btn-primary w-full" id="login-faceid-start" style="display:none;">Vérifier mon identité</button>
+            <button type="button" class="text-xs text-secondary" id="login-faceid-back" style="cursor:pointer; background:none; border:none; margin-top:var(--space-2);">
+              ← Retour à la connexion classique
+            </button>
+          </div>
           
           <div class="auth-footer" style="margin-top: var(--space-6);">
              <a href="landing.php" class="back-to-site">
@@ -439,6 +542,137 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <script src="/aptus_first_official_version/view/assets/js/auth_slider.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/password-toggle.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/face-api.min.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/face-recognition.js"></script>
   <script>lucide.createIcons();</script>
+
+  <script>
+  (function() {
+    const toggleBtn = document.getElementById('faceid-login-toggle');
+    const panel = document.getElementById('faceid-login-panel');
+    const backBtn = document.getElementById('login-faceid-back');
+    const videoEl = document.getElementById('login-faceid-video');
+    const overlayCanvas = document.getElementById('login-faceid-overlay');
+    const statusText = document.getElementById('login-faceid-status');
+    const resultMsg = document.getElementById('login-faceid-result');
+    const startBtn = document.getElementById('login-faceid-start');
+    const progressSteps = document.querySelectorAll('#faceid-login-panel .step');
+    const emailInput = document.getElementById('login-email');
+    const passwordFields = document.querySelectorAll('.sign-in-container .form-group');
+    const submitBtn = document.querySelector('.sign-in-container .btn-primary[type="submit"]');
+    const forgotLink = document.querySelector('.sign-in-container .text-xs.text-secondary[href]');
+
+    let cancelled = false;
+    let verifying = false;
+
+    if (!toggleBtn || !panel) return;
+
+    // ── Toggle Face ID panel ──
+    toggleBtn.addEventListener('click', async function() {
+      // Require email first
+      const email = emailInput ? emailInput.value.trim() : '';
+      if (!email) {
+        emailInput.focus();
+        emailInput.style.borderColor = 'var(--accent-tertiary, #ef4444)';
+        setTimeout(() => emailInput.style.borderColor = '', 2000);
+        return;
+      }
+
+      cancelled = false;
+      panel.classList.add('active');
+      toggleBtn.style.display = 'none';
+      // Hide password field and submit button
+      passwordFields[1].style.display = 'none';
+      submitBtn.style.display = 'none';
+      if (forgotLink) forgotLink.style.display = 'none';
+      resultMsg.style.display = 'none';
+      statusText.textContent = 'Chargement des modèles d\'IA...';
+      startBtn.style.display = 'none';
+      progressSteps.forEach(s => s.classList.remove('done'));
+
+      try {
+        await FaceAuth.loadModels();
+        await FaceAuth.startCamera(videoEl);
+        statusText.textContent = 'Caméra prête. Placez votre visage devant la caméra.';
+        startBtn.style.display = '';
+        startBtn.disabled = false;
+        startBtn.textContent = 'Vérifier mon identité';
+      } catch (e) {
+        statusText.textContent = 'Erreur : impossible d\'accéder à la caméra.';
+      }
+    });
+
+    // ── Back to classic login ──
+    backBtn.addEventListener('click', function() {
+      cancelled = true;
+      FaceAuth.stopCamera();
+      panel.classList.remove('active');
+      toggleBtn.style.display = '';
+      passwordFields[1].style.display = '';
+      submitBtn.style.display = '';
+      if (forgotLink) forgotLink.style.display = '';
+    });
+
+    // ── Start Face ID verification ──
+    startBtn.addEventListener('click', async function() {
+      if (verifying) return;
+      verifying = true;
+      startBtn.disabled = true;
+      startBtn.textContent = 'Vérification en cours...';
+      resultMsg.style.display = 'none';
+
+      const descriptor = await FaceAuth.runLivenessCheck(
+        videoEl,
+        function(text, step) {
+          statusText.textContent = text;
+          progressSteps.forEach(function(s, i) {
+            if (i < step) s.classList.add('done');
+            else s.classList.remove('done');
+          });
+        },
+        function() { return cancelled; },
+        overlayCanvas
+      );
+
+      if (cancelled) { verifying = false; return; }
+
+      if (descriptor) {
+        statusText.textContent = 'Comparaison du visage...';
+        const email = emailInput ? emailInput.value.trim() : '';
+        const res = await FaceAuth.verifyFace(email, descriptor);
+
+        resultMsg.style.display = 'block';
+        if (res.success) {
+          resultMsg.style.background = 'rgba(16,185,129,0.1)';
+          resultMsg.style.color = '#10b981';
+          resultMsg.style.border = '1px solid rgba(16,185,129,0.3)';
+          resultMsg.textContent = '✅ ' + res.message;
+          statusText.textContent = 'Redirection...';
+          FaceAuth.stopCamera();
+          setTimeout(function() {
+            window.location.href = res.redirect;
+          }, 1000);
+        } else {
+          resultMsg.style.background = 'rgba(239,68,68,0.1)';
+          resultMsg.style.color = '#ef4444';
+          resultMsg.style.border = '1px solid rgba(239,68,68,0.3)';
+          resultMsg.textContent = '❌ ' + res.message;
+          verifying = false;
+          startBtn.disabled = false;
+          startBtn.textContent = 'Réessayer';
+        }
+      } else {
+        resultMsg.style.display = 'block';
+        resultMsg.style.background = 'rgba(245,158,11,0.1)';
+        resultMsg.style.color = '#f59e0b';
+        resultMsg.style.border = '1px solid rgba(245,158,11,0.3)';
+        resultMsg.textContent = '⚠️ Vérification de vivacité échouée. Réessayez.';
+        verifying = false;
+        startBtn.disabled = false;
+        startBtn.textContent = 'Réessayer';
+      }
+    });
+  })();
+  </script>
 </body>
 </html>

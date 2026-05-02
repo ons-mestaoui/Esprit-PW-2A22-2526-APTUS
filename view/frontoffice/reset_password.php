@@ -8,9 +8,15 @@ $tokenValid = false;
 $id_utilisateur = false;
 $uc = new UtilisateurC();
 
-// Verification du jeton (token) depuis l'url
+// Verification du jeton (token) depuis l'url ou le formulaire
+$token = '';
 if (isset($_GET['token']) && !empty($_GET['token'])) {
     $token = trim($_GET['token']);
+} elseif (isset($_POST['token']) && !empty($_POST['token'])) {
+    $token = trim($_POST['token']);
+}
+
+if (!empty($token)) {
     $id_utilisateur = $uc->validateResetToken($token);
     
     if ($id_utilisateur !== false) {
@@ -95,7 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenValid) {
       <?php endif; ?>
 
       <?php if ($tokenValid): ?>
-      <form method="POST" action="" class="auth-form">
+      <form method="POST" action="reset_password.php" class="auth-form">
+        <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
         <div class="form-group w-full">
           <div class="input-icon-wrapper">
             <i data-lucide="lock" style="width:18px;height:18px;"></i>
