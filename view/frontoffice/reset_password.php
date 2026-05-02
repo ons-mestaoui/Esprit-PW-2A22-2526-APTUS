@@ -135,8 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenValid) {
       </div>
 
       <div style="position:absolute;top:var(--space-4);right:var(--space-4);z-index:1000;">
-        <button class="theme-toggle" aria-label="Toggle theme">
-          <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
+        <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme">
+          <i data-lucide="sun" class="icon-sun"></i>
           <i data-lucide="moon" class="icon-moon"></i>
         </button>
       </div>

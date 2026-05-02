@@ -52,6 +52,15 @@ if ($userId) {
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
 
+  <?php
+  // Load admin appearance overrides (colors, font, radius)
+  if (!isset($settingsC)) {
+      require_once __DIR__ . '/../../controller/SettingsAdminC.php';
+      $settingsC = new SettingsAdminC();
+  }
+  echo $settingsC->getAppearanceCSS();
+  ?>
+
   <script>
     /**
      * Security: Force reload if page is loaded from cache (Back/Forward button fix)

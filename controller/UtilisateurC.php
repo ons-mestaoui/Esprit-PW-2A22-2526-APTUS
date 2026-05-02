@@ -96,6 +96,7 @@ class UtilisateurC {
             $db->prepare("DELETE FROM profil WHERE id_utilisateur = :id")->execute(['id' => $id]);
             $db->prepare("DELETE FROM candidat WHERE id_candidat = :id")->execute(['id' => $id]);
             $db->prepare("DELETE FROM entreprise WHERE id_entreprise = :id")->execute(['id' => $id]);
+            $db->prepare("DELETE FROM tuteur WHERE id_tuteur = :id")->execute(['id' => $id]);
             $db->prepare("DELETE FROM administrateur WHERE id_admin = :id")->execute(['id' => $id]);
             
             // Puis supprimer l'utilisateur lui-même
@@ -257,8 +258,10 @@ class UtilisateurC {
             'language' => 'fr',
             'timezone' => 'Africa/Tunis',
             'theme' => 'dark',
-            'accent_color' => '#6366f1',
+            'accent_color' => '#6B34A3',
             'font_size' => 14,
+            'font_family' => 'Inter',
+            'border_radius' => 'medium',
             'privacy_public' => true,
             'privacy_email' => false,
             'privacy_phone' => false,
@@ -285,14 +288,19 @@ class UtilisateurC {
      * Fusionne les nouvelles préférences avec les existantes.
      */
     public function updatePreferences($id, $newPrefs) {
-        $db = config::getConnexion();
         try {
             $current = $this->getPreferences($id);
             $merged = array_merge($current, $newPrefs);
-            $json = json_encode($merged, JSON_UNESCAPED_UNICODE);
-            $query = $db->prepare("UPDATE utilisateur SET preferences = :prefs WHERE id_utilisateur = :id");
-            return $query->execute(['prefs' => $json, 'id' => $id]);
+            $json = json_encode($merged);
+            
+            $db = config::getConnexion();
+            $sql = "UPDATE utilisateur SET preferences = :prefs WHERE id_utilisateur = :id";
+            $req = $db->prepare($sql);
+            $req->bindValue(':prefs', $json);
+            $req->bindValue(':id', $id);
+            return $req->execute();
         } catch (Exception $e) {
+            error_log("Aptus Error: " . $e->getMessage());
             return false;
         }
     }

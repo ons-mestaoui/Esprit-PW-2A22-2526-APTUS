@@ -67,7 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $roleRoutes = [
                     'admin' => '../backoffice/dashboard.php',
                     'candidat' => 'jobs_feed.php',
-                    'entreprise' => 'hr_posts.php'
+                    'entreprise' => 'hr_posts.php',
+                    'tuteur' => 'dashboard_tuteur.php'
                 ];
                 $roleKey = strtolower($user['role']);
                 
@@ -428,6 +429,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               </div>
             </a>
 
+            <a href="signup_tuteur.php" class="role-card-mini">
+              <div class="role-icon" style="color: var(--accent-tertiary, #10B981);">
+                <i data-lucide="graduation-cap"></i>
+              </div>
+              <div class="role-info">
+                <h4>Tuteur</h4>
+                <p>Encadrez et suivez vos étudiants.</p>
+              </div>
+            </a>
+
           </div>
 
           <a href="landing.php" class="back-to-site" style="margin-top: var(--space-8);">
@@ -528,8 +539,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <!-- Theme toggle -->
       <div style="position:absolute;top:var(--space-4);right:var(--space-4);z-index:1000;">
-        <button class="theme-toggle" aria-label="Toggle theme">
-          <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
+        <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme">
+          <i data-lucide="sun" class="icon-sun"></i>
           <i data-lucide="moon" class="icon-moon"></i>
         </button>
       </div>

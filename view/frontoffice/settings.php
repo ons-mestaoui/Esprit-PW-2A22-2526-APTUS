@@ -56,9 +56,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } elseif ($_POST['action'] === 'update_appearance') {
         $activeTab = 'appearance';
         $theme = $_POST['theme'] ?? 'dark';
-        $color = $_POST['accent_color'] ?? '#6366f1';
+        $color = $_POST['accent_color'] ?? '#6B34A3';
         $fontSize = intval($_POST['font_size'] ?? 14);
-        $utilisateurC->updatePreferences($id, ['theme' => $theme, 'accent_color' => $color, 'font_size' => $fontSize]);
+        $fontFamily = $_POST['font_family'] ?? 'Inter';
+        $borderRadius = $_POST['border_radius'] ?? 'medium';
+        $utilisateurC->updatePreferences($id, [
+            'theme' => $theme, 
+            'accent_color' => $color, 
+            'font_size' => $fontSize,
+            'font_family' => $fontFamily,
+            'border_radius' => $borderRadius
+        ]);
         $prefs = $utilisateurC->getPreferences($id);
         $successMsg = "Apparence mise à jour.";
 
@@ -331,52 +339,120 @@ if (!isset($content)) {
 <div class="settings-section" id="tab-appearance">
   <form method="POST" action="" id="appearance-form">
     <input type="hidden" name="action" value="update_appearance">
-    <input type="hidden" name="theme" id="pref-theme" value="<?= htmlspecialchars($prefs['theme'] ?? 'dark') ?>">
-    <input type="hidden" name="accent_color" id="pref-color" value="<?= htmlspecialchars($prefs['accent_color'] ?? '#6366f1') ?>">
-    <input type="hidden" name="font_size" id="pref-fontsize" value="<?= intval($prefs['font_size'] ?? 14) ?>">
+    <input type="hidden" name="theme" id="inp-theme" value="<?= htmlspecialchars($prefs['theme'] ?? 'dark') ?>">
+    <input type="hidden" name="border_radius" id="inp-border-radius" value="<?= htmlspecialchars($prefs['border_radius'] ?? 'medium') ?>">
 
-    <div class="settings-card">
-      <div class="settings-card__title"><i data-lucide="sun" style="width:20px;height:20px;color:var(--stat-orange);"></i> Thème</div>
-      <div class="settings-card__desc">Choisissez le mode d'affichage de l'interface</div>
-      <div style="display:flex;gap:var(--space-4);">
-        <div class="theme-select" data-theme="light" style="flex:1;padding:var(--space-5);border:2px solid var(--border-color);border-radius:var(--radius-lg);text-align:center;cursor:pointer;background:var(--bg-body);">
-          <i data-lucide="sun" style="width:28px;height:28px;color:var(--text-secondary);margin-bottom:var(--space-2);"></i>
-          <div class="text-sm fw-semibold">Clair</div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-5);">
+      <!-- Column 1: Theme & Color -->
+      <div style="display:flex; flex-direction:column; gap:var(--space-5);">
+        <div class="settings-card" style="height:100%;">
+          <div class="settings-card__title"><i data-lucide="sun" style="width:20px;height:20px;color:var(--stat-orange);"></i> Thème</div>
+          <div class="settings-card__desc">Choisissez le mode d'affichage de l'interface</div>
+          <div style="display:flex;gap:var(--space-4);" id="theme-options">
+            <?php
+            $themeOptions = [
+              'light' => ['label' => 'Clair', 'icon' => 'sun'],
+              'dark' => ['label' => 'Sombre', 'icon' => 'moon'],
+            ];
+            foreach ($themeOptions as $val => $opt): ?>
+            <button type="button" class="theme-option <?= ($prefs['theme'] ?? 'dark')===$val ? 'active' : '' ?>" data-value="<?= $val ?>" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:var(--space-5);border:2px solid <?= ($prefs['theme'] ?? 'dark')===$val ? 'var(--accent-primary)' : 'var(--border-color)' ?>;border-radius:var(--radius-lg);background:var(--bg-body);cursor:pointer;transition:all 0.2s;">
+              <i data-lucide="<?= $opt['icon'] ?>" style="width:28px;height:28px;"></i>
+              <span class="text-sm fw-semibold"><?= $opt['label'] ?></span>
+            </button>
+            <?php endforeach; ?>
+          </div>
         </div>
-        <div class="theme-select" data-theme="dark" style="flex:1;padding:var(--space-5);border:2px solid var(--border-color);border-radius:var(--radius-lg);text-align:center;cursor:pointer;background:var(--bg-body);">
-          <i data-lucide="moon" style="width:28px;height:28px;color:var(--text-secondary);margin-bottom:var(--space-2);"></i>
-          <div class="text-sm fw-semibold">Sombre</div>
+
+        <div class="settings-card">
+          <div class="settings-card__title"><i data-lucide="palette" style="width:20px;height:20px;color:var(--accent-primary);"></i> Couleur d'accent</div>
+          <div class="settings-card__desc">Personnalisez la couleur principale de l'interface</div>
+          <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-4);">
+            <?php 
+            $colors = ['#6B34A3','#00A3DA','#6366F1','#8B5CF6','#EC4899','#10B981','#F59E0B','#EF4444'];
+            foreach($colors as $c): ?>
+            <button type="button" class="color-preset" data-color="<?= $c ?>" style="width:32px;height:32px;border-radius:50%;border:2px solid <?= ($prefs['accent_color'] ?? '#6B34A3')===$c ? 'var(--text-primary)' : 'transparent' ?>;background:<?= $c ?>;cursor:pointer;transition:all 0.2s;" title="<?= $c ?>"></button>
+            <?php endforeach; ?>
+          </div>
+          <div style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3); background:var(--bg-secondary); border-radius:var(--radius-md);">
+            <label class="text-xs fw-medium" style="color:var(--text-secondary);">Personnalisée :</label>
+            <input type="color" name="accent_color" id="inp-accent-color" value="<?= htmlspecialchars($prefs['accent_color'] ?? '#6B34A3') ?>" style="width:30px;height:30px;border:none;background:none;cursor:pointer;">
+            <input type="text" id="inp-accent-hex" value="<?= htmlspecialchars($prefs['accent_color'] ?? '#6B34A3') ?>" style="flex:1; font-family:monospace; font-size:12px; border:none; background:none; color:var(--text-primary);" maxlength="7">
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 2: Typography & Shape -->
+      <div style="display:flex; flex-direction:column; gap:var(--space-5);">
+        <div class="settings-card">
+          <div class="settings-card__title"><i data-lucide="type" style="width:20px;height:20px;color:var(--accent-secondary);"></i> Typographie</div>
+          <div class="settings-card__desc">Choisissez votre police et taille de texte</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
+            <div class="form-group">
+              <label class="form-label" style="font-size:12px;">Police de caractères</label>
+              <select class="select" name="font_family" id="inp-font-family" style="width:100%;">
+                <?php foreach(['Inter','Roboto','Outfit','Poppins','DM Sans','Plus Jakarta Sans'] as $f): ?>
+                <option value="<?= $f ?>" <?= ($prefs['font_family'] ?? 'Inter')===$f ? 'selected' : '' ?> style="font-family:'<?= $f ?>',sans-serif;"><?= $f ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size:12px;">Aperçu</label>
+              <div id="font-preview" style="padding:var(--space-3);background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border-color);font-family:'<?= $prefs['font_family'] ?? 'Inter' ?>',sans-serif;">
+                <div style="font-weight:700;font-size:var(--fs-md);margin-bottom:4px;">Aptus Platform</div>
+                <div style="font-size:var(--fs-sm);color:var(--text-secondary);">La plateforme intelligente 1234567890</div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:var(--space-4);">
+            <label class="form-label" id="fontsize-label" style="font-size:12px;">Taille du texte (<?= intval($prefs['font_size'] ?? 14) ?>px)</label>
+            <div style="display:flex;align-items:center;gap:var(--space-4);">
+              <span class="text-xs">A</span>
+              <input type="range" name="font_size" id="inp-font-size" style="flex:1;accent-color:var(--accent-primary);" min="12" max="20" value="<?= intval($prefs['font_size'] ?? 14) ?>">
+              <span style="font-size:1.25rem;font-weight:600;">A</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card__title"><i data-lucide="square" style="width:20px;height:20px;color:var(--stat-orange);"></i> Arrondi des coins</div>
+          <div class="settings-card__desc">Modifiez le style des boutons et des cartes</div>
+          <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;" id="radius-options">
+            <?php
+            $radiusOptions = [
+              'none' => ['label' => 'Droit', 'preview' => '0px'],
+              'small' => ['label' => 'Petit', 'preview' => '4px'],
+              'medium' => ['label' => 'Moyen', 'preview' => '12px'],
+              'large' => ['label' => 'Grand', 'preview' => '20px'],
+              'full' => ['label' => 'Rond', 'preview' => '28px'],
+            ];
+            foreach ($radiusOptions as $val => $opt): ?>
+            <button type="button" class="radius-option <?= ($prefs['border_radius'] ?? 'medium')===$val ? 'active' : '' ?>" data-value="<?= $val ?>" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:var(--space-2) var(--space-3);border:2px solid <?= ($prefs['border_radius'] ?? 'medium')===$val ? 'var(--accent-primary)' : 'var(--border-color)' ?>;border-radius:var(--radius-md);background:var(--bg-body);cursor:pointer;transition:all 0.2s;min-width:60px;">
+              <div style="width:30px;height:18px;border:2px solid var(--text-secondary);border-radius:<?= $opt['preview'] ?>;"></div>
+              <span style="font-size:10px;font-weight:500;color:var(--text-secondary);"><?= $opt['label'] ?></span>
+            </button>
+            <?php endforeach; ?>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="settings-card">
-      <div class="settings-card__title"><i data-lucide="palette" style="width:20px;height:20px;color:var(--accent-primary);"></i> Couleur d'accent</div>
-      <div class="settings-card__desc">Personnalisez la couleur principale de l'interface</div>
-      <div style="display:flex;gap:var(--space-3);">
-        <div class="color-swatch" data-color="#6366f1" style="background:#6366f1;"></div>
-        <div class="color-swatch" data-color="#3B82F6" style="background:#3B82F6;"></div>
-        <div class="color-swatch" data-color="#8B5CF6" style="background:#8B5CF6;"></div>
-        <div class="color-swatch" data-color="#EC4899" style="background:#EC4899;"></div>
-        <div class="color-swatch" data-color="#10B981" style="background:#10B981;"></div>
-        <div class="color-swatch" data-color="#F59E0B" style="background:#F59E0B;"></div>
-        <div class="color-swatch" data-color="#EF4444" style="background:#EF4444;"></div>
+    <!-- Live Preview (same as admin) -->
+    <div class="settings-card" style="margin-top:var(--space-5); padding:var(--space-4); border:1px dashed var(--border-color); background:var(--bg-secondary);">
+      <div style="font-size:var(--fs-xs);color:var(--text-tertiary);margin-bottom:var(--space-2);text-transform:uppercase;letter-spacing:0.5px;">Aperçu en direct</div>
+      <div style="display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary" id="preview-btn-primary" style="pointer-events:none;">Bouton Principal</button>
+        <button type="button" class="btn btn-secondary" id="preview-btn-secondary" style="pointer-events:none;">Bouton Secondaire</button>
+        <span id="preview-link" style="color:var(--accent-primary);font-weight:500;font-size:var(--fs-sm);cursor:default;">Lien exemple</span>
+        <div id="preview-badge" style="display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:var(--radius-full);font-size:var(--fs-xs);font-weight:600;">Badge</div>
       </div>
     </div>
 
-    <div class="settings-card">
-      <div class="settings-card__title"><i data-lucide="type" style="width:20px;height:20px;color:var(--accent-secondary);"></i> Taille du texte</div>
-      <div class="settings-card__desc">Ajustez la taille du texte de l'interface</div>
-      <div style="display:flex;align-items:center;gap:var(--space-4);max-width:300px;">
-        <span class="text-xs">A</span>
-        <input type="range" id="font-size-range" style="flex:1;accent-color:var(--accent-primary);" min="12" max="20" value="<?= intval($prefs['font_size'] ?? 14) ?>">
-        <span style="font-size:1.25rem;font-weight:600;">A</span>
-      </div>
+    <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
+      <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> Enregistrer l'apparence</button>
     </div>
-
-    <button type="submit" class="btn btn-primary" style="width:fit-content;"><i data-lucide="save" style="width:16px;height:16px;"></i> Enregistrer l'apparence</button>
   </form>
 </div>
+
 
 <!-- ═══ NOTIFICATIONS ═══ -->
 <div class="settings-section" id="tab-notifications">
@@ -554,96 +630,144 @@ if (!isset($content)) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // ─── Tabs Navigation ───
+  // ═══ TAB NAVIGATION (same as admin: localStorage persistence) ═══
   var navItems = document.querySelectorAll('.settings-nav__item');
+  var lastActiveTab = localStorage.getItem('aptus-settings-tab') || '<?= $activeTab ?>';
+  if (lastActiveTab === 'general' && '<?= $activeTab ?>' !== 'general') {
+    lastActiveTab = '<?= $activeTab ?>';
+  }
+
+  function activateTab(tabId) {
+    navItems.forEach(function(n) { n.classList.remove('active'); });
+    document.querySelectorAll('.settings-section').forEach(function(s) { s.classList.remove('active'); });
+    var targetBtn = document.querySelector('.settings-nav__item[data-tab="' + tabId + '"]');
+    if (targetBtn) targetBtn.classList.add('active');
+    var targetSection = document.getElementById('tab-' + tabId);
+    if (targetSection) targetSection.classList.add('active');
+    localStorage.setItem('aptus-settings-tab', tabId);
+  }
+
+  activateTab(lastActiveTab);
+
   navItems.forEach(function(item) {
     item.addEventListener('click', function() {
-      navItems.forEach(function(n) { n.classList.remove('active'); });
-      document.querySelectorAll('.settings-section').forEach(function(s) { s.classList.remove('active'); });
-      item.classList.add('active');
-      var tab = document.getElementById('tab-' + item.getAttribute('data-tab'));
-      if (tab) tab.classList.add('active');
+      activateTab(item.getAttribute('data-tab'));
     });
   });
 
-  // Restore active tab after form submission (set by PHP)
-  var serverTab = '<?= $activeTab ?>';
-  if (serverTab && serverTab !== 'general') {
-    var actBtn = document.querySelector('.settings-nav__item[data-tab="' + serverTab + '"]');
-    if (actBtn) actBtn.click();
-  }
+  // ═══ APPEARANCE TAB INTERACTIVITY (same pattern as admin) ═══
 
-  // ─── Appearance — Theme ───
-  var themeSelects = document.querySelectorAll('.theme-select');
-  var prefThemeInput = document.getElementById('pref-theme');
-  var currentTheme = prefThemeInput ? prefThemeInput.value : (localStorage.getItem('theme') || 'dark');
-
-  function applyThemeUI() {
-    themeSelects.forEach(function(el) {
-      if (el.dataset.theme === currentTheme) {
-        el.style.borderColor = 'var(--accent-primary)';
-        el.querySelector('i').style.color = 'var(--accent-primary)';
-      } else {
-        el.style.borderColor = 'var(--border-color)';
-        el.querySelector('i').style.color = 'var(--text-secondary)';
+  // --- Color picker <-> hex text sync (same as admin syncColorInputs) ---
+  var colorInp = document.getElementById('inp-accent-color');
+  var hexInp = document.getElementById('inp-accent-hex');
+  if (colorInp && hexInp) {
+    colorInp.addEventListener('input', function() {
+      hexInp.value = colorInp.value.toUpperCase();
+      updatePreview();
+    });
+    hexInp.addEventListener('input', function() {
+      var val = hexInp.value.trim();
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        colorInp.value = val;
+        updatePreview();
+      }
+    });
+    hexInp.addEventListener('blur', function() {
+      var val = hexInp.value.trim();
+      if (!/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        hexInp.value = colorInp.value.toUpperCase();
       }
     });
   }
-  applyThemeUI();
 
-  themeSelects.forEach(function(el) {
-    el.addEventListener('click', function() {
-      currentTheme = this.dataset.theme;
-      localStorage.setItem('theme', currentTheme);
-      document.documentElement.setAttribute('data-theme', currentTheme);
-      if (prefThemeInput) prefThemeInput.value = currentTheme;
-      applyThemeUI();
+  // --- Color preset buttons (same as admin) ---
+  document.querySelectorAll('.color-preset').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var color = btn.getAttribute('data-color');
+      if (colorInp) colorInp.value = color;
+      if (hexInp) hexInp.value = color;
+      btn.closest('div').querySelectorAll('.color-preset').forEach(function(b) {
+        b.style.borderColor = 'transparent';
+      });
+      btn.style.borderColor = 'var(--text-primary)';
+      updatePreview();
     });
   });
 
-  // ─── Appearance — Color ───
-  var colorSwatches = document.querySelectorAll('.color-swatch');
-  var prefColorInput = document.getElementById('pref-color');
-  var currentColor = prefColorInput ? prefColorInput.value : (localStorage.getItem('primaryColor') || '#6366f1');
+  // --- Theme options (same as admin) ---
+  document.querySelectorAll('.theme-option').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.theme-option').forEach(function(b) {
+        b.style.borderColor = 'var(--border-color)';
+        b.classList.remove('active');
+      });
+      btn.style.borderColor = 'var(--accent-primary)';
+      btn.classList.add('active');
+      var val = btn.getAttribute('data-value');
+      document.getElementById('inp-theme').value = val;
+      // Apply theme live
+      document.documentElement.setAttribute('data-theme', val);
+      localStorage.setItem('aptus-theme', val);
+    });
+  });
 
-  function applyColorUI() {
-    colorSwatches.forEach(function(el) {
-      el.classList.toggle('active', el.dataset.color === currentColor);
+  // --- Radius options (same as admin) ---
+  document.querySelectorAll('.radius-option').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.radius-option').forEach(function(b) {
+        b.style.borderColor = 'var(--border-color)';
+        b.classList.remove('active');
+      });
+      btn.style.borderColor = 'var(--accent-primary)';
+      btn.classList.add('active');
+      document.getElementById('inp-border-radius').value = btn.getAttribute('data-value');
+    });
+  });
+
+  // --- Font preview (same as admin) ---
+  var fontSelect = document.getElementById('inp-font-family');
+  var fontPreview = document.getElementById('font-preview');
+  if (fontSelect && fontPreview) {
+    fontSelect.addEventListener('change', function() {
+      fontPreview.style.fontFamily = "'" + fontSelect.value + "', sans-serif";
     });
   }
-  applyColorUI();
 
-  colorSwatches.forEach(function(el) {
-    el.addEventListener('click', function() {
-      currentColor = this.dataset.color;
-      localStorage.setItem('primaryColor', currentColor);
-      document.documentElement.style.setProperty('--accent-primary', currentColor);
-      if (prefColorInput) prefColorInput.value = currentColor;
-      applyColorUI();
-    });
-  });
-
-  // ─── Appearance — Font Size ───
-  var fontSizeRange = document.getElementById('font-size-range');
-  var prefFontSizeInput = document.getElementById('pref-fontsize');
-  if (fontSizeRange) {
+  // --- Font size range ---
+  var fontSizeRange = document.getElementById('inp-font-size');
+  var fontSizeLabel = document.getElementById('fontsize-label');
+  if (fontSizeRange && fontSizeLabel) {
     fontSizeRange.addEventListener('input', function() {
-      document.documentElement.style.fontSize = this.value + 'px';
-      localStorage.setItem('fontSize', this.value);
-      if (prefFontSizeInput) prefFontSizeInput.value = this.value;
+      fontSizeLabel.textContent = 'Taille du texte (' + fontSizeRange.value + 'px)';
     });
   }
 
-  // ─── Privacy — Toggle click on label ───
-  document.querySelectorAll('#tab-privacy .toggle-switch').forEach(function(toggle) {
-    toggle.addEventListener('click', function() {
-      var cb = this.querySelector('input[type="checkbox"]');
-      if (cb) {
-        cb.checked = !cb.checked;
-        this.classList.toggle('active', cb.checked);
-      }
-    });
-  });
+  // --- Live preview update (same as admin) ---
+  function updatePreview() {
+    var accent = document.getElementById('inp-accent-color');
+    var btnPrimary = document.getElementById('preview-btn-primary');
+    var btnSecondary = document.getElementById('preview-btn-secondary');
+    var link = document.getElementById('preview-link');
+    var badge = document.getElementById('preview-badge');
+
+    if (accent && btnPrimary) {
+      btnPrimary.style.background = accent.value;
+      btnPrimary.style.borderColor = accent.value;
+    }
+    if (accent && btnSecondary) {
+      btnSecondary.style.borderColor = accent.value;
+      btnSecondary.style.color = accent.value;
+    }
+    if (accent && link) {
+      link.style.color = accent.value;
+    }
+    if (accent && badge) {
+      badge.style.background = accent.value + '1a';
+      badge.style.color = accent.value;
+    }
+  }
+  // Initial preview
+  updatePreview();
 });
 </script>
 

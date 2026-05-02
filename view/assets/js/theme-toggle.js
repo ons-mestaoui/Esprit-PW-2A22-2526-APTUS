@@ -21,25 +21,35 @@
     updateToggleIcons(theme);
   }
 
+  function saveThemeToDatabase(theme) {
+    fetch('/aptus_first_official_version/view/frontoffice/update_theme_ajax.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ theme: theme })
+    }).catch(function(e) {
+      // Ignore errors (user might not be logged in)
+    });
+  }
+
   function updateToggleIcons(theme) {
+    // Icons display is now handled via CSS using [data-theme] attribute on html
+    // to allow smooth pill switch animations.
     document.querySelectorAll('.theme-toggle').forEach(function(btn) {
-      var sunIcon = btn.querySelector('.icon-sun');
-      var moonIcon = btn.querySelector('.icon-moon');
-      if (sunIcon && moonIcon) {
-        if (theme === 'dark') {
-          sunIcon.style.display = 'block';
-          moonIcon.style.display = 'none';
-        } else {
-          sunIcon.style.display = 'none';
-          moonIcon.style.display = 'block';
-        }
+      if (theme === 'dark') {
+        btn.classList.add('is-dark');
+      } else {
+        btn.classList.remove('is-dark');
       }
     });
   }
 
   function toggleTheme() {
     var current = html.getAttribute('data-theme') || 'light';
-    setTheme(current === 'dark' ? 'light' : 'dark');
+    var newTheme = current === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    saveThemeToDatabase(newTheme);
   }
 
   // Initialize on load

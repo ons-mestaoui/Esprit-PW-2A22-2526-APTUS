@@ -40,9 +40,9 @@
       <a href="#resources" class="nav-anchor">Ressources</a>
     </div>
     <div class="landing-nav__actions">
-      <button class="theme-toggle" aria-label="Toggle theme">
-        <i data-lucide="sun" class="icon-sun" style="display:none;width:20px;height:20px;color:var(--text-primary);"></i>
-        <i data-lucide="moon" class="icon-moon" style="width:20px;height:20px;color:var(--text-primary);"></i>
+      <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme">
+        <i data-lucide="sun" class="icon-sun"></i>
+        <i data-lucide="moon" class="icon-moon"></i>
       </button>
       <a href="login.php" class="btn btn-ghost nav-btn-login">Se connecter</a>
       <a href="signup_choice.php" class="btn btn-primary glow-btn">S'inscrire</a>

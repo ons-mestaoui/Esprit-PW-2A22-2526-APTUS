@@ -96,23 +96,7 @@
   flex-shrink: 0;
 }
 
-.theme-toggle {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  transition: var(--transition-fast);
-  cursor: pointer;
-  border: none;
-  background: none;
-}
-.theme-toggle:hover {
-  background: var(--bg-secondary);
-  color: var(--accent-primary);
-}
+
 
 .topnav__profile {
   display: flex;

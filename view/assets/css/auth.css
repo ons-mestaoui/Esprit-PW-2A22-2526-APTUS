@@ -19,10 +19,11 @@
 }
 .landing-nav.scrolled {
   background: var(--bg-topbar);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
 }
+
 .landing-nav__logo {
   display: flex;
   align-items: center;
@@ -136,7 +137,7 @@
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(4px);
   border: 1px solid rgba(255,255,255,0.2);
   border-radius: var(--radius-full);
   font-size: var(--fs-sm);
@@ -181,7 +182,7 @@
   font-size: var(--fs-base);
   background: #FFFFFF;
   color: var(--accent-primary);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 .hero__ctas .btn-primary:hover {
   transform: translateY(-2px);
@@ -262,7 +263,7 @@
   transform: scaleX(1);
 }
 .feature-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
   box-shadow: var(--shadow-lg);
 }
 .feature-card__icon {
@@ -358,7 +359,7 @@
   background: var(--accent-primary);
   color: #ffffff;
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
   border-color: var(--accent-primary);
 }
 .auth-card {
@@ -369,7 +370,7 @@
   padding: var(--space-10);
   width: 100%;
   max-width: 480px;
-  box-shadow: var(--shadow-2xl);
+  box-shadow: var(--shadow-xl);
   animation: fadeInUp 0.6s ease forwards;
 }
 .auth-card--wide {

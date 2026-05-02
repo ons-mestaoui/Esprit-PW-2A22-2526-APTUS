@@ -94,6 +94,14 @@
           <div class="role-desc">Recrutez les meilleurs talents et déposez vos offres.</div>
         </a>
 
+        <a href="signup_tuteur.php" class="role-card">
+          <div class="role-icon" style="color: var(--accent-tertiary, #10B981);">
+            <i data-lucide="graduation-cap" style="width:24px;height:24px;"></i>
+          </div>
+          <div class="role-title">Tuteur</div>
+          <div class="role-desc">Encadrez les étudiants et suivez leur progression académique.</div>
+        </a>
+
       </div>
 
       <!-- Footer -->
@@ -107,8 +115,8 @@
 
       <!-- Theme toggle -->
       <div style="position:absolute;top:var(--space-4);right:var(--space-4);">
-        <button class="theme-toggle" aria-label="Toggle theme">
-          <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
+        <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme">
+          <i data-lucide="sun" class="icon-sun"></i>
           <i data-lucide="moon" class="icon-moon"></i>
         </button>
       </div>

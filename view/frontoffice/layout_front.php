@@ -13,8 +13,8 @@ include_once __DIR__ . '/../../controller/ProfilC.php';
 $userId = $_SESSION['id_utilisateur'] ?? null;
 $userRole = isset($_SESSION['role']) ? strtolower($_SESSION['role']) : null;
 
-// Access Control: Only Candidats and Entreprises can access frontoffice protected pages
-if (!$userId || ($userRole !== 'candidat' && $userRole !== 'entreprise')) {
+// Access Control: Only Candidats, Entreprises, and Tuteurs can access frontoffice protected pages
+if (!$userId || ($userRole !== 'candidat' && $userRole !== 'entreprise' && $userRole !== 'tuteur')) {
     header("Location: login.php");
     exit();
 }
@@ -57,11 +57,63 @@ if ($userId) {
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
 
+  <?php
+  // Load admin appearance overrides (colors, font, radius)
+  require_once __DIR__ . '/../../controller/SettingsAdminC.php';
+  $platformSettingsC = new SettingsAdminC();
+  echo $platformSettingsC->getAppearanceCSS();
+  
+  // Load user personal preferences overrides (theme, accent color, font size)
+  if (isset($userId)) {
+      include_once __DIR__ . '/../../controller/UtilisateurC.php';
+      $utC = new UtilisateurC();
+      $userPrefs = $utC->getPreferences($userId);
+      
+      $userCSS = '';
+      if (!empty($userPrefs['accent_color'])) {
+          $hex = $userPrefs['accent_color'];
+          $userCSS .= "  --accent-primary: {$hex} !important;\n";
+          $userCSS .= "  --accent-primary-dark: {$hex} !important;\n";
+          $userCSS .= "  --accent-primary-light: {$hex}1a !important;\n";
+      }
+      if (!empty($userCSS)) {
+          echo "<style id=\"user-appearance-overrides\">\n:root {\n{$userCSS}}\n</style>\n";
+      }
+      
+      if (!empty($userPrefs['font_size'])) {
+          echo "<style>html { font-size: " . intval($userPrefs['font_size']) . "px !important; }</style>\n";
+      }
+
+      if (!empty($userPrefs['font_family'])) {
+          $ff = $userPrefs['font_family'];
+          echo "<style>body, h1, h2, h3, h4, h5, h6, .btn, .input { font-family: '{$ff}', sans-serif !important; }</style>\n";
+          echo "<link href=\"https://fonts.googleapis.com/css2?family=" . str_replace(' ', '+', $ff) . ":wght@300;400;500;600;700;800&display=swap\" rel=\"stylesheet\">\n";
+      }
+
+      if (!empty($userPrefs['border_radius'])) {
+          $radiusMap = [
+              'none' => '0px',
+              'small' => '4px',
+              'medium' => '12px',
+              'large' => '20px',
+              'full' => '9999px'
+          ];
+          $rv = $radiusMap[$userPrefs['border_radius']] ?? '12px';
+          echo "<style>:root { --radius-lg: {$rv} !important; --radius-md: " . (intval($rv)*0.75) . "px !important; --radius-sm: " . (intval($rv)*0.5) . "px !important; }</style>\n";
+      }
+      
+      if (!empty($userPrefs['theme'])) {
+          echo "<script>
+            if (localStorage.getItem('aptus-theme') !== '" . ($userPrefs['theme']) . "') {
+                localStorage.setItem('aptus-theme', '" . ($userPrefs['theme']) . "');
+                document.documentElement.setAttribute('data-theme', '" . ($userPrefs['theme']) . "');
+            }
+          </script>\n";
+      }
+  }
+  ?>
+
   <script>
-    /**
-     * Security: Force reload if page is loaded from cache (Back/Forward button fix)
-     * This ensures the PHP session check is executed on every navigation.
-     */
     window.addEventListener('pageshow', function(event) {
       if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
         window.location.reload();
@@ -71,9 +123,6 @@ if ($userId) {
 </head>
 <body>
 
-  <!-- Cursor aura removed for internal pages -->
-
-  <!-- Hero Background Animated (Global) - Smoothed for internal pages -->
   <div class="hero-bg-animated" style="opacity: 0.4;">
       <div class="blob blob-1" style="filter: blur(120px);"></div>
       <div class="blob blob-2" style="filter: blur(150px);"></div>
@@ -81,28 +130,29 @@ if ($userId) {
       <div class="grid-overlay" style="opacity: 0.05;"></div>
   </div>
 
-  <!-- ═══════════════════════════════════════════
-       TOP NAVIGATION BAR
-       ═══════════════════════════════════════════ -->
   <nav class="landing-nav glass-nav" id="landing-nav">
-    <!-- Logo -->
-    <a href="<?php echo ($currentRole === 'Entreprise') ? 'hr_posts.php' : 'jobs_feed.php'; ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
+    <a href="<?php 
+      if ($currentRole === 'Entreprise') echo 'hr_posts.php';
+      elseif ($currentRole === 'Tuteur') echo 'dashboard_tuteur.php';
+      else echo 'jobs_feed.php'; 
+    ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
       <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="landing-nav__logo-icon" style="background:none;">
       <span class="gradient-text accent-font h4 m-0">Aptus</span>
     </a>
 
-    <!-- Hamburger (Mobile) -->
     <button class="hamburger-landing" id="hamburger-landing" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
 
-    <!-- Navigation Links -->
     <div class="landing-nav__links" id="nav-links">
       <?php if ($currentRole === 'Entreprise'): ?>
         <a href="hr_posts.php" class="nav-anchor" id="nav-hr-posts"><i data-lucide="briefcase"></i><span>Mes Postes</span></a>
         <a href="hr_candidatures.php" class="nav-anchor" id="nav-hr-candidatures"><i data-lucide="users"></i><span>Candidatures</span></a>
         <a href="profil_entreprise.php" class="nav-anchor" id="nav-hr-profile"><i data-lucide="building"></i><span>Profil Entreprise</span></a>
         <a href="veille_feed_ent.php" class="nav-anchor" id="nav-hr-veille"><i data-lucide="line-chart"></i><span>Veille Marché</span></a>
+      <?php elseif ($currentRole === 'Tuteur'): ?>
+        <a href="dashboard_tuteur.php" class="nav-anchor" id="nav-tuteur-dashboard"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+        <a href="espace_tuteur.php" class="nav-anchor" id="nav-tuteur-espace"><i data-lucide="graduation-cap"></i><span>Mon Espace</span></a>
       <?php else: ?>
         <a href="jobs_feed.php" class="nav-anchor" id="nav-jobs"><i data-lucide="briefcase"></i><span>Offres d'emploi</span></a>
         <a href="cv_templates.php" class="nav-anchor" id="nav-cv"><i data-lucide="file-badge"></i><span>Générer CV</span></a>
@@ -112,15 +162,51 @@ if ($userId) {
       <?php endif; ?>
     </div>
 
-    <!-- Right Actions -->
     <div class="landing-nav__actions" style="display: flex; align-items: center; gap: 1rem;">
-      <!-- Theme Toggle -->
       <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme">
-        <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
+        <i data-lucide="sun" class="icon-sun"></i>
         <i data-lucide="moon" class="icon-moon"></i>
       </button>
 
-      <!-- Profile Dropdown -->
+      <!-- Notifications -->
+      <div class="dropdown" id="notifications-dropdown">
+        <button class="nav-icon-btn dropdown-trigger" aria-label="Notifications" style="position:relative; background:none; border:none; color:var(--text-primary); cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:all 0.3s ease;">
+          <i data-lucide="bell" style="width:20px;height:20px;"></i>
+          <span class="notification-dot" style="position:absolute; top:8px; right:8px; width:8px; height:8px; background:var(--accent-tertiary, #ef4444); border-radius:50%; border:2px solid var(--bg-card); animation: pulse-red 2s infinite;"></span>
+        </button>
+        <div class="dropdown-menu dropdown-menu--right" style="width:300px; padding:var(--space-4);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4);">
+            <h4 class="m-0" style="font-size:var(--fs-base);">Notifications</h4>
+            <span style="font-size:var(--fs-xs); color:var(--accent-primary); cursor:pointer;">Tout marquer comme lu</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:var(--space-3); max-height:300px; overflow-y:auto;">
+            <!-- Placeholder Notifications -->
+            <div style="display:flex; gap:var(--space-3); padding:var(--space-3); background:var(--bg-secondary); border-radius:var(--radius-md); font-size:var(--fs-sm);">
+                <div style="color:var(--accent-primary);"><i data-lucide="info" style="width:16px;height:16px;"></i></div>
+                <div>
+                    <div style="font-weight:var(--fw-medium);">Bienvenue sur Aptus !</div>
+                    <div style="font-size:var(--fs-xs); color:var(--text-secondary);">Complétez votre profil pour plus de visibilité.</div>
+                </div>
+            </div>
+          </div>
+          <div class="dropdown-divider"></div>
+          <a href="#" style="display:block; text-align:center; font-size:var(--fs-xs); color:var(--text-tertiary); text-decoration:none; padding-top:var(--space-2);">Voir toutes les notifications</a>
+        </div>
+      </div>
+
+      <style>
+      @keyframes pulse-red {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+      }
+      .nav-icon-btn:hover {
+        background: var(--bg-secondary) !important;
+        border-radius: var(--radius-md);
+        transform: translateY(-1px);
+      }
+      </style>
+
       <div class="dropdown" id="profile-dropdown">
         <div class="dropdown-trigger topnav__profile">
           <div class="topnav__profile-info">
@@ -138,16 +224,25 @@ if ($userId) {
           </div>
         </div>
         <div class="dropdown-menu">
-          <?php if ($currentRole !== 'Entreprise'): ?>
+          <?php if ($currentRole === 'Candidat'): ?>
           <a href="profil_candidat.php" class="dropdown-item" id="dropdown-profile">
             <i data-lucide="user" style="width:16px;height:16px;"></i>
             Mon Profil
           </a>
           <?php endif; ?>
-          <a href="settings.php<?php echo ($currentRole === 'Entreprise') ? '?role=entreprise' : ''; ?>" class="dropdown-item" id="dropdown-settings">
+          <a href="settings.php<?php 
+            if ($currentRole === 'Entreprise') echo '?role=entreprise';
+            elseif ($currentRole === 'Tuteur') echo '?role=tuteur';
+          ?>" class="dropdown-item" id="dropdown-settings">
             <i data-lucide="settings" style="width:16px;height:16px;"></i>
             Paramètres
           </a>
+          <?php if ($currentRole === 'Tuteur'): ?>
+          <a href="profil_tuteur.php" class="dropdown-item" id="dropdown-profile-tuteur">
+            <i data-lucide="user" style="width:16px;height:16px;"></i>
+            Mon Profil
+          </a>
+          <?php endif; ?>
           <div class="dropdown-divider"></div>
           <a href="logout.php" class="dropdown-item" id="dropdown-logout" style="color:var(--accent-tertiary);">
             <i data-lucide="log-out" style="width:16px;height:16px;"></i>
@@ -158,7 +253,6 @@ if ($userId) {
     </div>
   </nav>
 
-  <!-- Mobile Navigation Menu -->
   <div class="mobile-menu-landing" id="mobile-menu-landing">
     <?php if ($currentRole === 'Entreprise'): ?>
       <a href="hr_posts.php" class="nav-anchor"><i data-lucide="briefcase"></i> Mes Postes</a>
@@ -166,6 +260,10 @@ if ($userId) {
       <a href="profil_entreprise.php" class="nav-anchor"><i data-lucide="building"></i> Profil Entreprise</a>
       <a href="veille_feed_ent.php" class="nav-anchor"><i data-lucide="line-chart"></i> Veille Marché</a>
       <a href="settings.php?role=entreprise" class="nav-anchor"><i data-lucide="settings"></i> Paramètres</a>
+    <?php elseif ($currentRole === 'Tuteur'): ?>
+      <a href="dashboard_tuteur.php" class="nav-anchor"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a href="espace_tuteur.php" class="nav-anchor"><i data-lucide="graduation-cap"></i> Mon Espace</a>
+      <a href="settings.php?role=tuteur" class="nav-anchor"><i data-lucide="settings"></i> Paramètres</a>
     <?php else: ?>
       <a href="jobs_feed.php" class="nav-anchor"><i data-lucide="briefcase"></i> Offres d'emploi</a>
       <a href="cv_templates.php" class="nav-anchor"><i data-lucide="file-badge"></i> Générer CV</a>
@@ -177,9 +275,6 @@ if ($userId) {
     <?php endif; ?>
   </div>
 
-  <!-- ═══════════════════════════════════════════
-       MAIN CONTENT
-       ═══════════════════════════════════════════ -->
   <main class="front-main">
     <div class="front-content">
       <?php
@@ -190,9 +285,6 @@ if ($userId) {
     </div>
   </main>
 
-  <!-- ═══════════════════════════════════════════
-       FOOTER
-       ═══════════════════════════════════════════ -->
   <footer class="front-footer">
     <div class="front-footer__grid">
       <div class="front-footer__brand">
@@ -235,7 +327,6 @@ if ($userId) {
     </div>
   </footer>
 
-  <!-- Scripts -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/nav.js"></script>
@@ -245,30 +336,16 @@ if ($userId) {
     <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
   <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
-
-  <!-- ═══════════════════════════════════════════
-       ACCESSIBILITY GESTURE CONTROL (MediaPipe)
-       ═══════════════════════════════════════════ -->
   
-  <!-- Virtual Cursor -->
   <div class="a11y-cursor" id="a11y-cursor"></div>
-  
-  <!-- Video Preview Container (PIP) -->
   <div class="a11y-video-container" id="a11y-video-container">
     <video id="a11y-webcam" autoplay playsinline></video>
     <canvas id="a11y-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
   </div>
-  
-  <!-- Toggle Button (Floating) -->
   <button class="a11y-toggle" id="a11y-toggle" aria-label="Activer la navigation gestuelle" title="Navigation Hand Tracking">
     <i data-lucide="hand"></i>
   </button>
-
-  <!-- Load MediaPipe Tasks Vision & Our Custom A11Y Script -->
-  <!-- Note: We use type="module" for our custom script because MediaPipe Tasks Vision uses ES Modules -->
   <script type="module" src="/aptus_first_official_version/view/assets/js/a11y-hand-control.js"></script>
   <script>lucide.createIcons();</script>
-
 </body>
-
 </html>
