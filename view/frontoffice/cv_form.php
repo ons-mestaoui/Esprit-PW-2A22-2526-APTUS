@@ -285,7 +285,7 @@ if (!isset($content)) {
         width: 100%;
         padding: 0.75rem 1rem;
         border: 1px solid var(--border-color);
-        border-radius: 12px;
+        border-radius: 14px;
         background: var(--bg-input) !important;
         color: var(--text-primary) !important;
         cursor: pointer;
@@ -299,6 +299,7 @@ if (!isset($content)) {
     .premium-select-box:hover {
         border-color: var(--accent-primary);
         background: var(--bg-input-focus) !important;
+        border-radius: 14px;
     }
     .premium-select-box.active {
         border-color: var(--accent-primary);
@@ -326,12 +327,14 @@ if (!isset($content)) {
         display: flex;
         align-items: center;
         gap: 10px;
+        border-radius: 14px;
     }
     .premium-option-item:hover {
         background: var(--accent-primary-light) !important;
         color: var(--accent-primary) !important;
         border-left: 5px solid var(--accent-primary);
         padding-left: 1.5rem;
+        border-radius: 14px;
     }
     [data-theme="dark"] .premium-option-item:hover {
         background: rgba(162, 117, 211, 0.15) !important;
@@ -487,7 +490,7 @@ if (!isset($content)) {
 
         <!-- STEP 1: Personal Info -->
         <div class="step-content active" id="step-1">
-            <div class="step-header"><h2>Informations Personnelles</h2></div>
+            <div class="step-header"><h2 id="label-step-1">Informations Personnelles</h2></div>
 
             
             <div class="image-upload-wrapper" id="photo-upload-wrapper">
@@ -542,7 +545,7 @@ if (!isset($content)) {
 
         <!-- STEP 2: Summary (The Persona Architect) -->
         <div class="step-content" id="step-2">
-            <div class="step-header"><h2>Résumé Professionnel</h2></div>
+            <div class="step-header"><h2 id="label-step-2">Résumé Professionnel</h2></div>
             
             <div class="persona-grid">
                 <div class="persona-card" onclick="selectPersona('visionary', this)">
@@ -600,7 +603,7 @@ if (!isset($content)) {
 
         <!-- STEP 3: Experience (The Impact Timeline) -->
         <div class="step-content" id="step-3">
-            <div class="step-header"><h2>Expérience Professionnelle</h2></div>
+            <div class="step-header"><h2 id="label-step-3">Expérience Professionnelle</h2></div>
             <div class="timeline-container" id="experience-timeline">
                 <!-- Roles will be appended here -->
             </div>
@@ -614,7 +617,7 @@ if (!isset($content)) {
         <!-- STEP 4: Skills (The Skill Heatmap) -->
         <div class="step-content" id="step-4">
             <div class="step-header">
-                <h2>Vos Compétences</h2>
+                <h2 id="label-step-4">Vos Compétences</h2>
                 <p class="help-text">Distinguez vos savoir-faire techniques de vos qualités humaines.</p>
             </div>
             
@@ -688,7 +691,7 @@ if (!isset($content)) {
 
         <!-- STEP 5: Education (The Academic Journey) -->
         <div class="step-content" id="step-5">
-            <div class="step-header"><h2>Formation</h2></div>
+            <div class="step-header"><h2 id="label-step-5">Formation</h2></div>
             <div id="education-journey">
                 <!-- Degrees will be appended here -->
             </div>
@@ -700,7 +703,7 @@ if (!isset($content)) {
 
         <!-- STEP 6: Languages (Visual Fluency Meters) -->
         <div class="step-content" id="step-6">
-            <div class="step-header"><h2>Langues</h2></div>
+            <div class="step-header"><h2 id="label-step-6">Langues</h2></div>
             <div id="dynamic-languages-container"></div>
             <button class="btn-secondary-cv" style="width:100%; border-style:dashed;" onclick="addLanguage()"><i data-lucide="plus-circle"></i> Ajouter une langue</button>
             <textarea id="input-languages" style="display:none;"></textarea>
@@ -956,6 +959,14 @@ $receiverScript = '
     }
 
     window.addEventListener("message", function(e) {
+        const kMap = { 
+            2:["résumé","summary","propos","profil","about"], 
+            3:["expérience","experience","parcours","work","emploi","professional"], 
+            4:["compétence","skills","aptitudes","technique","outils","expert"], 
+            5:["formation","education","scolaire","academic","études","diplômes"], 
+            6:["langue","language","linguistique","linguistiques","languages"] 
+        };
+
         if (e.data.type === "cv-update") {
             const d = e.data;
             const setVal = (sel, val, isHtml = false) => {
@@ -1032,6 +1043,34 @@ $receiverScript = '
                 const txt = document.querySelectorAll("#photo-text, .photo-text");
                 txt.forEach(t => t.style.display = "none");
             }
+        } else if (e.data.type === "cv-labels") {
+            const labels = e.data.value;
+            Object.keys(labels).forEach(key => {
+                const step = parseInt(key.replace("label-step-", ""));
+                const newTitle = labels[key];
+                const keywords = kMap[step] || [];
+                
+                // 1. Try to find elements already marked with this step
+                let targets = document.querySelectorAll(`[data-cv-step="${step}"]`);
+                
+                // 2. If not marked, search by keywords (first translation)
+                if (targets.length === 0 && keywords.length > 0) {
+                    const sections = document.querySelectorAll("h1,h2,h3,h4,h5,p,div,span,.section-title");
+                    sections.forEach(el => {
+                        const txt = el.textContent.trim().toLowerCase();
+                        if (txt && keywords.some(k => txt === k || txt.startsWith(k + " ") || txt.includes(k))) {
+                            if (el.children.length === 0 || (el.children.length === 1 && el.children[0].tagName === "I")) {
+                                el.setAttribute("data-cv-step", step);
+                            }
+                        }
+                    });
+                    // Re-query targets after marking
+                    targets = document.querySelectorAll(`[data-cv-step="${step}"]`);
+                }
+                
+                // 3. Update all targets
+                targets.forEach(t => { t.innerText = newTitle; });
+            });
         } else if (e.data.type === "toggle-bionic") {
             isBionic = e.data.enabled;
             window.parent.postMessage({ type: "request-full-sync" }, "*");
@@ -1042,13 +1081,6 @@ $receiverScript = '
                 el.style.background = "none";
             });
             const step = e.data.step;
-            const kMap = { 
-                2:["résumé","summary","propos","profil"], 
-                3:["expérience","experience","parcours","stages","work","emploi"], 
-                4:["compétence","skills","aptitudes","technique","outils","expert"], 
-                5:["formation","education","scolaire","academic","études","diplômes"], 
-                6:["langue","language","linguistique","linguistiques"] 
-            };
             let target = null;
             if (step === 1) target = document.querySelector(".cv-header, .header-info, h1, .sidebar-header");
             else if (kMap[step]) {
@@ -1639,6 +1671,19 @@ function syncAllData() {
         ifrm.contentWindow.postMessage({ type: 'cv-update', field: 'photo', value: photo }, '*');
     }
     
+    // Sync Labels
+    const labels = {
+        'label-step-1': document.getElementById('label-step-1').textContent,
+        'label-step-2': document.getElementById('label-step-2').textContent,
+        'label-step-3': document.getElementById('label-step-3').textContent,
+        'label-step-4': document.getElementById('label-step-4').textContent,
+        'label-step-5': document.getElementById('label-step-5').textContent,
+        'label-step-6': document.getElementById('label-step-6').textContent
+    };
+    if (ifrm && ifrm.contentWindow) {
+        ifrm.contentWindow.postMessage({ type: 'cv-labels', value: labels }, '*');
+    }
+    
     // Sync Color
     const color = document.getElementById('color-picker').value;
     if (ifrm && ifrm.contentDocument) {
@@ -1655,6 +1700,19 @@ function populateFormWithJSON(data) {
     if(data.email) document.getElementById('input-email').value = data.email;
     if(data.telephone) document.getElementById('input-phone').value = data.telephone;
     if(data.adresse) document.getElementById('input-location').value = data.adresse;
+
+    // 1.5. Titres de sections
+    if(data.labels) {
+        Object.keys(data.labels).forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.textContent = data.labels[id];
+        });
+        // Sync labels with iframe
+        const ifrm = document.getElementById('template-preview-frame');
+        if (ifrm && ifrm.contentWindow) {
+            ifrm.contentWindow.postMessage({ type: 'cv-labels', value: data.labels }, '*');
+        }
+    }
     
     // 2. Résumé
     if(data.resume) document.getElementById('input-summary').innerHTML = data.resume;
@@ -1722,11 +1780,19 @@ async function runTranslateCV() {
         experience: currentRoles,
         education: currentDegrees,
         skills: currentSkills.map(s => typeof s === 'string' ? s : s.name),
-        languages: currentLangs
+        languages: currentLangs,
+        labels: {
+            'label-step-1': document.getElementById('label-step-1').textContent,
+            'label-step-2': document.getElementById('label-step-2').textContent,
+            'label-step-3': document.getElementById('label-step-3').textContent,
+            'label-step-4': document.getElementById('label-step-4').textContent,
+            'label-step-5': document.getElementById('label-step-5').textContent,
+            'label-step-6': document.getElementById('label-step-6').textContent
+        }
     };
 
     btn.disabled = true;
-    icon.classList.add('animate-spin');
+    if(icon) icon.classList.add('animate-spin');
     txt.textContent = 'Traduction...';
 
     try {
@@ -1747,7 +1813,9 @@ async function runTranslateCV() {
         showToast("Erreur de connexion.", 'alert-circle');
     } finally {
         btn.disabled = false;
-        icon.classList.remove('animate-spin');
+        // Re-fetch icon because Lucide replaces the <i> with <svg>
+        const finalIcon = document.getElementById('translate-icon');
+        if (finalIcon) finalIcon.classList.remove('animate-spin');
         txt.textContent = 'Traduire Tout';
     }
 }
