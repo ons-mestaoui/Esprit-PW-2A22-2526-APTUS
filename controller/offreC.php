@@ -309,4 +309,59 @@ class offreC{
             return [];
         }
     }
+    // ═══ GESTION DES FAVORIS ═══
+    public function toggleFavori($id_candidat, $id_offre) {
+        $db = config::getConnexion();
+        try {
+            // Vérifier si déjà en favori
+            $check = $db->prepare("SELECT id_favori FROM favoris WHERE id_candidat = :c AND id_offre = :o");
+            $check->execute(['c' => $id_candidat, 'o' => $id_offre]);
+            
+            if ($check->rowCount() > 0) {
+                // Supprimer
+                $del = $db->prepare("DELETE FROM favoris WHERE id_candidat = :c AND id_offre = :o");
+                $del->execute(['c' => $id_candidat, 'o' => $id_offre]);
+                return ['action' => 'removed'];
+            } else {
+                // Ajouter
+                $ins = $db->prepare("INSERT INTO favoris (id_candidat, id_offre) VALUES (:c, :o)");
+                $ins->execute(['c' => $id_candidat, 'o' => $id_offre]);
+                return ['action' => 'added'];
+            }
+        } catch (Exception $e) {
+            // Création automatique de la table si elle n'existe pas (pour le premier test)
+            $db->exec("CREATE TABLE IF NOT EXISTS favoris (
+                id_favori INT AUTO_INCREMENT PRIMARY KEY,
+                id_candidat INT NOT NULL,
+                id_offre INT NOT NULL,
+                date_ajout TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(id_candidat, id_offre)
+            )");
+            return $this->toggleFavori($id_candidat, $id_offre);
+        }
+    }
+
+    public function isFavori($id_candidat, $id_offre) {
+        $db = config::getConnexion();
+        try {
+            $req = $db->prepare("SELECT 1 FROM favoris WHERE id_candidat = :c AND id_offre = :o");
+            $req->execute(['c' => $id_candidat, 'o' => $id_offre]);
+            return $req->rowCount() > 0;
+        } catch (Exception $e) { return false; }
+    }
+
+    public function getFavorisByUser($id_candidat) {
+        $db = config::getConnexion();
+        try {
+            $sql = "SELECT o.*, u.nom as nom_entreprise 
+                    FROM offreemploi o 
+                    JOIN favoris f ON o.id_offre = f.id_offre 
+                    LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur 
+                    WHERE f.id_candidat = :id";
+            $req = $db->prepare($sql);
+            $req->execute(['id' => $id_candidat]);
+            return $req;
+        } catch (Exception $e) { return null; }
+    }
 }
+?>

@@ -228,6 +228,19 @@ if (!isset($content)) {
       </div>
     </div>
 
+    <!-- Favoris -->
+    <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border-color); transition: transform 0.3s ease;">
+      <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i data-lucide="star" style="width:14px;height:14px;color:#f59e0b;"></i> Ma Sélection
+      </h4>
+      <button onclick="filterByFavoris(this)" class="btn-favoris-filter" style="width: 100%; padding: 0.85rem; border-radius: 14px; border: 2px solid var(--border-color); background: var(--bg-secondary); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 0.75rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-weight: 700; font-size: 0.9rem; position: relative; overflow: hidden;" onmouseover="this.style.borderColor='var(--accent-primary)'; this.style.color='var(--accent-primary)'; this.style.transform='translateY(-2px)';" onmouseout="if(!showFavorisOnly){ this.style.borderColor='var(--border-color)'; this.style.color='var(--text-secondary)'; this.style.transform='translateY(0)'; }">
+          <div class="fav-icon-container" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--bg-card); border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <i data-lucide="bookmark" style="width: 16px; height: 16px; transition: all 0.3s;"></i>
+          </div>
+          Voir mes favoris
+      </button>
+    </div>
+
     <!-- Date de publication -->
     <div class="hr-sidebar__section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
       <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 1.25rem;">DATE DE PUBLICATION</h4>
@@ -379,6 +392,67 @@ if (!isset($content)) {
 
         currentDateSort = radio.value;
         fetchJobsSearch(document.getElementById('job-search').value);
+    }
+    let showFavorisOnly = false;
+
+    function filterByFavoris(btn) {
+        if (!btn) return;
+        showFavorisOnly = !showFavorisOnly;
+        const icon = btn.querySelector('i');
+        const iconContainer = btn.querySelector('.fav-icon-container');
+        
+        if (showFavorisOnly) {
+            btn.style.borderColor = 'var(--accent-primary)';
+            btn.style.color = 'var(--accent-primary)';
+            btn.style.background = 'rgba(168, 100, 228, 0.08)';
+            btn.style.boxShadow = '0 8px 20px rgba(168, 100, 228, 0.15)';
+            if (icon) {
+                icon.style.fill = 'currentColor';
+                icon.style.transform = 'scale(1.2)';
+            }
+            if (iconContainer) iconContainer.style.background = 'white';
+            fetchFavoris();
+        } else {
+            btn.style.borderColor = 'var(--border-color)';
+            btn.style.color = 'var(--text-secondary)';
+            btn.style.background = 'var(--bg-secondary)';
+            btn.style.boxShadow = 'none';
+            if (icon) {
+                icon.style.fill = 'none';
+                icon.style.transform = 'scale(1)';
+            }
+            if (iconContainer) iconContainer.style.background = 'var(--bg-card)';
+            fetchJobsSearch(document.getElementById('job-search').value);
+        }
+    }
+
+    function fetchFavoris() {
+        console.log("DEBUG: Début fetchFavoris");
+        const spinner = document.getElementById('job-search-spinner');
+        if (spinner) spinner.style.display = 'block';
+        
+        fetch('ajax_favoris.php?action=get_favoris')
+        .then(r => r.json())
+        .then(data => {
+            console.log("DEBUG: Favoris reçus:", data);
+            if (data.results && data.results.length > 0) {
+                updateJobsGrid(data.results);
+            } else {
+                const container = document.getElementById('jobs-container');
+                if (container) {
+                    container.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--text-tertiary);">Vous n\'avez pas encore d\'offres sauvegardées.</div>';
+                }
+                const resultsInfo = document.querySelector('.results-info');
+                if (resultsInfo) {
+                    resultsInfo.innerHTML = '<span style="color: #0ea5e9; font-weight: 700; font-size: 1.1rem;">0</span><span>favoris trouvés</span>';
+                }
+            }
+            if (spinner) spinner.style.display = 'none';
+        })
+        .catch(err => {
+            console.error("DEBUG: Erreur fetchFavoris:", err);
+            alert("Erreur lors de la récupération des favoris.");
+        });
     }
     </script>
   </aside>

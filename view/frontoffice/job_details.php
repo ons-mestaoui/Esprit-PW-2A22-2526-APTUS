@@ -135,11 +135,13 @@ if (!isset($content)) {
                 </form>
 
                 <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;">
-                    <button class="btn btn-ghost" style="flex: 1; padding: 0.75rem; border-radius: 10px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; border: 1px solid var(--border-color); color: var(--text-secondary);">
-                        <i data-lucide="share-2" style="width: 16px; height: 16px;"></i> Partager
+                    <button id="btn-share-<?php echo $id_offre; ?>" onclick="copyShareLink(<?php echo $id_offre; ?>)" class="btn btn-ghost" style="flex: 1; padding: 0.75rem; border-radius: 10px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; border: 1px solid var(--border-color); color: var(--text-secondary); transition: all 0.2s;">
+                        <i data-lucide="share-2" style="width: 16px; height: 16px;"></i> <span id="share-text-<?php echo $id_offre; ?>">Partager</span>
                     </button>
-                    <button class="btn btn-ghost" style="flex: 1; padding: 0.75rem; border-radius: 10px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; border: 1px solid var(--border-color); color: var(--text-secondary);">
-                        <i data-lucide="bookmark" style="width: 16px; height: 16px;"></i> Sauver
+                    <?php $is_fav = $offreC->isFavori(1, $id_offre); ?>
+                    <button id="btn-fav-<?php echo $id_offre; ?>" onclick="toggleFavori(<?php echo $id_offre; ?>)" class="btn btn-ghost" style="flex: 1; padding: 0.75rem; border-radius: 10px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; border: 1px solid <?php echo $is_fav ? 'var(--accent-primary)' : 'var(--border-color)'; ?>; color: <?php echo $is_fav ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; background: <?php echo $is_fav ? 'rgba(168, 100, 228, 0.05)' : 'transparent'; ?>;">
+                        <i data-lucide="bookmark" style="width: 16px; height: 16px; fill: <?php echo $is_fav ? 'currentColor' : 'none'; ?>;"></i> 
+                        <span id="fav-text-<?php echo $id_offre; ?>"><?php echo $is_fav ? 'Sauvé' : 'Sauver'; ?></span>
                     </button>
                 </div>
             </div>
@@ -149,6 +151,54 @@ if (!isset($content)) {
 </div>
 
 <script>
+function copyShareLink(id) {
+    const btn = document.getElementById('btn-share-' + id);
+    const text = document.getElementById('share-text-' + id);
+    const url = window.location.origin + window.location.pathname + '?id=' + id;
+    
+    navigator.clipboard.writeText(url).then(() => {
+        const originalText = text.innerText;
+        text.innerText = 'Lien copié !';
+        btn.style.borderColor = '#10b981';
+        btn.style.color = '#10b981';
+        
+        setTimeout(() => {
+            text.innerText = originalText;
+            btn.style.borderColor = 'var(--border-color)';
+            btn.style.color = 'var(--text-secondary)';
+        }, 2000);
+    });
+}
+
+function toggleFavori(id) {
+    const btn = document.getElementById('btn-fav-' + id);
+    const text = document.getElementById('fav-text-' + id);
+    const formData = new FormData();
+    formData.append('action', 'toggle');
+    formData.append('id_offre', id);
+
+    fetch('ajax_favoris.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.action === 'added') {
+            btn.style.color = 'var(--accent-primary)';
+            btn.style.borderColor = 'var(--accent-primary)';
+            btn.style.background = 'rgba(168, 100, 228, 0.05)';
+            text.innerText = 'Sauvé';
+            btn.querySelector('i').style.fill = 'currentColor';
+        } else {
+            btn.style.color = 'var(--text-secondary)';
+            btn.style.borderColor = 'var(--border-color)';
+            btn.style.background = 'transparent';
+            text.innerText = 'Sauver';
+            btn.querySelector('i').style.fill = 'none';
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     if (window.lucide) {
         lucide.createIcons();
