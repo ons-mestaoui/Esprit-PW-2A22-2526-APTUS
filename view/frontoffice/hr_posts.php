@@ -1,4 +1,4 @@
-<?php 
+﻿<?php 
 $pageTitle = "Mes Postes"; 
 $pageCSS = "feeds.css"; 
 $userRole = "Entreprise"; 

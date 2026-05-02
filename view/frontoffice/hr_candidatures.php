@@ -161,6 +161,12 @@ if (!isset($content)) {
             <div class="candidate-card__role" style="font-size: 0.9rem; color: var(--accent-primary); font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
                 <i data-lucide="briefcase" style="width: 14px; height: 14px;"></i> <?php echo $titreOffre; ?>
             </div>
+            <?php 
+                $note = isset($cand['note']) ? intval($cand['note']) : 0;
+            ?>
+            <div class="ai-score-badge" style="margin-top: 0.5rem; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; background: <?php echo $note >= 80 ? 'rgba(16, 185, 129, 0.1)' : ($note >= 50 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(107, 114, 128, 0.1)'); ?>; color: <?php echo $note >= 80 ? '#10b981' : ($note >= 50 ? '#f59e0b' : '#6b7280'); ?>; border-radius: 6px; font-size: 0.8rem; font-weight: 700; border: 1px solid currentColor;">
+                <i data-lucide="sparkles" style="width: 12px; height: 12px;"></i> Score IA: <?php echo $note > 0 ? $note . '%' : 'En attente'; ?>
+            </div>
             <div style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 0.4rem;">Déposé le <?php echo $dateCand; ?></div>
           </div>
           <div>
@@ -179,6 +185,7 @@ if (!isset($content)) {
 
         <div class="candidate-card__actions" style="display: flex; gap: 0.75rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color);">
           <textarea id="cv-data-<?php echo $cand['id_candidature']; ?>" style="display:none;"><?php echo htmlspecialchars($cand['cv__cand'] ?? $cand['cv_cand'] ?? ''); ?></textarea>
+          
           <button class="btn btn-primary" style="flex: 1; padding: 0.6rem; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onclick="event.stopPropagation(); openDetailsModal(null, <?php echo $cand['id_candidature']; ?>)">
             <i data-lucide="file-text" style="width:16px;height:16px;"></i> Voir Détails & CV
           </button>
@@ -198,6 +205,10 @@ if (!isset($content)) {
     </div>
   </div>
 </div>
+
+
+
+
 
 <!-- Modal Unifiée de la Candidature -->
 <div class="modal-overlay" id="details-modal-overlay">
@@ -226,6 +237,9 @@ if (!isset($content)) {
                   <i data-lucide="x" style="width:16px;height:16px;"></i> Refuser
               </button>
           </form>
+
+
+
           <button onclick="closeDetailsModal()" style="background: none; border: none; cursor: pointer; color: var(--text-tertiary); margin-left: 0.5rem;">
             <i data-lucide="x" style="width:28px;height:28px;"></i>
           </button>
@@ -404,7 +418,41 @@ function setViewMode(mode) {
 }
 
 // ═══ DETAILS MODAL LOGIC (UNIFIED) ═══
+let currentOpenedCandidatureId = null;
+
+function triggerAiReportFromDetails() {
+    const aiBtn = document.querySelector('button[onclick="triggerAiReportFromDetails()"]');
+    const val = aiBtn ? aiBtn.getAttribute('data-report') : null;
+    
+    if (!val || val.trim() === "") {
+        alert("Le rapport IA n'est pas disponible pour cette candidature.");
+        return;
+    }
+
+    try {
+        const data = JSON.parse(val);
+        document.getElementById('ai-report-score').innerText = (data.score || 0) + '%';
+        document.getElementById('ai-report-cv').innerText = data.analyse_cv || 'N/A';
+        document.getElementById('ai-report-reponse').innerText = data.analyse_reponse || 'N/A';
+        document.getElementById('ai-report-verdict').innerText = data.verdict || 'Analyse terminée.';
+        
+        const forts = document.getElementById('ai-report-forts');
+        const faibles = document.getElementById('ai-report-faibles');
+        forts.innerHTML = '';
+        faibles.innerHTML = '';
+        
+        if (data.points_forts) data.points_forts.forEach(p => forts.innerHTML += `<li>${p}</li>`);
+        if (data.points_faibles) data.points_faibles.forEach(p => faibles.innerHTML += `<li>${p}</li>`);
+
+        document.getElementById('ai-report-modal-overlay').style.display = 'flex';
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        alert("Erreur de lecture du rapport IA.");
+    }
+}
+
 function openDetailsModal(event, id) {
+    currentOpenedCandidatureId = id;
     if (event && event.target.closest('button') && !event.target.closest('.btn-primary')) {
         // Ignore clicks on reject/accept buttons, but allow clicks on the row or "Voir CV" button
         return;
@@ -557,3 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
+
+
+</body>
+</html>

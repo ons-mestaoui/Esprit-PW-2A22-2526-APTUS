@@ -1,14 +1,33 @@
 <?php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/scoreAIC.php';
 
 class candidatureC {
 
-    // Ajouter une candidature
+    // Ajouter une candidature avec Scoring IA
     public function addCandidature($candidature) {
-        $sql = "INSERT INTO candidatures 
-            (id_candidat, id_offre, nom, prenom, email, reponses_ques, cv__cand, date_candidature) 
-            VALUES (:id_candidat, :id_offre, :nom, :prenom, :email, :reponses_ques, :cv__cand, :date_candidature)";
         $db = config::getConnexion();
+        
+        // 1. Récupérer les détails de l'offre pour le contexte
+        $sqlOffre = "SELECT titre, description FROM offreemploi WHERE id_offre = :id";
+        $reqOffre = $db->prepare($sqlOffre);
+        $reqOffre->execute(['id' => $candidature->getIdOffre()]);
+        $offre = $reqOffre->fetch();
+        $contexte = "Poste: " . ($offre['titre'] ?? '') . ". Description: " . ($offre['description'] ?? '');
+
+        // 2. Calculer le score avec le nouveau contrôleur IA
+        $scoreAIC = new scoreAIC();
+        $prompt = "Évalue cette candidature sur 100 basée sur la réponse du candidat : '" . $candidature->getReponsesQues() . "' par rapport à ce poste : $contexte";
+        $score = $scoreAIC->calculerScore($prompt);
+
+        // 3. Déterminer le statut initial
+        $statut = 'En attente';
+
+        // 4. Insertion
+        $sql = "INSERT INTO candidatures 
+            (id_candidat, id_offre, nom, prenom, email, reponses_ques, cv__cand, date_candidature, note, statut) 
+            VALUES (:id_candidat, :id_offre, :nom, :prenom, :email, :reponses_ques, :cv__cand, :date_candidature, :note, :statut)";
+        
         try {
             $query = $db->prepare($sql);
             $query->execute([
@@ -20,8 +39,14 @@ class candidatureC {
                 'reponses_ques' => $candidature->getReponsesQues(),
                 'cv__cand' => $candidature->getCvCand(),
                 'date_candidature' => $candidature->getDateCandidature(),
-              
+                'note' => $score,
+                'statut' => $statut
             ]);
+
+            $lastId = $db->lastInsertId();
+
+            // Pas d'auto-rejection pour le moment, le RH voit tout.
+
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
         }
@@ -44,7 +69,8 @@ class candidatureC {
     public function filtrerCandidatures($criteres = []) {
         $sql = "SELECT c.*, o.titre as titre_offre, o.question as question_offre 
                 FROM candidatures c 
-                LEFT JOIN offreemploi o ON c.id_offre = o.id_offre WHERE 1=1";
+                LEFT JOIN offreemploi o ON c.id_offre = o.id_offre 
+                WHERE 1=1";
         
         $params = [];
         if (!empty($criteres['status'])) {

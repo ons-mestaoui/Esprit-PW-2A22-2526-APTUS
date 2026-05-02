@@ -97,6 +97,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])
 }
 
 $criteres = [];
+// Gestion de l'ouverture automatique de la modale via GET
+if (isset($_GET['apply_to'])) {
+    $id_pre_apply = intval($_GET['apply_to']);
+    $pre_offre = $offreC->getOffreById($id_pre_apply);
+    if ($pre_offre) {
+        $cand_data['id_offre'] = $pre_offre['id_offre'];
+        $cand_data['offer_title'] = $pre_offre['titre'];
+        $cand_data['offer_question'] = $pre_offre['question'] ?? 'Décrivez succinctement votre parcours et vos motivations...';
+    }
+}
+
 if (!empty($_GET['sort_salaire'])) {
     $criteres['sort_salaire'] = $_GET['sort_salaire'];
 }
@@ -432,21 +443,9 @@ if (!isset($content)) {
               <span class="job-card__date">
                 <i data-lucide="calendar" style="width:12px;height:12px;"></i> <?php echo htmlspecialchars($offreItem['date_publication'] ?? ''); ?>
               </span>
-              <button type="button" class="btn btn-sm" style="background: linear-gradient(90deg, #4fb5ff 0%, #a864e4 50%, #d85ab2 100%); border: none; color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';" onclick="openOfferModal(<?php echo htmlspecialchars(json_encode([
-                  'id' => $offreItem['id_offre'],
-                  'titre' => $offreItem['titre'],
-                  'nom_entreprise' => $offreItem['nom_entreprise'] ?? 'Entreprise Inconnue',
-                  'domaine' => $offreItem['domaine'],
-                  'description' => $offreItem['description'],
-                  'competences' => $offreItem['competences_requises'],
-                  'experience' => $offreItem['experience_requise'],
-                  'salaire' => $offreItem['salaire'],
-                  'question' => $offreItem['question'] ?? 'Décrivez succinctement votre parcours et vos motivations...',
-                  'date_pub' => $offreItem['date_publication'],
-                  'img_post' => $offreItem['img_post'] ?? ''
-              ])); ?>)">
-                <i data-lucide="eye" style="width:14px;height:14px;"></i> Voir détails
-              </button>
+                <a href="job_details.php?id=<?php echo $offreItem['id_offre']; ?>" class="btn btn-sm" style="background: linear-gradient(90deg, #4fb5ff 0%, #a864e4 50%, #d85ab2 100%); border: none; color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; text-decoration: none; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                  <i data-lucide="eye" style="width:14px;height:14px;"></i> Voir détails
+                </a>
             </div>
           </div>
         </div>
@@ -701,6 +700,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Logic for auto-opening application modal
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('apply_to') || <?php echo !empty($cand_errors) ? 'true' : 'false'; ?>) {
+        openApplyModal();
+    }
 });
 document.addEventListener('DOMContentLoaded', function() {
     var lucideScript = document.createElement('script');
@@ -882,9 +887,9 @@ function updateJobsGrid(offres) {
                     <span class="job-card__date">
                         <i data-lucide="calendar" style="width:12px;height:12px;"></i> ${datePub}
                     </span>
-                    <button type="button" class="btn btn-sm" style="background: linear-gradient(90deg, #4fb5ff 0%, #a864e4 50%, #d85ab2 100%); border: none; color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';" onclick='openOfferModal(${modalData})'>
+                    <a href="job_details.php?id=${o.id_offre}" class="btn btn-sm" style="background: linear-gradient(90deg, #4fb5ff 0%, #a864e4 50%, #d85ab2 100%); border: none; color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; text-decoration: none; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
                         <i data-lucide="eye" style="width:14px;height:14px;"></i> Voir détails
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>`;

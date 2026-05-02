@@ -146,7 +146,10 @@ class offreC{
     public function getOffreById($id_offre){
         $db = config::getConnexion();
         try{
-            $query=$db->prepare("SELECT * from offreemploi where id_offre=:id_offre");
+            $query=$db->prepare("SELECT o.*, u.nom as nom_entreprise 
+                                FROM offreemploi o 
+                                LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur 
+                                WHERE o.id_offre=:id_offre");
             $query->execute([
                 'id_offre' => $id_offre
             ]);
