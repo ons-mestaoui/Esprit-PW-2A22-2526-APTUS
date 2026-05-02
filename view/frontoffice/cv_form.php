@@ -276,6 +276,68 @@ if (!isset($content)) {
         padding: 20px;
     }
 
+    /* Premium Custom Select */
+    .premium-select-wrapper {
+        position: relative;
+        flex: 1;
+    }
+    .premium-select-box {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        background: var(--bg-input) !important;
+        color: var(--text-primary) !important;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.95rem;
+        height: 45px;
+        transition: var(--transition-fast);
+    }
+    .premium-select-box:hover {
+        border-color: var(--accent-primary);
+        background: var(--bg-input-focus) !important;
+    }
+    .premium-select-box.active {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(107, 52, 163, 0.1);
+    }
+    .premium-options-list {
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        right: 0;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px;
+        box-shadow: var(--shadow-xl);
+        display: none;
+        z-index: 1000;
+        overflow: hidden;
+        animation: fadeIn 0.2s ease;
+    }
+    .premium-option-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .premium-option-item:hover {
+        background: var(--accent-primary-light) !important;
+        color: var(--accent-primary) !important;
+        border-left: 5px solid var(--accent-primary);
+        padding-left: 1.5rem;
+    }
+    [data-theme="dark"] .premium-option-item:hover {
+        background: rgba(162, 117, 211, 0.15) !important;
+        color: #fff !important;
+    }
+
     .gender-selector-premium {
         background: var(--bg-secondary) !important;
         border: 1px solid var(--border-color) !important;
@@ -649,14 +711,21 @@ if (!isset($content)) {
                     <i data-lucide="languages" style="color:var(--accent-primary); width:18px;"></i> Traduction Polyglotte IA
                 </label>
                 <div style="display:flex; gap:10px;">
-                    <select id="target-lang-select" class="form-control" style="flex:1; border-radius:12px; height:45px; background:var(--bg-secondary);">
-                        <option value="Anglais">🇬🇧 Anglais (UK/US)</option>
-                        <option value="Espagnol">🇪🇸 Espagnol</option>
-                        <option value="Allemand">🇩🇪 Allemand</option>
-                        <option value="Italien">🇮🇹 Italien</option>
-                        <option value="Arabe">🇹🇳 Arabe</option>
-                        <option value="Français">🇫🇷 Français</option>
-                    </select>
+                    <div class="premium-select-wrapper">
+                        <div class="premium-select-box" onclick="this.classList.toggle('active'); const list = this.nextElementSibling; list.style.display = list.style.display === 'block' ? 'none' : 'block';">
+                            <span id="selected-lang-text">🇬🇧 Anglais (UK/US)</span>
+                            <i data-lucide="chevron-down"></i>
+                        </div>
+                        <div class="premium-options-list">
+                            <div class="premium-option-item" onclick="selectLangOption('Anglais', '🇬🇧 Anglais (UK/US)', this)">🇬🇧 Anglais (UK/US)</div>
+                            <div class="premium-option-item" onclick="selectLangOption('Espagnol', '🇪🇸 Espagnol', this)">🇪🇸 Espagnol</div>
+                            <div class="premium-option-item" onclick="selectLangOption('Allemand', '🇩🇪 Allemand', this)">🇩🇪 Allemand</div>
+                            <div class="premium-option-item" onclick="selectLangOption('Italien', '🇮🇹 Italien', this)">🇮🇹 Italien</div>
+                            <div class="premium-option-item" onclick="selectLangOption('Arabe', '🇹🇳 Arabe', this)">🇹🇳 Arabe</div>
+                            <div class="premium-option-item" onclick="selectLangOption('Français', '🇫🇷 Français', this)">🇫🇷 Français</div>
+                        </div>
+                        <input type="hidden" id="target-lang-select" value="Anglais">
+                    </div>
                     <button type="button" class="btn-ai-premium" id="btn-translate-cv" onclick="runTranslateCV()" style="padding: 0 20px; height:45px; border-radius:12px;">
                         <i data-lucide="refresh-cw" id="translate-icon"></i> <span id="translate-btn-text">Traduire Tout</span>
                     </button>
@@ -2166,8 +2235,7 @@ function renderDegrees() {
     currentDegrees.forEach((d, i) => {
         const div = document.createElement('div'); div.className = 'degree-milestone';
         div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-right:30px;">
-                <i data-lucide="star" class="honors-toggle ${d.honors?'active':''}" onclick="currentDegrees[${i}].honors=!currentDegrees[${i}].honors; renderDegrees(); syncEducation();" style="cursor:pointer;"></i>
+            <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:10px; padding-right:30px;">
                 <button type="button" class="text-danger" style="background:none; border:none; cursor:pointer; font-size:1.1rem;" onclick="removeDegreeCard(${i})">&times;</button>
             </div>
             <div style="display:flex; gap:10px; margin-bottom:10px;">
@@ -2537,4 +2605,19 @@ Compétences: ${document.getElementById('input-skills').value}
             btnElement.disabled = false;
         }
     }
+function selectLangOption(val, label, el) {
+    document.getElementById('target-lang-select').value = val;
+    document.getElementById('selected-lang-text').textContent = label;
+    const list = el.parentElement;
+    list.style.display = 'none';
+    list.previousElementSibling.classList.remove('active');
+}
+
+// Close dropdown when clicking outside
+window.addEventListener('click', (e) => {
+    if (!e.target.closest('.premium-select-wrapper')) {
+        document.querySelectorAll('.premium-options-list').forEach(l => l.style.display = 'none');
+        document.querySelectorAll('.premium-select-box').forEach(b => b.classList.remove('active'));
+    }
+});
 </script>
