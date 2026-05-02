@@ -141,7 +141,43 @@ class AIController {
     }
 
     public function polishText(string $text, string $context, string $mode = 'polish'): string {
-        // Mock or implement similarly if needed
-        return $text;
+        if ($mode === 'correct') {
+            $systemPrompt = "Tu es un correcteur linguistique expert. Corrige les fautes d'orthographe et de grammaire. 
+            IMPORTANT : Renvoie le texte en Français, SANS AUCUNE BALISE HTML. 
+            Si le texte est long, synthétise-le en 3 tirets maximum.
+            Renvoie UNIQUEMENT le texte corrigé, sans introduction.";
+        } else {
+            $systemPrompt = "Tu es un expert en recrutement et en optimisation de CV spécialisé en ATS.
+            Transforme le texte fourni en une liste ultra-professionnelle et percutante en Français.
+
+            RÈGLES D'OR :
+            1. FORMAT : Renvoie uniquement une liste utilisant des tirets (-). 
+            2. QUANTITÉ : Maximum 3 tirets (points).
+            3. AUCUN HTML : Interdiction formelle d'utiliser ou de garder des balises HTML (pas de <strong>, <ul>, <li>, etc.).
+            4. ACTION : Utilise des verbes d'action dynamiques et puissants au début de chaque tiret.
+            5. TECHNIQUE : Conserve impérativement tous les mots-clés techniques et les termes métiers du texte original.
+            6. SORTIE : Renvoie UNIQUEMENT les tirets. Pas d'introduction, pas de conclusion, pas de commentaires.
+
+            Contexte de la section : $context";
+        }
+
+        $payload = json_encode([
+            "model" => $this->model,
+            "messages" => [
+                ["role" => "system", "content" => $systemPrompt],
+                ["role" => "user", "content" => "Texte à traiter :\n" . $text]
+            ],
+            "temperature" => 0.3
+        ]);
+
+        $response = $this->callGroq($payload);
+        $data = json_decode($response, true);
+
+        if (isset($data['error'])) {
+            $err = $data['error'];
+            return "[Erreur] " . (is_array($err) ? ($err['message'] ?? "Erreur inconnue") : $err);
+        }
+
+        return $data['choices'][0]['message']['content'] ?? $text;
     }
 }

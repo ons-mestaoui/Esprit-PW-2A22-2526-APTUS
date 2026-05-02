@@ -142,51 +142,77 @@ if (!isset($content)) {
     
     .magic-fill-container:hover { border-color: var(--accent-primary); background: linear-gradient(135deg, rgba(107, 52, 163, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%); }
 
-    /* --- SOFT SKILLS CLUSTERS --- */
-    .soft-skills-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 12px;
-        margin-top: 15px;
+    /* --- THEME-AWARE COMPONENT STYLES --- */
+    .form-control, .lang-input-field, .form-select, #input-summary {
+        background: var(--bg-input) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
+        transition: var(--transition-base);
     }
+    .form-control:focus {
+        background: var(--bg-input-focus) !important;
+        border-color: var(--accent-primary) !important;
+    }
+
     .soft-skill-card {
-        background: white;
-        border: 1px solid var(--border-color);
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
         border-radius: 16px;
         padding: 15px;
         text-align: center;
         cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: var(--transition-bounce);
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 8px;
     }
     .soft-skill-card:hover {
-        border-color: #10b981;
-        background: rgba(16, 185, 129, 0.04);
+        background: var(--bg-card-hover) !important;
         transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.1);
+        box-shadow: var(--shadow-lg);
     }
-    .soft-skill-card.active {
-        border-color: #10b981;
-        background: #10b981;
-        color: white;
+    .soft-skills-grid div:nth-child(1).soft-skill-card:hover { border-color: #10b981 !important; }
+    .soft-skills-grid div:nth-child(2).soft-skill-card:hover { border-color: #f59e0b !important; }
+    .soft-skills-grid div:nth-child(3).soft-skill-card:hover { border-color: #6B34A3 !important; }
+    .soft-skills-grid div:nth-child(4).soft-skill-card:hover { border-color: #ef4444 !important; }
+    /* Refined active states (Outline style) */
+    .soft-skills-grid .soft-skill-card.active { 
+        background: var(--bg-card) !important; 
+        border-width: 2px !important;
+        color: var(--text-primary) !important;
+        box-shadow: var(--shadow-md);
     }
-    .soft-skill-card i {
-        width: 24px;
-        height: 24px;
-        transition: transform 0.3s ease;
+    
+    /* Category specific active colors (Borders & Icons) */
+    .soft-skills-grid div:nth-child(1).soft-skill-card.active { border-color: #10b981 !important; }
+    .soft-skills-grid div:nth-child(1).soft-skill-card.active i,
+    .soft-skills-grid div:nth-child(1).soft-skill-card.active svg { color: #10b981 !important; stroke: #10b981 !important; opacity: 1 !important; }
+
+    .soft-skills-grid div:nth-child(2).soft-skill-card.active { border-color: #f59e0b !important; }
+    .soft-skills-grid div:nth-child(2).soft-skill-card.active i,
+    .soft-skills-grid div:nth-child(2).soft-skill-card.active svg { color: #f59e0b !important; stroke: #f59e0b !important; opacity: 1 !important; }
+
+    .soft-skills-grid div:nth-child(3).soft-skill-card.active { border-color: #6B34A3 !important; }
+    .soft-skills-grid div:nth-child(3).soft-skill-card.active i,
+    .soft-skills-grid div:nth-child(3).soft-skill-card.active svg { color: #6B34A3 !important; stroke: #6B34A3 !important; opacity: 1 !important; }
+
+    .soft-skills-grid div:nth-child(4).soft-skill-card.active { border-color: #ef4444 !important; }
+    .soft-skills-grid div:nth-child(4).soft-skill-card.active i,
+    .soft-skills-grid div:nth-child(4).soft-skill-card.active svg { color: #ef4444 !important; stroke: #ef4444 !important; opacity: 1 !important; }
+    .soft-skill-card span {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: inherit !important;
     }
-    .soft-skill-card.active i { color: white; transform: scale(1.1); }
-    .soft-skill-card span { font-size: 0.8rem; font-weight: 700; }
 
     .skill-suggestions-box {
         margin-top: 15px;
         padding: 15px;
-        background: #f8fafc;
+        background: var(--bg-secondary) !important;
         border-radius: 12px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border-color) !important;
         display: none;
         animation: fadeIn 0.3s ease;
     }
@@ -194,55 +220,120 @@ if (!isset($content)) {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
+        margin-top: 12px;
     }
     .skill-chip {
         padding: 6px 12px;
-        background: white;
-        border: 1px solid #cbd5e1;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
         border-radius: 20px;
         font-size: 0.75rem;
         cursor: pointer;
-        transition: all 0.2s ease;
+        color: var(--text-primary) !important;
+        transition: var(--transition-fast);
     }
     .skill-chip:hover {
-        border-color: #10b981;
-        color: #10b981;
-        background: rgba(16, 185, 129, 0.05);
+        border-color: #10b981 !important;
+        color: #10b981 !important;
     }
     .skill-chip.selected {
-        background: #10b981;
-        color: white;
-        border-color: #10b981;
+        background: #10b981 !important;
+        color: white !important;
+        border-color: #10b981 !important;
     }
-    
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* --- MODAL SYSTEM --- */
-    .aptus-modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.75);
-        backdrop-filter: blur(4px);
-        display: none;
+    .persona-card {
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 16px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition-base);
+        color: var(--text-primary) !important;
+    }
+    .persona-card:hover {
+        background: var(--bg-card-hover) !important;
+        border-color: var(--accent-primary) !important;
+    }
+    .persona-card.active {
+        background: var(--accent-primary) !important;
+        border-color: var(--accent-primary) !important;
+        color: white !important;
+    }
+    .persona-title {
+        color: inherit !important;
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .alchemist-box-premium {
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-top: 4px solid var(--accent-primary) !important;
+        border-radius: 0 0 16px 16px;
+        padding: 20px;
+    }
+
+    .gender-selector-premium {
+        background: var(--bg-secondary) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 30px;
+        display: flex;
+        padding: 4px;
+        margin-bottom: 20px;
+    }
+    .gender-btn {
+        flex: 1;
+        padding: 10px;
+        border-radius: 25px;
+        cursor: pointer;
+        display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 9999;
-        padding: 20px;
-        transition: all 0.3s ease;
+        gap: 8px;
+        color: var(--text-secondary) !important;
+        font-weight: 600;
+        transition: var(--transition-base);
     }
-    .aptus-modal-overlay.active {
-        display: flex;
+    .gender-btn.active {
+        background: var(--accent-primary) !important;
+        color: white !important;
     }
+
     .aptus-modal-content {
-        background: white;
+        background: var(--bg-primary) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color) !important;
         padding: 35px;
         border-radius: 24px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        width: 100%;
-        max-width: 500px;
-        position: relative;
-        animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: var(--shadow-2xl);
     }
+
+    .audit-card-v3 {
+        background: var(--bg-card) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    .role-card, .degree-milestone, .language-card {
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 15px;
+        transition: var(--transition-base);
+    }
+
+    .soft-skills-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin-top: 15px;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes modalSlideIn {
         from { transform: scale(0.9) translateY(20px); opacity: 0; }
         to { transform: scale(1) translateY(0); opacity: 1; }
@@ -336,38 +427,6 @@ if (!isset($content)) {
         <div class="step-content active" id="step-1">
             <div class="step-header"><h2>Informations Personnelles</h2></div>
 
-            <!-- MAGIC AUTO-FILL SECTION -->
-            <div class="magic-fill-container" style="background: linear-gradient(135deg, rgba(107, 52, 163, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%); border: 2px dashed var(--accent-primary); border-radius: 20px; padding: 25px; margin-bottom: 30px; position: relative; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
-                <div style="position: absolute; top: -20px; right: -20px; opacity: 0.1; transform: rotate(15deg);">
-                    <i data-lucide="sparkles" style="width: 120px; height: 120px; color: var(--accent-primary);"></i>
-                </div>
-                <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
-                    <div style="background: var(--accent-primary); color: white; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(107, 52, 163, 0.3);">
-                        <i data-lucide="wand-2" style="width: 22px;"></i>
-                    </div>
-                    <div>
-                        <h3 style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text-primary);">Remplissage Magique IA</h3>
-                        <p style="margin:0; font-size:0.85rem; color:var(--text-tertiary);">Gagnez du temps ! Collez votre LinkedIn ou votre ancien CV.</p>
-                    </div>
-                </div>
-                
-                <div id="magic-input-area">
-                    <textarea id="magic-paste-text" class="form-control" placeholder="Collez ici le texte de votre profil LinkedIn ou le contenu de votre CV..." style="min-height: 100px; background: white; border-radius: 12px; margin-bottom: 12px; font-size: 0.9rem; line-height: 1.5;"></textarea>
-                    <div style="display: flex; gap: 10px;">
-                        <button type="button" class="btn-ai-premium" id="btn-magic-fill" onclick="runMagicFill()" style="flex: 2; justify-content: center; height: 45px;">
-                            <i data-lucide="zap"></i> <span>Analyser & Remplir Tout</span>
-                        </button>
-                        <button type="button" class="btn-secondary-cv" onclick="document.getElementById('magic-paste-text').value=''" style="flex: 1; height: 45px; border-style: solid;">
-                            <i data-lucide="trash-2"></i> Effacer
-                        </button>
-                    </div>
-                </div>
-
-                <div id="magic-loading" style="display:none; text-align:center; padding: 20px 0;">
-                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem; margin-bottom: 15px;"></div>
-                    <p style="font-weight: 700; color: var(--accent-primary); animation: pulse 1.5s infinite;">L'IA structure vos données... ✨</p>
-                </div>
-            </div>
             
             <div class="image-upload-wrapper" id="photo-upload-wrapper">
                 <i class="fa-solid fa-camera fa-2x" style="color:var(--text-tertiary);"></i>
@@ -467,7 +526,7 @@ if (!isset($content)) {
             <div class="form-group" style="position:relative;">
                 <label>Votre Profil Final *</label>
                  <div id="input-summary" contenteditable="true" class="form-control" 
-                      style="padding: 15px; padding-bottom:45px; height:auto; min-height:120px; overflow-y:auto; background:white; line-height:1.6;"
+                      style="padding: 15px; padding-bottom:45px; height:auto; min-height:120px; overflow-y:auto; line-height:1.6;"
                       oninput="syncField(this, this.innerHTML)"></div>
 
                 <button type="button" class="btn-ai-premium" onclick="openAIPolishModal('input-summary', 'summary', this)" style="bottom:12px; right:12px; position:absolute;">
@@ -536,7 +595,7 @@ if (!isset($content)) {
                             <span>Leadership</span>
                         </div>
                         <div class="soft-skill-card" onclick="toggleSkillCluster('organisation', this)">
-                            <i data-lucide="layers" style="color:#3b82f6;"></i>
+                            <i data-lucide="layers" style="color:#6B34A3;"></i>
                             <span>Organisation</span>
                         </div>
                         <div class="soft-skill-card" onclick="toggleSkillCluster('adaptabilite', this)">
@@ -547,7 +606,7 @@ if (!isset($content)) {
 
                     <!-- Suggestions contextuelles -->
                     <div id="soft-skill-suggestions" class="skill-suggestions-box">
-                        <p style="font-size:0.75rem; font-weight:700; color:var(--text-tertiary); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">Suggestions pour <span id="cluster-name-display" style="color:#10b981;">---</span> :</p>
+                        <p style="font-size:0.75rem; font-weight:700; color:var(--text-tertiary); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">Suggestions pour <span id="cluster-name-display">---</span> :</p>
                         <div id="chips-container" class="chip-container"></div>
                     </div>
                 </div>
@@ -1518,44 +1577,7 @@ function syncAllData() {
     }
 }
 
-/* ── ADVANCED FEATURES : MAGIC FILL ── */
-async function runMagicFill() {
-    const text = document.getElementById('magic-paste-text').value.trim();
-    if (!text) {
-        showToast("Veuillez coller du texte d'abord.", 'alert-circle');
-        return;
-    }
-
-    const inputArea = document.getElementById('magic-input-area');
-    const loadingArea = document.getElementById('magic-loading');
-    
-    inputArea.style.display = 'none';
-    loadingArea.style.display = 'block';
-
-    try {
-        const response = await fetch('ajax_ai_autofill.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text })
-        });
-        const result = await response.json();
-
-        if (result.success && result.data) {
-            populateFormWithJSON(result.data);
-            showToast("CV rempli magiquement ! ✨", 'sparkles');
-            // Hide magic area after success
-            document.querySelector('.magic-fill-container').style.display = 'none';
-        } else {
-            showToast("Erreur IA : " + (result.error || "Inconnu"), 'alert-circle');
-            inputArea.style.display = 'block';
-            loadingArea.style.display = 'none';
-        }
-    } catch (e) {
-        showToast("Erreur de connexion.", 'alert-circle');
-        inputArea.style.display = 'block';
-        loadingArea.style.display = 'none';
-    }
-}
+/* ── ADVANCED FEATURES : TRANSLATION ── */
 
 function populateFormWithJSON(data) {
     // 1. Infos de base
@@ -1985,6 +2007,9 @@ function toggleSkillCluster(type, el) {
         el.classList.add('active');
         activeCluster = type;
         nameDisplay.textContent = el.querySelector('span').textContent;
+        // Sync color with the selected category icon
+        const icon = el.querySelector('i');
+        if (icon) nameDisplay.style.color = icon.style.color;
         
         container.innerHTML = '';
         softSkillClusters[type].forEach(skill => {
@@ -2104,7 +2129,7 @@ function renderTags() {
             t.style.color = '#065f46';
         }
         
-        t.innerHTML = `<span>${name}</span><button type="button" onclick="removeSkillObj('${name}')">&times;</button>`;
+        t.innerHTML = `<span>${name}</span><button type="button" onclick="removeSkillObj('${name.replace(/'/g, "\\'")}')">&times;</button>`;
         c.appendChild(t);
     });
     const strArray = currentSkills.map(s => s.name || s);
@@ -2416,7 +2441,7 @@ Compétences: ${document.getElementById('input-skills').value}
 }
 
     // ==========================================
-    // IA Polish Integration (Ollama Mistral 7b)
+    // IA Polish Integration (Groq Cloud)
     // ==========================================
     let pendingAI = { inputId: null, context: null, btn: null };
 
@@ -2505,7 +2530,7 @@ Compétences: ${document.getElementById('input-skills').value}
             }
         } catch (error) {
             console.error("Erreur dans l'IA Polish:", error);
-            showToast("Erreur de connexion à Ollama.", 'alert-octagon');
+            showToast("Erreur de connexion au service d'IA.", 'alert-octagon');
         } finally {
             btnElement.classList.remove('ai-loading');
             spanText.textContent = originalText;

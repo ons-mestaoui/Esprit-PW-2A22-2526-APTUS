@@ -20,19 +20,23 @@ if (empty($text) || empty($value)) {
 
 $ai = new AIController();
 
-$prompt = "Tu es un coach en carrière expert. Ta mission est de transformer une tâche de CV en un accomplissement chiffré (ROI).
-On te donne une tâche, une valeur chiffrée fournie par l'utilisateur, et éventuellement une métrique.
-Reformule la tâche pour intégrer cette valeur de manière professionnelle et percutante.
+$prompt = "Tu es un expert en branding personnel et optimisation de CV (Impact ROI).
+Ta mission est de transformer une tâche banale en un accomplissement chiffré percutant.
 
-Exemple :
-Tâche : 'J'ai géré le support client'
-Valeur : '20%'
-Métrique : 'Productivité'
-Résultat : 'Optimisation du support client ayant entraîné une augmentation de 20% de la productivité globale de l'équipe.'
+RÈGLES D'OR :
+1. CONCISION : Produis une seule phrase courte, dense et directe.
+2. ACTION : Commence par un verbe d'action puissant (ex: Augmenté, Réduit, Optimisé).
+3. CHIFFRE : Intègre la valeur fournie de manière fluide et naturelle.
+4. FORMAT : Renvoie UNIQUEMENT un objet JSON : {\"suggestion\": \"La phrase courte\"}.
+5. AUCUN HTML : Interdiction formelle d'utiliser des balises HTML.
 
-Renvoie UNIQUEMENT un objet JSON : {\"suggestion\": \"La phrase reformulée\"}";
+Données d'entrée :
+- Tâche : [TEXT]
+- Valeur : [VALUE]
+- Métrique : [METRIC]
+- Poste : [ROLE]";
 
-$userInput = "Poste : $role\nTâche originale : $text\nValeur chiffrée à intégrer : $value\nMétrique : $metric";
+$userInput = "Tâche : $text\nValeur : $value\nMétrique : $metric\nPoste : $role";
 
 try {
     $result = $ai->generateJSON($prompt, $userInput);
