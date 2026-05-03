@@ -204,7 +204,7 @@ if (!isset($content)) {
                                 $tags = explode(',', $offre['competences_requises']);
                                 foreach($tags as $tag): 
                             ?>
-                                <span style="background: white; border: 1px solid var(--border-color); padding: 0.6rem 1rem; border-radius: 12px; font-weight: 700; color: var(--text-primary); font-size: 0.9rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                                <span style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 0.6rem 1.25rem; border-radius: 12px; font-weight: 700; color: var(--text-primary); font-size: 0.9rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s; cursor: default;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                                     <?php echo htmlspecialchars(trim($tag)); ?>
                                 </span>
                             <?php endforeach; ?>

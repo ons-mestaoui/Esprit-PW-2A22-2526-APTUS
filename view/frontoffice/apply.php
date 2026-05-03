@@ -297,9 +297,11 @@ document.addEventListener('DOMContentLoaded', () => {
         placeholder: 'Rédigez votre réponse avec soin...',
         modules: {
             toolbar: [
-                [{ 'header': [1, 2, false] }],
-                ['bold', 'italic', 'underline'],
+                [{ 'font': [] }, { 'size': [] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
                 [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'align': [] }],
                 ['clean']
             ]
         }
