@@ -111,13 +111,134 @@ if (!isset($content)) {
      TEMPLATES SECTION
      ═══════════════════════════════════════════════ -->
 <div id="templates-section">
-  <div class="page-header">
-    <h1 class="page-header__title">
-      <i data-lucide="layout-template" style="width:28px;height:28px;color:var(--accent-primary);"></i>
-      Templates CV
-    </h1>
-    <p class="page-header__subtitle">Choisissez votre template et créez un CV professionnel en quelques clics</p>
-  </div>
+  <!-- ═══════════════════════════════════════════
+       CV LANDING HERO (ULTIMATE IA EXPERIENCE)
+       ═══════════════════════════════════════════ -->
+  <header class="cv-hero" style="padding: 4rem 2rem; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%); overflow: hidden; position: relative; min-height: 650px; display: flex; align-items: center; border-radius: 0 0 50px 50px; margin: -20px -20px 40px -20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);">
+    
+    <!-- ✨ PATTERN BACKGROUND -->
+    <div style="position:absolute; inset:0; opacity:0.1; pointer-events:none; background-image: radial-gradient(white 1px, transparent 0); background-size: 40px 40px;"></div>
+    
+    <div class="container mx-auto" style="width: 100%; max-width: 1200px; position: relative; z-index: 10;">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 40px;">
+        
+        <!-- 📝 LEFT COLUMN: TEXT & FEATURES -->
+        <div style="flex: 1; min-width: 300px; text-align: left;">
+          <div style="background: linear-gradient(90deg, #fbbf24, #f59e0b); color: #000; width: fit-content; padding: 6px 18px; border-radius: 50px; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); display: flex; align-items: center; gap: 8px;">
+              🚀 RÉVOLUTION IA INTÉGRÉE
+          </div>
+          
+          <h1 style="font-size: 3.5rem; font-weight: 950; line-height: 1; margin-bottom: 25px; color: white; letter-spacing: -1.5px;">
+            Créez votre CV Professionnel <br><span style="color: #fbbf24;">en Quelques Minutes.</span>
+          </h1>
+          
+          <p style="color: white; opacity: 0.95; font-size: 1.15rem; margin-bottom: 2.5rem; max-width: 580px; line-height: 1.6; font-weight: 500;">
+            Choisissez parmi nos templates premium, personnalisez avec l'assistance IA, et téléchargez votre CV prêt à l'emploi. 
+          </p>
+
+          <div style="margin-bottom: 3rem;">
+            <span style="display:inline-block; font-weight:800; color: #fbbf24; background: rgba(0,0,0,0.25); padding: 8px 15px; border-radius: 8px; border-left: 4px solid #fbbf24; backdrop-filter: blur(10px);">
+                L'IA analyse votre offre et adapte chaque mot pour votre victoire.
+            </span>
+          </div>
+
+          <!-- Features Grid (Spaced Out) -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:40px; margin-bottom: 4rem;">
+              <div style="display:flex; align-items:flex-start; gap:15px; color:white;">
+                  <div style="background:rgba(255,255,255,0.15); padding:12px; border-radius:50%; backdrop-filter: blur(5px);"><i data-lucide="target" style="width:20px; height:20px;"></i></div>
+                  <div>
+                      <div style="font-weight: 900; font-size: 1.05rem; margin-bottom: 4px;">Adaptation "Sur Mesure"</div>
+                      <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.4;">Réécriture automatique selon l'offre.</div>
+                  </div>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:15px; color:white;">
+                  <div style="background:rgba(255,255,255,0.15); padding:12px; border-radius:50%; backdrop-filter: blur(5px);"><i data-lucide="shield-check" style="width:20px; height:20px;"></i></div>
+                  <div>
+                      <div style="font-weight: 900; font-size: 1.05rem; margin-bottom: 4px;">Audit ATS High-Tech</div>
+                      <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.4;">Découvrez votre score et battez les algorithmes.</div>
+                  </div>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:15px; color:white;">
+                  <div style="background:rgba(255,255,255,0.15); padding:12px; border-radius:50%; backdrop-filter: blur(5px);"><i data-lucide="trending-up" style="width:20px; height:20px;"></i></div>
+                  <div>
+                      <div style="font-weight: 900; font-size: 1.05rem; margin-bottom: 4px;">Stratégie Salariale</div>
+                      <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.4;">Scripts tactiques pour maximiser le salaire.</div>
+                  </div>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:15px; color:white;">
+                  <div style="background:rgba(255,255,255,0.15); padding:12px; border-radius:50%; backdrop-filter: blur(5px);"><i data-lucide="brain" style="width:20px; height:20px;"></i></div>
+                  <div>
+                      <div style="font-weight: 900; font-size: 1.05rem; margin-bottom: 4px;">Coaching IA</div>
+                      <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.4;">Psychologie et réussite d'entretien.</div>
+                  </div>
+              </div>
+          </div>
+
+          <div style="display:flex; flex-wrap: wrap; gap: 15px; margin-bottom: 3rem;">
+            <a href="cv_my.php?mode=tailor" class="btn" style="background:white; color:#4f46e5; border:none; font-weight:900; padding: 12px 35px; border-radius:15px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px;">
+              <i data-lucide="zap" style="width:20px; height:20px;"></i> Commencer Maintenant
+            </a>
+            <a href="cv_my.php" class="btn" style="border: 1px solid rgba(255,255,255,0.3); color:white; background:rgba(255,255,255,0.1); backdrop-filter:blur(10px); font-weight:800; padding: 12px 35px; border-radius:15px; display: flex; align-items: center; gap: 10px;">
+              <i data-lucide="folder" style="width:20px; height:20px;"></i> Mes CVs
+            </a>
+          </div>
+
+          <!-- Stats Bar -->
+          <div style="display: flex; align-items: center; gap: 30px; pt: 30px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px;">
+              <div>
+                  <div style="font-size: 1.5rem; font-weight: 900; color: white;"><?php echo $totalAvailable; ?></div>
+                  <div style="font-size: 0.65rem; color: rgba(255,255,255,0.6); text-transform: uppercase;">Templates</div>
+              </div>
+              <div style="width:1px; height:30px; background:rgba(255,255,255,0.2);"></div>
+              <div>
+                  <div style="font-size: 1.5rem; font-weight: 900; color: white;">100%</div>
+                  <div style="font-size: 0.65rem; color: rgba(255,255,255,0.6); text-transform: uppercase;">Gratuit</div>
+              </div>
+              <div style="width:1px; height:30px; background:rgba(255,255,255,0.2);"></div>
+              <div>
+                  <div style="font-size: 1.5rem; font-weight: 900; color: white;">PDF</div>
+                  <div style="font-size: 0.65rem; color: rgba(255,255,255,0.6); text-transform: uppercase;">HD Export</div>
+              </div>
+          </div>
+        </div>
+
+        <!-- 🎨 RIGHT COLUMN: DUAL FLOATING CVs -->
+        <div style="flex: 1; display: flex; justify-content: flex-end; position: relative; min-width: 400px;">
+          <div style="position:relative; width:450px; height:450px;">
+              <!-- CV Card Back -->
+              <div style="position:absolute; right:80px; top:20px; width:200px; height:300px; background:white; border-radius:12px; box-shadow: 20px 40px 80px rgba(0,0,0,0.3); transform: rotate(-5deg); z-index:4; padding: 25px; border-top: 8px solid #7c3aed;">
+                  <div style="width:80%; height:8px; background:#e5e7eb; border-radius:4px; margin-bottom:15px;"></div>
+                  <div style="width:100%; height:4px; background:#f3f4f6; border-radius:2px; margin-bottom:8px;"></div>
+                  <div style="width:100%; height:4px; background:#f3f4f6; border-radius:2px; margin-bottom:8px;"></div>
+                  <div style="width:60%; height:4px; background:#f3f4f6; border-radius:2px; margin-bottom:25px;"></div>
+                  <div style="width:40%; height:12px; background:rgba(124, 58, 237, 0.2); border-radius:4px; margin-bottom:15px;"></div>
+              </div>
+
+              <!-- CV Card Front -->
+              <div style="position:absolute; right:0; top:60px; width:200px; height:300px; background:white; border-radius:12px; box-shadow: 30px 60px 100px rgba(0,0,0,0.4); transform: rotate(4deg); z-index:5; display:flex; overflow:hidden;">
+                  <div style="width:90px; height:100%; background:#ecfdf5; padding: 20px; display:flex; flex-direction:column; align-items:center;">
+                      <div style="width:40px; height:40px; background:#d1fae5; border-radius:50%; margin-bottom:20px;"></div>
+                      <div style="width:100%; height:3px; background:#d1fae5; border-radius:2px; margin-bottom:8px;"></div>
+                      <div style="width:100%; height:3px; background:#d1fae5; border-radius:2px; margin-bottom:8px;"></div>
+                  </div>
+                  <div style="flex-grow:1; padding:25px;">
+                      <div style="width:70%; height:8px; background:#e5e7eb; border-radius:4px; margin-bottom:20px;"></div>
+                      <div style="width:100%; height:4px; background:#f3f4f6; border-radius:2px; margin-bottom:8px;"></div>
+                      <div style="width:100%; height:4px; background:#f3f4f6; border-radius:2px; margin-bottom:8px;"></div>
+                  </div>
+              </div>
+              
+              <!-- 🚀 Floating AI Badge (Refined & Well-Placed) -->
+              <div style="position:absolute; left:140px; bottom:180px; background:#fbbf24; color:black; padding:8px 18px; border-radius:30px; font-weight:900; box-shadow:0 15px 40px rgba(251, 191, 36, 0.6); z-index:10; display:flex; align-items:center; justify-content:center; gap:8px; animation: float 3s ease-in-out infinite;">
+                  <i data-lucide="sparkles" style="width:16px; height:16px;"></i>
+                  <span style="font-size:0.75rem; letter-spacing:1.5px; text-transform:uppercase;">IA ACTIVE</span>
+              </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
 
   <div class="cv-gallery-layout">
     <!-- ═══ SIDEBAR FILTERS ═══ -->
@@ -169,6 +290,7 @@ if (!isset($content)) {
       </div>
 
       <div class="cv-templates-grid stagger">
+
         <?php foreach ($dbTemplates as $t): 
           $tags = array_filter(array_map('trim', explode(',', $t['description'])));
           $mainTag = !empty($tags) ? $tags[0] : 'Général';
