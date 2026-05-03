@@ -126,8 +126,8 @@ if (!isset($content)) {
                 <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Intéressé ?</h3>
                 <p style="color: var(--text-tertiary); font-size: 0.9rem; margin-bottom: 2rem;">Postulez dès maintenant et rejoignez l'équipe de <?php echo htmlspecialchars($offre['nom_entreprise'] ?? 'Entreprise'); ?>.</p>
                 
-                <form action="jobs_feed.php" method="GET">
-                    <input type="hidden" name="apply_to" value="<?php echo $id_offre; ?>">
+                <form action="apply.php" method="GET">
+                    <input type="hidden" name="id" value="<?php echo $id_offre; ?>">
                     <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; border-radius: 12px; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); border: none; color: white; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(168, 100, 228, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
                         <i data-lucide="send" style="width: 20px; height: 20px;"></i>
                         Postuler maintenant
