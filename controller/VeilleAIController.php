@@ -2,8 +2,6 @@
 require_once __DIR__ . '/EnvLoader.php';
 require_once dirname(__DIR__) . '/config.php';
 
-EnvLoader::load(dirname(__DIR__) . '/.env');
-
 class VeilleAIController
 {
     private $geminiApiKey;
@@ -13,15 +11,28 @@ class VeilleAIController
 
     public function __construct()
     {
-        $this->geminiApiKey = $_ENV['GEMINI_API_KEY'] ?? '';
-        $this->firecrawlApiKey = $_ENV['FIRECRAWL_API_KEY'] ?? '';
-        $this->groqApiKey = $_ENV['GROQ_API_KEY'] ?? '';
-        $this->openRouterApiKey = $_ENV['OPENROUTER_API_KEY'] ?? '';
+        // Ensure .env is loaded using multiple fallback strategies
+        $envPath = __DIR__ . '/../.env';
+        if (!file_exists($envPath)) {
+            $envPath = dirname(__DIR__) . '/.env';
+        }
+        
+        EnvLoader::load($envPath);
+
+        // Use a more robust way to fetch env vars
+        $this->geminiApiKey = $_ENV['GEMINI_API_KEY'] ?? $_SERVER['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY') ?? '';
+        $this->firecrawlApiKey = $_ENV['FIRECRAWL_API_KEY'] ?? $_SERVER['FIRECRAWL_API_KEY'] ?? getenv('FIRECRAWL_API_KEY') ?? '';
+        $this->groqApiKey = $_ENV['GROQ_API_KEY'] ?? $_SERVER['GROQ_API_KEY'] ?? getenv('GROQ_API_KEY') ?? '';
+        $this->openRouterApiKey = $_ENV['OPENROUTER_API_KEY'] ?? $_SERVER['OPENROUTER_API_KEY'] ?? getenv('OPENROUTER_API_KEY') ?? '';
     }
 
     private function callGemini($prompt)
     {
-        // Using 'gemini-flash-latest' to ensure compatibility with newer API keys
+        if (empty($this->geminiApiKey)) {
+            return "API Error: Clé API Gemini manquante. Vérifiez votre fichier .env.";
+        }
+
+        // Using 'gemini-flash-latest' as verified by test_api.php
         $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $this->geminiApiKey;
 
         $data = [
@@ -34,7 +45,6 @@ class VeilleAIController
             ],
             "generationConfig" => [
                 "temperature" => 0.7,
-            "max_tokens" => 500,
                 "topK" => 40,
                 "topP" => 0.95,
                 "maxOutputTokens" => 2048,
@@ -281,9 +291,9 @@ REPORT STRUCTURE TO FOLLOW:
         }
         
         $prompt = "Voici les derniers rapports de veille marché en Tunisie:\n" . $reportsText . "\n\n" .
-        "Génère exactement 5 phrases d'accroche ('pulse') très courtes et percutantes rà©sumant ces tendances du marché. " .
-        "Chaque phrase doit àªtre une information clà©. " .
-        "Renvoie UNIQUEMENT un tableau JSON de chaînes de caractères, sans texte avant ni aprà¨s.";
+        "Génère exactement 5 phrases d'accroche ('pulse') très courtes et percutantes résumant ces tendances du marché. " .
+        "Chaque phrase doit être une information clé. " .
+        "Renvoie UNIQUEMENT un tableau JSON de chaînes de caractères, sans texte avant ni après.";
 
         // Use OpenRouter to save Gemini/Groq limits
         $aiResponse = $this->callOpenRouter($prompt);
@@ -319,12 +329,25 @@ REPORT STRUCTURE TO FOLLOW:
         - month (e.g., '2024-05')
         - predicted_salary (numeric)
         - predicted_demand (numeric 1-10)
-        - confidence_score (0-1)";
+        - confidence_score (0-1).
+        
+        IMPORTANT: Return ONLY the raw JSON array. No markdown, no text.";
 
-        $aiResponse = $this->callGemini($prompt);
+        // Switch to Groq for better stability and structured output
+        if (!empty($this->groqApiKey)) {
+            $aiResponse = $this->callGroq($prompt);
+        } else {
+            $aiResponse = $this->callGemini($prompt);
+        }
         
         if (strpos($aiResponse, 'API Error:') === 0) {
-            return ["error" => $aiResponse];
+            // Last chance fallback to Gemini if Groq failed
+            if (!empty($this->groqApiKey)) {
+                $aiResponse = $this->callGemini($prompt);
+                if (strpos($aiResponse, 'API Error:') === 0) return ["error" => $aiResponse];
+            } else {
+                return ["error" => $aiResponse];
+            }
         }
 
         $start = strpos($aiResponse, '[');

@@ -2,15 +2,21 @@
 session_start();
 require_once __DIR__ . '/EnvLoader.php';
 
-// Load .env from root
-EnvLoader::load(__DIR__ . '/../.env');
-
 class AgentController {
 
     private $apiKey;
 
     public function __construct() {
-        $this->apiKey = getenv('GEMINI_AGENT_API_KEY') ?: getenv('GEMINI_API_KEY');
+        // Ensure .env is loaded using multiple fallback strategies
+        $envPath = __DIR__ . '/../.env';
+        if (!file_exists($envPath)) {
+            $envPath = dirname(__DIR__) . '/.env';
+        }
+        
+        EnvLoader::load($envPath);
+
+        $this->apiKey = $_ENV['GEMINI_AGENT_API_KEY'] ?? $_SERVER['GEMINI_AGENT_API_KEY'] ?? getenv('GEMINI_AGENT_API_KEY') 
+                        ?? $_ENV['GEMINI_API_KEY'] ?? $_SERVER['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY') ?? '';
 
         // Initialize session history if it doesn't exist
         if (!isset($_SESSION['agent_history'])) {
@@ -33,10 +39,6 @@ class AgentController {
         $systemPrompt = "Tu es l'assistant d'accessibilité IA du site Aptus (Plateforme RH et Veille).
 Tu es amical, fun et non robotique. Tu parles français. Garde tes réponses courtes et directes.
 Ton but est d'aider l'utilisateur à naviguer et à accomplir des tâches (surtout la Veille Marché).
-
-Tu as deux super-pouvoirs :
-1. NAVIGUER : Tu peux envoyer l'utilisateur sur n'importe quelle page.
-2. AGIR : Tu peux remplir des formulaires, cliquer sur des boutons et manipuler la page actuelle via du code JavaScript (via l'objet AIAgentUtils).
 
 ### CARTE DU SITE (URLs exactes) :
 - Dashboard Admin : /aptus_first_official_version/view/backoffice/dashboard.php
@@ -135,12 +137,12 @@ L'objet 'action' est optionnel. Si l'utilisateur demande juste une info ou discu
             "contents" => $contents,
             "generationConfig" => [
                 "temperature" => 0.7,
-                "responseMimeType" => "application/json",
+                // Removed strict JSON mime type to avoid empty responses on some prompts
             ]
         ];
 
-        // Use gemini-flash-latest to avoid the strict 20/day quota limit of 2.5
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $this->apiKey;
+        // Use gemini-1.5-flash for maximum stability
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $this->apiKey;
 
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -159,10 +161,12 @@ L'objet 'action' est optionnel. Si l'utilisateur demande juste une info ou discu
         $responseData = json_decode($response, true);
 
         $hasError = isset($responseData['error']) || !isset($responseData['candidates'][0]['content']['parts'][0]['text']);
-        $errorMessage = $responseData['error']['message'] ?? 'Invalid API Response';
         
-        if ($hasError && (strpos(strtolower($errorMessage), 'high demand') !== false || strpos(strtolower($errorMessage), 'quota') !== false || strpos(strtolower($errorMessage), 'exceeded') !== false || strpos(strtolower($errorMessage), 'overloaded') !== false)) {
-            $groqApiKey = getenv('GROQ_API_KEY');
+        // If Gemini fails or returns an empty response, attempt Groq fallback
+        if ($hasError) {
+            $errorMessage = $responseData['error']['message'] ?? 'Invalid API Response (Empty candidates)';
+            
+            $groqApiKey = $_ENV['GROQ_API_KEY'] ?? $_SERVER['GROQ_API_KEY'] ?? getenv('GROQ_API_KEY') ?? '';
             if (!empty($groqApiKey)) {
                 $messages = [
                     ["role" => "system", "content" => $systemPrompt]
