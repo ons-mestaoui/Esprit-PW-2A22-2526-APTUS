@@ -376,5 +376,85 @@ class VeilleC
 
         return $stats;
     }
+
+    // --- Data Aggregation for Visualizations ---
+    public function getRegionalMarketStats()
+    {
+        // Simple aggregation of average salaries and report counts by region
+        $sql = "SELECT region, AVG(salaire_moyen_global) as avg_salary, COUNT(*) as report_count 
+                FROM rapport_marche 
+                WHERE region IS NOT NULL AND region != '' 
+                GROUP BY region";
+        try {
+            $stmt = $this->db->query($sql);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Error in getRegionalMarketStats: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getSkillDNA()
+    {
+        // Calculate co-occurrences of sectors/tags across reports to build a graph
+        $sql = "SELECT secteur_principal FROM rapport_marche WHERE secteur_principal IS NOT NULL AND secteur_principal != ''";
+        $nodes = [];
+        $links = [];
+        
+        try {
+            $stmt = $this->db->query($sql);
+            $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $cooccurrences = [];
+            $nodeCounts = [];
+
+            foreach ($reports as $r) {
+                $tags = array_map('trim', explode(',', $r['secteur_principal']));
+                $tags = array_filter($tags); // Remove empty
+                
+                foreach ($tags as $tag) {
+                    if (!isset($nodeCounts[$tag])) $nodeCounts[$tag] = 0;
+                    $nodeCounts[$tag]++;
+                }
+                
+                // Co-occurrence matrix
+                for ($i = 0; $i < count($tags); $i++) {
+                    for ($j = $i + 1; $j < count($tags); $j++) {
+                        $t1 = $tags[$i];
+                        $t2 = $tags[$j];
+                        
+                        // Order alphabetically to avoid duplicates
+                        if (strcmp($t1, $t2) > 0) {
+                            $temp = $t1;
+                            $t1 = $t2;
+                            $t2 = $temp;
+                        }
+                        
+                        $key = $t1 . "|||" . $t2;
+                        if (!isset($cooccurrences[$key])) $cooccurrences[$key] = 0;
+                        $cooccurrences[$key]++;
+                    }
+                }
+            }
+            
+            // Build Nodes
+            foreach ($nodeCounts as $tag => $count) {
+                $nodes[] = ["id" => $tag, "group" => 1, "value" => $count];
+            }
+            
+            // Build Links
+            foreach ($cooccurrences as $key => $weight) {
+                $parts = explode("|||", $key);
+                $links[] = ["source" => $parts[0], "target" => $parts[1], "value" => $weight];
+            }
+            
+            return ["nodes" => $nodes, "links" => $links];
+
+        } catch (Exception $e) {
+            error_log("Error in getSkillDNA: " . $e->getMessage());
+            return ["nodes" => [], "links" => []];
+        }
+    }
+
 }
 ?>

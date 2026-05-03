@@ -8,11 +8,15 @@ class VeilleAIController
 {
     private $geminiApiKey;
     private $firecrawlApiKey;
+    private $groqApiKey;
+    private $openRouterApiKey;
 
     public function __construct()
     {
         $this->geminiApiKey = $_ENV['GEMINI_API_KEY'] ?? '';
         $this->firecrawlApiKey = $_ENV['FIRECRAWL_API_KEY'] ?? '';
+        $this->groqApiKey = $_ENV['GROQ_API_KEY'] ?? '';
+        $this->openRouterApiKey = $_ENV['OPENROUTER_API_KEY'] ?? '';
     }
 
     private function callGemini($prompt)
@@ -30,6 +34,7 @@ class VeilleAIController
             ],
             "generationConfig" => [
                 "temperature" => 0.7,
+            "max_tokens" => 500,
                 "topK" => 40,
                 "topP" => 0.95,
                 "maxOutputTokens" => 2048,
@@ -52,11 +57,97 @@ class VeilleAIController
         $result = json_decode($response, true);
         
         // Handle API errors gracefully
+        if (isset($result['error']) || !isset($result['candidates'])) {
+            $errorMessage = $result['error']['message'] ?? 'Unknown Error';
+            
+            // Fallback to Groq on Rate Limit (429) or Server Overload (503)
+            if (!empty($this->groqApiKey) && (strpos($errorMessage, 'high demand') !== false || strpos($errorMessage, 'quota') !== false || strpos($errorMessage, 'exceeded') !== false || strpos($errorMessage, 'overloaded') !== false)) {
+                return $this->callGroq($prompt);
+            }
+            
+            return "API Error: " . $errorMessage;
+        }
+
+        return $result['candidates'][0]['content']['parts'][0]['text'] ?? "AI could not generate a response.";
+    }
+
+    private function callGroq($prompt)
+    {
+        $url = "https://api.groq.com/openai/v1/chat/completions";
+        $data = [
+            "model" => "llama-3.3-70b-versatile",
+            "messages" => [
+                ["role" => "system", "content" => "You are a helpful Market Intelligence AI. Output exactly what is requested, with no markdown code block wrapping unless specified. Output valid JSON if requested."],
+                ["role" => "user", "content" => $prompt]
+            ],
+            "temperature" => 0.7,
+            "max_tokens" => 500
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->groqApiKey
+        ]);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $response = curl_exec($ch);
+        if (curl_errno($ch)) {
+            return "Error: " . curl_error($ch);
+        }
+        curl_close($ch);
+
+        $result = json_decode($response, true);
+        
         if (isset($result['error'])) {
             return "API Error: " . $result['error']['message'];
         }
 
-        return $result['candidates'][0]['content']['parts'][0]['text'] ?? "AI could not generate a response.";
+        return $result['choices'][0]['message']['content'] ?? "AI could not generate a response.";
+    }
+
+    
+    public function callOpenRouter($prompt)
+    {
+        $url = "https://openrouter.ai/api/v1/chat/completions";
+        $data = [
+            "model" => "google/gemini-2.5-flash",
+            "messages" => [
+                ["role" => "system", "content" => "You are a helpful Market Intelligence AI. Output exactly what is requested, with no markdown code block wrapping unless specified. Output valid JSON if requested."],        
+                ["role" => "user", "content" => $prompt]
+            ],
+            "temperature" => 0.7,
+            "max_tokens" => 500
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->openRouterApiKey,
+            'HTTP-Referer: http://localhost',
+            'X-Title: Aptus Market Intelligence'
+        ]);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $response = curl_exec($ch);
+        if (curl_errno($ch)) {
+            return "Error: " . curl_error($ch);
+        }
+        curl_close($ch);
+
+        $result = json_decode($response, true);
+
+        if (isset($result['error'])) {
+            return "API Error: " . $result['error']['message'];
+        }
+
+        return $result['choices'][0]['message']['content'] ?? "AI could not generate a response.";
     }
 
     public function generateDraft($metadata)
@@ -177,6 +268,41 @@ REPORT STRUCTURE TO FOLLOW:
         $decoded = json_decode($aiResponse, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             return ["error" => "API returned invalid JSON: " . json_last_error_msg() . " - Response: " . substr($aiResponse, 0, 100) . "..."];
+        }
+        return $decoded;
+    }
+
+
+    public function getMarketPulse($reports)
+    {
+        $reportsText = "";
+        foreach ($reports as $r) {
+            $reportsText .= "- Titre: {$r['titre']}, Secteur: {$r['secteur_principal']}, Salaire Moyen: {$r['salaire_moyen_global']} TND\n";
+        }
+        
+        $prompt = "Voici les derniers rapports de veille marché en Tunisie:\n" . $reportsText . "\n\n" .
+        "Génère exactement 5 phrases d'accroche ('pulse') très courtes et percutantes rà©sumant ces tendances du marché. " .
+        "Chaque phrase doit àªtre une information clà©. " .
+        "Renvoie UNIQUEMENT un tableau JSON de chaînes de caractères, sans texte avant ni aprà¨s.";
+
+        // Use OpenRouter to save Gemini/Groq limits
+        $aiResponse = $this->callOpenRouter($prompt);
+        
+        if (strpos($aiResponse, 'API Error:') === 0) {
+            return ["error" => $aiResponse];
+        }
+
+        $start = strpos($aiResponse, '[');
+        $end = strrpos($aiResponse, ']');
+        if ($start !== false && $end !== false) {
+            $aiResponse = substr($aiResponse, $start, $end - $start + 1);
+        } else {
+            $aiResponse = preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($aiResponse));
+        }
+
+        $decoded = json_decode($aiResponse, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ["error" => "API returned invalid JSON: " . json_last_error_msg()];
         }
         return $decoded;
     }

@@ -47,7 +47,22 @@ foreach ($dbReports as $r) {
 .feed-filter-btn.active { background: var(--accent-primary); color: #fff; border-color: var(--accent-primary); box-shadow: 0 2px 12px rgba(99,102,241,0.3); }
 </style>
 
+
+<!-- Phase 1: L'Écho IA (Pulse Ticker) -->
+<div class="market-pulse-ticker" id="market-pulse-ticker">
+    <div class="pulse-label">
+        <i data-lucide="zap" style="width:20px;height:20px;display:inline-block;vertical-align:-3px;margin-right:4px;"></i> 
+        L'Écho IA
+    </div>
+    <div class="pulse-track-mask" style="flex-grow: 1; overflow: hidden; display: flex;">
+        <div class="pulse-track" id="pulse-track">
+        <div class="pulse-item">Chargement des insights en cours...</div>
+    </div>
+    </div>
+</div>
+
 <div class="veille-layout">
+
   <!-- ═══ MAIN FEED ═══ -->
   <div class="report-feed stagger">
 
@@ -130,6 +145,7 @@ foreach ($dbReports as $r) {
         <a href="veille_details.php?id=<?php echo $featured['id_rapport_marche']; ?>" class="btn btn-sm btn-primary">
           <i data-lucide="book-open" style="width:14px;height:14px;"></i> Lire le rapport
         </a>
+          <button class="btn btn-sm btn-secondary" onclick="if(window.AIAgentUtils && window.AIAgentUtils.triggerFlashBriefing) window.AIAgentUtils.triggerFlashBriefing(<?php echo $featured['id_rapport_marche']; ?>, '<?php echo addslashes(htmlspecialchars($featured['titre'])); ?>'); else alert('L\'agent IA n\'est pas disponible.')" title="Briefing Audio"><i data-lucide="mic" style="width:14px;height:14px;"></i> Écouter</button>
         <div class="flex gap-2">
           <button class="btn btn-sm btn-ghost"><i data-lucide="bookmark" style="width:14px;height:14px;"></i></button>
           <button class="btn btn-sm btn-ghost"><i data-lucide="share-2" style="width:14px;height:14px;"></i></button>
@@ -172,6 +188,7 @@ foreach ($dbReports as $r) {
         <a href="veille_details.php?id=<?php echo $r['id_rapport_marche']; ?>" class="btn btn-sm btn-secondary">
           <i data-lucide="book-open" style="width:14px;height:14px;"></i> Lire le rapport
         </a>
+          <button class="btn btn-sm btn-ghost" onclick="if(window.AIAgentUtils && window.AIAgentUtils.triggerFlashBriefing) window.AIAgentUtils.triggerFlashBriefing(<?php echo $r['id_rapport_marche']; ?>, '<?php echo addslashes(htmlspecialchars($r['titre'])); ?>'); else alert('L\'agent IA n\'est pas disponible.')" title="Briefing Audio"><i data-lucide="mic" style="width:14px;height:14px;color:var(--accent-primary);"></i> Écouter</button>
         <div class="flex gap-2">
           <button class="btn btn-sm btn-ghost"><i data-lucide="bookmark" style="width:14px;height:14px;"></i></button>
           <button class="btn btn-sm btn-ghost"><i data-lucide="share-2" style="width:14px;height:14px;"></i></button>
@@ -181,7 +198,36 @@ foreach ($dbReports as $r) {
     <?php endfor; ?>
     </div> <!-- /feed-cards-container -->
 
-    <!-- AI Forecast Dashboard Section (Moved to Bottom) -->
+    
+
+<div style="margin-top: 20px; text-align: center;">
+    <button class="btn btn-primary" onclick="openARModal()"><i data-lucide="box" style="width:20px;height:20px;margin-right:8px;vertical-align:-4px;"></i> Voir les Statistiques en AR Holographique</button>
+</div>
+
+<!-- AR Modal -->
+<div id="ar-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:var(--bg-primary); padding:30px; border-radius:12px; text-align:center; max-width:400px;">
+        <h3 style="margin-bottom:15px; color:var(--text-primary);">Scanner pour l'AR</h3>
+        <p style="margin-bottom:20px; color:var(--text-secondary);">Ouvrez cette page sur votre tà©là©phone pour voir le bureau holographique WebXR.</p>
+        <div id="qrcode" style="margin: 0 auto 20px auto; display:flex; justify-content:center;"></div>
+        <button class="btn btn-secondary" onclick="closeARModal()">Fermer</button>
+    </div>
+</div>
+
+<!-- Phase 2 & 4: Data Visualizations -->
+<div class="visualizations-container" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+    <h2 style="margin-bottom: 20px; font-size: 24px; color: var(--text-primary);"><i data-lucide="map" style="width:24px;height:24px;color:var(--accent-primary);"></i> Interactive Talent Heatmap</h2>
+    <div id="tunisia-heatmap" style="min-height: 200px; background: var(--bg-secondary); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        Chargement de la carte...
+    </div>
+
+    <h2 style="margin-top: 40px; margin-bottom: 20px; font-size: 24px; color: var(--text-primary);"><i data-lucide="network" style="width:24px;height:24px;color:var(--accent-primary);"></i> Skill DNA Graph</h2>
+    <div id="skill-dna-graph" style="min-height: 400px; background: var(--bg-secondary); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; position: relative;">
+        Chargement du graphe...
+    </div>
+</div>
+
+      <!-- AI Forecast Dashboard Section (Moved to Bottom) -->
     <div id="ai-forecast-section" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-top: 32px; position: relative; overflow: hidden;">
         <div style="position: absolute; top: -20px; right: -20px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%); z-index: 0;"></div>
         
@@ -477,3 +523,72 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+
+
+<script>
+// Load Pulse Ticker
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await fetch('/aptus_first_official_version/view/backoffice/api_veille_ai.php?action=get_pulse');
+        const data = await res.json();
+        
+        const track = document.getElementById('pulse-track');
+        if (data.success && Array.isArray(data.pulse) && data.pulse.length > 0) {
+            track.innerHTML = '';
+            // Duplicate the items to allow smooth infinite scrolling
+            const items = [...data.pulse, ...data.pulse];
+            items.forEach(insight => {
+                const div = document.createElement('div');
+                div.className = 'pulse-item';
+                div.textContent = insight;
+                track.appendChild(div);
+            });
+        } else {
+            track.innerHTML = `<div class="pulse-item pulse-error">Impossible de charger L'Écho IA. ${data.error || 'Quota atteint.'}</div>`;
+        }
+    } catch (e) {
+        console.error("Pulse API Error:", e);
+    }
+});
+</script>
+
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="/aptus_first_official_version/view/assets/js/market_heatmap.js"></script>
+<script src="/aptus_first_official_version/view/assets/js/skill_dna_graph.js"></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<?php
+$tunnelUrlFile = dirname(__DIR__, 2) . '/tunnel_url.txt';
+$arBaseUrl = "http://192.168.0.66";
+if (file_exists($tunnelUrlFile)) {
+    $fileUrl = trim(file_get_contents($tunnelUrlFile));
+    // Basic clean
+    $fileUrl = preg_replace('/[^a-zA-Z0-9:\/\.\-]/', '', $fileUrl);
+    if (!empty($fileUrl) && strpos($fileUrl, 'https') === 0) {
+        $arBaseUrl = $fileUrl;
+    }
+}
+?>
+<script>
+let qrGenerated = false;
+function openARModal() {
+    document.getElementById('ar-modal').style.display = 'flex';
+    if (!qrGenerated) {
+        const arUrl = "<?php echo $arBaseUrl; ?>/aptus_first_official_version/view/frontoffice/veille_ar.php";
+        new QRCode(document.getElementById("qrcode"), {
+            text: arUrl,
+            width: 200,
+            height: 200,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+        qrGenerated = true;
+    }
+}
+function closeARModal() {
+    document.getElementById('ar-modal').style.display = 'none';
+}
+</script>

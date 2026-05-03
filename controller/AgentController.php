@@ -63,6 +63,10 @@ Exemples de fonctions utiles :
 - AIAgentUtils.addSecteurTag('Secteur') : Ajoute un tag de secteur (Page Veille).
 - AIAgentUtils.setQuillContent('<h1>HTML</h1>') : Remplit l'éditeur de texte riche (Page Veille).
 - AIAgentUtils.goToStep(2) : Change d'étape dans le formulaire de rapport (1 à 4).
+- AIAgentUtils.editReport(index) : Ouvre le modal pour modifier un rapport (index 0 pour le premier).
+- AIAgentUtils.deleteReport(index) : Supprime un rapport (index 0 pour le premier).
+- AIAgentUtils.readReport(index) : Ouvre la page de lecture d'un rapport (index 0 pour le premier).
+- AIAgentUtils.exportPDF() : Exporte le rapport actuellement ouvert en PDF.
 
 ### SCÉNARIOS SPÉCIFIQUES (Page Veille Admin) :
 Pour créer un rapport, tu peux dire : \"Je commence à remplir le rapport pour vous.\"
@@ -153,6 +157,65 @@ L'objet 'action' est optionnel. Si l'utilisateur demande juste une info ou discu
         curl_close($ch);
 
         $responseData = json_decode($response, true);
+
+        $hasError = isset($responseData['error']) || !isset($responseData['candidates'][0]['content']['parts'][0]['text']);
+        $errorMessage = $responseData['error']['message'] ?? 'Invalid API Response';
+        
+        if ($hasError && (strpos(strtolower($errorMessage), 'high demand') !== false || strpos(strtolower($errorMessage), 'quota') !== false || strpos(strtolower($errorMessage), 'exceeded') !== false || strpos(strtolower($errorMessage), 'overloaded') !== false)) {
+            $groqApiKey = getenv('GROQ_API_KEY');
+            if (!empty($groqApiKey)) {
+                $messages = [
+                    ["role" => "system", "content" => $systemPrompt]
+                ];
+                foreach ($_SESSION['agent_history'] as $msg) {
+                    $role = ($msg['role'] === 'model') ? 'assistant' : 'user';
+                    $text = '';
+                    foreach ($msg['parts'] as $part) {
+                        if (isset($part['text'])) {
+                            $text .= $part['text'] . " ";
+                        }
+                    }
+                    if (!empty(trim($text))) {
+                        $messages[] = ["role" => $role, "content" => trim($text)];
+                    }
+                }
+                
+                $groqData = [
+                    "model" => "llama-3.3-70b-versatile",
+                    "messages" => $messages,
+                    "temperature" => 0.7,
+                    "response_format" => ["type" => "json_object"]
+                ];
+                
+                $gCh = curl_init("https://api.groq.com/openai/v1/chat/completions");
+                curl_setopt($gCh, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($gCh, CURLOPT_POST, true);
+                curl_setopt($gCh, CURLOPT_POSTFIELDS, json_encode($groqData));
+                curl_setopt($gCh, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . $groqApiKey
+                ]);
+                curl_setopt($gCh, CURLOPT_SSL_VERIFYPEER, false);
+                
+                $gRes = curl_exec($gCh);
+                curl_close($gCh);
+                
+                $gData = json_decode($gRes, true);
+                if (isset($gData['choices'][0]['message']['content'])) {
+                    $responseData = [
+                        'candidates' => [
+                            [
+                                'content' => [
+                                    'parts' => [
+                                        ['text' => $gData['choices'][0]['message']['content']]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ];
+                }
+            }
+        }
 
         if (isset($responseData['candidates'][0]['content']['parts'][0]['text'])) {
             $rawText = $responseData['candidates'][0]['content']['parts'][0]['text'];

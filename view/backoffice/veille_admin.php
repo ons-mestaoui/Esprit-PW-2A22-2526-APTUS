@@ -500,12 +500,8 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
         </button>
     </div>
 
-    <!-- Sector Filter Bar -->
-    <div id="sector-filter-bar" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; align-items:center;">
-        <span style="font-size:13px; font-weight:600; color:var(--text-secondary); margin-right:4px;">Filtrer :</span>
-        <button class="sector-filter-btn active" data-sector="all" onclick="filterBySector('all', this)">
-            Tous
-        </button>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+        <!-- Sector Filter Bar -->
         <?php 
         $allSecteurs = [];
         foreach ($listeRapportsDb as $p) {
@@ -516,18 +512,51 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
                 }
             }
         }
-        foreach ($allSecteurs as $sec): ?>
-        <button class="sector-filter-btn" data-sector="<?php echo htmlspecialchars($sec); ?>" onclick="filterBySector('<?php echo htmlspecialchars(addslashes($sec)); ?>', this)">
-            <?php echo htmlspecialchars($sec); ?>
-        </button>
-        <?php endforeach; ?>
+        if (!empty($allSecteurs)): 
+            $visibleSecteurs = array_slice($allSecteurs, 0, 4);
+        ?>
+        <div class="feed-filter-bar" id="sector-filter-bar" style="margin-bottom:0; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-secondary);">
+                <i data-lucide="tag" style="width:14px;height:14px;display:inline;vertical-align:-2px;"></i> Filtrer :
+            </span>
+            <button class="sector-filter-btn active" onclick="filterBySector('all', this)">Tous</button>
+            <?php foreach ($visibleSecteurs as $sec): ?>
+            <button class="sector-filter-btn" onclick="filterBySector('<?php echo htmlspecialchars(addslashes($sec)); ?>', this)"><?php echo htmlspecialchars($sec); ?></button>
+            <?php endforeach; ?>
+            
+            <?php if (count($allSecteurs) > 4): ?>
+            <div style="position:relative; display:inline-block;" id="more-sectors-dropdown-container">
+                <button class="sector-filter-btn" onclick="toggleMoreSectors()" id="btn-more-sectors">
+                    <i data-lucide="more-horizontal" style="width:14px;height:14px;vertical-align:-2px;"></i> Voir plus
+                </button>
+                <!-- Dropdown Menu -->
+                <div id="more-sectors-dropdown" style="display:none; position:absolute; top:100%; left:0; margin-top:8px; background:var(--bg-main); border:1px solid var(--border-color); border-radius:12px; padding:12px; width:250px; box-shadow:0 10px 25px rgba(0,0,0,0.1); z-index:100;">
+                    <input type="text" id="sector-search" placeholder="Rechercher un secteur..." class="input" style="width:100%; margin-bottom:12px; font-size:13px; padding:8px 12px; box-sizing: border-box;" onkeyup="searchSectors()">
+                    <div style="max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;" id="sector-list-container">
+                        <?php foreach ($allSecteurs as $sec): ?>
+                        <button class="sector-filter-btn" style="text-align:left; border:none; border-radius:6px; background:transparent; width:100%; justify-content:flex-start;" onclick="filterBySector('<?php echo htmlspecialchars(addslashes($sec)); ?>', this, true)"><?php echo htmlspecialchars($sec); ?></button>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <!-- Sorting -->
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-secondary);">Trier par :</span>
+            <button class="btn btn-sm" style="background:var(--bg-main); border:1px solid var(--border-color); color:var(--text-primary); border-radius:8px;" onclick="toggleSortSalary()" id="btn-sort-salary" data-sort="desc">
+                Salaire <i data-lucide="arrow-down" id="sort-icon" style="width:14px;height:14px;margin-left:4px;"></i>
+            </button>
+        </div>
     </div>
 
     <div class="published-list" style="margin-top:0;" id="rapports-list">
       <?php foreach ($listeRapportsDb as $p): 
         $secteursData = htmlspecialchars($p['secteur_principal'] ?? '');
       ?>
-      <div class="published-item rapport-item" data-secteurs="<?php echo $secteursData; ?>" style="display:flex; justify-content:space-between; align-items:center; padding:16px;">
+      <div class="published-item rapport-item" data-secteurs="<?php echo $secteursData; ?>" data-salaire="<?php echo floatval($p['salaire_moyen_global'] ?? 0); ?>" style="display:flex; justify-content:space-between; align-items:center; padding:16px;">
         <div>
           <div class="published-item__title" style="font-size:16px; font-weight:600; margin-bottom:4px;"><?php echo htmlspecialchars($p['titre']); ?></div>
           <div class="published-item__meta" style="color:var(--text-secondary); font-size:13px;">
@@ -1977,10 +2006,25 @@ function renderForecastChart(forecastData, chartEl, placeholder) {
     window.addEventListener('resize', () => forecastChart.resize());
 }
 
-function filterBySector(sector, btnEl) {
+function filterBySector(sector, btnEl, isDropdown = false) {
     // Toggle active state on filter buttons
-    document.querySelectorAll('.sector-filter-btn').forEach(b => b.classList.remove('active'));
-    if (btnEl) btnEl.classList.add('active');
+    document.querySelectorAll('.sector-filter-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.closest('#sector-list-container')) {
+            b.style.background = 'transparent';
+            b.style.color = 'var(--text-secondary)';
+        }
+    });
+
+    if (btnEl) {
+        btnEl.classList.add('active');
+        if (isDropdown) {
+            btnEl.style.background = 'var(--bg-hover)';
+            btnEl.style.color = 'var(--text-primary)';
+            // Highlight the "Voir plus" button
+            document.getElementById('btn-more-sectors').classList.add('active');
+        }
+    }
 
     const items = document.querySelectorAll('.rapport-item');
     let visibleCount = 0;
@@ -2000,6 +2044,10 @@ function filterBySector(sector, btnEl) {
         }
     });
 
+    if (isDropdown) {
+        document.getElementById('more-sectors-dropdown').style.display = 'none';
+    }
+
     // Show empty state if no results
     const list = document.getElementById('rapports-list');
     let emptyState = document.getElementById('filter-empty-state');
@@ -2016,6 +2064,54 @@ function filterBySector(sector, btnEl) {
     } else if (emptyState) {
         emptyState.style.display = 'none';
     }
+}
+
+function toggleMoreSectors() {
+    const dropdown = document.getElementById('more-sectors-dropdown');
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    if (dropdown.style.display === 'block') {
+        document.getElementById('sector-search').focus();
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const container = document.getElementById('more-sectors-dropdown-container');
+    const dropdown = document.getElementById('more-sectors-dropdown');
+    if (container && dropdown && !container.contains(e.target)) {
+        dropdown.style.display = 'none';
+    }
+});
+
+function searchSectors() {
+    const input = document.getElementById('sector-search').value.toLowerCase();
+    const buttons = document.getElementById('sector-list-container').querySelectorAll('button');
+    buttons.forEach(btn => {
+        const text = btn.innerText.toLowerCase();
+        btn.style.display = text.includes(input) ? '' : 'none';
+    });
+}
+
+let sortDirection = 'desc';
+function toggleSortSalary() {
+    const btn = document.getElementById('btn-sort-salary');
+    const container = document.getElementById('rapports-list');
+    const items = Array.from(document.querySelectorAll('.rapport-item'));
+    
+    sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+    
+    btn.innerHTML = `Salaire <i data-lucide="arrow-${sortDirection === 'desc' ? 'down' : 'up'}" id="sort-icon" style="width:14px;height:14px;margin-left:4px;"></i>`;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    items.sort((a, b) => {
+        const salA = parseFloat(a.dataset.salaire) || 0;
+        const salB = parseFloat(b.dataset.salaire) || 0;
+        return sortDirection === 'desc' ? salB - salA : salA - salB;
+    });
+
+    items.forEach(item => {
+        container.appendChild(item);
+    });
 }
 
 function openDeleteModal(actionName, idFieldName, idValue, message) {

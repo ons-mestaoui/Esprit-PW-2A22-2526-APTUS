@@ -26,6 +26,42 @@ switch ($action) {
         echo json_encode(['success' => true, 'data' => $result]);
         break;
 
+
+
+    case 'get_regional_stats':
+        $stats = $veilleC->getRegionalMarketStats();
+        echo json_encode(['success' => true, 'data' => $stats]);
+        break;
+
+    case 'get_skill_dna':
+        $dna = $veilleC->getSkillDNA();
+        echo json_encode(['success' => true, 'data' => $dna]);
+        break;
+
+    case 'get_pulse':
+        $cacheFile = __DIR__ . '/cache_pulse.json';
+        $cacheTime = 12 * 3600; // 12 hours
+
+        if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime) {
+            $cachedData = json_decode(file_get_contents($cacheFile), true);
+            if ($cachedData && is_array($cachedData)) {
+                echo json_encode(['success' => true, 'pulse' => $cachedData]);
+                break;
+            }
+        }
+
+        $reports = $veilleC->afficherRapports();
+        $latestReports = array_slice($reports, 0, 10);
+        $pulse = $aiController->getMarketPulse($latestReports);
+
+        if (isset($pulse['error'])) {
+            echo json_encode(['success' => false, 'error' => $pulse['error']]);
+        } else {
+            file_put_contents($cacheFile, json_encode($pulse));
+            echo json_encode(['success' => true, 'pulse' => $pulse]);
+        }
+        break;
+
     case 'get_forecast':
         $secteur = $_GET['secteur'] ?? '';
         
