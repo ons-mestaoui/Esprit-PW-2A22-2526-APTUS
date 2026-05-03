@@ -8,16 +8,21 @@ class candidatureC {
     public function addCandidature($candidature) {
         $db = config::getConnexion();
         
-        // 1. Récupérer les détails de l'offre pour le contexte
-        $sqlOffre = "SELECT titre, description FROM offreemploi WHERE id_offre = :id";
+        // 1. Récupérer les détails complets de l'offre
+        $sqlOffre = "SELECT titre, description, question FROM offreemploi WHERE id_offre = :id";
         $reqOffre = $db->prepare($sqlOffre);
         $reqOffre->execute(['id' => $candidature->getIdOffre()]);
         $offre = $reqOffre->fetch();
-        $contexte = "Poste: " . ($offre['titre'] ?? '') . ". Description: " . ($offre['description'] ?? '');
-
-        // 2. Calculer le score avec le nouveau contrôleur IA
+        
+        $contexteOffre = "OFFRE : " . ($offre['titre'] ?? '') . ". DESCRIPTION : " . ($offre['description'] ?? '');
+        $questionEntreprise = $offre['question'] ?? "Quelle est votre motivation ?";
+        
+        // 2. Calculer le score avec une structure claire
         $scoreAIC = new scoreAIC();
-        $prompt = "Évalue cette candidature sur 100 basée sur la réponse du candidat : '" . $candidature->getReponsesQues() . "' par rapport à ce poste : $contexte";
+        $prompt = "--- CONTEXTE DE L'OFFRE ---\n$contexteOffre\n\n" .
+                  "--- QUESTION DE L'ENTREPRISE ---\n$questionEntreprise\n\n" .
+                  "--- RÉPONSE DU CANDIDAT ---\n" . $candidature->getReponsesQues() . "\n\n" .
+                  "Analyse la réponse par rapport à la question et à l'offre pour donner un score.";
         $score = $scoreAIC->calculerScore($prompt);
 
         // 3. Déterminer le statut initial
