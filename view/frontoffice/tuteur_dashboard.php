@@ -358,41 +358,23 @@ if (!isset($content)) {
                 <p>Aucune formation assignée.</p>
             </div>
         <?php else: ?>
-            <?php foreach ($formations as $f):
-                $dateDiff = (strtotime($f['date_formation']) - strtotime(date('Y-m-d'))) / 86400;
-                $statusText = "";
-                $statusClass = "";
-                if ($dateDiff == 0) {
-                    $statusText = "Aujourd'hui";
-                    $statusClass = "urgent";
-                } elseif ($dateDiff == 1) {
-                    $statusText = "Demain !";
-                    $statusClass = "urgent";
-                } elseif ($dateDiff > 0) {
-                    $statusText = "Dans " . round($dateDiff) . "j";
-                    $statusClass = "upcoming";
-                } else {
-                    $statusText = "Passé";
-                    $statusClass = "";
-                }
-                ?>
                 <div class="side-card <?php echo $f['is_online'] ? 'online' : 'offline'; ?>">
                     <div class="side-card__header">
                         <div>
-                            <div class="side-card__title"><?php echo htmlspecialchars($f['titre']); ?></div>
+                            <div class="side-card__title"><?php echo $f['titre_safe']; ?></div>
                             <div class="side-card__meta">
                                 <i data-lucide="clock" style="width:12px;height:12px;"></i>
                                 <?php echo date('H:i', strtotime($f['date_formation'])); ?> (7 jours)
                             </div>
                         </div>
-                        <?php if ($statusText): ?>
-                            <span class="status-badge <?php echo $statusClass; ?>"><?php echo $statusText; ?></span>
+                        <?php if ($f['statut_temporel']): ?>
+                            <span class="status-badge <?php echo $f['statut_temporel_class']; ?>"><?php echo $f['statut_temporel']; ?></span>
                         <?php endif; ?>
                     </div>
                     <div class="side-card__body">
                         <div class="side-card__meta" style="margin-top: 5px;">
                             <i data-lucide="calendar" style="width:12px;height:12px;"></i>
-                            <?php echo date('d M Y', strtotime($f['date_formation'])); ?>
+                            <?php echo $f['date_format']; ?>
                         </div>
                     </div>
                     <div class="side-card__footer"

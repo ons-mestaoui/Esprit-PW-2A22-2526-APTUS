@@ -222,6 +222,70 @@ class InscriptionController
         }
     }
 
+    /**
+     * 🧩 LOGIQUE MÉTIER "MES FORMATIONS" (MVC COMPLIANCE)
+     */
+    public function getMyFormationsPageData($id_user) {
+        require_once __DIR__ . '/TuteurDashboardController.php';
+        require_once __DIR__ . '/FormationController.php';
+        $tuteurC = new TuteurDashboardController();
+        $formationC = new FormationController();
+
+        $mesCoursRaw = $this->listerMesFormations($id_user);
+        $mesCours = [];
+        
+        $completedCours = 0;
+        $enCoursCours = 0;
+        $annuleeCours = 0;
+
+        foreach ($mesCoursRaw as $c) {
+            // Smart Progression logic
+            if ($c['statut'] !== 'Terminée' && $c['progression'] < 100) {
+                $resources = $tuteurC->getResources($c['id_formation']);
+                if (!empty($resources)) {
+                    $c['progression'] = $this->calculateSmartPercentage($id_user, $c['id_formation'], count($resources));
+                } else {
+                    $c['progression'] = 0;
+                }
+            } else {
+                $c['progression'] = 100;
+            }
+
+            // Stats logic
+            if ($c['progression'] == 100 || $c['statut'] === 'Terminée') {
+                $completedCours++;
+                $c['filter_cat'] = 'terminee';
+            } elseif ($c['statut'] === 'annulée') {
+                $annuleeCours++;
+                $c['filter_cat'] = 'annulee';
+            } else {
+                $enCoursCours++;
+                $c['filter_cat'] = 'en-cours';
+            }
+
+            // Date & Availability logic
+            $dateF = date('Y-m-d', strtotime($c['date_formation']));
+            $c['is_available'] = ($dateF <= date('Y-m-d'));
+            $c['display_statut'] = (!$c['is_available'] && $c['statut'] !== 'annulée') ? 'En attente' : $c['statut'];
+            $c['date_format_brut'] = date('d/m/Y', strtotime($c['date_formation']));
+
+            // Use common formatter
+            $mesCours[] = $formationC->formatFormationForView($c);
+        }
+
+        $totalCours = count($mesCours);
+        $globalProgress = $totalCours > 0 ? round(($completedCours / $totalCours) * 100) : 0;
+
+        return [
+            'mesCours' => $mesCours,
+            'totalCours' => $totalCours,
+            'completedCours' => $completedCours,
+            'enCoursCours' => $enCoursCours,
+            'annuleeCours' => $annuleeCours,
+            'globalProgress' => $globalProgress
+        ];
+    }
+
     // Marquer une formation comme terminée (progression = 100%)
     // Contrainte : on ne peut pas terminer une formation dont la date est dans le futur
     public function terminerFormation($id_formation, $id_user)
@@ -443,6 +507,50 @@ class InscriptionController
             }
             header("Location: formations_admin.php");
             exit();
+        }
+    }
+
+    /**
+     * Point d'entrée centralisé pour les requêtes AJAX liées aux inscriptions
+     */
+    public function handleAjax($action, $data)
+    {
+        require_once __DIR__ . '/SessionManager.php';
+        switch ($action) {
+            case 'inscrire':
+                $id_f = (int)($data['id_formation'] ?? 0);
+                $id_u = (int)($data['id_user'] ?? SessionManager::getUserId());
+                if (!$id_f || !$id_u) return ['success' => false, 'message' => 'Données manquantes.'];
+                try {
+                    $this->inscrire($id_f, $id_u);
+                    return ['success' => true, 'message' => 'Inscription réussie !'];
+                } catch (Exception $e) {
+                    return ['success' => false, 'message' => $e->getMessage()];
+                }
+
+            case 'desinscrire':
+                $id_f = (int)($data['id_formation'] ?? 0);
+                $id_u = (int)($data['id_user'] ?? $_SESSION['user_id'] ?? 0);
+                if (!$id_f || !$id_u) return ['success' => false, 'message' => 'Données manquantes.'];
+                try {
+                    // Logique de désinscription sécurisée
+                    $db = config::getConnexion();
+                    $stmtF = $db->prepare("SELECT date_formation FROM Formation WHERE id_formation = ?");
+                    $stmtF->execute([$id_f]);
+                    $date_f = $stmtF->fetchColumn();
+                    if ($date_f && strtotime($date_f) <= strtotime(date('Y-m-d'))) {
+                        return ['success' => false, 'message' => "La formation a déjà commencé ou est passée."];
+                    }
+                    
+                    $stmtI = $db->prepare("DELETE FROM inscription WHERE id_formation = ? AND id_user = ?");
+                    $stmtI->execute([$id_f, $id_u]);
+                    return ['success' => true, 'message' => 'Désinscription effectuée avec succès.'];
+                } catch (Exception $e) {
+                    return ['success' => false, 'message' => $e->getMessage()];
+                }
+
+            default:
+                return ['success' => false, 'message' => 'Action inconnue dans InscriptionController.'];
         }
     }
 }

@@ -6,64 +6,18 @@ if (!isset($content)) {
     require_once __DIR__ . '/../../controller/FormationController.php';
     $formationC = new FormationController();
     
-    $liste = $formationC->listerFormations()->fetchAll();
+    // MVC COMPLIANCE : Délégation totale de la logique de filtrage au contrôleur
+    $data = $formationC->getCatalogData($_GET);
     
-    // Filter Mock logic
-    $q = $_GET['q'] ?? '';
-    $domaine = $_GET['domaine'] ?? '';
-    $niveau = $_GET['niveau'] ?? '';
-    
-    $formations = [];
-    $domainesMap = [];
-    $maintenant = new DateTime();
-    
-    foreach($liste as $f) {
-        if (!empty($f['domaine'])) {
-            $domainesMap[$f['domaine']] = true;
-        }
-        
-        $match = true;
-        if ($q && stripos($f['titre'], $q) === false && stripos($f['description'], $q) === false) $match = false;
-        if ($domaine && $f['domaine'] != $domaine) $match = false;
-        if ($niveau && $f['niveau'] != $niveau) $match = false;
-        
-        if ($match) {
-            $dateFormation = isset($f['date_formation']) ? new DateTime($f['date_formation']) : new DateTime();
-            // Normaliser à minuit : une formation d'aujourd'hui ou future → S'inscrire
-            $dateFormation->setTime(0, 0, 0);
-            $aujourdhui = new DateTime(); $aujourdhui->setTime(0, 0, 0);
-            $f['est_passee'] = $dateFormation < $aujourdhui;
-            $formations[] = $f;
-        }
-    }
-    $sort = $_GET['sort'] ?? 'date_desc';
-    usort($formations, function($a, $b) use ($sort) {
-        if ($sort === 'date_asc') {
-            return $a['id_formation'] <=> $b['id_formation'];
-        } elseif ($sort === 'titre_asc') {
-            return strcasecmp($a['titre'], $b['titre']);
-        } else {
-            // date_desc: Plus récent (nouvellement ajouté)
-            return $b['id_formation'] <=> $a['id_formation'];
-        }
-    });
+    $formationsPage  = $data['formationsPage'];
+    $totalFormations = $data['totalFormations'];
+    $totalPages      = $data['totalPages'];
+    $domaines        = $data['domaines'];
 
-    $domaines = array_keys($domainesMap);
-    
-    // Pagination for infinite scroll
-    $totalFormations = count($formations);
-    $perPage = 6;
-    $page = (int)($_GET['page'] ?? 1);
-    $totalPages = ceil($totalFormations / $perPage);
-    $offset = ($page - 1) * $perPage;
-    
-    $formationsPage = array_slice($formations, $offset, $perPage);
-
-    // If AJAX request, return only the HTML for the new cards
+    // Si requête AJAX (Infinite Scroll), on ne renvoie que les cartes
     if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         foreach($formationsPage as $f) {
-            // Include card HTML
-            include 'catalog_card_partial.php'; // We'll create this file to keep it clean, OR output inline
+            include 'catalog_card_partial.php';
         }
         exit();
     }

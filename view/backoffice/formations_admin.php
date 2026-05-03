@@ -3,40 +3,27 @@ require_once __DIR__ . '/../../controller/SessionManager.php';
 SessionManager::start();
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controller/FormationController.php';
-require_once __DIR__ . '/../../controller/TuteurController.php';
-require_once __DIR__ . '/../../model/Formation.php';
 
 $formationC = new FormationController();
-$tuteurC = new TuteurController();
 
+// 🛠️ MVC COMPLIANCE : On délègue toute la logique au Controller
+$data = $formationC->getAdminPageData();
 
+$listeFormations = $data['listeFormations'];
+$totalFormations = $data['totalFormations'];
+$domaines        = $data['domaines'];
+$tuteurs         = $data['tuteurs'];
+$tuteursList     = $data['tuteursList'];
+$stats           = $data['stats'];
 
-$listeFormations = $formationC->listerFormations()->fetchAll();
-$tuteurs = $formationC->getTuteurs();   // Pour le select du modal formation
-$tuteursList = $tuteurC->listerTuteurs();   // Pour filtre planning + modal créneau
-$totalFormations = count($listeFormations);
-$domaines = array_unique(array_map(function ($f) {
-    return $f['domaine'];
-}, $listeFormations));
+$calendarEventsJSON = json_encode($data['calendarEvents']);
+$tuteurColorsJSON   = json_encode($data['tuteurColors']);
+
+$totalInscrits  = $stats['total_inscrits'];
+$certificats    = $stats['certificats'];
+$tauxCompletion = $stats['taux_completion'];
+
 sort($domaines);
-
-// Events : formations (background) + créneaux tuteurs (foreground)
-$formationEvents = $formationC->getFormationsForCalendar();
-$planningEvents = $tuteurC->getPlanning();  // Tous les tuteurs
-$calendarEvents = json_encode(array_merge($formationEvents, $planningEvents));
-$planningJSON = json_encode($planningEvents);
-$tuteurColors = [];
-// Color palette for tuteurs (standard Aptus vibrant colors)
-$palette = ['var(--accent-primary)', 'var(--accent-secondary)', 'var(--accent-tertiary)', 'var(--accent-warning)', 'var(--accent-info)', '#8b5cf6', '#14b8a6', '#ef4444'];
-foreach ($tuteursList as $idx => $t) {
-    $tuteurColors[$t['id']] = $palette[$idx % count($palette)];
-}
-$tuteurColorsJSON = json_encode($tuteurColors);
-
-$statsGlobales = $formationC->getStatsGlobales();
-$totalInscrits = $statsGlobales['total_inscrits'];
-$certificats = $statsGlobales['certificats'];
-$tauxCompletion = $statsGlobales['taux_completion'];
 
 $pageTitle = "Formations";
 $pageCSS = "formations.css";
@@ -174,59 +161,7 @@ if (!isset($content)) {
                 </tr>
             </thead>
             <tbody id="formations-table-body">
-                <?php foreach ($listeFormations as $f):
-                    $levelClass = 'badge-neutral';
-                    switch ($f['niveau']) {
-                        case 'Débutant':
-                            $levelClass = 'badge-success';
-                            break;
-                        case 'Intermédiaire':
-                            $levelClass = 'badge-warning';
-                            break;
-                        case 'Avancé':
-                            $levelClass = 'badge-danger';
-                            break;
-                        case 'Expert':
-                            $levelClass = 'badge-primary';
-                            break;
-                    }
-                    ?>
-                    <tr>
-                        <td class="fw-medium">
-                            <div style="display:flex; align-items:center; gap:12px;">
-                                <img src="<?php echo $f['image_base64']; ?>" alt=""
-                                    style="width:45px; height:25px; object-fit:cover; border-radius:4px; background:var(--bg-secondary);">
-                                <?php echo htmlspecialchars($f['titre']); ?>
-                            </div>
-                        </td>
-                        <td><span class="badge badge-info">
-                                <?php echo htmlspecialchars($f['domaine']); ?>
-                            </span></td>
-                        <td><span class="badge <?php echo $levelClass; ?>">
-                                <?php echo $f['niveau']; ?>
-                            </span></td>
-                        <td class="text-sm">
-                            <i data-lucide="<?php echo $f['is_online'] ? 'video' : 'map-pin'; ?>"
-                                style="width:14px; height:14px; vertical-align:middle; margin-right:5px;"></i>
-                            <?php echo $f['is_online'] ? 'En ligne' : 'Présentiel'; ?>
-                        </td>
-                        <td class="text-sm text-secondary">
-                            <?php echo date('d M. Y', strtotime($f['date_formation'])); ?>
-                        </td>
-                        <td>
-                            <div class="flex gap-1">
-                                <a href="edit_formation.php?id=<?php echo $f['id_formation']; ?>"
-                                    class="btn btn-sm btn-ghost" title="Éditer">
-                                    <i data-lucide="pencil" style="width:14px;height:14px;"></i>
-                                </a>
-                                <button type="button" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);"
-                                    onclick='aptusConfirmDelete("../../controller/traitement_delete.php?delete_id=<?php echo $f["id_formation"]; ?>", <?php echo htmlspecialchars(json_encode("Supprimer définitivement la formation « " . $f["titre"] . " » ?"), ENT_QUOTES, "UTF-8"); ?>);'>
-                                    <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
+                <?php include 'admin_table_rows_partial.php'; ?>
             </tbody>
         </table>
     </div>
@@ -777,12 +712,9 @@ if (!isset($content)) {
     }
 
     // ── DONNÉES PHP → JS ──────────────────────────────────────────
-    // Toutes les formations (background reference)
-    const formationEvents = <?php echo json_encode($formationEvents); ?>;
-    // Créneaux tuteurs (peuvent être filtrés dynamiquement)
-    let allPlanningEvents = <?php echo $planningJSON; ?>;
-    // Couleurs par tuteur
-    const tuteurColors = <?php echo $tuteurColorsJSON; ?>;
+    // ── DONNÉES INJECTÉES (MVC) ──────────────────────────────────
+    const calendarEvents = <?php echo $calendarEventsJSON; ?>;
+    const tuteurColors   = <?php echo $tuteurColorsJSON; ?>;
 
     // ── VARIABLES CLÉS ──────────────────────────────────────────
 
@@ -849,7 +781,7 @@ if (!isset($content)) {
         fd.append('couleur', couleur);
         if (recurrent) fd.append('recurrent', '1');
 
-        fetch('../../controller/ajax_tuteur.php', { method: 'POST', body: fd })
+        fetch('ajax_handler_back.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
                 closeModal();
@@ -901,17 +833,11 @@ if (!isset($content)) {
             selectable: true,   // Cliquer-glisser pour créer un créneau
             selectMirror: true,
 
-            // Source 1 : Formations — vraies séances de tuteurs, colorées par tuteur
-            eventSources: [
-                {
-                    id: 'formations',
-                    events: formationEvents.map(e => ({ ...e, editable: false }))
-                },
-                {
-                    id: 'planning',
-                    events: allPlanningEvents
-                }
-            ],
+            // Source unique consolidée via le contrôleur
+            events: calendarEvents.map(e => ({ 
+                ...e, 
+                editable: e.extendedProps && e.extendedProps.type !== 'formation' 
+            })),
 
             // Cliquer-glisser sur une zone vide → ouvrir le modal d'ajout
             select: function (info) {
@@ -989,7 +915,7 @@ if (!isset($content)) {
         fd.append('id', id);
         fd.append('debut', toSQL(start));
         fd.append('fin', toSQL(end || start));
-        fetch('../../controller/ajax_tuteur.php', { method: 'POST', body: fd })
+        fetch('ajax_handler_back.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(d => {
                 if (!d.success) {
@@ -1107,7 +1033,8 @@ if (!isset($content)) {
             btnCreate.innerHTML = '⏳ Création en cours...';
 
             const formData = new FormData(document.getElementById('add-formation-form'));
-            fetch('../../controller/traitement_add.php', { method: 'POST', body: formData })
+            formData.append('action', 'add_formation');
+            fetch('ajax_handler_back.php', { method: 'POST', body: formData })
                 .then(r => r.json())
                 .then(data => {
                     btnCreate.disabled = false;
@@ -1169,6 +1096,25 @@ if (!isset($content)) {
     const resetBtn = document.getElementById('reset-filters');
     const tableBody = document.getElementById('formations-table-body');
 
+    function deleteFormation(id, title) {
+        aptusConfirmDelete(() => {
+            const fd = new FormData();
+            fd.append('action', 'delete_formation');
+            fd.append('id', id);
+            fetch('ajax_handler_back.php', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.success) {
+                        aptusAlert(d.message || 'Formation supprimée.', 'success');
+                        performSearch(); // Rafraîchir la liste sans recharger la page
+                    } else {
+                        aptusAlert(d.message || 'Erreur lors de la suppression.', 'error');
+                    }
+                })
+                .catch(err => aptusAlert('Erreur réseau : ' + err.message, 'error'));
+        }, `Supprimer définitivement la formation « ${title} » ?`);
+    }
+
     function performSearch() {
         const s = searchInput.value;
         const d = filterDomaine.value;
@@ -1184,7 +1130,7 @@ if (!isset($content)) {
         // On ajoute un effet de chargement visuel léger
         tableBody.style.opacity = '0.5';
 
-        fetch(`ajax_search_formations.php?s=${encodeURIComponent(s)}&d=${encodeURIComponent(d)}&n=${encodeURIComponent(n)}`)
+        fetch(`ajax_handler_back.php?action=search_formations&s=${encodeURIComponent(s)}&d=${encodeURIComponent(d)}&n=${encodeURIComponent(n)}`)
             .then(response => response.text())
             .then(html => {
                 tableBody.innerHTML = html;

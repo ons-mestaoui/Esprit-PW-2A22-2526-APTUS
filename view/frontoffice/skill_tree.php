@@ -14,34 +14,15 @@ if (!isset($content)) {
     $formationC = new FormationController();
     $id_user    = $_SESSION['user_id'] ?? 10;
 
-    // 1. Données pour la Timeline
-    if (isset($_GET['id']) && (int)$_GET['id'] > 0) {
-        $skillChain = $formationC->getSkillTree((int)$_GET['id'], $id_user);
-        $viewMode   = 'chain';
-    } else {
-        $allTrees = $formationC->getAllFormationsWithSkillTree($id_user);
-        $viewMode = 'all';
-    }
+    // MVC COMPLIANCE : On délègue toute la logique au Controller
+    $treeId = isset($_GET['id']) ? (int)$_GET['id'] : null;
+    $treeData = $formationC->getSkillTreePageData($id_user, $treeId);
 
-    // 2. Données pour la Skill Map (Récupération récursive)
-    $toutesLesFormations = $formationC->listerFormations()->fetchAll();
-    $formationsData = [];
-    foreach ($toutesLesFormations as $f) {
-        $data = $formationC->getFormationWithPrerequisite((int)$f['id_formation'], $id_user);
-        $isUnlocked = true;
-        if (!empty($data['prerequis_id'])) {
-            $prereq = $formationC->getFormationWithPrerequisite((int)$data['prerequis_id'], $id_user);
-            $isUnlocked = ($prereq && $prereq['ma_progression'] >= 100);
-        }
-        $data['is_unlocked'] = $isUnlocked;
-        $formationsData[] = $data;
-    }
-
-    // Stats
-    $globalDone = 0;
-    foreach ($formationsData as $f) { if ($f['ma_progression'] >= 100) $globalDone++; }
-    $globalTotal = count($formationsData);
-    $globalPercent = ($globalTotal > 0) ? round(($globalDone / $globalTotal) * 100) : 0;
+    $viewMode       = $treeData['viewMode'];
+    $skillChain     = $treeData['skillChain'];
+    $allTrees       = $treeData['allTrees'];
+    $formationsData = $treeData['formationsData'];
+    $globalPercent  = $treeData['globalPercent'];
 
     $content = __FILE__;
     include 'layout_front.php';

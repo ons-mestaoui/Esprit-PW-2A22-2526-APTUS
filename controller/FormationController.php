@@ -14,15 +14,22 @@ class FormationController
         $tables_utilisateurs = ['utilisateur', 'User'];
         foreach ($tables_utilisateurs as $table) {
             try {
-                $liste = $db->query("
+                $stmt = $db->query("
                     SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
                     FROM Formation f 
                     LEFT JOIN $table u ON f.id_tuteur = u.id
                     WHERE f.statut = 'active'
-                      AND (f.date_fin IS NULL OR f.date_fin >= DATE_SUB(NOW(), INTERVAL 48 HOUR))
+                      AND (
+                        (f.date_fin IS NOT NULL AND f.date_fin >= DATE_SUB(NOW(), INTERVAL 48 HOUR))
+                        OR 
+                        (f.date_fin IS NULL AND f.date_formation >= DATE_SUB(NOW(), INTERVAL 48 HOUR))
+                      )
                     ORDER BY f.date_formation ASC
                 ");
-                return $liste;
+                $results = $stmt->fetchAll();
+                
+                // Préparation des données pour la Vue (Logic métier centralisée)
+                return array_map([$this, 'formatFormationForView'], $results);
             } catch (Exception $e) {
                 if ($table === end($tables_utilisateurs))
                     throw new Exception('Erreur SQL: ' . $e->getMessage());
@@ -30,7 +37,210 @@ class FormationController
         }
     }
 
-    // Stats pour le dashboard admin (nb formations, inscrits, certificats, taux)
+    // Récupère l'intégralité des formations (sans filtre de date pour le Skill Tree)
+    public function listerToutesFormations()
+    {
+        $db = config::getConnexion();
+        $tables_utilisateurs = ['utilisateur', 'User'];
+        foreach ($tables_utilisateurs as $table) {
+            try {
+                $stmt = $db->query("
+                    SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                    FROM Formation f 
+                    LEFT JOIN $table u ON f.id_tuteur = u.id
+                    WHERE f.statut = 'active'
+                    ORDER BY f.date_formation ASC
+                ");
+                $results = $stmt->fetchAll();
+                return array_map([$this, 'formatFormationForView'], $results);
+            } catch (Exception $e) {
+                if ($table === end($tables_utilisateurs))
+                    throw new Exception('Erreur SQL: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Centralise la logique de présentation (Logic Métier / Display Logic)
+     * Transforme une ligne brute de BDD en données prêtes pour la Vue.
+     */
+    public function formatFormationForView($f) {
+        $f['id_formation'] = (int)($f['id_formation'] ?? 0);
+        $f['titre_safe']   = htmlspecialchars($f['titre'] ?? '');
+        $f['domaine_safe'] = htmlspecialchars($f['domaine'] ?? 'Général');
+        $f['desc_short']   = htmlspecialchars(substr(strip_tags($f['description'] ?? ''), 0, 130));
+        
+        // Gestion des badges de niveau
+        $niveauColors = ['Débutant'=>'#10b981','Intermédiaire'=>'#f59e0b','Avancé'=>'#ef4444','Expert'=>'#8b5cf6'];
+        $f['niveau_color'] = $niveauColors[$f['niveau'] ?? ''] ?? 'var(--accent-primary)';
+        
+        $niveauClasses = ['Débutant'=>'badge-success','Intermédiaire'=>'badge-warning','Avancé'=>'badge-danger','Expert'=>'badge-primary'];
+        $f['niveau_class'] = $niveauClasses[$f['niveau'] ?? ''] ?? 'badge-neutral';
+        
+        // Gestion du lieu/format
+        $f['lieu_icon']  = $f['is_online'] ? 'video' : 'map-pin';
+        $f['lieu_label'] = $f['is_online'] ? 'En ligne' : 'Présentiel';
+        $f['lieu_color'] = $f['is_online'] ? '#3b82f6' : '#10b981';
+
+        // Formatage de la date
+        $f['date_format'] = date('d M. Y', strtotime($f['date_formation']));
+        
+        // Calcul du statut temporel
+        $dateRef = strtotime(date('Y-m-d'));
+        $dateFm  = strtotime(date('Y-m-d', strtotime($f['date_formation'])));
+        $dateDiff = ($dateFm - $dateRef) / 86400;
+        
+        $f['statut_temporel'] = "";
+        $f['statut_temporel_class'] = "";
+        
+        if ($dateDiff == 0) {
+            $f['statut_temporel'] = "Aujourd'hui";
+            $f['statut_temporel_class'] = "urgent";
+        } elseif ($dateDiff == 1) {
+            $f['statut_temporel'] = "Demain !";
+            $f['statut_temporel_class'] = "urgent";
+        } elseif ($dateDiff > 0) {
+            $f['statut_temporel'] = "Dans " . round($dateDiff) . "j";
+            $f['statut_temporel_class'] = "upcoming";
+        } else {
+            $f['statut_temporel'] = "Passé";
+            $f['statut_temporel_class'] = "";
+        }
+        
+        $f['est_passee'] = ($dateDiff < 0);
+
+        // Style de background (Image ou Gradient)
+        $f['bg_style'] = !empty($f['image_base64'])
+            ? "background:url('{$f['image_base64']}') center/cover no-repeat;"
+            : "background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(139,92,246,0.12));";
+
+        return $f;
+    }
+
+    /**
+     * 🧩 LOGIQUE MÉTIER ADMIN (MVC COMPLIANCE)
+     */
+    public function getAdminFormationsData() {
+        $liste = $this->listerFormations();
+        $domaines = array_unique(array_map(function($f) { return $f['domaine']; }, $liste));
+        return [
+            'listeFormations' => $liste,
+            'totalFormations' => count($liste),
+            'domaines' => $domaines,
+            'tuteurs' => $this->getTuteurs()
+        ];
+    }
+
+    /**
+     * 🧩 LOGIQUE MÉTIER PAGE ADMIN COMPLÈTE (MVC COMPLIANCE)
+     */
+    public function getAdminPageData() {
+        require_once __DIR__ . '/TuteurController.php';
+        $tC = new TuteurController();
+
+        $adminData = $this->getAdminFormationsData();
+        $stats = $this->getStatsGlobales();
+        
+        $tuteursList = $tC->listerTuteurs();
+        $formationEvents = $this->getFormationsForCalendar();
+        $planningEvents = $tC->getPlanning(); 
+        
+        // Color palette for tuteurs
+        $palette = ['var(--accent-primary)', 'var(--accent-secondary)', 'var(--accent-tertiary)', 'var(--accent-warning)', 'var(--accent-info)', '#8b5cf6', '#14b8a6', '#ef4444'];
+        $tuteurColors = [];
+        foreach ($tuteursList as $idx => $t) {
+            $tuteurColors[$t['id']] = $palette[$idx % count($palette)];
+        }
+
+        return [
+            'listeFormations'  => $adminData['listeFormations'],
+            'totalFormations'  => $adminData['totalFormations'],
+            'domaines'         => $adminData['domaines'],
+            'tuteurs'          => $adminData['tuteurs'],
+            'tuteursList'      => $tuteursList,
+            'stats'            => $stats,
+            'calendarEvents'   => array_merge($formationEvents, $planningEvents),
+            'tuteurColors'     => $tuteurColors
+        ];
+    }
+
+    /**
+     * 🧩 LOGIQUE MÉTIER DÉTAIL (MVC COMPLIANCE)
+     */
+    public function getFormationDetailData($id, $id_user) {
+        require_once __DIR__ . '/InscriptionController.php';
+        $inscriC = new InscriptionController();
+        
+        $formation = $this->getFormationById($id);
+        if (!$formation) return null;
+
+        $formation = $this->formatFormationForView($formation);
+        
+        // Vérification prérequis
+        $is_unlocked = true;
+        $prereq_titre = "";
+        if (!empty($formation['prerequis_id'])) {
+            $prereq = $this->getFormationWithPrerequisite($formation['prerequis_id'], $id_user);
+            if ($prereq && $prereq['ma_progression'] < 100) {
+                $is_unlocked = false;
+                $prereq_titre = $prereq['titre'];
+            }
+        }
+
+        return [
+            'formation'   => $formation,
+            'is_unlocked' => $is_unlocked,
+            'prereq_titre'=> $prereq_titre,
+            'isInscribed'=> $inscriC->isUserInscribed($id, $id_user)
+        ];
+    }
+
+    /**
+     * 🧩 LOGIQUE MÉTIER "SKILL TREE" (MVC COMPLIANCE)
+     */
+    public function getSkillTreePageData($id_user, $target_id = null) {
+        $viewMode = 'all';
+        $skillChain = [];
+        $allTrees = [];
+
+        if ($target_id && (int)$target_id > 0) {
+            $skillChain = $this->getSkillTree((int)$target_id, $id_user);
+            $viewMode = 'chain';
+        } else {
+            $allTrees = $this->getAllFormationsWithSkillTree($id_user);
+            $viewMode = 'all';
+        }
+
+        // Données pour la Neural Map
+        $toutesLesFormations = $this->listerToutesFormations();
+        $formationsData = [];
+        $globalDone = 0;
+
+        foreach ($toutesLesFormations as $f) {
+            $data = $this->getFormationWithPrerequisite((int)$f['id_formation'], $id_user);
+            $isUnlocked = true;
+            if (!empty($data['prerequis_id'])) {
+                $prereq = $this->getFormationWithPrerequisite((int)$data['prerequis_id'], $id_user);
+                $isUnlocked = ($prereq && $prereq['ma_progression'] >= 100);
+            }
+            $data['is_unlocked'] = $isUnlocked;
+            $data['description'] = strip_tags($data['description']); // Clean for JS
+            $formationsData[] = $data;
+            if ($data['ma_progression'] >= 100) $globalDone++;
+        }
+
+        $globalTotal = count($formationsData);
+        $globalPercent = ($globalTotal > 0) ? round(($globalDone / $globalTotal) * 100) : 0;
+
+        return [
+            'viewMode' => $viewMode,
+            'skillChain' => $skillChain,
+            'allTrees' => $allTrees,
+            'formationsData' => $formationsData,
+            'globalPercent' => $globalPercent
+        ];
+    }
+
     public function getStatsGlobales()
     {
         $db = config::getConnexion();
@@ -299,8 +509,14 @@ class FormationController
                 ORDER BY f.date_formation ASC
             ");
             $query->execute(['id' => $id_tuteur]);
-            return $query->fetchAll();
-        } catch (Exception $e) { throw new Exception('Erreur: ' . $e->getMessage()); }
+            $raw = $query->fetchAll();
+            
+            $formatted = [];
+            foreach ($raw as $f) {
+                $formatted[] = $this->formatFormationForView($f);
+            }
+            return $formatted;
+        } catch (Exception $e) { return []; }
     }
 
     public function getCalendarEventsJSON($id_tuteur)
@@ -393,6 +609,57 @@ class FormationController
         } catch (Exception $e) { return []; }
     }
 
+    /**
+     * LOGIQUE MÉTIER CATALOGUE (MVC COMPLIANCE)
+     */
+    public function getCatalogData($filters) {
+        $liste = $this->listerFormations(); // Déjà formaté par formatFormationForView
+        
+        $q = $filters['q'] ?? '';
+        $domaine = $filters['domaine'] ?? '';
+        $niveau = $filters['niveau'] ?? '';
+        $sort = $filters['sort'] ?? 'date_desc';
+        $page = (int)($filters['page'] ?? 1);
+        $perPage = 6;
+
+        $formations = [];
+        $domainesMap = [];
+        
+        foreach($liste as $f) {
+            if (!empty($f['domaine'])) {
+                $domainesMap[$f['domaine']] = true;
+            }
+            
+            $match = true;
+            if ($q && stripos($f['titre'], $q) === false && stripos($f['description'], $q) === false) $match = false;
+            if ($domaine && $f['domaine'] != $domaine) $match = false;
+            if ($niveau && $f['niveau'] != $niveau) $match = false;
+            
+            if ($match) {
+                $formations[] = $f;
+            }
+        }
+
+        // Tri logic
+        usort($formations, function($a, $b) use ($sort) {
+            if ($sort === 'date_asc') return $a['id_formation'] <=> $b['id_formation'];
+            if ($sort === 'titre_asc') return strcasecmp($a['titre'], $b['titre']);
+            return $b['id_formation'] <=> $a['id_formation'];
+        });
+
+        $totalFormations = count($formations);
+        $totalPages = ceil($totalFormations / $perPage);
+        $offset = ($page - 1) * $perPage;
+        $formationsPage = array_slice($formations, $offset, $perPage);
+
+        return [
+            'formationsPage' => $formationsPage,
+            'totalFormations' => $totalFormations,
+            'totalPages' => $totalPages,
+            'domaines' => array_keys($domainesMap)
+        ];
+    }
+
     private function getChildrenOf(int $parent_id, ?int $id_user = null): array
     {
         $db = config::getConnexion();
@@ -445,5 +712,171 @@ class FormationController
         $sql .= " ORDER BY f.date_formation DESC";
         $query = $db->prepare($sql); $query->execute($params);
         return $query->fetchAll();
+    }
+
+    /**
+     * 🧩 LOGIQUE MÉTIER CENTRALISÉE (MVC COMPLIANCE)
+     * Regroupe toutes les données nécessaires à la visionneuse de cours
+     */
+    public function getFormationViewerData($id_formation, $id_user)
+    {
+        require_once __DIR__ . '/TuteurDashboardController.php';
+        require_once __DIR__ . '/InscriptionController.php';
+        
+        $tuteurC = new TuteurDashboardController();
+        $inscriC = new InscriptionController();
+
+        $formation = $this->getFormationById($id_formation);
+        if (!$formation) return null;
+
+        $resources = $tuteurC->getResources($id_formation);
+        $current_progression = $inscriC->getCurrentProgression($id_formation, $id_user);
+        $viewed_chapters = $inscriC->getViewedChapters($id_user, $id_formation);
+
+        // Calculs métier / Presentation logic
+        $clean_desc = preg_replace('/<!-- APTUS_RESOURCES: .*? -->/s', '', $formation['description']);
+        $word_count = str_word_count(strip_tags($clean_desc));
+        $min_read_seconds = max(180, (int)round($word_count / 4.17));
+        $has_chapters = !empty($resources);
+        
+        // Date formatting centralisée
+        $mois = ['January'=>'Janvier','February'=>'Février','March'=>'Mars','April'=>'Avril','May'=>'Mai','June'=>'Juin','July'=>'Juillet','August'=>'Août','September'=>'Septembre','October'=>'Octobre','November'=>'Novembre','December'=>'Décembre'];
+        $current_month_fr = $mois[date('F')] . ' ' . date('Y');
+
+        return [
+            'formation'           => $this->formatFormationForView($formation),
+            'resources'           => $resources,
+            'current_progression' => $current_progression,
+            'viewed_chapters'     => $viewed_chapters,
+            'clean_desc'          => $clean_desc,
+            'word_count'          => $word_count,
+            'min_read_seconds'    => $min_read_seconds,
+            'has_chapters'        => $has_chapters,
+            'total_chapters'      => count($resources),
+            'current_month_fr'    => $current_month_fr,
+            'reading_time_est'    => max(1, round($word_count / 250))
+        ];
+    }
+
+    /**
+     * 🚀 ROUTEUR AJAX CENTRALISÉ (BACK-OFFICE)
+     */
+    public function handleAjax()
+    {
+        $action = $_REQUEST['action'] ?? '';
+        
+        switch ($action) {
+            case 'search_formations':
+                $search  = $_GET['s'] ?? '';
+                $domaine = $_GET['d'] ?? '';
+                $niveau  = $_GET['n'] ?? '';
+                $this->renderSearchRows($search, $domaine, $niveau);
+                break;
+
+            case 'add_formation':
+                header('Content-Type: application/json');
+                echo json_encode($this->add_formation_handler($_POST, $_FILES));
+                break;
+
+            case 'edit_formation':
+                header('Content-Type: application/json');
+                echo json_encode($this->edit_formation_handler($_POST, $_FILES));
+                break;
+
+            case 'delete_formation':
+                header('Content-Type: application/json');
+                $id = (int)($_POST['id'] ?? 0);
+                try {
+                    $this->deleteFormation($id);
+                    echo json_encode(['success' => true, 'message' => 'Formation supprimée.']);
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+                
+            default:
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Action inconnue.']);
+        }
+    }
+
+    private function renderSearchRows($search, $domaine, $niveau)
+    {
+        $rawFormations = $this->rechercherFormations($search, $domaine, $niveau);
+        $listeFormations = array_map([$this, 'formatFormationForView'], $rawFormations);
+        
+        // On inclut le partial pour le rendu
+        include __DIR__ . '/../view/backoffice/admin_table_rows_partial.php';
+    }
+
+    private function add_formation_handler($data, $files) {
+        try {
+            $image_base64 = "";
+            if (isset($files['image']) && $files['image']['error'] === UPLOAD_ERR_OK) {
+                $image_data = file_get_contents($files['image']['tmp_name']);
+                $type = strtolower(pathinfo($files['image']['name'], PATHINFO_EXTENSION));
+                $image_base64 = 'data:image/' . $type . ';base64,' . base64_encode($image_data);
+            }
+
+            $f = new Formation(
+                $data['titre'],
+                $data['description'],
+                $data['domaine'],
+                $data['niveau'],
+                $data['duree'] ?? '0',
+                $data['date_formation'],
+                $image_base64,
+                !empty($data['id_tuteur']) ? (int)$data['id_tuteur'] : null,
+                (int)$data['is_online'],
+                trim($data['online_url'] ?? ''),
+                !empty($data['prerequis_id']) ? (int)$data['prerequis_id'] : null,
+                !empty($data['date_fin']) ? $data['date_fin'] : null
+            );
+
+            $this->addFormation($f);
+            return ['success' => true, 'type' => 'success', 'message' => 'Formation ajoutée avec succès !'];
+        } catch (Exception $e) {
+            return ['success' => false, 'type' => 'error', 'message' => $e->getMessage()];
+        }
+    }
+
+    private function edit_formation_handler($data, $files) {
+        $id = (int)($data['id_formation'] ?? 0);
+        if (!$id) return ['success' => false, 'message' => 'ID manquant.'];
+
+        $formation_old = $this->getFormationById($id);
+        if (!$formation_old) return ['success' => false, 'message' => 'Formation non trouvée.'];
+
+        $is_online = (int) ($data['is_online'] ?? 0);
+        $lien_room = trim($data['online_url'] ?? '');
+
+        $image_base64 = $formation_old['image_base64'];
+        if (isset($files['image']) && $files['image']['error'] === UPLOAD_ERR_OK) {
+            $image_data = file_get_contents($files['image']['tmp_name']);
+            $type = strtolower(pathinfo($files['image']['name'], PATHINFO_EXTENSION));
+            $image_base64 = 'data:image/' . $type . ';base64,' . base64_encode($image_data);
+        }
+
+        try {
+            $f = new Formation(
+                $data['titre'],
+                $data['description'],
+                $data['domaine'],
+                $data['niveau'],
+                $data['duree'] ?? '0',
+                $data['date_formation'],
+                $image_base64,
+                !empty($data['id_tuteur']) ? (int) $data['id_tuteur'] : null,
+                $is_online,
+                $lien_room,
+                !empty($data['prerequis_id']) ? (int)$data['prerequis_id'] : null,
+                !empty($data['date_fin']) ? $data['date_fin'] : null
+            );
+
+            $this->updateFormation($f, $id);
+            return ['success' => true, 'message' => 'Formation modifiée avec succès.'];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 }

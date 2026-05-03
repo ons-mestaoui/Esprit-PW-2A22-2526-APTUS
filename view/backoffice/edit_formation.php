@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../model/Formation.php';
 
 $formationC = new FormationController();
 $tuteurs = $formationC->getTuteurs();
-$listeFormations = $formationC->listerFormations()->fetchAll();
+$listeFormations = $formationC->listerFormations();
 
 if (isset($_GET['id'])) {
     $formation = $formationC->getFormationById($_GET['id']);
@@ -52,7 +52,8 @@ if (!isset($content)) {
 </div>
 
 <div class="card-flat p-4">
-    <form action="../../controller/traitement_edit.php" method="POST" enctype="multipart/form-data" class="auth-form" style="max-width: 600px; margin: 0 auto;" novalidate>
+    <form id="edit-formation-form" enctype="multipart/form-data" class="auth-form" style="max-width: 600px; margin: 0 auto;" novalidate>
+        <input type="hidden" name="action" value="edit_formation">
         <input type="hidden" name="id_formation" value="<?php echo $formation['id_formation']; ?>">
 
         <div class="form-group">
@@ -182,7 +183,10 @@ if (!isset($content)) {
                 value="<?php echo htmlspecialchars($formation['lien_api_room'] ?? ''); ?>">
         </div>
 
-        <button class="btn btn-primary" type="submit">Enregistrer les modifications</button>
+        <button class="btn btn-primary" type="submit" id="btn-save-edit">
+            <span class="btn-text">Enregistrer les modifications</span>
+            <span class="btn-loader" style="display:none;"><i data-lucide="loader-2" class="animate-spin" style="width:18px;height:18px;"></i></span>
+        </button>
 
     </form>
 </div>
@@ -290,6 +294,45 @@ if (!isset($content)) {
             e.preventDefault();
             return false;
         }
+
+        // --- Soumission AJAX ---
+        e.preventDefault();
+        const btn = document.getElementById('btn-save-edit');
+        const btnText = btn.querySelector('.btn-text');
+        const btnLoader = btn.querySelector('.btn-loader');
+
+        btn.disabled = true;
+        btnText.style.opacity = '0.5';
+        btnLoader.style.display = 'inline-flex';
+
+        const formData = new FormData(formEdit);
+        // On s'assure que le contenu Quill est bien envoyé
+        formData.set('description', quillEdit.root.innerHTML);
+
+        fetch('ajax_handler_back.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                aptusAlert(d.message, 'success');
+                setTimeout(() => window.location.href = 'formations_admin.php', 1500);
+            } else {
+                aptusAlert(d.message || 'Erreur lors de la modification.', 'error');
+                btn.disabled = false;
+                btnText.style.opacity = '1';
+                btnLoader.style.display = 'none';
+            }
+        })
+        .catch(err => {
+            aptusAlert('Erreur réseau : ' + err.message, 'error');
+            btn.disabled = false;
+            btnText.style.opacity = '1';
+            btnLoader.style.display = 'none';
+        });
+
+        return false;
     };
 
     document.getElementById('lieu-select-edit').addEventListener('change', function () {

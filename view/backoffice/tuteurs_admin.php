@@ -8,12 +8,12 @@ if (!isset($content)) {
     require_once __DIR__ . '/../../controller/TuteurController.php';
 
     $tuteurC = new TuteurController();
-    $tuteurs  = $tuteurC->listerTuteurs();
+    $data = $tuteurC->getAdminTuteursPageData();
 
-    // Stats globales
-    $nbTuteurs    = count($tuteurs);
-    $nbFormations = array_sum(array_column($tuteurs, 'nb_formations'));
-    $nbEtudiants  = array_sum(array_column($tuteurs, 'nb_etudiants'));
+    $tuteurs      = $data['tuteurs'];
+    $nbTuteurs    = $data['nbTuteurs'];
+    $nbFormations = $data['nbFormations'];
+    $nbEtudiants  = $data['nbEtudiants'];
 
     $content = __FILE__;
     include 'layout_back.php';
@@ -784,7 +784,7 @@ function submitTuteur() {
     formData.append('specialite', specialite);
     formData.append('bio',        bio);
 
-    fetch('../../controller/ajax_tuteur.php', { method: 'POST', body: formData })
+    fetch('ajax_handler_back.php', { method: 'POST', body: formData })
         .then(r => r.json())
         .then(data => {
             closeModal();
@@ -815,7 +815,7 @@ function supprimerTuteur(id, nom) {
         fd.append('action', 'delete_tuteur');
         fd.append('id', id);
 
-        fetch('../../controller/ajax_tuteur.php', { method: 'POST', body: fd })
+        fetch('ajax_handler_back.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {

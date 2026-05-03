@@ -9,17 +9,16 @@ require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controller/FormationController.php';
 require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
 
+// 🛠️ MVC COMPLIANCE : On délègue toute la logique au Controller
 $id_formation = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-$formationC = new FormationController();
-$tuteurC = new TuteurDashboardController();
+$dashC = new TuteurDashboardController();
+$data = $dashC->getTuteurManagePageData($id_formation);
 
-$formation = $formationC->getFormationById($id_formation);
-if (!$formation) {
-    die("Formation introuvable.");
-}
+if (!$data) die("Formation introuvable.");
 
-$students = $tuteurC->getStudentsByFormation($id_formation);
-$resources = $tuteurC->getResources($id_formation);
+$formation = $data['formation'];
+$students  = $data['students'];
+$resources = $data['resources'];
 
 if (!isset($content)) {
     $content = __FILE__;

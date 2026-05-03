@@ -7,44 +7,22 @@ if (!isset($content)) {
     require_once __DIR__ . '/../../controller/SessionManager.php';
     SessionManager::start();
 
-    // Fetch the formation by ID
+    // Fetch the formation detail data (MVC COMPLIANCE)
     $id = $_GET['id'] ?? 1;
-    $formationC = new FormationController();
-    $formation = $formationC->getFormationById($id);
-
-    // Use centralized SessionManager for user identification
-    $id_user = SessionManager::getUserId();
-    $userRole = (isset($_GET['role']) && $_GET['role'] == 'tuteur') ? 'Tuteur' : 'Candidat';
-
-    // === CONTRAINTE: VERIFICATION DU PREREQUIS ===
-    $is_unlocked = true;
-    $prereq_titre = "";
-    if (!empty($formation['prerequis_id'])) {
-        $prereq = $formationC->getFormationWithPrerequisite($formation['prerequis_id'], $id_user);
-        if ($prereq && $prereq['ma_progression'] < 100) {
-            $is_unlocked = false;
-            $prereq_titre = $prereq['titre'];
-        }
+    $id_user     = SessionManager::getUserId();
+    $userRole    = $_SESSION['role'] ?? 'Etudiant';
+    $formationC  = new FormationController();
+    
+    $detailData = $formationC->getFormationDetailData($id, $id_user);
+    if (!$detailData) {
+        header('Location: formations_catalog.php');
+        exit();
     }
 
-    // Si on a été redirigé avec une erreur (ex: prérequis) ou depuis le contrôleur d'inscription
-    if (isset($_SESSION['flash_error'])) {
-        $errorMsg = $_SESSION['flash_error'];
-        unset($_SESSION['flash_error']);
-    } elseif (isset($_SESSION['flash_success'])) {
-        $successMsg = $_SESSION['flash_success'];
-        unset($_SESSION['flash_success']);
-    }
-
-    if (!$is_unlocked && !isset($errorMsg)) {
-        // Optionnel : un message d'avertissement
-    } elseif (strtotime($formation['date_formation']) < strtotime(date('Y-m-d')) && !isset($errorMsg)) {
-        // Optionnel
-    }
-    // Check if already inscribed
-    require_once __DIR__ . '/../../controller/InscriptionController.php';
-    $inscriptionController = new InscriptionController();
-    $isInscribed = $inscriptionController->isUserInscribed($id, $id_user);
+    $formation   = $detailData['formation'];
+    $is_unlocked = $detailData['is_unlocked'];
+    $prereq_titre= $detailData['prereq_titre'];
+    $isInscribed = $detailData['isInscribed'];
 
     $content = __FILE__;
     include 'layout_front.php';
@@ -72,13 +50,13 @@ if (!isset($content)) {
         <div style="padding: 3rem; display: flex; flex-direction: column;">
             <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
                 <span class="badge badge-info"
-                    style="font-size:0.75rem;"><?php echo htmlspecialchars($formation['domaine'] ?? 'Général'); ?></span>
-                <span class="badge badge-primary"
-                    style="font-size:0.75rem;"><?php echo htmlspecialchars($formation['niveau']); ?></span>
+                    style="font-size:0.75rem;"><?php echo $formation['domaine_safe']; ?></span>
+                <span class="badge <?php echo $formation['niveau_class']; ?>"
+                    style="font-size:0.75rem;"><?php echo $formation['niveau']; ?></span>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
-                <h1 style="font-size: 2rem; margin: 0;"><?php echo htmlspecialchars($formation['titre']); ?></h1>
+                <h1 style="font-size: 2rem; margin: 0;"><?php echo $formation['titre_safe']; ?></h1>
             </div>
 
             <div
@@ -93,7 +71,7 @@ if (!isset($content)) {
                 </div>
                 <div>
                     <label style="opacity: 0.6; font-size: 0.75rem; text-transform: uppercase;">Date</label>
-                    <div style="font-weight: 600;"><?php echo date('d M Y', strtotime($formation['date_formation'])); ?>
+                    <div style="font-weight: 600;"><?php echo $formation['date_format']; ?>
                     </div>
                 </div>
                 <div>
@@ -155,13 +133,51 @@ if (!isset($content)) {
                     <a href="skill_tree.php" class="btn btn-secondary" style="font-size: 0.85rem;"><i data-lucide="git-branch" style="width: 14px; height: 14px;"></i> Voir mon Skill Tree</a>
                 </div>
             <?php else: ?>
-                <form action="../../controller/traitement_inscription.php" method="post" style="margin-top: auto;">
+                <form id="inscription-form" style="margin-top: auto;">
+                    <input type="hidden" name="action" value="inscrire">
                     <input type="hidden" name="id_formation" value="<?php echo $formation['id_formation']; ?>">
-                    <button type="submit" class="btn btn-primary"
+                    <button type="submit" class="btn btn-primary" id="btn-submit-inscri"
                         style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 12px; border: none; cursor: pointer;">
                         S'inscrire maintenant
                     </button>
                 </form>
+
+                <script>
+                    document.getElementById('inscription-form').onsubmit = function(e) {
+                        e.preventDefault();
+                        const btn = document.getElementById('btn-submit-inscri');
+                        btn.disabled = true;
+                        btn.textContent = 'Traitement...';
+
+                        const formData = new FormData(this);
+                        fetch('ajax_handler.php', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(r => r.json())
+                        .then(d => {
+                            if (d.success) {
+                                Swal.fire({
+                                    title: 'Félicitations !',
+                                    text: d.message,
+                                    icon: 'success',
+                                    confirmButtonText: 'Voir mes cours'
+                                }).then(() => {
+                                    window.location.href = 'formations_my.php';
+                                });
+                            } else {
+                                Swal.fire('Erreur', d.message, 'error');
+                                btn.disabled = false;
+                                btn.textContent = "S'inscrire maintenant";
+                            }
+                        })
+                        .catch(err => {
+                            Swal.fire('Erreur', 'Erreur réseau : ' + err.message, 'error');
+                            btn.disabled = false;
+                            btn.textContent = "S'inscrire maintenant";
+                        });
+                    };
+                </script>
             <?php endif; ?>
         </div>
     </div>

@@ -2,39 +2,29 @@
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $pageTitle = "Visionneuse de Cours - Aptus AI";
 
-require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controller/FormationController.php';
-require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
 require_once __DIR__ . '/../../controller/SessionManager.php';
 SessionManager::start();
 
-$formationC = new FormationController();
-$tuteurC    = new TuteurDashboardController();
-
 $id_formation = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-$formation    = $formationC->getFormationById($id_formation);
-if (!$formation) die("Formation introuvable.");
+$id_user      = SessionManager::getUserId();
 
-$resources = $tuteurC->getResources($id_formation);
-$id_user   = SessionManager::getUserId();
+// 🛠️ MVC COMPLIANCE : On délègue toute la logique au Controller
+$formationC = new FormationController();
+$data = $formationC->getFormationViewerData($id_formation, $id_user);
 
-// ── Calcul mots & temps (pour mode dwell-time) ──────────────
-$clean_desc        = preg_replace('/<!-- APTUS_RESOURCES: .*? -->/s', '', $formation['description']);
-$word_count        = str_word_count(strip_tags($clean_desc));
-// Plancher réaliste : minimum 3 minutes (180s), même pour les petits cours
-$min_read_seconds  = max(180, (int)round($word_count / 4.17));
+if (!$data) die("Formation introuvable.");
 
-// ── Mode de progression ──────────────────────────────────────
-// Si le tuteur a ajouté des ressources/chapitres → mode Chapitres
-// Sinon → mode Dwell Time pur
-$has_chapters      = !empty($resources);
-$total_chapters    = $has_chapters ? count($resources) : 0;
-
-// Charger la progression actuelle depuis la BDD (via le Controller)
-require_once __DIR__ . '/../../controller/InscriptionController.php';
-$inscriC = new InscriptionController();
-$current_progression = $inscriC->getCurrentProgression($id_formation, $id_user);
-$viewed_chapters     = $inscriC->getViewedChapters($id_user, $id_formation);
+// Extraction des données pour le View (Variables propres et prêtes à l'affichage)
+$formation           = $data['formation'];
+$resources           = $data['resources'];
+$current_progression = $data['current_progression'];
+$viewed_chapters     = $data['viewed_chapters'];
+$clean_desc          = $data['clean_desc'];
+$word_count          = $data['word_count'];
+$min_read_seconds    = $data['min_read_seconds'];
+$has_chapters        = $data['has_chapters'];
+$total_chapters      = $data['total_chapters'];
 
 if (!isset($content)) {
     $content = __FILE__;
@@ -64,10 +54,7 @@ if (!isset($content)) {
                     background:linear-gradient(135deg, #6366f1, #8b5cf6);font-size:1.3rem; animation: starPulse 2s infinite;">🔔</div>
         <div style="flex:1;">
             <div style="font-size:0.7rem;font-weight:800;letter-spacing:0.12em;color:var(--accent-primary);text-transform:uppercase;margin-bottom:0.4rem;">
-                NOUVEAUTÉS APTUS — <?php 
-                    $mois = ['January'=>'Janvier','February'=>'Février','March'=>'Mars','April'=>'Avril','May'=>'Mai','June'=>'Juin','July'=>'Juillet','August'=>'Août','September'=>'Septembre','October'=>'Octobre','November'=>'Novembre','December'=>'Décembre']; 
-                    echo $mois[date('F')] . ' ' . date('Y'); 
-                ?>
+                NOUVEAUTÉS APTUS — <?php echo $data['current_month_fr']; ?>
             </div>
             <h4 id="aptus-update-headline" style="margin:0 0 0.5rem;font-size:1.1rem;color:var(--text-primary);font-weight:800;"></h4>
             <p  id="aptus-update-content"  style="margin:0;font-size:0.9rem;line-height:1.6;color:var(--text-secondary);"></p>
@@ -80,8 +67,7 @@ if (!isset($content)) {
     </div>
 </div>
 
-<!-- ══ Barre de progression (Seulement si chapitres présents) ════ -->
-<?php if ($has_chapters): ?>
+<!-- ══ Barre de progression ════════════════════════════════════ -->
 <div style="background:var(--bg-card);border-radius:var(--radius-lg);padding:1.1rem 1.5rem;margin-bottom:1.5rem;
             border:1px solid var(--border-color);display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
             box-shadow:var(--shadow-sm);">
@@ -97,7 +83,7 @@ if (!isset($content)) {
             <?php if ($has_chapters): ?>
                 <strong id="chapters-done" style="color:var(--text-primary);"><?php echo count($viewed_chapters); ?></strong> / <strong style="color:var(--text-primary);"><?php echo $total_chapters; ?></strong> chapitres complétés
             <?php else: ?>
-                Temps estimé : <strong style="color:var(--text-primary);"><?php echo max(1,round($word_count/250)); ?> min</strong>
+                Temps estimé : <strong style="color:var(--text-primary);"><?php echo $data['reading_time_est']; ?> min</strong>
             <?php endif; ?>
         </div>
     </div>
@@ -117,86 +103,104 @@ if (!isset($content)) {
         Cours terminé
     </div>
 </div>
-<?php endif; ?>
+
+<!-- ══ Hero Section (Banner) ════════════════════════════════════ -->
+<div class="formation-hero" style="
+    position: relative; 
+    height: 320px; 
+    border-radius: 24px; 
+    overflow: hidden; 
+    margin-bottom: 2rem;
+    background-image: url('<?php echo !empty($formation['image_base64']) ? $formation['image_base64'] : 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070'; ?>');
+    background-size: cover;
+    background-position: center;
+    box-shadow: var(--shadow-lg);
+">
+    <!-- Overlay sombre pour lisibilité maximale -->
+    <div style="
+        position: absolute; 
+        inset: 0; 
+        background: linear-gradient(90deg, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.3) 100%);
+        display: flex;
+        align-items: center;
+        padding: 0 4rem;
+        justify-content: space-between;
+    ">
+        <div style="color: white;">
+            <span style="
+                background: linear-gradient(90deg, #0ea5e9 0%, #8b5cf6 100%); 
+                padding: 6px 16px; 
+                border-radius: 20px; 
+                font-size: 0.75rem; 
+                font-weight: 800; 
+                text-transform: uppercase;
+                margin-bottom: 1.2rem;
+                display: inline-block;
+                box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+                color: white;
+            ">E-LEARNING</span>
+            <h1 style="font-size: 3.2rem; font-weight: 900; margin: 0 0 0.5rem 0; line-height: 1.1; color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+                <?php echo htmlspecialchars($formation['titre']); ?>
+            </h1>
+            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center;">👤</div>
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; font-weight: 700;">Formateur</span>
+                    <span style="font-size: 1.2rem; font-weight: 700;">Par <?php echo htmlspecialchars($formation['tuteur_nom'] ?? 'Dupont'); ?></span>
+                </div>
+            </div>
+        </div>
+
+        <a href="formations_my.php" style="
+            background: #0f172a;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 16px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 0.95rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        " onmouseover="this.style.background='white'; this.style.color='black'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#0f172a'; this.style.color='white'; this.style.transform='translateY(0)'">
+            Quitter le cours
+        </a>
+    </div>
+</div>
 
 <!-- ══ Contenu Principal ════════════════════════════════════════ -->
-<div style="background:var(--bg-card);border-radius:16px;padding:2.5rem;border:1px solid var(--border-color);box-shadow:var(--shadow-sm);">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2rem;border-bottom:1px solid var(--border-color);padding-bottom:1.5rem;">
-        <div>
-            <h1 style="font-size:2rem;margin-bottom:0.5rem;color:var(--text-primary);"><?php echo htmlspecialchars($formation['titre']); ?></h1>
-            <p style="color:var(--text-secondary);margin:0;">
-                Tuteur : <strong><?php echo htmlspecialchars($formation['tuteur_nom'] ?? 'Aptus'); ?></strong> |
-                Domaine : <strong><?php echo htmlspecialchars($formation['domaine']); ?></strong> |
-                Niveau : <strong><?php echo htmlspecialchars($formation['niveau']); ?></strong>
-            </p>
+<div style="background:var(--bg-card); border-radius:24px; padding:2.5rem; border:1px solid var(--border-color); box-shadow:var(--shadow-sm);">
+    <div style="margin-bottom:3rem;">
+        <h2 style="font-size:1.8rem; margin-bottom:1.5rem; color:var(--text-primary); font-weight: 800;">📖 Description du cours</h2>
+        <div style="font-size:1.1rem; line-height:1.7; color:var(--text-primary);">
+            <?php echo $clean_desc; ?>
         </div>
-        <a href="formations_my.php" class="btn btn-secondary">Retour à mes cours</a>
     </div>
 
-    <!-- Description -->
-    <div style="margin-bottom:3rem;background:var(--bg-surface);padding:1.5rem;border-radius:12px;border:1px solid var(--border-color);">
-        <h3 style="margin-bottom:1rem;color:var(--text-primary);">Description du cours</h3>
-        <div style="font-size:1.05rem;line-height:1.6;color:var(--text-primary);"><?php echo $clean_desc; ?></div>
-    </div>
+    <hr style="border:none; border-top:1px solid var(--border-color); margin: 3rem 0;">
 
-    <!-- ══ Ressources / Chapitres ══════════════════════════════ -->
     <div>
-        <h2 style="font-size:1.5rem;margin-bottom:1.5rem;color:var(--text-primary);">
-            <?php echo $has_chapters ? '📚 Chapitres du cours' : 'Ressources Pédagogiques'; ?>
-        </h2>
+        <h3 style="font-size:1.5rem; margin-bottom:1.8rem; color:var(--text-primary); font-weight: 800;">📚 Chapitres et Ressources</h3>
         <?php if (empty($resources)): ?>
-            <div style="text-align:center;padding:2rem;background:var(--bg-surface);border-radius:12px;border:1px dashed var(--border-color);color:var(--text-secondary);">
-                <p>Aucun chapitre ajouté par le tuteur pour le moment.</p>
+            <div style="text-align:center; padding:2rem; background:var(--bg-surface); border-radius:16px; border:1px dashed var(--border-color); color:var(--text-secondary);">
+                Aucune ressource disponible pour ce cours.
             </div>
         <?php else: ?>
-            <!-- Mode Chapitres : chaque ressource = un chapitre avec badge d'état -->
-            <div style="display:flex;flex-direction:column;gap:0.6rem;">
-                <?php foreach ($resources as $idx => $res):
+            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                <?php foreach ($resources as $idx => $res): 
                     $chapter_id = $res['id'] ?? $idx;
                     $is_done = in_array($chapter_id, $viewed_chapters);
                 ?>
-                <div class="chapter-card" data-chapter-index="<?php echo $idx; ?>"
-                     data-chapter-id="<?php echo htmlspecialchars($chapter_id); ?>"
-                     style="display:flex;align-items:center;gap:1rem;
-                            background:<?php echo $is_done ? 'var(--accent-secondary-light)' : 'var(--bg-card)'; ?>;
-                            border:1px solid <?php echo $is_done ? 'var(--accent-secondary)' : 'var(--border-color)'; ?>;
-                            border-radius:var(--radius-md);padding:1rem 1.25rem;
-                            transition:var(--transition-base);">
-
-                    <!-- Numéro / Check -->
-                    <div style="width:34px;height:34px;border-radius:var(--radius-full);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;
-                                background:<?php echo $is_done ? 'var(--accent-secondary-light)' : 'var(--accent-primary-light)'; ?>;
-                                color:<?php echo $is_done ? 'var(--accent-secondary)' : 'var(--accent-primary)'; ?>;">
+                <div class="chapter-card" style="background:var(--bg-surface); padding:1.25rem 1.5rem; border-radius:16px; border:1px solid <?php echo $is_done ? 'var(--accent-secondary)' : 'var(--border-color)'; ?>; display:flex; align-items:center; gap:1.2rem;">
+                    <div style="width:38px; height:38px; border-radius:50%; background:<?php echo $is_done ? 'var(--accent-secondary-light)' : 'var(--accent-primary-light)'; ?>; color:<?php echo $is_done ? 'var(--accent-secondary)' : 'var(--accent-primary)'; ?>; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.95rem; flex-shrink:0;">
                         <?php echo $is_done ? '✓' : ($idx + 1); ?>
                     </div>
-
-                    <!-- Infos -->
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-size:0.65rem;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.2rem;">
-                            Chapitre <?php echo $idx + 1; ?>
-                            <span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:4px;background:var(--accent-primary-light);color:var(--accent-primary);margin-left:0.4rem;">
-                                <?php echo strtoupper(htmlspecialchars($res['type'])); ?>
-                            </span>
+                    <div style="flex:1;">
+                        <div style="font-size:0.65rem; font-weight:700; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.2rem;">
+                            Chapitre <?php echo $idx + 1; ?> • <?php echo strtoupper($res['type']); ?>
                         </div>
-                        <div style="font-size:0.95rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                            <?php echo htmlspecialchars($res['titre']); ?>
-                        </div>
+                        <h4 style="margin:0; font-size:1.05rem; color:var(--text-primary); font-weight: 600;"><?php echo htmlspecialchars($res['titre']); ?></h4>
                     </div>
-
-                    <!-- Bouton accès -->
-                    <a href="<?php echo htmlspecialchars($res['url']); ?>"
-                       <?php if ($res['type'] === 'pdf' || strpos($res['url'], 'data:') === 0): ?> download="<?php echo htmlspecialchars($res['titre']); ?>.pdf" <?php endif; ?>
-                       target="_blank"
-                       onclick="markChapterOpened('<?php echo $chapter_id; ?>', <?php echo $idx; ?>)"
-                       style="flex-shrink:0;padding:0.45rem 1rem;border-radius:var(--radius-sm);font-size:0.82rem;font-weight:700;text-decoration:none;
-                              transition:var(--transition-fast);
-                              <?php if ($is_done): ?>
-                                   background: var(--accent-secondary-light);color: var(--accent-secondary);border:1px solid var(--accent-secondary);
-                              <?php else: ?>
-                                  background:var(--gradient-primary);color:white;border:none;box-shadow:0 2px 8px rgba(107,52,163,0.3);
-                              <?php endif; ?>"
-                       onmouseover="<?php if (!$is_done): ?>this.style.boxShadow='0 4px 14px rgba(107,52,163,0.4)';this.style.transform='translateY(-1px)';<?php endif; ?>"
-                       onmouseout="this.style.boxShadow='<?php echo $is_done ? 'none' : '0 2px 8px rgba(107,52,163,0.3)'; ?>';this.style.transform='none';">
+                    <a href="<?php echo htmlspecialchars($res['url']); ?>" target="_blank" onclick="markChapterOpened('<?php echo $chapter_id; ?>', <?php echo $idx; ?>)" style="padding: 0.6rem 1.2rem; border-radius: 12px; background: <?php echo $is_done ? 'var(--accent-secondary-light)' : 'var(--gradient-primary)'; ?>; color: <?php echo $is_done ? 'var(--accent-secondary)' : 'white'; ?>; font-weight:700; font-size:0.85rem; text-decoration:none; border: <?php echo $is_done ? '1px solid var(--accent-secondary)' : 'none'; ?>;">
                         <?php echo $is_done ? '✓ Vu' : 'Ouvrir →'; ?>
                     </a>
                 </div>
@@ -228,7 +232,12 @@ if (!isset($content)) {
 <div class="chat-window" id="chat-window">
     <div class="chat-header">
         <div><h4 style="margin:0;font-size:0.95rem;">🤖 Assistant IA</h4><span style="font-size:0.75rem;opacity:0.8;"><?php echo htmlspecialchars($formation['titre']); ?></span></div>
-        <button onclick="toggleChat()" style="background:none;border:none;color:white;font-size:18px;cursor:pointer;">✕</button>
+        <div style="display:flex; align-items:center;">
+            <button type="button" onclick="genererFicheDepuisChat(event)" class="btn-generate-fiche" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; margin-right: 12px; transition: all 0.2s; display:flex; align-items:center; gap:5px; font-weight:600;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                <i data-lucide="file-text" style="width:14px; height:14px;"></i> Fiche
+            </button>
+            <button onclick="toggleChat()" style="background:none;border:none;color:white;font-size:18px;cursor:pointer;">✕</button>
+        </div>
     </div>
     <div class="chat-messages" id="chat-messages">
         <div class="chat-msg ai"><span class="ai-badge">🤖 Assistant IA</span>Bonjour ! Posez-moi vos questions sur <strong><?php echo htmlspecialchars($formation['titre']); ?></strong>.</div>
@@ -370,5 +379,131 @@ function sendChatMsg() {
         ab.innerHTML='<span class="ai-badge">🤖 Assistant IA</span>'+(data.success ? data.ai_reply.replace(/\n/g,'<br>') : (data.message||'Erreur.'));
         div.appendChild(ab); div.scrollTop=div.scrollHeight;
     }).catch(()=>{ document.getElementById('typing-indicator')?.remove(); });
+}
+
+function genererFicheDepuisChat(event) {
+    if(event) event.preventDefault();
+    let chatElements = document.querySelectorAll('.chat-msg');
+    if(chatElements.length <= 1) {
+        Swal.fire({
+            title: 'Oups !',
+            text: "Posez d'abord quelques questions à l'assistant pour générer une fiche personnalisée.",
+            icon: 'info'
+        });
+        return;
+    }
+    
+    let historiqueChat = "";
+    chatElements.forEach(el => {
+        let sender = el.classList.contains('user') ? "Étudiant : " : "IA : ";
+        let text = el.innerText.replace('🤖 Assistant IA', '').trim();
+        historiqueChat += sender + text + "\n\n";
+    });
+
+    Swal.fire({
+        title: 'Génération en cours...',
+        html: `
+            <div style="margin-top:1rem; text-align:center;">
+                <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.5rem;">Aptus IA analyse votre conversation pour créer une fiche de révision optimale.</p>
+                <div style="width: 50px; height: 50px; border: 4px solid var(--accent-primary-light); border-top: 4px solid var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+            </div>
+        `,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        customClass: { popup: 'radius-lg' }
+    });
+
+    fetch('ajax_handler.php?action=generate_fiche_from_chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_history: historiqueChat })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if(data.success) {
+            Swal.fire({
+                title: '✨ Votre Fiche de Révision',
+                html: `
+                    <div id="fiche-revision-container" style="text-align:left; max-height:480px; overflow-y:auto; padding:2.5rem; border-radius:20px; background:var(--bg-body); border:1px solid var(--border-color); box-shadow:inset 0 4px 20px rgba(0,0,0,0.03); margin-top:1rem;">
+                        <div id="fiche-pdf-content">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; border-bottom:1px solid var(--border-color); padding-bottom:1rem;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="width:30px; height:30px; background:var(--gradient-primary); border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:12px;">A</div>
+                                    <span style="font-weight:800; font-size:0.75rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary);">Aptus Intelligence</span>
+                                </div>
+                                <span style="font-size:0.7rem; color:var(--text-tertiary); font-weight:600;">${new Date().toLocaleDateString('fr-FR')}</span>
+                            </div>
+                            ${data.fiche_html}
+                        </div>
+                    </div>
+                `,
+                width: '800px',
+                showCancelButton: true,
+                confirmButtonText: '<i data-lucide="download" style="width:16px;height:16px;margin-right:8px;vertical-align:middle;"></i> Télécharger PDF',
+                cancelButtonText: 'Fermer',
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: 'btn btn-primary',
+                    cancelButton: 'btn btn-secondary',
+                    actions: 'gap-3 mt-4'
+                },
+                didRender: () => {
+                    if (window.lucide) lucide.createIcons();
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    telechargerFichePDF(data.fiche_html);
+                }
+            });
+        } else {
+            Swal.fire('Erreur', data.message || 'Une erreur est survenue lors de la génération.', 'error');
+        }
+    })
+    .catch(err => {
+        Swal.fire('Erreur réseau', err.message, 'error');
+    });
+}
+
+function telechargerFichePDF(htmlContent) {
+    const element = document.createElement('div');
+    element.style.padding = '60px 80px';
+    element.style.fontFamily = "'Inter', -apple-system, sans-serif";
+    element.style.color = "#374151";
+    element.innerHTML = `
+        <div style="border-bottom: 2px solid #E5E7EB; padding-bottom: 25px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #00A3DA, #8a2594); border-radius: 6px;"></div>
+                    <span style="font-weight: 800; font-size: 1.2rem; color: #111827; letter-spacing: -0.02em;">Aptus Intelligence</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #6B7280; margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Fiche de Synthèse Académique</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="font-size: 0.75rem; color: #9CA3AF; margin: 0;">Date de génération : ${new Date().toLocaleDateString('fr-FR')}</p>
+                <p style="font-size: 0.75rem; color: #9CA3AF; margin: 2px 0 0 0;">ID Document : #APT-${Math.floor(Math.random()*9000)+1000}</p>
+            </div>
+        </div>
+        
+        <div style="line-height: 1.7; font-size: 11pt;">
+            ${htmlContent}
+        </div>
+        
+        <div style="margin-top: 80px; border-top: 1px solid #F3F4F6; padding-top: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <p style="font-size: 0.7rem; color: #BDC3C7; margin: 0;">&copy; ${new Date().getFullYear()} Aptus Corp. Document généré par assistance pédagogique IA.</p>
+                <p style="font-size: 0.75rem; font-weight: 600; color: #00A3DA; margin: 0;">aptus.ai</p>
+            </div>
+        </div>
+    `;
+    
+    const opt = {
+        margin:       0,
+        filename:     'Aptus_Fiche_Synthese.pdf',
+        image:        { type: 'jpeg', quality: 1 },
+        html2canvas:  { scale: 2.5, useCORS: true, letterRendering: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save();
 }
 </script>

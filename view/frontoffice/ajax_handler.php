@@ -28,8 +28,9 @@ header('Content-Type: application/json');
 // Récupération sécurisée de l'action demandée
 $action = isset($_REQUEST['action']) ? trim($_REQUEST['action']) : '';
 
-// Check for POST max size exceeded
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
+// Check for POST max size exceeded (but allow application/json)
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0 && stripos($contentType, 'application/json') === false) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Le fichier envoyé est trop lourd (dépasse la limite de PHP).']);
     exit;
@@ -216,6 +217,23 @@ switch ($action) {
         }
         break;
 
+    // --------------------------------------------------------
+    // NEXT-GEN AI FEATURES : MindMap & CheatSheet
+    // --------------------------------------------------------
+    case 'get_ai_mindmap':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $aiC = new AIController();
+        $id_formation = (int)($_GET['id'] ?? 0);
+        echo json_encode($aiC->getMindMap($id_formation));
+        break;
+
+    case 'get_ai_cheatsheet':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $aiC = new AIController();
+        $id_formation = (int)($_GET['id'] ?? 0);
+        echo json_encode($aiC->getCheatSheet($id_formation));
+        break;
+
     case 'generate_ai_syllabus':
         require_once __DIR__ . '/../../controller/AIController.php';
         $controller = new AIController();
@@ -326,6 +344,13 @@ switch ($action) {
         echo json_encode(['success' => $success]);
         break;
 
+    case 'inscrire':
+    case 'desinscrire':
+        require_once __DIR__ . '/../../controller/InscriptionController.php';
+        $inscriC = new InscriptionController();
+        echo json_encode($inscriC->handleAjax($action, $_POST));
+        break;
+
     // --------------------------------------------------------
     // CHAT HYBRIDE (Tuteur Augmenté)
     // --------------------------------------------------------
@@ -384,6 +409,17 @@ switch ($action) {
         
         $success = NotificationController::creerNotification($uid, 'certif_ready', $msg, $url, 'video', 'URGENT');
         echo json_encode(['success' => $success]);
+        break;
+
+    case 'generate_fiche_from_chat':
+        // Handle JSON input from fetch body
+        $input = json_decode(file_get_contents('php://input'), true);
+        $history = $input['chat_history'] ?? '';
+        
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $aiC = new AIController();
+        $result = $aiC->generateFicheFromChat($history);
+        echo json_encode($result);
         break;
 
 

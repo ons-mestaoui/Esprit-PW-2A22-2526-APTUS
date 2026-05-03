@@ -35,44 +35,15 @@ if (!isset($content)) {
         exit();
     }
 
-    $mesCoursRaw = $inscriptionC->listerMesFormations($id_user);
-    $mesCours = [];
-    
-    require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
-    $tuteurC = new TuteurDashboardController();
+    // MVC COMPLIANCE : On délègue toute la logique au Controller
+    $pageData = $inscriptionC->getMyFormationsPageData($id_user);
 
-    // Recalculer la progression Smart pour chaque cours (Seulement si NON terminée)
-    foreach ($mesCoursRaw as $c) {
-        if ($c['statut'] !== 'Terminée' && $c['progression'] < 100) {
-            $resources = $tuteurC->getResources($c['id_formation']);
-            if (!empty($resources)) {
-                $total_chapters = count($resources);
-                $c['progression'] = $inscriptionC->calculateSmartPercentage($id_user, $c['id_formation'], $total_chapters);
-            } else {
-                // Smart Logic : Pas de chapitres = 0% de progression réelle
-                $c['progression'] = 0;
-            }
-        } else {
-            // Sécurité : Si c'est terminé, c'est 100%
-            $c['progression'] = 100;
-        }
-        $mesCours[] = $c;
-    }
-
-    // Compute stats for the welcome banner
-    $totalCours = count($mesCours);
-    $completedCours = 0;
-    $enCoursCours = 0;
-    $annuleeCours = 0;
-    foreach ($mesCours as $c) {
-        if ($c['progression'] == 100 || $c['statut'] === 'Terminée') {
-            $completedCours++;
-        } elseif ($c['statut'] === 'annulée') {
-            $annuleeCours++;
-        } else {
-            $enCoursCours++;
-        }
-    }
+    $mesCours       = $pageData['mesCours'];
+    $totalCours     = $pageData['totalCours'];
+    $completedCours = $pageData['completedCours'];
+    $enCoursCours   = $pageData['enCoursCours'];
+    $annuleeCours   = $pageData['annuleeCours'];
+    $globalProgress = $pageData['globalProgress'];
 
     $content = __FILE__;
     include 'layout_front.php';
@@ -357,11 +328,11 @@ if (!isset($content)) {
             <div class="global-progress">
                 <div class="global-progress__bar">
                     <div class="global-progress__fill"
-                        style="width: <?php echo $totalCours > 0 ? round(($completedCours / $totalCours) * 100) : 0; ?>%;">
+                        style="width: <?php echo $globalProgress; ?>%;">
                     </div>
                 </div>
                 <span
-                    class="global-progress__text"><?php echo $totalCours > 0 ? round(($completedCours / $totalCours) * 100) : 0; ?>%</span>
+                    class="global-progress__text"><?php echo $globalProgress; ?>%</span>
             </div>
         <?php else: ?>
             <p>Commencez votre parcours en explorant notre catalogue de formations.</p>
@@ -414,15 +385,8 @@ if (!isset($content)) {
 <div class="grid" id="formationsGrid"
     style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
     <?php if (!empty($mesCours)):
-        foreach ($mesCours as $cours):
-            // Determine filter category
-            $filterCat = 'en-cours';
-            if ($cours['progression'] == 100 || $cours['statut'] === 'Terminée')
-                $filterCat = 'terminee';
-            if ($cours['statut'] === 'annulée')
-                $filterCat = 'annulee';
-            ?>
-            <div class="formation-card" data-category="<?php echo $filterCat; ?>">
+        foreach ($mesCours as $cours): ?>
+            <div class="formation-card" data-category="<?php echo $cours['filter_cat']; ?>">
                 <!-- Image -->
                 <div class="formation-card__image">
                     <?php if (!empty($cours['image_base64'])): ?>
@@ -436,21 +400,16 @@ if (!isset($content)) {
                 <!-- Badges -->
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                     <span class="badge badge-info"
-                        style="font-size: 0.7rem;"><?php echo ($cours['is_online']) ? '🌐 En ligne' : '📍 Présentiel'; ?></span>
-                    <?php 
-                        $dateFormation = date('Y-m-d', strtotime($cours['date_formation']));
-                        $isAvailable = ($dateFormation <= date('Y-m-d'));
-                        $displayStatut = (!$isAvailable && $cours['statut'] !== 'annulée') ? 'En attente' : $cours['statut'];
-                    ?>
+                        style="font-size: 0.7rem;"><?php echo $cours['lieu_label']; ?></span>
                     <span
-                        class="badge <?php echo ($cours['statut'] == 'annulée') ? 'badge-danger' : ($filterCat === 'terminee' ? 'badge-success' : ($isAvailable ? 'badge-neutral' : 'badge-info')); ?>"
+                        class="badge <?php echo ($cours['statut'] == 'annulée') ? 'badge-danger' : ($cours['filter_cat'] === 'terminee' ? 'badge-success' : ($cours['is_available'] ? 'badge-neutral' : 'badge-info')); ?>"
                         style="font-size: 0.7rem;">
-                        <?php echo htmlspecialchars($displayStatut); ?>
+                        <?php echo htmlspecialchars($cours['display_statut']); ?>
                     </span>
                 </div>
 
                 <!-- Title & Tutor -->
-                <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;"><?php echo htmlspecialchars($cours['titre']); ?></h2>
+                <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;"><?php echo $cours['titre_safe']; ?></h2>
                 <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
                     Tuteur : <b><?php echo htmlspecialchars($cours['tuteur_nom'] ?? 'Aptus'); ?></b>
                 </div>
@@ -489,7 +448,7 @@ if (!isset($content)) {
                     </div>
                 <?php else: ?>
                     <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: auto;">
-                        <?php if ($cours['is_online'] && $isAvailable): ?>
+                        <?php if ($cours['is_online'] && $cours['is_available']): ?>
                             <a href="jitsi_room.php?id_formation=<?php echo $cours['id_formation']; ?>&url=<?php echo urlencode($cours['lien_api_room'] ?? '#'); ?>" class="btn"
                                 style="background: var(--gradient-primary); color: white; text-align:center; padding: 0.5rem; text-decoration:none; border-radius:8px; font-weight:600; box-shadow: var(--shadow-md); transition: all 0.2s;"
                                 onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='var(--shadow-lg)'"
@@ -498,15 +457,15 @@ if (!isset($content)) {
                         <?php endif; ?>
 
                         <!-- Contrainte : accès si date_formation <= aujourd'hui -->
-                        <?php if ($isAvailable): ?>
+                        <?php if ($cours['is_available']): ?>
                             <a href="formation_viewer.php?id=<?php echo $cours['id_formation']; ?>" class="btn btn-primary"
                                 style="text-align:center;">📖 Accéder au cours</a>
                         <?php else: ?>
                             <button class="btn"
                                 style="background: var(--bg-tertiary); color: var(--text-tertiary); cursor: not-allowed; width:100%; border:none; padding:0.5rem; border-radius:8px;"
-                                disabled>🔒 Disponible le <?php echo date('d/m/Y', strtotime($cours['date_formation'])); ?></button>
+                                disabled>🔒 Disponible le <?php echo $cours['date_format_brut']; ?></button>
                             <form action="formations_my.php" method="POST" style="margin: 0;"
-                                onsubmit="return confirmDesinscription(this, event, '<?php echo addslashes(htmlspecialchars($cours['titre'])); ?>');">
+                                onsubmit="return confirmDesinscription(this, event, '<?php echo addslashes($cours['titre_safe']); ?>');">
                                 <input type="hidden" name="id_formation" value="<?php echo $cours['id_formation']; ?>">
                                 <button type="submit" class="btn"
                                     style="width: 100%; background: transparent; color: var(--accent-tertiary); border: 1px solid var(--accent-tertiary); padding: 0.5rem; border-radius: 8px;">Se désinscrire</button>
@@ -710,10 +669,8 @@ if (!isset($content)) {
             html: `Êtes-vous sûr de vouloir annuler votre inscription à la formation <br><b>"${formationTitre}"</b> ?`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#e2e8f0',
             confirmButtonText: 'Oui, me désinscrire',
-            cancelButtonText: '<span style="color:var(--text-primary)">Annuler</span>',
+            cancelButtonText: 'Annuler',
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {

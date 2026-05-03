@@ -274,4 +274,25 @@ class TuteurDashboardController
             return [];
         }
     }
+
+    /**
+     * 🧩 LOGIQUE MÉTIER GESTION FORMATION (MVC COMPLIANCE)
+     */
+    public function getTuteurManagePageData($id_formation) {
+        require_once __DIR__ . '/FormationController.php';
+        $fC = new FormationController();
+        
+        $formation = $fC->getFormationById($id_formation);
+        if (!$formation) return null;
+
+        $formation = $fC->formatFormationForView($formation);
+        $students  = $this->getStudentsByFormation($id_formation);
+        $resources = $this->getResources($id_formation);
+
+        return [
+            'formation' => $formation,
+            'students'  => $students,
+            'resources' => $resources
+        ];
+    }
 }

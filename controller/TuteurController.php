@@ -88,6 +88,25 @@ class TuteurController
     }
 
     // ----------------------------------------------------------
+    // LOGIQUE MÉTIER ADMIN (MVC COMPLIANCE)
+    // ----------------------------------------------------------
+
+    /**
+     * Prépare toutes les données pour la page tuteurs_admin.php
+     */
+    public function getAdminTuteursPageData(): array
+    {
+        $tuteurs = $this->listerTuteurs();
+        
+        return [
+            'tuteurs'      => $tuteurs,
+            'nbTuteurs'    => count($tuteurs),
+            'nbFormations' => array_sum(array_column($tuteurs, 'nb_formations')),
+            'nbEtudiants'  => array_sum(array_column($tuteurs, 'nb_etudiants'))
+        ];
+    }
+
+    // ----------------------------------------------------------
     // CRÉER un nouveau tuteur
     // ----------------------------------------------------------
 

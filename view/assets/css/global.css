@@ -927,3 +927,75 @@ p {
 .error-msg.show {
   display: block;
 }
+
+/* ── SweetAlert2 Custom Branding (Aptus) ───────────────── */
+.swal2-popup {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-2xl) !important;
+    padding: 1.5rem !important;
+    
+    /* Elegant Gradient Border */
+    border: 2px solid transparent !important;
+    background-image: linear-gradient(var(--bg-card), var(--bg-card)), var(--gradient-primary) !important;
+    background-origin: border-box !important;
+    background-clip: padding-box, border-box !important;
+}
+
+.swal2-title {
+    color: var(--text-primary) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 800 !important;
+    margin-top: 1rem !important;
+}
+
+.swal2-html-container {
+    color: var(--text-secondary) !important;
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+}
+
+.swal2-confirm.swal2-styled {
+    background: var(--gradient-primary) !important;
+    border: none !important;
+    border-radius: var(--radius-sm) !important;
+    font-weight: 700 !important;
+    padding: 0.8rem 2rem !important;
+    box-shadow: 0 4px 15px rgba(0, 163, 218, 0.3) !important;
+    transition: transform 0.2s ease !important;
+}
+
+.swal2-confirm.swal2-styled:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 163, 218, 0.4) !important;
+}
+
+.swal2-cancel.swal2-styled {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-radius: var(--radius-sm) !important;
+    font-weight: 600 !important;
+    padding: 0.8rem 1.5rem !important;
+}
+
+.swal2-icon {
+    border-width: 3px !important;
+}
+
+.swal2-icon.swal2-success {
+    border-color: var(--primary-cyan) !important;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-line'] {
+    background-color: var(--primary-cyan) !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+    border: .25em solid rgba(0, 163, 218, 0.2) !important;
+}
+
+.swal2-container {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+}
