@@ -344,9 +344,23 @@ if (!isset($content)) {
         </div>
 
         <!-- Recherche dynamique d'offres (Full Width) -->
-        <div class="search-box" style="margin-top: 0; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.05); position: relative;">
-            <i class="fas fa-search"></i>
-            <input type="text" id="job-search" placeholder="Rechercher un poste par titre (ex: Développeur, Manager, Designer...)" onkeyup="filterOffres()" style="height: 55px; font-size: 1.1rem; border-radius: 18px; border: 2px solid transparent; transition: all 0.3s; background: white; width: 100%;">
+        <div style="display: flex; gap: 15px; width: 100%; align-items: stretch;">
+            <div class="search-box" style="margin-top: 0; flex: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.05); position: relative;">
+                <i class="fas fa-search"></i>
+                <input type="text" id="job-search" placeholder="Rechercher par titre..." onkeyup="filterAll()" style="height: 55px; font-size: 1.1rem; border-radius: 18px; border: 2px solid transparent; transition: all 0.3s; background: white; width: 100%;">
+            </div>
+            
+            <!-- Slider de Rayon -->
+            <div style="background: white; border-radius: 18px; padding: 0 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); min-width: 250px;">
+                <i class="fas fa-map-marked-alt" style="color: var(--accent-primary);"></i>
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.7rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase;">Rayon</span>
+                        <span id="radius-val" style="font-size: 0.85rem; font-weight: 800; color: var(--accent-primary);">50 km</span>
+                    </div>
+                    <input type="range" id="radius-slider" min="1" max="100" value="100" oninput="filterAll()" style="width: 100%; accent-color: var(--accent-primary); cursor: pointer;">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -733,13 +747,48 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btn-commencer').style.display = 'flex';
     };
 
-    window.filterOffres = function() {
+    let radiusCircle = null;
+
+    window.filterAll = function() {
         const query = document.getElementById('job-search').value.toLowerCase();
+        const maxDist = parseInt(document.getElementById('radius-slider').value);
+        document.getElementById('radius-val').innerText = maxDist === 100 ? "Illimité" : maxDist + " km";
+        
         let count = 0;
+
+        // Gérer le cercle de rayon
+        if (userLocation && maxDist < 100) {
+            const radiusInMeters = maxDist * 1000;
+            if (!radiusCircle) {
+                radiusCircle = L.circle(userLocation, {
+                    radius: radiusInMeters,
+                    color: '#c00d0dff', // Violet Aptus pour le cercle
+                    fillColor: '#ea3535ff',
+                    fillOpacity: 0.08,
+                    weight: 2,
+                    dashArray: '10, 10'
+                }).addTo(map);
+            } else {
+                radiusCircle.setLatLng(userLocation);
+                radiusCircle.setRadius(radiusInMeters);
+            }
+            
+            // Auto-zoom pour que tout le cercle soit visible
+            map.fitBounds(radiusCircle.getBounds(), { padding: [20, 20] });
+        } else if (radiusCircle) {
+            map.removeLayer(radiusCircle);
+            radiusCircle = null;
+        }
         
         jobMarkers.forEach(marker => {
             const title = marker.options.jobTitle.toLowerCase();
-            if (title.includes(query)) {
+            const markerPos = marker.getLatLng();
+            const distanceToUser = userLocation ? (getDistance(userLocation, [markerPos.lat, markerPos.lng])) : 0;
+            
+            const matchesSearch = title.includes(query);
+            const matchesRadius = (maxDist === 100) || (distanceToUser <= maxDist);
+
+            if (matchesSearch && matchesRadius) {
                 if (!map.hasLayer(marker)) marker.addTo(map);
                 count++;
             } else {
@@ -747,7 +796,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Mettre à jour le compteur
         document.getElementById('current-count').innerText = count;
     };
 
