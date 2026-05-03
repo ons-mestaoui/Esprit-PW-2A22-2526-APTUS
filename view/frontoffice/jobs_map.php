@@ -315,6 +315,29 @@ if (!isset($content)) {
         box-shadow: 0 15px 25px rgba(168, 100, 228, 0.4);
     }
 
+    .btn-external-maps {
+        background: #f8fafc;
+        color: #1e293b;
+        border: 2px solid #f1f5f9;
+        padding: 15px;
+        border-radius: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        text-decoration: none;
+    }
+    .btn-external-maps:hover {
+        background: #fff;
+        border-color: #4285F4;
+        color: #4285F4;
+        transform: translateY(-2px);
+    }
+    
     @keyframes slideInRight {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
@@ -724,10 +747,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <a href="apply.php?id=${offre.id_offre}" class="btn-apply-drawer">
                         <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Postuler maintenant
                     </a>
-                    <button onclick="getDirections(${lat}, ${lon}); closeDrawer();" style="border: 2px solid #f1f5f9; background: white; color: #1e293b; padding: 15px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;">
-                        <i class="fas fa-directions" style="margin-right: 8px; color: var(--accent-primary);"></i> Voir l'itinéraire
+                    <button onclick="getDirections(${lat}, ${lon}); closeDrawer();" style="border: 2px solid #f1f5f9; background: white; color: #1e293b; padding: 15px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class="fas fa-route" style="color: var(--accent-primary);"></i> Itinéraire interne
                     </button>
-                    <a href="job_details.php?id=${offre.id_offre}" style="text-align: center; color: #94a3b8; font-size: 0.8rem; text-decoration: none; margin-top: 10px;">
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank" class="btn-external-maps">
+                        <img src="https://www.google.com/images/branding/product/2x/maps_96dp.png" style="width: 20px;" alt="Google Maps">
+                        Ouvrir dans Google Maps
+                    </a>
+                    <a href="job_details.php?id=${offre.id_offre}" style="text-align: center; color: #94a3b8; font-size: 0.8rem; text-decoration: none; margin-top: 5px;">
                         Voir l'offre complète sur le site
                     </a>
                 </div>
