@@ -133,7 +133,7 @@ if (!isset($content)) {
     }
     .search-box input {
         width: 100%;
-        padding: 0.85rem 1rem 0.85rem 2.5rem;
+        padding: 0.85rem 1rem 0.85rem 3.25rem !important;
         border-radius: 14px;
         border: 1px solid var(--border-color);
         background: #fff;
@@ -148,10 +148,12 @@ if (!isset($content)) {
     }
     .search-box i {
         position: absolute;
-        left: 0.85rem;
+        left: 1.25rem;
         top: 50%;
         transform: translateY(-50%);
         color: var(--accent-primary);
+        font-size: 1.1rem;
+        z-index: 10;
     }
     .leaflet-routing-container {
         display: none; /* On gère l'affichage nous-mêmes */
@@ -170,6 +172,77 @@ if (!isset($content)) {
         border-right: 4px solid var(--accent-primary);
         animation: slideInRight 0.5s ease;
     }
+    .btn-center-me {
+        position: absolute;
+        bottom: 40px; /* Un peu plus bas */
+        right: 20px;
+        z-index: 1000;
+        width: 55px;
+        height: 55px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        cursor: pointer;
+        border: 2px solid rgba(168, 100, 228, 0.1);
+        color: #4fb5ff; /* Bleu Aptus */
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .btn-center-me i {
+        font-size: 1.5rem !important;
+        position: relative;
+        z-index: 1001;
+    }
+    .btn-center-me:hover {
+        transform: scale(1.15) rotate(90deg);
+        color: white;
+        background: var(--gradient-primary);
+        border-color: transparent;
+    }
+    .btn-center-me::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 2px solid var(--accent-primary);
+        animation: pulse-me 2s infinite;
+        opacity: 0;
+    }
+    @keyframes pulse-me {
+        0% { transform: scale(1); opacity: 0.5; }
+        100% { transform: scale(1.6); opacity: 0; }
+    }
+    
+    /* Style Hover Cards Tooltip */
+    .leaflet-tooltip-aptus {
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(8px);
+        border: none !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+        padding: 10px 15px !important;
+        font-family: 'Outfit', sans-serif !important;
+    }
+    .leaflet-tooltip-aptus::before {
+        display: none !important;
+    }
+    .hover-card-title {
+        color: var(--text-primary);
+        font-weight: 800;
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+        display: block;
+    }
+    .hover-card-company {
+        color: var(--accent-primary);
+        font-weight: 700;
+        font-size: 0.75rem;
+        display: block;
+    }
+
     @keyframes slideInRight {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
@@ -256,12 +329,26 @@ if (!isset($content)) {
     }
 </style>
 
-<div style="padding: 20px 25px 0 25px;">
-    <!-- Bouton Retour à l'extrémité -->
-    <a href="jobs_feed.php" class="btn-back-map" style="position: static; margin-bottom: 20px;" title="Retour aux offres">
-        <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
-        <span style="font-weight: 700; margin-left: 0.5rem;">Retour aux offres</span>
-    </a>
+<div style="padding: 20px 0 0 0;">
+    <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; width: calc(100% - 50px); margin-left: 25px;">
+        <!-- Ligne du haut : Retour + Compteur -->
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <a href="jobs_feed.php" class="btn-back-map" title="Retour aux offres">
+                <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+                <span style="font-weight: 700; margin-left: 0.5rem;">Retour aux offres</span>
+            </a>
+            <div id="job-count-badge" style="background: white; padding: 0.5rem 1.25rem; border-radius: 20px; font-size: 0.85rem; font-weight: 800; color: var(--accent-primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
+                <i class="fas fa-layer-group" style="margin-right: 8px; opacity: 0.7;"></i>
+                <span id="current-count">0</span> offres trouvées
+            </div>
+        </div>
+
+        <!-- Recherche dynamique d'offres (Full Width) -->
+        <div class="search-box" style="margin-top: 0; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.05); position: relative;">
+            <i class="fas fa-search"></i>
+            <input type="text" id="job-search" placeholder="Rechercher un poste par titre (ex: Développeur, Manager, Designer...)" onkeyup="filterOffres()" style="height: 55px; font-size: 1.1rem; border-radius: 18px; border: 2px solid transparent; transition: all 0.3s; background: white; width: 100%;">
+        </div>
+    </div>
 
     <div id="map-container">
         <!-- Panneau de guidage (Tout à droite) -->
@@ -333,6 +420,11 @@ if (!isset($content)) {
         </div>
 
         <div id="map"></div>
+        
+        <!-- Bouton Centrer sur moi -->
+        <button class="btn-center-me" onclick="centerOnMe()" title="Ma position actuelle">
+            <i class="fas fa-crosshairs" style="font-size: 1.25rem;"></i>
+        </button>
     </div>
 </div>
 
@@ -346,9 +438,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Initialisation de la carte (Centrée sur la Tunisie)
     const map = L.map('map').setView([36.8065, 10.1815], 11);
 
-    // 2. Ajout de la couche de tuiles (Thème Soft/Clean)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    // 2. Ajout de la couche de tuiles (Version Française d'OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap France | &copy; OpenStreetMap contributors'
     }).addTo(map);
 
     // 3. Récupération des offres depuis PHP
@@ -431,8 +523,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ]);
     }
 
-    // 5. Géocodage et affichage des offres avec délai (pour respecter l'API gratuite)
+    // 5. Géocodage et affichage des offres
+    let jobMarkers = []; // Stocker les marqueurs pour le filtrage
+    
     async function displayOffres(offresList) {
+        // Nettoyer les anciens marqueurs
+        jobMarkers.forEach(m => map.removeLayer(m));
+        jobMarkers = [];
+
         for (let i = 0; i < offresList.length; i++) {
             const offre = offresList[i];
             if (!offre.lieu) continue;
@@ -457,7 +555,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         iconAnchor: [20, 40]
                     });
 
-                    const marker = L.marker([lat, lon], { icon: customIcon }).addTo(map);
+                    const marker = L.marker([lat, lon], { 
+                        icon: customIcon,
+                        jobTitle: offre.titre // Stocker le titre pour le filtre
+                    }).addTo(map);
+
+                    // Hover Card (Tooltip)
+                    marker.bindTooltip(`
+                        <div class="hover-card">
+                            <span class="hover-card-title">${offre.titre}</span>
+                            <span class="hover-card-company">${offre.entreprise || 'Aptus Partner'}</span>
+                        </div>
+                    `, {
+                        className: 'leaflet-tooltip-aptus',
+                        direction: 'top',
+                        offset: [0, -35],
+                        opacity: 1
+                    });
 
                     const popupContent = `
                         <div style="min-width: 150px; padding: 2px;">
@@ -487,6 +601,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                     marker.bindPopup(popupContent);
+                    jobMarkers.push(marker); // Garder trace du marqueur
                 } else {
                     console.warn(`Lieu non trouvé pour l'offre #${offre.id_offre}: ${offre.lieu}`);
                 }
@@ -499,7 +614,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    displayOffres(offres);
+    displayOffres(offres).then(() => {
+        // Initialiser le compteur au premier chargement
+        document.getElementById('current-count').innerText = jobMarkers.length;
+    });
 
     // 6. Fonction pour l'itinéraire
     let routingControl = null;
@@ -524,7 +642,10 @@ document.addEventListener('DOMContentLoaded', () => {
             fitSelectedRoutes: true,
             show: false,
             lineOptions: {
-                styles: [{ color: '#a864e4', opacity: 0.8, weight: 8 }]
+                styles: [
+                    { color: 'white', opacity: 0.9, weight: 12 }, // Contour blanc pour le contraste
+                    { color: '#007aff', opacity: 1, weight: 8 }    // Ligne bleue électrique au centre
+                ]
             },
             createMarker: function() { return null; }
         }).on('routesfound', function(e) {
@@ -579,6 +700,15 @@ document.addEventListener('DOMContentLoaded', () => {
         else iconElement.className = "fas fa-arrow-up";
     }
 
+    window.centerOnMe = function() {
+        if (userLocation) {
+            map.flyTo(userLocation, 18, {
+                animate: true,
+                duration: 1.5
+            });
+        }
+    };
+
     window.startGuidage = function() {
         if (!routingControl) return;
         
@@ -601,6 +731,24 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('route-info').style.display = 'none';
         document.getElementById('guidage-panel').style.display = 'none';
         document.getElementById('btn-commencer').style.display = 'flex';
+    };
+
+    window.filterOffres = function() {
+        const query = document.getElementById('job-search').value.toLowerCase();
+        let count = 0;
+        
+        jobMarkers.forEach(marker => {
+            const title = marker.options.jobTitle.toLowerCase();
+            if (title.includes(query)) {
+                if (!map.hasLayer(marker)) marker.addTo(map);
+                count++;
+            } else {
+                if (map.hasLayer(marker)) map.removeLayer(marker);
+            }
+        });
+
+        // Mettre à jour le compteur
+        document.getElementById('current-count').innerText = count;
     };
 
     window.searchAddress = function() {
