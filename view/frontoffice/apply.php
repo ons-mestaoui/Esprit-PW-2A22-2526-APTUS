@@ -215,7 +215,7 @@ if (!isset($content)) {
                     </div>
                     <h2 style="font-size: 2.5rem; font-weight: 900; color: var(--text-primary); margin-bottom: 1rem;">Candidature envoyée !</h2>
                     <p style="color: var(--text-secondary); font-size: 1.2rem; margin-bottom: 3rem;">Bonne chance ! L'équipe vous recontactera très prochainement.</p>
-                    <a href="jobs_feed.php" class="btn btn-primary" style="padding: 1.25rem 3rem; border-radius: 18px; font-weight: 800; text-decoration: none; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); color: white; box-shadow: 0 10px 30px rgba(168, 100, 228, 0.3);">Découvrir d'autres offres</a>
+                    <a href="jobs_feed.php" class="btn btn-primary" style="padding: 1.25rem 3rem; border-radius: 18px; font-weight: 800; text-decoration: none;">Découvrir d'autres offres</a>
                 </div>
             <?php else: ?>
                 <div class="glass-card" style="padding: 3.5rem;">
@@ -277,7 +277,7 @@ if (!isset($content)) {
                         <?php endif; ?>
 
                         <div style="grid-column: span 2; margin-top: 1rem;">
-                            <button type="submit" style="width: 100%; padding: 1.25rem; border-radius: 20px; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); color: white; border: none; font-size: 1.25rem; font-weight: 900; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 15px 40px rgba(168, 100, 228, 0.4);" onmouseover="this.style.transform='translateY(-5px) scale(1.02)';" onmouseout="this.style.transform='translateY(0) scale(1)';">
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.25rem; border-radius: 20px; font-size: 1.25rem; font-weight: 900; border: none; color: white;">
                                 Soumettre ma candidature
                             </button>
                         </div>

@@ -146,21 +146,24 @@ if (!isset($content)) {
                         </div>
                     </div>
 
-                    <div style="display: flex; align-items: center; gap: 1.25rem;">
-                        <div style="width: 52px; height: 52px; background: rgba(245, 158, 11, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #f59e0b;">
-                            <i data-lucide="map-pin" style="width: 26px; height: 26px;"></i>
+                        <div style="display: flex; align-items: center; gap: 1.25rem;">
+                            <div style="width: 52px; height: 52px; background: rgba(245, 158, 11, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #f59e0b;">
+                                <i data-lucide="map-pin" style="width: 26px; height: 26px;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-tertiary); font-weight: 700;">Localisation</div>
+                                <div style="font-weight: 800; color: var(--text-primary);"><?php echo htmlspecialchars($offre['lieu'] ?? 'Tunis, Tunisie'); ?></div>
+                            </div>
                         </div>
-                        <div>
-                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-tertiary); font-weight: 700;">Localisation</div>
-                            <div style="font-weight: 800; color: var(--text-primary);"><?php echo htmlspecialchars($offre['lieu'] ?? 'Tunis, Tunisie'); ?></div>
-                        </div>
-                    </div>
+                        <button type="button" class="btn btn-sm btn-primary" style="padding: 0.5rem 1rem; border-radius: 12px; font-weight: 700; cursor: default;">
+                            Afficher Maps <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+                        </button>
                 </div>
 
                 <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
                     <form action="apply.php" method="GET" style="margin-bottom: 1.5rem;">
                         <input type="hidden" name="id" value="<?php echo $id_offre; ?>">
-                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.25rem; border-radius: 18px; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); border: none; color: white; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 10px 30px rgba(168, 100, 228, 0.4);" onmouseover="this.style.transform='translateY(-5px) scale(1.02)'; this.style.boxShadow='0 15px 40px rgba(168, 100, 228, 0.5)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 10px 30px rgba(168, 100, 228, 0.4)';">
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.25rem; border-radius: 18px; font-weight: 800; font-size: 1.1rem; border: none; color: white;">
                             <i data-lucide="send" style="width: 22px; height: 22px;"></i>
                             Postuler maintenant
                         </button>

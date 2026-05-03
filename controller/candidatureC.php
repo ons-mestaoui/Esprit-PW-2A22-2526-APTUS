@@ -205,6 +205,32 @@ class candidatureC {
         }
     }
 
+    // Récupérer une candidature spécifique par son ID
+    public function getCandidatureById($id) {
+        $sql = "SELECT * FROM candidatures WHERE id_candidature = :id";
+        $db = config::getConnexion();
+        try {
+            $query = $db->prepare($sql);
+            $query->execute(['id' => $id]);
+            return $query->fetch();
+        } catch (Exception $e) {
+            die('Error:' . $e->getMessage());
+        }
+    }
+
+    // Récupérer les candidatures d'un candidat spécifique
+    public function getCandidaturesByCandidat($id_candidat) {
+        $sql = "SELECT * FROM candidatures WHERE id_candidat = :id ORDER BY date_candidature DESC";
+        $db = config::getConnexion();
+        try {
+            $query = $db->prepare($sql);
+            $query->execute(['id' => $id_candidat]);
+            return $query->fetchAll();
+        } catch (Exception $e) {
+            die('Error:' . $e->getMessage());
+        }
+    }
+
     // Vérifier si un candidat a déjà postulé à une offre
     public function hasAlreadyApplied($id_candidat, $id_offre) {
         $sql = "SELECT COUNT(*) FROM candidatures WHERE id_candidat = :id_c && id_offre = :id_o";

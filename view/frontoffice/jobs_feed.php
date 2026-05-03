@@ -517,7 +517,7 @@ if (!isset($content)) {
               <span class="job-card__date">
                 <i data-lucide="calendar" style="width:12px;height:12px;"></i> <?php echo htmlspecialchars($offreItem['date_publication'] ?? ''); ?>
               </span>
-                <a href="job_details.php?id=<?php echo $offreItem['id_offre']; ?>" class="btn btn-sm" style="background: linear-gradient(90deg, #4fb5ff 0%, #a864e4 50%, #d85ab2 100%); border: none; color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; text-decoration: none; box-shadow: 0 4px 15px rgba(168, 100, 228, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                <a href="job_details.php?id=<?php echo $offreItem['id_offre']; ?>" class="btn btn-sm btn-primary">
                   <i data-lucide="eye" style="width:14px;height:14px;"></i> Voir détails
                 </a>
             </div>
