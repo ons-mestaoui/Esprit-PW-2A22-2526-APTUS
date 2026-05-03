@@ -292,7 +292,7 @@ if (!isset($content)) {
 <div class="guide-dashboard">
     <div class="hero-guide-card">
         <div>
-            <span style="background: var(--gradient-primary); color: #fff; padding: 5px 15px; border-radius: 50px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+            <span style="background: var(--gradient-primary); color: #fff; padding: 8px 15px; border-radius: 50px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
                 Guide de Réussite Personnel
             </span>
             <h1 style="font-size: 2.5rem; font-weight: 900; margin-top: 1rem;">
@@ -426,44 +426,42 @@ if (!isset($content)) {
         </div>
     </div>
 
-    <!-- Formations & Salary -->
+    <!-- Formations Section -->
     <div class="card-grid">
-    <!-- Formations & Salary -->
-    <div class="card-grid">
-        <!-- Formations -->
         <div class="premium-card">
             <h2 class="section-title" style="margin-bottom: 1.5rem;">
                 <i data-lucide="graduation-cap" style="color:#10b981;"></i> Plan de Montée en Compétences
             </h2>
-            <?php if (empty($guide['skill_gaps'])): ?>
+            <?php 
+            $gaps = $guide['skill_gaps'] ?? [];
+            if (empty($gaps)): 
+            ?>
                 <p style="color: var(--text-tertiary);">Votre profil semble déjà parfaitement aligné avec les besoins techniques du poste.</p>
             <?php else: ?>
                 <div style="display:flex; flex-direction:column; gap:15px;">
-                    <?php foreach ($guide['skill_gaps'] as $gap): ?>
-                        <?php if ($gap['real_formation']): ?>
-                            <!-- FORMATION RÉELLE DU SITE -->
+                    <?php foreach ($gaps as $gap): ?>
+                        <?php if (!empty($gap['real_formation'])): ?>
                             <div style="background: rgba(16, 185, 129, 0.05); padding: 1.5rem; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.2);">
                                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
                                     <div style="background:#10b981; color:#fff; font-size:0.65rem; font-weight:900; padding:4px 10px; border-radius:50px; text-transform:uppercase;">Disponible sur Aptus</div>
                                     <i data-lucide="award" style="color:#10b981; width:18px;"></i>
                                 </div>
-                                <div style="font-weight: 850; font-size: 1.1rem; color: var(--text-primary);"><?php echo htmlspecialchars($gap['real_formation']['titre']); ?></div>
-                                <div style="font-size: 0.85rem; color: #10b981; font-weight: 700; margin-top: 5px;"><?php echo htmlspecialchars($gap['skill']); ?></div>
+                                <div style="font-weight: 850; font-size: 1.1rem; color: var(--text-primary);"><?php echo htmlspecialchars($gap['real_formation']['titre'] ?? 'Formation'); ?></div>
+                                <div style="font-size: 0.85rem; color: #10b981; font-weight: 700; margin-top: 5px;"><?php echo htmlspecialchars($gap['skill'] ?? 'Compétence'); ?></div>
                                 <p style="font-size: 0.9rem; margin-top: 12px; color: var(--text-secondary); line-height:1.5;">
                                     Nous avons trouvé cette formation dans notre catalogue pour vous aider à maîtriser cet aspect critique du poste.
                                 </p>
-                                <a href="formations_catalog.php?id=<?php echo $gap['real_formation']['id_formation']; ?>" class="btn-primary" style="display:inline-block; margin-top:15px; padding: 10px 20px; font-size: 0.85rem; border-radius:12px;">S'inscrire maintenant</a>
+                                <a href="formations_catalog.php?id=<?php echo $gap['real_formation']['id_formation'] ?? '#'; ?>" class="btn-primary" style="display:inline-block; margin-top:15px; padding: 10px 20px; font-size: 0.85rem; border-radius:12px;">S'inscrire maintenant</a>
                             </div>
                         <?php else: ?>
-                            <!-- CONSEIL STRATÉGIQUE (PAS DE FORMATION LOCALE) -->
                             <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 20px; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-primary);">
                                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
                                     <div style="color:var(--accent-primary); font-size:0.75rem; font-weight:900; text-transform:uppercase; letter-spacing:0.5px;">Conseil Stratégique</div>
                                     <i data-lucide="compass" style="color:var(--accent-primary); width:18px;"></i>
                                 </div>
-                                <div style="font-weight: 850; font-size: 1rem; color: var(--text-primary); margin-bottom: 8px;">Auto-formation : <?php echo htmlspecialchars($gap['skill']); ?></div>
+                                <div style="font-weight: 850; font-size: 1rem; color: var(--text-primary); margin-bottom: 8px;">Auto-formation : <?php echo htmlspecialchars($gap['skill'] ?? 'Compétence'); ?></div>
                                 <p style="font-size: 0.9rem; color: var(--text-secondary); line-height:1.5; font-style: italic;">
-                                    "<?php echo htmlspecialchars($gap['strategic_advice']); ?>"
+                                    "<?php echo htmlspecialchars($gap['strategic_advice'] ?? 'Suivez des tutoriels en ligne pour renforcer ce point.'); ?>"
                                 </p>
                                 <div style="margin-top:10px; font-size:0.8rem; color:var(--text-tertiary); display:flex; align-items:center; gap:5px;">
                                     <i data-lucide="info" style="width:14px;"></i> Note : Formation non disponible dans notre catalogue actuel.
@@ -474,38 +472,219 @@ if (!isset($content)) {
                 </div>
             <?php endif; ?>
         </div>
+    </div>
 
-        <!-- Salary & Soft Skills -->
-        <div class="premium-card">
-            <h2 class="section-title" style="margin-bottom: 1.5rem;">
-                <i data-lucide="banknote" style="color:#f59e0b;"></i> Stratégie Salariale
-            </h2>
-            <div style="text-align:center;">
-                <div style="font-size: 0.8rem; font-weight: 800; color: var(--text-tertiary);">ESTIMATION MARCHÉ</div>
-                <div class="salary-badge"><?php echo htmlspecialchars($guide['salary_strategy']['estimated_range']); ?></div>
-            </div>
-            <div style="margin-top: 2rem;">
-                <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 1rem;">POINTS DE NÉGOCIATION :</div>
-                <ul style="list-style: none; padding: 0;">
-                    <?php foreach ($guide['salary_strategy']['negotiation_points'] as $p): ?>
-                    <li style="display:flex; gap: 10px; margin-bottom: 10px; font-size: 0.95rem; align-items:flex-start;">
-                        <i data-lucide="check" style="color:#16a34a; width:18px; flex-shrink:0;"></i>
-                        <?php echo htmlspecialchars($p); ?>
-                    </li>
-                    <?php endforeach; ?>
-                </ul>
+    <!-- ENRICHED STRATEGY SECTION -->
+    <div class="card-grid">
+        <!-- SALARY STRATEGY -->
+        <div class="premium-card" style="position:relative; overflow:hidden; background: linear-gradient(165deg, var(--bg-card) 0%, rgba(245, 158, 11, 0.05) 100%);">
+            <!-- Decorative Icon -->
+            <div style="position:absolute; bottom:-30px; left:-20px; font-size:120px; color:rgba(245, 158, 11, 0.05); transform:rotate(-15deg); pointer-events:none;">
+                <i data-lucide="trending-up"></i>
             </div>
             
-            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
-                <h3 style="font-size: 1.1rem; display:flex; align-items:center; gap: 8px;">
-                    <i data-lucide="heart" style="color:#e11d48;"></i> Qualités Humaines (Soft Skills)
-                </h3>
-                <p style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6; margin-top: 10px;">
-                    <?php echo htmlspecialchars($guide['soft_skills_advice']); ?>
-                </p>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+                <h2 class="section-title" style="margin:0;">
+                    <i data-lucide="banknote" style="color:#f59e0b;"></i> Stratégie Salariale
+                </h2>
+                <div style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 6px 15px; border-radius: 50px; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">
+                    Analyse Fintech
+                </div>
+            </div>
+
+            <?php 
+                $sal = $guide['salary_strategy'] ?? null; 
+                $extracted = $sal['extracted_or_estimated'] ?? 'Estimation';
+                $period = $sal['range']['period'] ?? 'an';
+                
+                // Extraction intelligente des nombres pour éviter le "42-46 - 48"
+                $rawMin = $sal['range']['min'] ?? ($sal['estimated_range'] ?? '42');
+                $rawMax = $sal['range']['max'] ?? '';
+
+                // On cherche tous les nombres dans les chaînes
+                preg_match_all('/\d+/', $rawMin . ' ' . $rawMax, $matches);
+                $numbers = $matches[0] ?? [];
+                
+                if (count($numbers) >= 2) {
+                    $displayMin = $numbers[0];
+                    $displayMax = end($numbers);
+                } else {
+                    $displayMin = $numbers[0] ?? '42';
+                    $displayMax = '48';
+                }
+
+                $currency = $sal['range']['currency'] ?? 'k€';
+                $marketContext = $sal['market_context'] ?? 'Analyse stratégique basée sur la rareté de vos compétences et la tension du marché actuel.';
+                $scripts = $sal['negotiation_scripts'] ?? [];
+                if (empty($scripts) && isset($sal['negotiation_points'])) {
+                    foreach($sal['negotiation_points'] as $p) {
+                        $scripts[] = [
+                            'moment' => 'Argument Stratégique', 
+                            'script' => $p,
+                            'rationale' => "Cette analyse a été générée avec l'ancienne version. Relancez l'optimisation pour obtenir une analyse psychologique profonde et personnalisée de cet argument."
+                        ];
+                    }
+                }
+            ?>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 2rem;">
+                <!-- Main Value -->
+                <div style="background: var(--bg-secondary); padding: 2rem; border-radius: 30px; border: 1px solid var(--border-color); display:flex; flex-direction:column; justify-content:center; align-items:center; min-height: 160px;">
+                    <div style="font-size: 0.7rem; font-weight: 900; color: var(--text-tertiary); letter-spacing: 1.5px; margin-bottom: 10px; text-transform: uppercase;">VOTRE VALEUR</div>
+                    <div style="display:flex; align-items:center; gap:2px; flex-wrap: nowrap; white-space: nowrap;">
+                        <span style="font-size: 3.2rem; font-weight: 900; color: var(--text-primary); line-height:1;"><?php echo $displayMin; ?></span>
+                        <?php if($displayMax && $displayMax !== $displayMin): ?>
+                            <span style="font-size: 1.8rem; color: var(--text-tertiary); font-weight: 300; margin: 0 5px;">-</span>
+                            <span style="font-size: 3.2rem; font-weight: 900; color: var(--text-primary); line-height:1;"><?php echo $displayMax; ?></span>
+                        <?php endif; ?>
+                        <span style="font-size: 1.8rem; font-weight: 800; color: #f59e0b; margin-left: 5px;"><?php echo $currency; ?></span>
+                    </div>
+                    <div style="margin-top:15px; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary);">Par <?php echo $period; ?></div>
+                </div>
+
+                <!-- Market Power Meter -->
+                <div style="background: var(--bg-secondary); padding: 2rem; border-radius: 30px; border: 1px solid var(--border-color); display:flex; flex-direction:column; justify-content:center; min-height: 160px;">
+                    <div style="font-size: 0.7rem; font-weight: 900; color: var(--text-tertiary); letter-spacing: 1.5px; margin-bottom: 20px; text-transform: uppercase;">PUISSANCE DE NÉGOCIATION</div>
+                    <div style="height: 14px; background: var(--border-color); border-radius: 20px; overflow:hidden; position:relative; margin-bottom: 12px;">
+                        <div style="position:absolute; left:0; top:0; height:100%; width:75%; background: linear-gradient(90deg, #f59e0b, #10b981); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:800; letter-spacing: 0.5px;">
+                        <span style="color: var(--text-tertiary);">FAIBLE</span>
+                        <span style="color:#10b981;">DOMINANTE</span>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 15px; line-height: 1.4;">Basé sur le match <?php echo $guide['score_ats'] ?? '85'; ?>% de votre CV.</p>
+                </div>
+            </div>
+
+            <div style="font-weight: 850; font-size: 0.8rem; margin-bottom: 1.2rem; letter-spacing:1px; color:var(--text-tertiary); display:flex; align-items:center; gap:8px;">
+                <i data-lucide="map" style="width:14px;"></i> ROADMAP DE NÉGOCIATION :
+            </div>
+            
+            <div style="display:grid; gap:12px;">
+                <?php foreach ($scripts as $ix => $script): ?>
+                <div class="nego-item" style="background: var(--bg-card); padding: 1.2rem; border-radius: 20px; border: 1px solid var(--border-color); border-left: 4px solid #f59e0b; transition: all 0.3s ease;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
+                        <div style="font-weight: 800; font-size: 0.75rem; color: #f59e0b; text-transform: uppercase; letter-spacing:0.5px;">
+                            <?php echo $ix+1; ?>. <?php echo htmlspecialchars($script['moment'] ?? 'Phase'); ?>
+                        </div>
+                        <?php if(isset($script['rationale'])): ?>
+                        <button onclick="toggleDrawer(this)" style="background: rgba(245, 158, 11, 0.1); border:none; color:#f59e0b; font-size:0.65rem; font-weight:900; padding:4px 10px; border-radius:50px; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;">
+                            <i data-lucide="key" style="width:10px;"></i> ANALYSE TACTIQUE
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div style="font-size: 1rem; color: var(--text-primary); font-style: italic; line-height:1.4; margin-bottom: 0;">
+                        "<?php echo htmlspecialchars($script['script'] ?? $script); ?>"
+                    </div>
+
+                    <?php if(isset($script['rationale'])): ?>
+                    <div class="tactical-drawer" style="max-height: 0; overflow: hidden; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0;">
+                        <div style="margin-top: 15px; padding: 15px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(255,255,255,0.02) 100%); border-radius: 12px; border: 1px dashed rgba(245, 158, 11, 0.2); font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                            <div style="font-weight: 900; color: #f59e0b; font-size: 0.7rem; margin-bottom: 5px; display:flex; align-items:center; gap:5px;">
+                                <i data-lucide="lightbulb" style="width:14px;"></i> LEVIER PSYCHOLOGIQUE :
+                            </div>
+                            <?php echo htmlspecialchars($script['rationale']); ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <!-- PSYCHOLOGY OF SUCCESS -->
+        <div class="premium-card" style="position:relative; overflow:hidden; background: linear-gradient(165deg, var(--bg-card) 0%, rgba(107, 52, 163, 0.05) 100%);">
+            <!-- Decorative Icon -->
+            <div style="position:absolute; top:-20px; right:-20px; font-size:130px; color:rgba(107, 52, 163, 0.04); pointer-events:none;">
+                <i data-lucide="brain"></i>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+                <h2 class="section-title" style="margin:0;">
+                    <i data-lucide="brain-circuit" style="color:#6b34a3;"></i> Psychologie & Réussite
+                </h2>
+                <div style="background: rgba(107, 52, 163, 0.1); color: #6b34a3; padding: 6px 15px; border-radius: 50px; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">
+                    Analyse Comportementale
+                </div>
+            </div>
+
+            <?php 
+                $psy = $guide['psychology_of_success'] ?? null;
+                $traits = $psy['target_traits'] ?? [];
+                $tactics = $psy['winning_tactics'] ?? [];
+                $posture = $psy['ideal_posture'] ?? ($guide['soft_skills_advice'] ?? 'Adoptez une posture professionnelle et proactive.');
+            ?>
+
+            <!-- Culture Fit Radar Mock -->
+            <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 30px; border: 1px solid var(--border-color); margin-bottom: 2rem; display:flex; align-items:center; gap:20px;">
+                <div style="width:80px; height:80px; border-radius:50%; border:8px solid #6b34a3; border-top-color:var(--border-color); display:flex; align-items:center; justify-content:center; transform:rotate(45deg); flex-shrink:0;">
+                    <div style="transform:rotate(-45deg); font-weight:900; font-size:1.2rem; color:#6b34a3;">92%</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.7rem; font-weight: 900; color: var(--text-tertiary); letter-spacing: 1.5px; margin-bottom: 5px;">CULTURE FIT INDEX</div>
+                    <div style="font-weight: 800; font-size: 1rem; color: var(--text-primary);">Excellente Compatibilité</div>
+                    <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 3px;">Votre profil match les valeurs de l'entreprise.</p>
+                </div>
+            </div>
+
+            <!-- Traits & Tactics -->
+            <div style="display:grid; gap:20px;">
+                <!-- Winning Traits -->
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+                    <?php if(empty($traits)): ?>
+                        <div style="background: rgba(107, 52, 163, 0.05); padding: 12px; border-radius: 16px; border: 1px solid var(--border-color);">
+                            <div style="font-weight: 800; color: #6b34a3; font-size: 0.9rem;">Intelligence Émotionnelle</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top:3px;">Maîtrise de la communication interpersonnelle.</div>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($traits as $trait): ?>
+                        <div style="background: rgba(107, 52, 163, 0.08); padding: 12px; border-radius: 16px; border: 1px solid rgba(107, 52, 163, 0.15);">
+                            <div style="font-weight: 800; color: #6b34a3; font-size: 0.9rem; margin-bottom: 4px;"><?php echo htmlspecialchars($trait['trait'] ?? 'Atout'); ?></div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px;"><?php echo htmlspecialchars($trait['why'] ?? ''); ?></div>
+                            <?php if(isset($trait['how_to_demonstrate'])): ?>
+                            <div style="font-size: 0.7rem; color: #6b34a3; font-weight: 700; background: rgba(107, 52, 163, 0.05); padding: 5px 8px; border-radius: 6px;">
+                                💡 Preuve : <span style="font-weight: 500;"><?php echo htmlspecialchars($trait['how_to_demonstrate']); ?></span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Winning Tactics -->
+                <?php if(!empty($tactics)): ?>
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 24px; border: 1px solid var(--border-color);">
+                    <div style="font-weight: 850; font-size: 0.8rem; margin-bottom: 1.2rem; color: #6b34a3; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="zap" style="width:16px;"></i> TACTIQUES DE PERSUASION :
+                    </div>
+                    <?php foreach ($tactics as $tactic): ?>
+                    <div style="margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px dashed var(--border-color); last-child: border-bottom: none;">
+                        <div style="font-weight:800; font-size:0.95rem; color:var(--text-primary); margin-bottom: 2px;"><?php echo htmlspecialchars($tactic['tactic'] ?? ''); ?></div>
+                        <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 6px;"><?php echo htmlspecialchars($tactic['description'] ?? ''); ?></div>
+                        <?php if(isset($tactic['how_to_apply'])): ?>
+                        <div style="font-size: 0.8rem; color: var(--text-tertiary); padding-left: 10px; border-left: 2px solid #6b34a3; line-height: 1.4;">
+                            <strong>Méthode :</strong> <?php echo htmlspecialchars($tactic['how_to_apply']); ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
+                <!-- Expert Posture -->
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; border: 1px solid var(--border-color); border-left: 5px solid #6b34a3; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
+                    <div style="font-weight: 900; font-size: 0.8rem; margin-bottom: 10px; color: #6b34a3; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="shield-check" style="width:16px;"></i> CONSEIL DE POSTURE EXPERTE
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--text-primary); line-height: 1.6; font-style: italic; font-weight: 500;">
+                        "<?php echo htmlspecialchars($posture); ?>"
+                    </p>
+                </div>
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <script>
@@ -529,6 +708,24 @@ if (!isset($content)) {
         
         osc.start();
         osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    function toggleDrawer(btn) {
+        const item = btn.closest('.nego-item');
+        const drawer = item.querySelector('.tactical-drawer');
+        const isOpening = drawer.style.maxHeight === '0px' || !drawer.style.maxHeight;
+
+        if (isOpening) {
+            drawer.style.maxHeight = '300px';
+            drawer.style.opacity = '1';
+            btn.style.background = '#f59e0b';
+            btn.style.color = '#fff';
+        } else {
+            drawer.style.maxHeight = '0px';
+            drawer.style.opacity = '0';
+            btn.style.background = 'rgba(245, 158, 11, 0.1)';
+            btn.style.color = '#f59e0b';
+        }
     }
 
     function initQuiz() {

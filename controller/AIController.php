@@ -330,41 +330,80 @@ class AIController {
             'competences' => strip_tags($oldCVData['competences'] ?? '')
         ];
 
-        // 2. Demander à l'IA d'analyser les AJOUTS (Differential Analysis)
-        $prompt = "Tu es un Expert en Recrutement Stratégique. 
-        Ta mission est de comparer le CV ORIGINAL et le CV OPTIMISÉ du candidat par rapport à l'OFFRE D'EMPLOI fournie.
-        
-        OBJECTIF : Identifie les 3 compétences techniques ou mots-clés qui ont été AJOUTÉS ou ENRICHIS dans le CV optimisé pour correspondre à l'offre, mais que le candidat ne possédait pas (ou peu) dans son CV original.
-        
-        STRUCTURE DU JSON À RENVOYER :
-        {
-          \"justifications\": [
-             {\"champ\": \"Résumé\", \"raison\": \"...\"},
-             {\"champ\": \"Expériences\", \"raison\": \"...\"},
-             {\"champ\": \"Compétences\", \"raison\": \"...\"},
-             {\"champ\": \"Langues\", \"raison\": \"...\"}
-          ],
-          \"skill_gaps\": [
-             {
-               \"skill\": \"Nom de la compétence ajoutée\",
-               \"strategic_advice\": \"Conseil dynamique sur comment maîtriser RÉELLEMENT cette compétence ajoutée pour passer l'entretien avec succès. Explique pourquoi cet ajout était nécessaire pour l'ATS.\"
-             }
-          ],
-          \"company_insights\": { \"culture\": \"...\", \"strategic_tips\": \"...\" },
-          \"interview_quiz\": [
-             {
-               \"question\": \"...\",
-               \"options\": [\"...\", \"...\", \"...\"],
-               \"correct_index\": 2,
-               \"explanation\": \"...\"
-             }
-          ],
-          \"soft_skills_advice\": \"...\",
-          \"salary_strategy\": {
-             \"estimated_range\": \"...\",
-             \"negotiation_points\": [\"...\", \"...\", \"...\"]
-          }
-        }";
+        // 2. Nouveau Prompt Stratégique (Tactique & Psychologique)
+        $prompt = "Tu es l'Expert Ultime en Coaching de Carrière, Négociation Salariale et Psychologie du Recrutement.
+
+TON ET STYLE :
+- Direct, tactique et professionnel. 
+- Évite les phrases génériques (\"Il est important de...\"). 
+- Utilise un ton \"Insider\" : donne des conseils concrets que seul un recruteur senior connaîtrait.
+
+1. STRATÉGIE SALARIALE (PRECISION CRITIQUE) :
+- EXTRACTION : Si un salaire est mentionné dans l'offre, extrais-le impérativement.
+- ESTIMATION : Si absent, effectue une estimation précise basée sur le marché actuel en France pour ce poste et ce type d'entreprise.
+- UNITÉ : Précise clairement si c'est \"par an\" (K€) ou \"par mois\" (Net).
+- NÉGOCIATION : Fournis des scripts de négociation \"High-Stakes\" pour maximiser la rémunération. 
+  *INTERDICTION STRICTE* : Ne donne JAMAIS de mots isolés comme \"Expérience\" ou \"Compétences\". 
+  Chaque script doit être une phrase complète, tactique et prête à être dite oralement (ex: \"Au vu de mon expertise sur [Projet X], je propose...\").
+
+2. PSYCHOLOGIE ET RÉUSSITE DU RECRUTEMENT :
+- TRAITS CIBLÉS : Identifie les 3 traits de caractère (Soft Skills) qui feront \"mouche\" spécifiquement pour cette entreprise et son secteur.
+- PSYCHOLOGIE DE LA PERSUASION : Donne des conseils sur comment \"gagner\" l'entretien (ex: comment créer un ancrage positif, comment utiliser la preuve sociale dans ses réponses).
+- POSTURE : Décris la posture mentale et physique idéale pour ce recrutement spécifique.
+
+STRUCTURE JSON :
+{
+  \"justifications\": [
+     {\"champ\": \"Résumé\", \"raison\": \"...\"},
+     {\"champ\": \"Expériences\", \"raison\": \"...\"},
+     {\"champ\": \"Compétences\", \"raison\": \"...\"},
+     {\"champ\": \"Langues\", \"raison\": \"...\"}
+  ],
+  \"skill_gaps\": [
+     {
+       \"skill\": \"Nom de la compétence ajoutée\",
+       \"strategic_advice\": \"Conseil dynamique sur comment maîtriser RÉELLEMENT cette compétence ajoutée pour passer l'entretien avec succès. Explique pourquoi cet ajout était nécessaire pour l'ATS.\"
+     }
+  ],
+  \"salary_strategy\": {
+    \"extracted_or_estimated\": \"Extrait\" | \"Estimé\",
+    \"range\": {\"min\": \"...\", \"max\": \"...\", \"period\": \"An\" | \"Mois\", \"currency\": \"€\"},
+    \"market_context\": \"Analyse tactique du marché.\",
+    \"negotiation_scripts\": [
+       {
+         \"moment\": \"Quand aborder le sujet\", 
+         \"script\": \"Le verbatim exact à utiliser\",
+         \"rationale\": \"L'explication psychologique : pourquoi cette phrase est efficace et quel levier elle actionne chez le recruteur.\"
+       }
+    ]
+  },
+  \"psychology_of_success\": {
+    \"target_traits\": [
+      {
+        \"trait\": \"...\", 
+        \"why\": \"Pourquoi ça leur plaît\",
+        \"how_to_demonstrate\": \"Un exemple concret ou une manière d'illustrer ce trait pendant l'entretien.\"
+      }
+    ],
+    \"winning_tactics\": [
+      {
+        \"tactic\": \"Titre\", 
+        \"description\": \"Description de la tactique\",
+        \"how_to_apply\": \"Étapes concrètes et méthodologie pour mettre en œuvre cette tactique efficacement.\"
+      }
+    ],
+    \"ideal_posture\": \"Description de l'attitude gagnante avec explication du ressenti visé chez le recruteur.\"
+  },
+  \"interview_quiz\": [
+     {
+       \"question\": \"...\",
+       \"options\": [\"...\", \"...\", \"...\"],
+       \"correct_index\": 2,
+       \"explanation\": \"...\"
+     }
+  ],
+  \"company_insights\": { \"culture\": \"...\", \"strategic_tips\": \"...\" }
+}";
 
         $userInput = "OFFRE D'EMPLOI : " . json_encode($jobData) . "\n\n" .
                      "CV ORIGINAL : " . json_encode($cleanOldCV) . "\n\n" .
