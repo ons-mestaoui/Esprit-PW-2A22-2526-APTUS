@@ -243,6 +243,78 @@ if (!isset($content)) {
         display: block;
     }
 
+    /* Side Drawer Style */
+    .side-drawer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 380px;
+        height: 100%;
+        background: white;
+        z-index: 2000;
+        box-shadow: 20px 0 50px rgba(0,0,0,0.1);
+        transform: translateX(-100%);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        overflow-y: auto;
+    }
+    .side-drawer.open {
+        transform: translateX(0);
+    }
+    .drawer-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+    .drawer-close:hover {
+        background: #f1f5f9;
+        color: #ef4444;
+    }
+    .drawer-image {
+        width: 100%;
+        height: 180px;
+        border-radius: 20px;
+        object-fit: cover;
+        background: var(--gradient-primary);
+    }
+    .drawer-badge {
+        background: rgba(168, 100, 228, 0.1);
+        color: var(--accent-primary);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        width: fit-content;
+    }
+    .btn-apply-drawer {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 15px;
+        border-radius: 14px;
+        text-align: center;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: 0 10px 20px rgba(168, 100, 228, 0.3);
+        transition: all 0.3s;
+    }
+    .btn-apply-drawer:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 25px rgba(168, 100, 228, 0.4);
+    }
+
     @keyframes slideInRight {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
@@ -365,6 +437,16 @@ if (!isset($content)) {
     </div>
 
     <div id="map-container">
+        <!-- Side Drawer -->
+        <div id="side-drawer" class="side-drawer">
+            <div class="drawer-close" onclick="closeDrawer()">
+                <i class="fas fa-times"></i>
+            </div>
+            <div id="drawer-content">
+                <!-- Rempli par JS -->
+            </div>
+        </div>
+
         <!-- Panneau de guidage (Tout à droite) -->
         <div id="guidage-panel" class="guidage-panel">
             <div id="instruction-upcoming" class="instruction-upcoming" style="display: none;">
@@ -574,11 +656,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         jobTitle: offre.titre // Stocker le titre pour le filtre
                     }).addTo(map);
 
+                    // Au lieu d'un popup, on ouvre le Side Drawer au clic
+                    marker.on('click', () => {
+                        openDrawer(offre, lat, lon);
+                    });
+
                     // Hover Card (Tooltip)
                     marker.bindTooltip(`
                         <div class="hover-card">
                             <span class="hover-card-title">${offre.titre}</span>
-                            <span class="hover-card-company">${offre.entreprise || 'Aptus Partner'}</span>
+                            <span class="hover-card-company">${offre.nom_entreprise || offre.entreprise || 'Entreprise'}</span>
                         </div>
                     `, {
                         className: 'leaflet-tooltip-aptus',
@@ -587,34 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         opacity: 1
                     });
 
-                    const popupContent = `
-                        <div style="min-width: 150px; padding: 2px;">
-                            <h3 style="margin: 0 0 6px; font-weight: 800; color: #1e293b; font-size: 1rem; line-height: 1.2;">${offre.titre}</h3>
-                            
-                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                                <div style="width: 20px; height: 20px; background: #f1f5f9; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-building" style="font-size: 0.6rem; color: #64748b;"></i>
-                                </div>
-                                <span style="color: #9333ea; font-weight: 700; font-size: 0.8rem;">${offre.nom_entreprise}</span>
-                            </div>
-
-                            <div style="display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 0.75rem; margin-bottom: 10px;">
-                                <i class="fas fa-map-marker-alt" style="color: #cbd5e1; font-size: 0.7rem;"></i>
-                                <span>${offre.lieu}</span>
-                            </div>
-
-                            <a href="#" onclick="getDirections(${lat}, ${lon})" class="btn-route">
-                                <i class="fas fa-directions"></i> Itinéraire
-                            </a>
-                            
-                            <div style="text-align: center; margin-top: 10px;">
-                                <a href="job_details.php?id=${offre.id_offre}" style="font-size: 0.75rem; color: #94a3b8; text-decoration: none;">
-                                    Détails complets
-                                </a>
-                            </div>
-                        </div>
-                    `;
-                    marker.bindPopup(popupContent);
+                    jobMarkers.push(marker); // Garder trace du marqueur
                     jobMarkers.push(marker); // Garder trace du marqueur
                 } else {
                     console.warn(`Lieu non trouvé pour l'offre #${offre.id_offre}: ${offre.lieu}`);
@@ -633,7 +693,56 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('current-count').innerText = jobMarkers.length;
     });
 
-    // 6. Fonction pour l'itinéraire
+    // 6. Gestion du Side Drawer
+    window.openDrawer = function(offre, lat, lon) {
+        const drawer = document.getElementById('side-drawer');
+        const content = document.getElementById('drawer-content');
+        
+        content.innerHTML = `
+            <div style="margin-top: 20px;">
+                <div class="drawer-badge">Offre Active</div>
+                <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary); margin: 15px 0 5px 0; line-height: 1.1;">${offre.titre}</h2>
+                <p style="color: var(--accent-primary); font-weight: 700; font-size: 1rem; margin-bottom: 20px;">${offre.nom_entreprise || offre.entreprise || 'Entreprise'}</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px;">
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; display: block;">Lieu</span>
+                        <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">${offre.lieu}</span>
+                    </div>
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; display: block;">Type</span>
+                        <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Temps Plein</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h4 style="font-size: 0.85rem; font-weight: 800; color: var(--text-primary); margin-bottom: 10px;">Description courte</h4>
+                    <p style="font-size: 0.9rem; color: #64748b; line-height: 1.6;">Nous recherchons un talent passionné pour rejoindre notre équipe à ${offre.lieu}. Cette opportunité vous permettra de travailler sur des projets innovants chez ${offre.nom_entreprise || offre.entreprise || 'notre partenaire'}.</p>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <a href="apply.php?id=${offre.id_offre}" class="btn-apply-drawer">
+                        <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Postuler maintenant
+                    </a>
+                    <button onclick="getDirections(${lat}, ${lon}); closeDrawer();" style="border: 2px solid #f1f5f9; background: white; color: #1e293b; padding: 15px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                        <i class="fas fa-directions" style="margin-right: 8px; color: var(--accent-primary);"></i> Voir l'itinéraire
+                    </button>
+                    <a href="job_details.php?id=${offre.id_offre}" style="text-align: center; color: #94a3b8; font-size: 0.8rem; text-decoration: none; margin-top: 10px;">
+                        Voir l'offre complète sur le site
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        drawer.classList.add('open');
+        map.flyTo([lat, lon], 15, { animate: true, duration: 0.8 });
+    };
+
+    window.closeDrawer = function() {
+        document.getElementById('side-drawer').classList.remove('open');
+    };
+
+    // 7. Fonction pour l'itinéraire
     let routingControl = null;
 
     window.getDirections = function(destLat, destLon) {
