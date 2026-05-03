@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../model/Template.php';
 require_once __DIR__ . '/../../controller/TemplateC.php';
 require_once __DIR__ . '/../../model/CV.php';
 require_once __DIR__ . '/../../controller/CVC.php';
+require_once __DIR__ . '/../../controller/AIController.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -16,6 +17,7 @@ $cvc = new CVC();
 
 $template_id = (int)($_GET['template_id'] ?? 0);
 $cv_id       = (int)($_GET['cv_id']       ?? 0);
+$tailorMode  = (int)($_GET['tailor_mode']  ?? 0);
 
 $cv = [
     'nomComplet'  => '', 'email' => '', 'telephone' => '', 'adresse' => '',
@@ -43,6 +45,28 @@ if ($cv_id) {
             'couleurTheme'=> $row['couleurTheme'] ?? '#6B34A3',
         ]);
         $template_id = $row['id_template'];
+    }
+}
+
+// Tailoring Logic (Aptus V2: Use pre-generated session data)
+$jobData = $_SESSION['tailor_job_data'] ?? null;
+$tailorReport = null;
+
+if ($tailorMode && $jobData && $cv_id) {
+    // If we have pre-generated data in session, use it
+    if (isset($_SESSION['tailor_cv_data']) && $_SESSION['tailor_cv_id'] == $cv_id) {
+        $tailored = $_SESSION['tailor_cv_data'];
+        $tailorReport = $_SESSION['tailor_guide'] ?? null;
+    }
+
+    if (isset($tailored)) {
+        // Update CV fields with AI improvements
+        $cv['resume']      = !empty($tailored['resume']) ? $tailored['resume'] : $cv['resume'];
+        $cv['experience']  = !empty($tailored['experience']) ? $tailored['experience'] : $cv['experience'];
+        $cv['competences'] = !empty($tailored['competences']) ? $tailored['competences'] : $cv['competences'];
+        $cv['langues']     = !empty($tailored['langues']) ? $tailored['langues'] : $cv['langues'];
+        $cv['formation']   = !empty($tailored['formation']) ? $tailored['formation'] : $cv['formation'];
+        $cv['titrePoste']  = !empty($tailored['titrePoste']) ? $tailored['titrePoste'] : $cv['titrePoste'];
     }
 }
 
@@ -148,6 +172,21 @@ if (!isset($content)) {
         border: 1px solid var(--border-color) !important;
         color: var(--text-primary) !important;
         transition: var(--transition-base);
+    }
+    .tailor-highlight {
+        border: 2px solid var(--accent-primary) !important;
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.1) !important;
+    }
+    .tailor-banner {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 14px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);
     }
     .form-control:focus {
         background: var(--bg-input-focus) !important;
@@ -409,7 +448,17 @@ if (!isset($content)) {
     const INITIAL_DATA = <?php echo json_encode($cv); ?>;
     const CV_ID = <?php echo $cv_id ? (int)$cv_id : 'null'; ?>;
     const TEMPLATE_ID = <?php echo (int)$template_id; ?>;
+    const TAILOR_REPORT = <?php echo json_encode($tailorReport); ?>;
 </script>
+
+<?php if ($tailorMode && $jobData): ?>
+    <div class="tailor-banner" style="margin: 20px; border: 2px dashed #6366f1;">
+        <div>
+            <strong>✨ Mode Sur Mesure Activé</strong><br>
+            <span style="font-size:0.8rem; opacity:0.9;">Ce CV a été forgé par l'IA pour le poste de <strong><?php echo htmlspecialchars($jobData['title'] ?? 'Poste'); ?></strong> chez <strong><?php echo htmlspecialchars($jobData['company'] ?? 'l\'entreprise'); ?></strong>.</span>
+        </div>
+    </div>
+<?php endif; ?>
 
 <div class="builder-layout">
 
@@ -487,6 +536,24 @@ if (!isset($content)) {
 
     <!-- CENTER: Form Area -->
     <main class="builder-form-area" id="form-container">
+
+        <!-- TAILOR BANNER -->
+        <?php if($tailorMode && $jobData): ?>
+        <div class="tailor-banner">
+            <div style="flex: 1;">
+                <h4 style="margin:0; font-size: 1.1rem; font-weight: 850;">CV Sur Mesure en cours</h4>
+                <p style="margin:0; font-size: 0.85rem; opacity: 0.9;">Optimisé pour le poste de <strong><?php echo htmlspecialchars($jobData['title'] ?? 'Inconnu'); ?></strong> chez <strong><?php echo htmlspecialchars($jobData['company'] ?? 'Aptus'); ?></strong>.</p>
+                <?php if(isset($tailorReport['template_suggestion']) && $tailorReport['template_suggestion'] !== ($template['nom'] ?? '')): ?>
+                <p style="margin:5px 0 0 0; font-size: 0.75rem; background: rgba(255,255,255,0.2); display:inline-block; padding: 2px 8px; border-radius: 4px;">
+                    💡 L'IA suggère le modèle <strong><?php echo $tailorReport['template_suggestion']; ?></strong> pour ce poste.
+                </p>
+                <?php endif; ?>
+            </div>
+            <button onclick="window.location.href='cv_tailor_guide.php?id=<?php echo $cv_id; ?>'" style="background: #fff; color: #6366f1; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
+                Voir le Guide
+            </button>
+        </div>
+        <?php endif; ?>
 
         <!-- STEP 1: Personal Info -->
         <div class="step-content active" id="step-1">
@@ -590,7 +657,7 @@ if (!isset($content)) {
 
             <div class="form-group" style="position:relative;">
                 <label>Votre Profil Final *</label>
-                 <div id="input-summary" contenteditable="true" class="form-control" 
+                 <div id="input-summary" contenteditable="true" class="form-control <?php echo $tailorMode ? 'tailor-highlight' : ''; ?>" 
                       style="padding: 15px; padding-bottom:45px; height:auto; min-height:120px; overflow-y:auto; line-height:1.6;"
                       oninput="syncField(this, this.innerHTML)"></div>
 
@@ -604,7 +671,7 @@ if (!isset($content)) {
         <!-- STEP 3: Experience (The Impact Timeline) -->
         <div class="step-content" id="step-3">
             <div class="step-header"><h2 id="label-step-3">Expérience Professionnelle</h2></div>
-            <div class="timeline-container" id="experience-timeline">
+            <div class="timeline-container <?php echo $tailorMode ? 'tailor-highlight' : ''; ?>" id="experience-timeline" style="border-radius: 16px; padding: 10px;">
                 <!-- Roles will be appended here -->
             </div>
             <button class="btn-secondary-cv" style="width:100%; border-style:dashed; margin-bottom:1.5rem;" onclick="addRoleCard()"><i data-lucide="plus-circle"></i> Ajouter un poste</button>
@@ -631,7 +698,7 @@ if (!isset($content)) {
                         <div style="display:flex; gap:10px; position:relative;">
                             <div class="input-icon-group" style="flex:1;">
                                 <i data-lucide="search"></i>
-                                <input type="text" id="input-skill-search" class="form-control" placeholder="ex: React, Python, Finance, Gestion de projet..." autocomplete="off" onkeydown="if(event.key==='Enter'){ event.preventDefault(); addSkillFromInput(); }">
+                                <input type="text" id="input-skill-search" class="form-control <?php echo $tailorMode ? 'tailor-highlight' : ''; ?>" placeholder="ex: React, Python, Finance, Gestion de projet..." autocomplete="off" onkeydown="if(event.key==='Enter'){ event.preventDefault(); addSkillFromInput(); }">
                             </div>
                         </div>
                     </div>
@@ -692,7 +759,7 @@ if (!isset($content)) {
         <!-- STEP 5: Education (The Academic Journey) -->
         <div class="step-content" id="step-5">
             <div class="step-header"><h2 id="label-step-5">Formation</h2></div>
-            <div id="education-journey">
+            <div id="education-journey" class="<?php echo $tailorMode ? 'tailor-highlight' : ''; ?>" style="border-radius: 16px; padding: 10px;">
                 <!-- Degrees will be appended here -->
             </div>
             <button class="btn-secondary-cv" style="width:100%; border-style:dashed; margin-bottom:1.5rem;" onclick="addDegreeCard()"><i data-lucide="plus-circle"></i> Ajouter un diplôme</button>
@@ -775,15 +842,23 @@ if (!isset($content)) {
     <!-- Étape 1 : Le Choix -->
     <div id="ai-audit-prompt" class="aptus-modal-content">
         <div class="modal-icon-circle" style="background: rgba(107, 52, 163, 0.1); color: var(--accent-primary); margin: 0 auto 1.5rem auto; display:flex; align-items:center; justify-content:center;">
-            <i data-lucide="sparkles" style="width: 40px; height: 40px;"></i>
+            <i data-lucide="<?php echo $tailorMode ? 'book-open' : 'sparkles'; ?>" style="width: 40px; height: 40px;"></i>
         </div>
-        <h2 style="font-size:1.5rem; margin-bottom:1rem;">CV Enregistré ! 🎉</h2>
+        <h2 style="font-size:1.5rem; margin-bottom:1rem;">CV <?php echo $tailorMode ? 'Optimisé' : 'Enregistré'; ?> ! 🎉</h2>
         <p style="color:var(--text-secondary); margin-bottom:1.5rem; line-height:1.6;">
-            Souhaitez-vous que notre IA experte analyse ce CV (Audit ATS, Score, et Conseils) avant de quitter ?
+            <?php if($tailorMode): ?>
+                Votre CV a été adapté avec succès. Souhaitez-vous générer votre **Guide de Réussite Personnel** (Conseils d'entretien, Quiz QCM, Stratégie salariale) ?
+            <?php else: ?>
+                Souhaitez-vous que notre IA experte analyse ce CV (Audit ATS, Score, et Conseils) avant de quitter ?
+            <?php endif; ?>
         </p>
         <div style="display:flex; flex-direction:column; gap:12px;">
-            <button class="btn-modal-confirm" onclick="startAIAudit()">✨ Analyser mon CV (Gratuit)</button>
-            <button class="btn-secondary-cv" style="border:none;" onclick="window.location.href='cv_my.php'">Non merci, aller à Mes CVs</button>
+            <?php if($tailorMode): ?>
+                <button class="btn-modal-confirm" onclick="startGuideGeneration()" style="background: var(--gradient-primary);">✨ Générer mon Guide de Réussite</button>
+            <?php else: ?>
+                <button class="btn-modal-confirm" onclick="startAIAudit()">✨ Analyser mon CV (Gratuit)</button>
+            <?php endif; ?>
+            <button class="btn-secondary-cv" style="border:none;" onclick="window.location.href='cv_my.php'">Aller à Mes CVs</button>
         </div>
     </div>
 
@@ -832,8 +907,39 @@ if (!isset($content)) {
             </div>
         </div>
 
-        <button class="btn-modal-confirm" style="width:100%; padding: 18px; font-size: 1.15rem; border-radius: 16px; background: #6D3AB7; box-shadow: 0 8px 20px rgba(109, 58, 183, 0.3); font-weight: 700;" onclick="window.location.href='cv_my.php'">
-            Terminer et aller à Mes CVs
+        <!-- NEW: Tailoring Report Section -->
+        <div id="tailor-report-section" style="display:none; margin-top: 25px; border-top: 2px solid var(--border-color); padding-top: 25px; margin-bottom: 30px;">
+             <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%); border-radius: 20px; padding: 25px; border: 1px solid var(--border-color);">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+                    <i data-lucide="wand-2" style="color:var(--accent-primary); width:24px;"></i>
+                    <h3 style="margin:0; font-size:1.3rem; font-weight:800; color:var(--text-primary);">Analyse Sur Mesure</h3>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom: 25px;">
+                    <div>
+                        <h4 style="font-size:0.75rem; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; font-weight:800;">Culture & Fit</h4>
+                        <div id="tailor-culture" class="culture-badge" style="display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:8px; font-size:0.75rem; font-weight:800; text-transform:uppercase;"></div>
+                        <p id="tailor-culture-desc" style="font-size:0.85rem; margin-top:10px; line-height:1.5; color:var(--text-secondary);"></p>
+                    </div>
+                    <div>
+                        <h4 style="font-size:0.75rem; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; font-weight:800;">Négociation Salariale</h4>
+                        <div id="tailor-salary" style="font-size:1.4rem; font-weight:900; color:#10b981;"></div>
+                        <p id="tailor-salary-tips" style="font-size:0.8rem; margin-top:5px; color:var(--text-tertiary); line-height:1.4;"></p>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
+                    <h4 style="font-size:0.9rem; font-weight:800; margin-bottom:15px; display:flex; align-items:center; gap:8px; color:var(--text-primary);">
+                        <i data-lucide="graduation-cap" style="width:18px; color:#10b981;"></i> Formations suggérées (Lacunes)
+                    </h4>
+                    <div id="tailor-trainings" style="display:flex; flex-direction:column; gap:10px;"></div>
+                </div>
+             </div>
+        </div>
+
+        <button class="btn-modal-confirm" style="width:100%; padding: 18px; font-size: 1.15rem; border-radius: 16px; background: #6D3AB7; box-shadow: 0 8px 20px rgba(109, 58, 183, 0.3); font-weight: 700;" 
+                onclick="window.location.href = (typeof TAILOR_REPORT !== 'undefined' && TAILOR_REPORT) ? 'cv_tailor_guide.php?id='+CV_ID : 'cv_my.php'">
+            <?php echo $tailorMode ? 'Voir mon Guide de Réussite' : 'Terminer et aller à Mes CVs'; ?>
         </button>
     </div>
 </div>
@@ -1254,6 +1360,51 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (INITIAL_DATA.urlPhoto) { document.getElementById('photo-b64').value = INITIAL_DATA.urlPhoto; const pi = document.getElementById('photo-preview-img'); if(pi) { pi.src=INITIAL_DATA.urlPhoto; pi.style.display='block'; }}
+        
+        // Handle TAILOR_REPORT automatically
+        if (typeof TAILOR_REPORT !== 'undefined' && TAILOR_REPORT) {
+            AUDIT_CV_ID = CV_ID;
+            // Force save to session if coming from redirection
+            setTimeout(() => {
+                document.getElementById('ai-audit-overlay').classList.add('active');
+                document.getElementById('ai-audit-prompt').style.display = 'none';
+                document.getElementById('ai-audit-dashboard').style.display = 'block';
+                
+                // Populate Tailor Section
+                const section = document.getElementById('tailor-report-section');
+                section.style.display = 'block';
+                
+                animateATSScore(TAILOR_REPORT.match_score || 0, 'ats-score-value');
+                
+                const cult = document.getElementById('tailor-culture');
+                cult.textContent = TAILOR_REPORT.culture_fit ? 'Alignement Culturel' : 'Adaptation';
+                cult.className = 'match-badge match-high';
+                document.getElementById('tailor-culture-desc').textContent = TAILOR_REPORT.culture_fit || '';
+                
+                document.getElementById('tailor-salary').textContent = TAILOR_REPORT.salary_negotiation?.[0] || '---';
+                document.getElementById('tailor-salary-tips').innerHTML = (TAILOR_REPORT.salary_negotiation || []).join('<br>• ');
+                
+                const tCont = document.getElementById('tailor-trainings');
+                tCont.innerHTML = '';
+                (TAILOR_REPORT.training_recommendations || []).forEach(tr => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:var(--bg-secondary); padding:10px 15px; border-radius:12px; border:1px solid var(--border-color);";
+                    div.innerHTML = `
+                        <div style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">${tr}</div>
+                        <button class="btn-apply-small" onclick="window.location.href='formations_catalog.php'">Découvrir</button>
+                    `;
+                    tCont.appendChild(div);
+                });
+
+                // Populate strengths/weaknesses with tailor justification
+                const sList = document.getElementById('ats-strengths');
+                sList.innerHTML = '<li>Analyse Sur Mesure activée</li>';
+                const wList = document.getElementById('ats-weaknesses');
+                wList.innerHTML = (TAILOR_REPORT.missing_skills || []).map(s => `<li>Lacune : ${s}</li>`).join('');
+                
+                if (window.lucide) window.lucide.createIcons();
+            }, 1000);
+        }
     }
 
     // Real-time Event Listeners
@@ -2489,6 +2640,49 @@ async function saveCV() {
             alert('Erreur: ' + rj.message);
         }
     } catch(e) { alert('Erreur de connexion.'); } finally { b.disabled = false; b.textContent = 'Enregistrer le CV'; }
+}
+
+async function startGuideGeneration() {
+    if (!AUDIT_CV_ID) {
+        alert("Veuillez sauvegarder votre CV au moins une fois.");
+        return;
+    }
+    document.getElementById('ai-audit-prompt').style.display = 'none';
+    document.getElementById('ai-audit-scanner').style.display = 'block';
+    document.getElementById('audit-main-title').textContent = "Génération du Guide de Réussite...";
+    document.getElementById('audit-status-text').textContent = "L'IA analyse votre CV optimisé...";
+    
+    const progBar = document.getElementById('audit-progress');
+    const interval = setInterval(() => {
+        const currentWidth = parseFloat(progBar.style.width || 0);
+        if (currentWidth < 98) {
+            progBar.style.width = (currentWidth + (98 - currentWidth) * 0.2) + '%';
+        }
+    }, 1000);
+
+    try {
+        const response = await fetch('ajax_guide_generate.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `cv_id=${AUDIT_CV_ID}`
+        });
+        const data = await response.json();
+        clearInterval(interval);
+
+        if (data.success) {
+            progBar.style.width = '100%';
+            setTimeout(() => {
+                window.location.href = `cv_tailor_guide.php?id=${AUDIT_CV_ID}`;
+            }, 800);
+        } else {
+            alert("Erreur lors de la génération : " + data.error);
+            window.location.href = 'cv_my.php';
+        }
+    } catch(err) {
+        clearInterval(interval);
+        alert("Erreur de connexion : " + err.message);
+        window.location.href = 'cv_my.php';
+    }
 }
 
 async function startAIAudit() {

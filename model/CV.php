@@ -20,6 +20,9 @@ class CV
     private ?string $dateCreation;
     private ?string $dateMiseAJour;
     private ?string $ai_analysis;
+    private ?int $is_tailored;
+    private ?string $target_job_url;
+    private ?string $tailoring_report;
 
     public function __construct(
         ?int $id_cv = null,
@@ -39,7 +42,10 @@ class CV
         ?string $statut = "en_attente",
         ?string $dateCreation = null,
         ?string $dateMiseAJour = null,
-        ?string $ai_analysis = null
+        ?string $ai_analysis = null,
+        ?int $is_tailored = 0,
+        ?string $target_job_url = "",
+        ?string $tailoring_report = ""
     ) {
         $this->id_cv = $id_cv;
         $this->id_candidat = $id_candidat;
@@ -59,6 +65,9 @@ class CV
         $this->dateCreation = $dateCreation;
         $this->dateMiseAJour = $dateMiseAJour;
         $this->ai_analysis = $ai_analysis;
+        $this->is_tailored = $is_tailored;
+        $this->target_job_url = $target_job_url;
+        $this->tailoring_report = $tailoring_report;
     }
 
     // Getters
@@ -80,6 +89,9 @@ class CV
     public function getDateCreation(): ?string { return $this->dateCreation; }
     public function getDateMiseAJour(): ?string { return $this->dateMiseAJour; }
     public function getAiAnalysis(): ?string { return $this->ai_analysis; }
+    public function getIsTailored(): ?int { return $this->is_tailored; }
+    public function getTargetJobUrl(): ?string { return $this->target_job_url; }
+    public function getTailoringReport(): ?string { return $this->tailoring_report; }
 
     // Setters
     public function setNomDocument(?string $nom): void { $this->nomDocument = $nom; }
@@ -95,4 +107,7 @@ class CV
     public function setCouleurTheme(?string $color): void { $this->couleurTheme = $color; }
     public function setStatut(?string $statut): void { $this->statut = $statut; }
     public function setAiAnalysis(?string $analysis): void { $this->ai_analysis = $analysis; }
+    public function setIsTailored(?int $tailored): void { $this->is_tailored = $tailored; }
+    public function setTargetJobUrl(?string $url): void { $this->target_job_url = $url; }
+    public function setTailoringReport(?string $report): void { $this->tailoring_report = $report; }
 }

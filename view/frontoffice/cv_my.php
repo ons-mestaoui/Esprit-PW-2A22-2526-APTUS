@@ -414,6 +414,71 @@ if (!isset($content)) {
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
     border-color: rgba(139, 92, 246, 0.2);
 }
+
+/* ── TAILOR PROGRESS ── */
+.tailor-steps-container {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.tailor-step {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    opacity: 0.4;
+    transition: all 0.4s ease;
+}
+
+.tailor-step.active {
+    opacity: 1;
+    color: var(--accent-primary);
+}
+
+.tailor-step.completed {
+    opacity: 1;
+    color: #10b981;
+}
+
+.tailor-step-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.tailor-step.active .tailor-step-icon {
+    background: var(--accent-primary);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+}
+
+.tailor-step.completed .tailor-step-icon {
+    background: #10b981;
+    color: #fff;
+}
+
+.tailor-progress-bar {
+    height: 6px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+    display: none;
+}
+
+.tailor-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--gradient-primary);
+    transition: width 0.5s ease;
+}
 </style>
 
 <div class="dashboard-wrap">
@@ -508,6 +573,18 @@ if (!isset($content)) {
                         <i data-lucide="eye"></i>
                     </button>
                 </div>
+                <?php if(isset($cv['is_tailored']) && $cv['is_tailored']): ?>
+                <div class="tailor-badge" style="position: absolute; top: 15px; left: 15px; z-index: 5; background: rgba(255,255,255,0.95); padding: 6px 12px; border-radius: 10px; display: flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 850; border: 1px solid var(--accent-primary); box-shadow: 0 4px 15px rgba(107, 52, 163, 0.15); letter-spacing: 1px;">
+                    <?php 
+                        $url = $cv['target_job_url'] ?? '';
+                        $icon = 'briefcase';
+                        if(stripos($url, 'linkedin') !== false) $icon = 'linkedin';
+                        else if(stripos($url, 'indeed') !== false) $icon = 'globe';
+                    ?>
+                    <i data-lucide="<?php echo $icon; ?>" style="width: 13px; color: var(--accent-primary);"></i>
+                    <span style="color: var(--accent-primary);">OPTIMISÉ SUR MESURE</span>
+                </div>
+                <?php endif; ?>
             </div>
 
             <div class="cv-miniature__info">
@@ -525,6 +602,14 @@ if (!isset($content)) {
                         <button onclick="generatePDF(<?php echo $cv['id_cv']; ?>)" class="btn-action-small print" title="Imprimer">
                             <i data-lucide="printer" style="width: 14px;"></i>
                         </button>
+                        <button onclick="openTailorModal(<?php echo $cv['id_cv']; ?>)" class="btn-action-small tailor" title="Sur Mesure" style="color: #8b5cf6; border-color: rgba(139, 92, 246, 0.2);">
+                            <i data-lucide="wand-2" style="width: 14px;"></i>
+                        </button>
+                        <?php if(isset($cv['is_tailored']) && $cv['is_tailored']): ?>
+                        <a href="cv_tailor_guide.php?id=<?php echo $cv['id_cv']; ?>" class="btn-action-small guide" title="Voir le Guide" style="color: #0ea5e9; border-color: rgba(14, 165, 233, 0.2);">
+                            <i data-lucide="book-open" style="width: 14px;"></i>
+                        </a>
+                        <?php endif; ?>
                         <?php if($aiData): ?>
                         <button onclick="showAIAudit(<?php echo htmlspecialchars(json_encode($aiData), ENT_QUOTES); ?>, <?php echo $cv['id_cv']; ?>)" class="btn-action-small ai" title="IA">
                             <i data-lucide="sparkles" style="width: 14px;"></i>
@@ -602,6 +687,64 @@ if (!isset($content)) {
 </div>
 
 <iframe id="print-frame" style="display:none;"></iframe>
+
+<!-- TAILOR MODAL -->
+<div id="tailor-modal" class="aptus-modal-overlay" onclick="if(event.target===this) this.classList.remove('active');">
+    <div class="aptus-modal-content" style="max-width: 450px; padding: 2.5rem; border-radius: 30px; background: #fff;">
+        <div id="tailor-modal-form">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);">
+                    <i data-lucide="wand-2" style="color: #fff; width: 34px; height: 34px;"></i>
+                </div>
+                <h2 style="font-size: 1.8rem; font-weight: 850; letter-spacing: -1px; color: #1e293b; margin-bottom: 8px;">CV Sur Mesure</h2>
+                <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5;">L'IA va scanner l'offre d'emploi et optimiser chaque section de votre CV pour ce poste.</p>
+            </div>
+            
+            <input type="hidden" id="tailor-cv-id">
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; margin-bottom: 10px; font-weight: 800; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Lien de l'offre (LinkedIn, Indeed...)</label>
+                <input type="url" id="tailor-job-url" placeholder="https://..." style="width: 100%; padding: 16px; border-radius: 16px; border: 2px solid #f1f5f9; background: #f8fafc; color: #1e293b; font-size: 1rem; transition: all 0.3s ease;">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button onclick="startTailoring()" id="btn-start-tailor" class="btn-aptus-primary" style="height: 58px; font-size: 1.05rem; width: 100%;">
+                    Lancer l'Analyse ✨
+                </button>
+                <button onclick="document.getElementById('tailor-modal').classList.remove('active')" style="background: none; border: none; color: #94a3b8; font-weight: 700; font-size: 0.9rem; cursor: pointer; padding: 10px;">
+                    Annuler
+                </button>
+            </div>
+        </div>
+
+        <!-- PROGRESS VIEW -->
+        <div id="tailor-modal-processing" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div class="spin" style="width: 60px; height: 60px; border: 4px solid var(--accent-primary); border-top-color: transparent; border-radius: 50%; margin: 0 auto 1.5rem;"></div>
+                <h2 style="font-size: 1.6rem; font-weight: 850; color: #1e293b;">Analyse IA Stratégique</h2>
+                <p style="color: #64748b; font-size: 0.9rem;">Veuillez patienter, nos agents IA travaillent sur votre dossier...</p>
+            </div>
+
+            <div class="tailor-progress-bar" style="display: block; margin-bottom: 25px;">
+                <div class="tailor-progress-fill" id="tailor-progress-fill"></div>
+            </div>
+
+            <div class="tailor-steps-container" style="display: flex;">
+                <div class="tailor-step active" id="step-scrape">
+                    <div class="tailor-step-icon">1</div>
+                    <div style="font-weight: 700; font-size: 0.95rem;">Scraping de l'offre d'emploi...</div>
+                </div>
+                <div class="tailor-step" id="step-analyze">
+                    <div class="tailor-step-icon">2</div>
+                    <div style="font-weight: 700; font-size: 0.95rem;">Analyse des compétences...</div>
+                </div>
+                <div class="tailor-step" id="step-tailor">
+                    <div class="tailor-step-icon">3</div>
+                    <div style="font-weight: 700; font-size: 0.95rem;">Optimisation de votre CV...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -722,5 +865,99 @@ window.addEventListener('resize', () => {
         container.style.width = (794 * scale) + 'px';
     }
 });
+
+/* ── TAILORING LOGIC ── */
+function openTailorModal(cvId) {
+    document.getElementById('tailor-cv-id').value = cvId;
+    document.getElementById('tailor-job-url').value = '';
+    document.getElementById('tailor-modal').classList.add('active');
+    setTimeout(() => document.getElementById('tailor-job-url').focus(), 100);
+}
+
+async function startTailoring() {
+    const cvId = document.getElementById('tailor-cv-id').value;
+    const url = document.getElementById('tailor-job-url').value;
+    const formView = document.getElementById('tailor-modal-form');
+    const processingView = document.getElementById('tailor-modal-processing');
+    const progressFill = document.getElementById('tailor-progress-fill');
+    
+    if(!url || !url.startsWith('http')) {
+        aptusAlert('Erreur', 'Veuillez saisir un lien valide.');
+        return;
+    }
+
+    // Switch views
+    formView.style.display = 'none';
+    processingView.style.display = 'block';
+
+    const steps = [
+        { id: 'step-scrape', duration: 8000, progress: 33 },
+        { id: 'step-analyze', duration: 5000, progress: 66 },
+        { id: 'step-tailor', duration: 7000, progress: 95 }
+    ];
+
+    let currentStepIndex = 0;
+    
+    function updateSteps() {
+        if (currentStepIndex >= steps.length) return;
+        
+        const step = steps[currentStepIndex];
+        const el = document.getElementById(step.id);
+        
+        // Mark previous as completed
+        if (currentStepIndex > 0) {
+            const prev = document.getElementById(steps[currentStepIndex-1].id);
+            prev.classList.remove('active');
+            prev.classList.add('completed');
+            prev.querySelector('.tailor-step-icon').innerHTML = '<i data-lucide="check" style="width:16px;"></i>';
+            if(window.lucide) lucide.createIcons();
+        }
+
+        el.classList.add('active');
+        progressFill.style.width = step.progress + '%';
+        
+        currentStepIndex++;
+        if (currentStepIndex < steps.length) {
+            setTimeout(updateSteps, steps[currentStepIndex-1].duration);
+        }
+    }
+
+    updateSteps();
+
+    try {
+        const response = await fetch('ajax_job_analyze.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `cv_id=${cvId}&url=${encodeURIComponent(url)}`
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Le serveur a répondu avec une erreur (${response.status}).`);
+        }
+
+        const text = await response.text();
+        let res;
+        try {
+            res = JSON.parse(text);
+        } catch (e) {
+            console.error("Réponse non-JSON :", text);
+            throw new Error("Le serveur a renvoyé une réponse invalide. Vérifiez les logs.");
+        }
+
+        if(res.success) {
+            progressFill.style.width = '100%';
+            setTimeout(() => {
+                window.location.href = `cv_form.php?cv_id=${cvId}&tailor_mode=1`;
+            }, 800);
+        } else {
+            throw new Error(res.error || 'Une erreur est survenue.');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Erreur d\'Analyse : ' + (e.message || 'Impossible de contacter le serveur.'));
+        formView.style.display = 'block';
+        processingView.style.display = 'none';
+    }
+}
 </script>
 

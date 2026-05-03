@@ -83,7 +83,18 @@ try {
     $languages   = $data['languages']   ?? '';
     $ndoc        = 'CV ' . $name;
 
-    // Instanciation stricte du Modèle MVC
+    // Handle Tailoring Metadata from Session
+    $is_tailored = 0;
+    $target_url = '';
+    $report = '';
+    // If the user is tailoring, the report is in session
+    if (isset($_SESSION['tailor_job_url'])) {
+        $is_tailored = 1;
+        $target_url = $_SESSION['tailor_job_url'];
+        $report = isset($_SESSION['tailor_guide']) ? json_encode($_SESSION['tailor_guide']) : '';
+    }
+
+    // Instanciation stricte du Modèle MVC (Vérifier l'ordre dans model/CV.php)
     $cvModel = new CV(
         $cv_id,
         $id_candidat,
@@ -99,7 +110,13 @@ try {
         $languages,
         $photo,
         $couleur,
-        'en_attente' // statut par défaut
+        'en_attente', // statut
+        null,         // dateCreation
+        null,         // dateMiseAJour
+        null,         // ai_analysis
+        $is_tailored,
+        $target_url,
+        $report
     );
 
     // Appel du Contrôleur MVC

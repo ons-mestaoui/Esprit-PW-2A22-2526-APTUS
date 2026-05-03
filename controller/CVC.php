@@ -8,8 +8,8 @@ class CVC
     {
         $db = config::getConnexion();
         $query = $db->prepare(
-            'INSERT INTO cv (id_candidat, id_template, nomDocument, nomComplet, titrePoste, resume, infoContact, experience, formation, competences, langues, urlPhoto, couleurTheme, statut, dateCreation, dateMiseAJour, ai_analysis) 
-            VALUES (:id_candidat, :id_template, :nomDocument, :nomComplet, :titrePoste, :resume, :infoContact, :experience, :formation, :competences, :langues, :urlPhoto, :couleurTheme, :statut, NOW(), NOW(), :ai_analysis)'
+            'INSERT INTO cv (id_candidat, id_template, nomDocument, nomComplet, titrePoste, resume, infoContact, experience, formation, competences, langues, urlPhoto, couleurTheme, statut, dateCreation, dateMiseAJour, ai_analysis, is_tailored, target_job_url, tailoring_report) 
+            VALUES (:id_candidat, :id_template, :nomDocument, :nomComplet, :titrePoste, :resume, :infoContact, :experience, :formation, :competences, :langues, :urlPhoto, :couleurTheme, :statut, NOW(), NOW(), :ai_analysis, :is_tailored, :target_job_url, :tailoring_report)'
         );
         $query->execute([
             'id_candidat' => $cv->getIdCandidat(),
@@ -26,7 +26,10 @@ class CVC
             'urlPhoto'    => $cv->getUrlPhoto(),
             'couleurTheme'=> $cv->getCouleurTheme(),
             'statut'      => $cv->getStatut(),
-            'ai_analysis' => $cv->getAiAnalysis()
+            'ai_analysis' => $cv->getAiAnalysis(),
+            'is_tailored' => $cv->getIsTailored(),
+            'target_job_url' => $cv->getTargetJobUrl(),
+            'tailoring_report' => $cv->getTailoringReport()
         ]);
         return $db->lastInsertId();
     }
@@ -70,6 +73,9 @@ class CVC
                 urlPhoto      = :urlPhoto,
                 couleurTheme  = :couleurTheme,
                 ai_analysis   = :ai_analysis,
+                is_tailored   = :is_tailored,
+                target_job_url = :target_job_url,
+                tailoring_report = :tailoring_report,
                 dateMiseAJour = NOW()
             WHERE id_cv = :id'
         );
@@ -86,7 +92,22 @@ class CVC
             'urlPhoto'    => $cv->getUrlPhoto(),
             'couleurTheme'=> $cv->getCouleurTheme(),
             'ai_analysis' => $cv->getAiAnalysis(),
+            'is_tailored' => $cv->getIsTailored(),
+            'target_job_url' => $cv->getTargetJobUrl(),
+            'tailoring_report' => $cv->getTailoringReport(),
             'id'          => $id
+        ]);
+    }
+
+    public function updateTailoring($id, $isTailored, $jobUrl, $report)
+    {
+        $db = config::getConnexion();
+        $query = $db->prepare('UPDATE cv SET is_tailored = :is_t, target_job_url = :url, tailoring_report = :report WHERE id_cv = :id');
+        $query->execute([
+            'is_t' => $isTailored,
+            'url' => $jobUrl,
+            'report' => $report,
+            'id' => $id
         ]);
     }
 
