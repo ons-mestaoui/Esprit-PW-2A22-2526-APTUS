@@ -4,7 +4,7 @@ class offreC{
     public function ajouterOffre($offre){
         $db = config::getConnexion();
         try{
-            $query = $db->prepare("INSERT INTO offreemploi (id_entreprise, titre, description, domaine, competences_requises, experience_requise, salaire, question, date_publication, date_expir, statut, img_post, type) VALUES (1, :titre, :description, :domaine, :competences_requises, :experience_requise, :salaire, :question, :date_publication, :date_expir, 'Actif', :img_post, :type)");
+            $query = $db->prepare("INSERT INTO offreemploi (id_entreprise, titre, description, domaine, competences_requises, experience_requise, salaire, question, date_publication, date_expir, statut, img_post, type, lieu) VALUES (1, :titre, :description, :domaine, :competences_requises, :experience_requise, :salaire, :question, :date_publication, :date_expir, 'Actif', :img_post, :type, :lieu)");
             $query->execute([
                 'titre' => $offre->getTitre(),
                 'description' => $offre->getDescription(),
@@ -16,7 +16,8 @@ class offreC{
                 'date_publication' => $offre->getDatePublication(),
                 'date_expir' => $offre->getDateExpir(),
                 'img_post' => $offre->getImgPost(),
-                'type' => $offre->getType()
+                'type' => $offre->getType(),
+                'lieu' => $offre->getLieu()
             ]); 
         }catch (Exception $e){
             echo 'Erreur: '.$e->getMessage();
@@ -111,9 +112,9 @@ class offreC{
         try{
             // img_post est inclus s'il n'est pas null, sinon on garde l'ancien (à gérer côté vue ou ici, plus propre ici)
             if ($offre->getImgPost() !== null) {
-                $query = $db->prepare("UPDATE offreemploi SET titre=:titre, description=:description, domaine=:domaine, competences_requises=:competences_requises, experience_requise=:experience_requise, salaire=:salaire, question=:question, date_publication=:date_publication, date_expir=:date_expir, img_post=:img_post, type=:type WHERE id_offre=:id_offre");
+                $query = $db->prepare("UPDATE offreemploi SET titre=:titre, description=:description, domaine=:domaine, competences_requises=:competences_requises, experience_requise=:experience_requise, salaire=:salaire, question=:question, date_publication=:date_publication, date_expir=:date_expir, img_post=:img_post, type=:type, lieu=:lieu WHERE id_offre=:id_offre");
             } else {
-                $query = $db->prepare("UPDATE offreemploi SET titre=:titre, description=:description, domaine=:domaine, competences_requises=:competences_requises, experience_requise=:experience_requise, salaire=:salaire, question=:question, date_publication=:date_publication, date_expir=:date_expir, type=:type WHERE id_offre=:id_offre");
+                $query = $db->prepare("UPDATE offreemploi SET titre=:titre, description=:description, domaine=:domaine, competences_requises=:competences_requises, experience_requise=:experience_requise, salaire=:salaire, question=:question, date_publication=:date_publication, date_expir=:date_expir, type=:type, lieu=:lieu WHERE id_offre=:id_offre");
             }
             
             $params = [
@@ -127,7 +128,8 @@ class offreC{
                 'question' => $offre->getQuestion(),
                 'date_publication' => $offre->getDatePublication(),
                 'date_expir' => $offre->getDateExpir(),
-                'type' => $offre->getType()
+                'type' => $offre->getType(),
+                'lieu' => $offre->getLieu()
             ];
 
             if ($offre->getImgPost() !== null) {
@@ -197,7 +199,6 @@ class offreC{
             $req->execute($params);
             return $req->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            return [];
         }
     }
 
@@ -362,6 +363,19 @@ class offreC{
             $req->execute(['id' => $id_candidat]);
             return $req;
         } catch (Exception $e) { return null; }
+    }
+
+    public function getOffresAvecLieu() {
+        $db = config::getConnexion();
+        try { 
+            $sql = "SELECT o.*, u.nom as nom_entreprise 
+                    FROM offreemploi o 
+                    LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur 
+                    WHERE o.lieu IS NOT NULL AND o.lieu != '' AND o.statut = 'Actif'";
+            return $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
     }
 }
 ?>

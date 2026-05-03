@@ -12,10 +12,11 @@ class offre{
     private $date_expir;
     private $img_post;
     private $type;
+    private $lieu;
 
     
 
-    public function __construct( string $titre, string $description, string $domaine, string $competences_requises, string $experience_requise, float $salaire, string $question, string $date_publication, string $date_expir, ?string $img_post = null, string $type = 'Sur site') {
+    public function __construct( string $titre, string $description, string $domaine, string $competences_requises, string $experience_requise, float $salaire, string $question, string $date_publication, string $date_expir, ?string $img_post = null, string $type = 'Sur site', ?string $lieu = null) {
 
         $this->titre = $titre;
         $this->description = $description;
@@ -28,7 +29,7 @@ class offre{
         $this->date_expir = $date_expir;
         $this->img_post = $img_post;
         $this->type = $type;
-        
+        $this->lieu = $lieu;
     }
 
     public function getTitre() {
@@ -101,5 +102,10 @@ class offre{
     public function setType($type) {
         $this->type = $type;
     }
-
+    public function getLieu() {
+        return $this->lieu;
+    }
+    public function setLieu($lieu) {
+        $this->lieu = $lieu;
+    }
 }

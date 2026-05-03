@@ -194,9 +194,9 @@ if (!isset($content)) {
       <p class="promo-banner__desc">Ne cherchez plus au hasard. Affichez les opportunités à proximité de votre domicile pour faciliter votre quotidien.</p>
     </div>
   </div>
-  <button type="button" style="background: linear-gradient(90deg, #0ea5e9 0%, #9333ea 100%); color: white; border: none; border-radius: 6px; padding: 0.6rem 1.25rem; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; white-space: nowrap; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.25);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(147, 51, 234, 0.35)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(147, 51, 234, 0.25)';">
+  <a href="jobs_map.php" style="background: linear-gradient(90deg, #0ea5e9 0%, #9333ea 100%); color: white; border: none; border-radius: 6px; padding: 0.6rem 1.25rem; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; white-space: nowrap; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.25); text-decoration: none;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(147, 51, 234, 0.35)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(147, 51, 234, 0.25)';">
     Afficher Maps <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
-  </button>
+  </a>
 </div>
 
 <style>@keyframes spin { to { transform: rotate(360deg); } }</style>

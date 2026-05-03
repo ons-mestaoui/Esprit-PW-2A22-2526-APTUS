@@ -1,0 +1,626 @@
+<?php 
+require_once '../../controller/offreC.php';
+$offreC = new offreC();
+$offres = $offreC->getOffresAvecLieu();
+
+$pageTitle = "Carte des Offres"; 
+$pageCSS = "feeds.css"; 
+$userRole = "Candidat"; 
+
+if (!isset($content)) {
+    $content = __FILE__;
+    include 'layout_front.php';
+} else {
+?>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Leaflet Routing Machine CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+<style>
+    #map-container {
+        height: calc(100vh - 160px);
+        margin: 0 25px 25px 25px;
+        border-radius: 30px;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-color);
+        position: relative;
+        z-index: 1; /* Pour rester sous la barre de navigation */
+    }
+    #map {
+        height: 100%;
+        width: 100%;
+        background: #f8fafc;
+    }
+    .btn-back-map {
+        background: linear-gradient(90deg, #0ea5e9 0%, #9333ea 100%);
+        padding: 0.6rem 1.25rem;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(147, 51, 234, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        font-size: 0.85rem;
+    }
+    .btn-back-map:hover {
+        transform: translateX(-5px);
+        box-shadow: 0 6px 20px rgba(147, 51, 234, 0.3);
+        color: white;
+    }
+    .map-overlay-card {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+        padding: 1.25rem;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,1);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        max-width: 280px;
+    }
+    .route-info-card {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: white;
+        padding: 0.75rem 1.25rem;
+        border-radius: 16px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        border: 1px solid var(--border-color);
+        animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        min-width: 280px;
+    }
+    .btn-start-navigation {
+        background: var(--gradient-primary);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 800;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        justify-content: center;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 12px rgba(168, 100, 228, 0.25);
+    }
+    /* Style pour le panneau d'instructions Leaflet */
+    .leaflet-routing-container {
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(10px);
+        border-radius: 20px !important;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 1rem !important;
+        width: 320px !important;
+    }
+    .leaflet-routing-alt {
+        max-height: none !important;
+    }
+    @keyframes slideUp {
+        from { transform: translate(-50%, 100%); opacity: 0; }
+        to { transform: translate(-50%, 0); opacity: 1; }
+    }
+    .route-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .route-item i { color: var(--accent-primary); font-size: 1.2rem; }
+    .route-val { font-weight: 800; color: var(--text-primary); font-size: 1rem; }
+    .route-label { font-size: 0.75rem; color: var(--text-tertiary); font-weight: 600; text-transform: uppercase; }
+    .search-box {
+        margin-top: 1.25rem;
+        position: relative;
+    }
+    .search-box input {
+        width: 100%;
+        padding: 0.85rem 1rem 0.85rem 2.5rem;
+        border-radius: 14px;
+        border: 1px solid var(--border-color);
+        background: #fff;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+    .search-box input:focus {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 4px rgba(168, 100, 228, 0.1);
+        outline: none;
+    }
+    .search-box i {
+        position: absolute;
+        left: 0.85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--accent-primary);
+    }
+    .leaflet-routing-container {
+        display: none; /* On gère l'affichage nous-mêmes */
+    }
+    .guidage-panel {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: white;
+        padding: 1rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        width: 240px;
+        display: none;
+        border-right: 4px solid var(--accent-primary);
+        animation: slideInRight 0.5s ease;
+    }
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    .instruction-next {
+        font-weight: 800;
+        color: var(--text-primary);
+        font-size: 0.95rem; /* Un peu plus petit pour le titre principal */
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .instruction-upcoming {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 0.5rem;
+        width: 100%;
+    }
+    .instruction-dist {
+        color: var(--accent-primary);
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+    .leaflet-marker-icon {
+        transition: all 0.2s linear; /* Encore plus rapide */
+    }
+    .custom-marker {
+        background: var(--gradient-primary);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 20px 20px 20px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: rotate(-45deg);
+        box-shadow: 0 5px 15px rgba(168, 100, 228, 0.4);
+        border: 2px solid white;
+    }
+    .custom-marker i {
+        transform: rotate(45deg);
+        color: white;
+        font-size: 18px;
+    }
+    .leaflet-popup-content-wrapper {
+        border-radius: 15px;
+        padding: 0.5rem;
+    }
+    .btn-route {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        background: linear-gradient(90deg, #0ea5e9 0%, #9333ea 100%);
+        color: white !important;
+        padding: 0.6rem 1rem;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 700;
+        margin-top: 1rem;
+        transition: all 0.3s;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 10px rgba(147, 51, 234, 0.15);
+    }
+    .btn-route:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(147, 51, 234, 0.3);
+    }
+    /* Style global des popups Leaflet */
+    .leaflet-popup-content-wrapper {
+        border-radius: 20px ;
+        padding: 10px ;
+    }
+    .leaflet-popup-tip {
+        background: white ;
+    }
+</style>
+
+<div style="padding: 20px 25px 0 25px;">
+    <!-- Bouton Retour à l'extrémité -->
+    <a href="jobs_feed.php" class="btn-back-map" style="position: static; margin-bottom: 20px;" title="Retour aux offres">
+        <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
+        <span style="font-weight: 700; margin-left: 0.5rem;">Retour aux offres</span>
+    </a>
+
+    <div id="map-container">
+        <!-- Panneau de guidage (Tout à droite) -->
+        <div id="guidage-panel" class="guidage-panel">
+            <div id="instruction-upcoming" class="instruction-upcoming" style="display: none;">
+                <i class="fas fa-redo-alt" style="font-size: 0.6rem;"></i>
+                <span>Ensuite : <span id="next-step-text">--</span></span>
+            </div>
+            <div class="instruction-next">
+                <i id="instruction-icon" class="fas fa-arrow-up"></i>
+                <span id="instruction-text">Calcul...</span>
+            </div>
+            <div id="instruction-dist" class="instruction-dist">-- m</div>
+        </div>
+
+        <!-- Itinéraire Info Card -->
+        <div id="route-info" class="route-info-card">
+            <div style="display: flex; align-items: center; gap: 2rem; width: 100%; justify-content: center;">
+                <div class="route-item">
+                    <i class="fas fa-car"></i>
+                    <span id="car-time" class="route-val">--</span>
+                    <span class="route-label">Voiture</span>
+                </div>
+                <div style="width: 1px; height: 30px; background: var(--border-color);"></div>
+                <div class="route-item">
+                    <i class="fas fa-walking"></i>
+                    <span id="walk-time" class="route-val">--</span>
+                    <span class="route-label">À pied</span>
+                </div>
+                <div style="width: 1px; height: 30px; background: var(--border-color);"></div>
+                <div class="route-item">
+                    <i class="fas fa-route"></i>
+                    <span id="route-dist" class="route-val">--</span>
+                    <span class="route-label">Distance</span>
+                </div>
+            </div>
+            
+            <button class="btn-start-navigation" id="btn-commencer" onclick="startGuidage()">
+                <i class="fas fa-play"></i> Commencer le guidage
+            </button>
+
+            <button onclick="stopGuidage()" style="border:none; background:none; cursor:pointer; color:var(--text-tertiary); font-size: 0.8rem; text-decoration: underline;">
+                Annuler
+            </button>
+        </div>
+
+        <!-- Overlay d'info -->
+        <div class="map-overlay-card">
+            <h3 style="font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.2rem;">Exploration Locale</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                Trouvez les meilleures opportunités à proximité de chez vous.
+            </p>
+            
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="address-search" placeholder="Rechercher une ville..." onkeypress="if(event.key === 'Enter') searchAddress()">
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 12px; height: 12px; background: #4fb5ff; border-radius: 50%; box-shadow: 0 0 0 4px rgba(79, 181, 255, 0.2);"></div>
+                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary);">Ma position</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 12px; height: 12px; background: var(--accent-primary); border-radius: 50%; box-shadow: 0 0 0 4px rgba(168, 100, 228, 0.2);"></div>
+                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary);">Offre disponible</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet Routing Machine JS -->
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialisation de la carte (Centrée sur la Tunisie)
+    const map = L.map('map').setView([36.8065, 10.1815], 11);
+
+    // 2. Ajout de la couche de tuiles (Thème Soft/Clean)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    // 3. Récupération des offres depuis PHP
+    const offres = <?php echo json_encode($offres); ?>;
+    let userLocation = null;
+
+    // 4. Géolocalisation de l'utilisateur (Rafraîchissement forcé toutes les 5s)
+    let userMarker = null;
+
+    function refreshLocation() {
+        navigator.geolocation.getCurrentPosition((position) => {
+            const { latitude, longitude } = position.coords;
+            const newPos = [latitude, longitude];
+            
+            if (!userMarker) {
+                userMarker = L.circleMarker(newPos, {
+                    radius: 12,
+                    fillColor: "#4fb5ff",
+                    color: "#fff",
+                    weight: 4,
+                    opacity: 1,
+                    fillOpacity: 1
+                }).addTo(map);
+                map.setView(newPos, 18);
+            } else {
+                userMarker.setLatLng(newPos);
+            }
+            
+            const oldPos = userLocation;
+            userLocation = newPos;
+
+            // Optimisation : Ne recalculer la route que si on a bougé de plus de 3 mètres
+            if (routingControl && currentDest) {
+                if (!oldPos || getDistance(oldPos, newPos) > 0.003) {
+                    updateLiveRoute();
+                    checkInstructionProgress(newPos);
+                }
+            }
+        }, (err) => {}, {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 2000
+        });
+    }
+
+    // Premier appel immédiat
+    refreshLocation();
+    // Puis toutes les 500ms (Ultra-réactif)
+    setInterval(refreshLocation, 500);
+
+    // Fonction pour vérifier si on a passé une étape sans attendre le serveur
+    function checkInstructionProgress(currentPos) {
+        if (!window.allInstructions || window.allInstructions.length <= 1) return;
+        
+        // Si on est à moins de 15m du prochain point de manœuvre, on passe à l'instruction suivante
+        const nextInstr = window.allInstructions[0];
+        if (nextInstr.distance < 15) {
+            window.allInstructions.shift(); // Supprimer l'étape franchie
+            updateInstructionPanel(window.allInstructions[0], window.allInstructions[1]);
+        }
+    }
+
+    // Fonction utilitaire pour calculer la distance entre 2 points (en km)
+    function getDistance(pos1, pos2) {
+        const R = 6371;
+        const dLat = (pos2[0] - pos1[0]) * Math.PI / 180;
+        const dLon = (pos2[1] - pos1[1]) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(pos1[0] * Math.PI / 180) * Math.cos(pos2[0] * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    let currentDest = null;
+    function updateLiveRoute() {
+        if (!userLocation || !currentDest) return;
+        routingControl.setWaypoints([
+            L.latLng(userLocation[0], userLocation[1]),
+            L.latLng(currentDest.lat, currentDest.lon)
+        ]);
+    }
+
+    // 5. Géocodage et affichage des offres avec délai (pour respecter l'API gratuite)
+    async function displayOffres(offresList) {
+        for (let i = 0; i < offresList.length; i++) {
+            const offre = offresList[i];
+            if (!offre.lieu) continue;
+
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(offre.lieu)}`);
+                const data = await response.json();
+                
+                if (data.length > 0) {
+                    const lat = data[0].lat;
+                    const lon = data[0].lon;
+
+                    const markerHtml = `
+                        <div class="custom-marker">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                    `;
+                    const customIcon = L.divIcon({
+                        html: markerHtml,
+                        className: 'dummy',
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 40]
+                    });
+
+                    const marker = L.marker([lat, lon], { icon: customIcon }).addTo(map);
+
+                    const popupContent = `
+                        <div style="min-width: 150px; padding: 2px;">
+                            <h3 style="margin: 0 0 6px; font-weight: 800; color: #1e293b; font-size: 1rem; line-height: 1.2;">${offre.titre}</h3>
+                            
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                <div style="width: 20px; height: 20px; background: #f1f5f9; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-building" style="font-size: 0.6rem; color: #64748b;"></i>
+                                </div>
+                                <span style="color: #9333ea; font-weight: 700; font-size: 0.8rem;">${offre.nom_entreprise}</span>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 0.75rem; margin-bottom: 10px;">
+                                <i class="fas fa-map-marker-alt" style="color: #cbd5e1; font-size: 0.7rem;"></i>
+                                <span>${offre.lieu}</span>
+                            </div>
+
+                            <a href="#" onclick="getDirections(${lat}, ${lon})" class="btn-route">
+                                <i class="fas fa-directions"></i> Itinéraire
+                            </a>
+                            
+                            <div style="text-align: center; margin-top: 10px;">
+                                <a href="job_details.php?id=${offre.id_offre}" style="font-size: 0.75rem; color: #94a3b8; text-decoration: none;">
+                                    Détails complets
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    marker.bindPopup(popupContent);
+                } else {
+                    console.warn(`Lieu non trouvé pour l'offre #${offre.id_offre}: ${offre.lieu}`);
+                }
+            } catch (err) {
+                console.error("Erreur de géocodage:", err);
+            }
+
+            // Attendre 1 seconde entre chaque requête pour ne pas être banni par Nominatim
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+    }
+
+    displayOffres(offres);
+
+    // 6. Fonction pour l'itinéraire
+    let routingControl = null;
+
+    window.getDirections = function(destLat, destLon) {
+        if (!userLocation) {
+            alert("Veuillez autoriser la géolocalisation pour obtenir l'itinéraire.");
+            return;
+        }
+
+        currentDest = { lat: destLat, lon: destLon };
+
+        routingControl = L.Routing.control({
+            waypoints: [
+                L.latLng(userLocation[0], userLocation[1]),
+                L.latLng(destLat, destLon)
+            ],
+            language: 'fr', // Forcer les instructions en français
+            routeWhileDragging: false,
+            addWaypoints: false,
+            draggableWaypoints: false,
+            fitSelectedRoutes: true,
+            show: false,
+            lineOptions: {
+                styles: [{ color: '#a864e4', opacity: 0.8, weight: 8 }]
+            },
+            createMarker: function() { return null; }
+        }).on('routesfound', function(e) {
+            const routes = e.routes;
+            const summary = routes[0].summary;
+            const instructions = routes[0].instructions;
+            
+            // Stocker les instructions pour les mettre à jour selon la position
+            window.allInstructions = instructions;
+            
+            if (instructions && instructions.length > 0) {
+                updateInstructionPanel(instructions[0], instructions[1]);
+            }
+
+            const distKm = (summary.totalDistance / 1000).toFixed(1);
+            const timeCar = Math.round(summary.totalTime / 60);
+            const timeWalk = Math.round(distKm * 12);
+
+            document.getElementById('route-dist').innerText = distKm + ' km';
+            document.getElementById('car-time').innerText = timeCar + ' min';
+            document.getElementById('walk-time').innerText = timeWalk > 60 ? Math.floor(timeWalk/60) + 'h ' + (timeWalk%60) + 'm' : timeWalk + ' min';
+            document.getElementById('route-info').style.display = 'flex';
+        }).addTo(map);
+    };
+
+    function updateInstructionPanel(instr, nextInstr = null) {
+        // Instruction principale
+        let text = instr.text;
+        const streetName = instr.road || "";
+        if (streetName && !text.includes(streetName)) {
+            text += " sur " + streetName;
+        }
+
+        const dist = Math.round(instr.distance);
+        const iconElement = document.getElementById('instruction-icon');
+        
+        document.getElementById('instruction-text').innerText = text;
+        document.getElementById('instruction-dist').innerText = dist + " m";
+
+        // Instruction suivante (Ensuite)
+        const upcomingPanel = document.getElementById('instruction-upcoming');
+        if (nextInstr) {
+            document.getElementById('next-step-text').innerText = nextInstr.text;
+            upcomingPanel.style.display = 'flex';
+        } else {
+            upcomingPanel.style.display = 'none';
+        }
+        
+        // Changer l'icône selon le texte
+        if (text.toLowerCase().includes('gauche')) iconElement.className = "fas fa-arrow-left";
+        else if (text.toLowerCase().includes('droite')) iconElement.className = "fas fa-arrow-right";
+        else iconElement.className = "fas fa-arrow-up";
+    }
+
+    window.startGuidage = function() {
+        if (!routingControl) return;
+        
+        // Afficher le panneau de guidage
+        document.getElementById('guidage-panel').style.display = 'block';
+        
+        // Masquer le bouton commencer
+        document.getElementById('btn-commencer').style.display = 'none';
+        
+        if (userLocation) {
+            map.setView(userLocation, 18);
+        }
+    };
+
+    window.stopGuidage = function() {
+        if (routingControl) {
+            map.removeControl(routingControl);
+            routingControl = null;
+        }
+        document.getElementById('route-info').style.display = 'none';
+        document.getElementById('guidage-panel').style.display = 'none';
+        document.getElementById('btn-commencer').style.display = 'flex';
+    };
+
+    window.searchAddress = function() {
+        const query = document.getElementById('address-search').value;
+        if (!query) return;
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    map.setView([data[0].lat, data[0].lon], 13);
+                } else {
+                    alert("Lieu non trouvé.");
+                }
+            })
+            .catch(err => console.error("Search error:", err));
+    };
+
+    if (window.lucide) lucide.createIcons();
+});
+</script>
+
+<?php } ?>

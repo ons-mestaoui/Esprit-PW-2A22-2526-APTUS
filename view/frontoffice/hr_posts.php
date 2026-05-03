@@ -1,4 +1,4 @@
-﻿<?php 
+<?php 
 $pageTitle = "Mes Postes"; 
 $pageCSS = "feeds.css"; 
 $userRole = "Entreprise"; 
@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $experience = trim($_POST['experience_requise'] ?? '');
     $salaire = trim($_POST['salaire'] ?? '');
     $question = trim($_POST['question'] ?? '');
+    $lieu = trim($_POST['lieu'] ?? '');
     
     // Forçage de la date de publication selon l'action (Add = Aujourd'hui, Edit = On garde l'ancienne date)
     if (isset($_POST['submit_add'])) {
@@ -62,7 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'question' => $question,
         'date_publication' => $date_pub,
         'date_expir' => $date_exp,
-        'type' => trim($_POST['type'] ?? 'Sur site')
+        'type' => trim($_POST['type'] ?? 'Sur site'),
+        'lieu' => $lieu
     ];
 
     // ---- RULES PHP ----
@@ -96,6 +98,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['date_expir'] = "La date d'expiration ne peut pas précéder la date de publication.";
     }
 
+    if ($form_data['type'] !== 'À distance' && empty($lieu)) {
+        $errors['lieu'] = "Le lieu est obligatoire pour les postes sur site ou hybrides.";
+    }
+
     // SI AUCUNE ERREUR: ON SAUVEGARDE EN BDD
     if (empty($errors)) {
         $offre = new offre(
@@ -109,7 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $date_pub, 
             $date_exp,
             $img_post_base64,
-            $form_data['type']
+            $form_data['type'],
+            $form_data['lieu']
         );
         
         if (isset($_POST['submit_add'])) {
@@ -435,14 +442,23 @@ if (!isset($content)) {
                                 <input type="text" class="input <?php echo isset($errors['salaire']) ? 'has-error' : ''; ?>" name="salaire" id="salaire" placeholder="ex: 2000" value="<?php echo htmlspecialchars(val('salaire', $form_data, $offreEdit)); ?>">
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="type">Type de poste</label>
-                            <?php $currentType = val('type', $form_data, $offreEdit, 'Sur site'); ?>
-                            <select class="input" name="type" id="type" style="cursor: pointer;">
-                                <option value="Sur site" <?php echo $currentType === 'Sur site' ? 'selected' : ''; ?>>Sur site</option>
-                                <option value="À distance" <?php echo $currentType === 'À distance' ? 'selected' : ''; ?>>À distance</option>
-                                <option value="Hybride" <?php echo $currentType === 'Hybride' ? 'selected' : ''; ?>>Hybride</option>
-                            </select>
+                        <div class="input-group-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="type">Type de poste</label>
+                                <?php $currentType = val('type', $form_data, $offreEdit, 'Sur site'); ?>
+                                <select class="input" name="type" id="type" style="cursor: pointer;" onchange="toggleLieuField()">
+                                    <option value="Sur site" <?php echo $currentType === 'Sur site' ? 'selected' : ''; ?>>Sur site</option>
+                                    <option value="À distance" <?php echo $currentType === 'À distance' ? 'selected' : ''; ?>>À distance</option>
+                                    <option value="Hybride" <?php echo $currentType === 'Hybride' ? 'selected' : ''; ?>>Hybride</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="lieu">Lieu / Ville</label>
+                                <input type="text" class="input <?php echo isset($errors['lieu']) ? 'has-error' : ''; ?>" name="lieu" id="lieu" placeholder="ex: Tunis, Menzah" value="<?php echo htmlspecialchars(val('lieu', $form_data, $offreEdit)); ?>">
+                                <?php if (isset($errors['lieu'])): ?>
+                                    <span class="error-msg"><?php echo $errors['lieu']; ?></span>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -965,7 +981,34 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Tags Logic for competences_requises
+// Gestion du champ Lieu en fonction du Type
+function toggleLieuField() {
+    const typeSelect = document.getElementById('type');
+    const lieuInput = document.getElementById('lieu');
+    
+    if (typeSelect && lieuInput) {
+        if (typeSelect.value === 'À distance') {
+            lieuInput.value = '';
+            lieuInput.disabled = true;
+            lieuInput.style.opacity = '0.5';
+            lieuInput.style.cursor = 'not-allowed';
+            lieuInput.placeholder = 'Non applicable à distance';
+        } else {
+            lieuInput.disabled = false;
+            lieuInput.style.opacity = '1';
+            lieuInput.style.cursor = 'text';
+            lieuInput.placeholder = 'ex: Tunis, Menzah';
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation
+    toggleLieuField();
+    
+    const typeSelect = document.getElementById('type');
+    if(typeSelect) typeSelect.addEventListener('change', toggleLieuField);
+
     const hiddenInput = document.getElementById('competences_requises');
     const visualInput = document.getElementById('competences_requises_visual');
     const tagsContainer = document.getElementById('tags-container');
