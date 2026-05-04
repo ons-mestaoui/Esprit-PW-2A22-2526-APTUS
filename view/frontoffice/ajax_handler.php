@@ -89,13 +89,8 @@ switch ($action) {
             $word_count    = (int)($_POST['word_count'] ?? 0);
             $new_prog      = (int)($_POST['new_prog'] ?? 0);
 
-            // Plancher 180 secondes (3 min) même pour les courts textes
-            $min_required  = max(180, ($word_count > 0) ? ($word_count / 4.17) : 180);
-            $ratio         = ($dwell_seconds > 0) ? min($dwell_seconds / $min_required, 1.0) : 0;
-            $calc_prog     = (int)round($ratio * 100);
-
-            $validated = min($new_prog, $calc_prog);
-            $final     = max($current, $validated);
+            // Appel de la logique métier centralisée dans le Controller (MVC Compliance)
+            $final = $inscriC->validateDwellProgression($dwell_seconds, $word_count, $new_prog, $current);
             
             require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
             $controller = new TuteurDashboardController();

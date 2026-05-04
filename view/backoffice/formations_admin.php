@@ -11,19 +11,19 @@ $data = $formationC->getAdminPageData();
 
 $listeFormations = $data['listeFormations'];
 $totalFormations = $data['totalFormations'];
-$domaines        = $data['domaines'];
-$tuteurs         = $data['tuteurs'];
-$tuteursList     = $data['tuteursList'];
-$stats           = $data['stats'];
+$domaines = $data['domaines'];
+$tuteurs = $data['tuteurs'];
+$tuteursList = $data['tuteursList'];
+$stats = $data['stats'];
 
 $calendarEventsJSON = json_encode($data['calendarEvents']);
-$tuteurColorsJSON   = json_encode($data['tuteurColors']);
+$tuteurColorsJSON = json_encode($data['tuteurColors']);
 
-$totalInscrits  = $stats['total_inscrits'];
-$certificats    = $stats['certificats'];
+$totalInscrits = $stats['total_inscrits'];
+$certificats = $stats['certificats'];
 $tauxCompletion = $stats['taux_completion'];
 
-sort($domaines);
+// sort($domaines); // SUPPRIMÉ : Déplacé dans FormationController::getAdminFormationsData() pour respecter le MVC
 
 $pageTitle = "Formations";
 $pageCSS = "formations.css";
@@ -189,62 +189,84 @@ if (!isset($content)) {
 <!-- ════════════ MODAL : Ajouter/modifier un créneau ════════════ -->
 <div id="modal-creneau"
     style="display:none;position:fixed;inset:0;background:var(--bg-overlay, rgba(15, 23, 42, 0.6));backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:1rem;transition: all 0.3s ease;">
-    
-    <div style="background:var(--bg-card, #ffffff); color:var(--text-primary, #1e293b); border-radius:12px; width:100%; max-width:550px; box-shadow:0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); position:relative; display:flex; flex-direction:column; max-height: 90vh;">
+
+    <div
+        style="background:var(--bg-card, #ffffff); color:var(--text-primary, #1e293b); border-radius:12px; width:100%; max-width:550px; box-shadow:0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); position:relative; display:flex; flex-direction:column; max-height: 90vh;">
 
         <!-- Header -->
         <div style="display:flex; justify-content:space-between; align-items:center; padding:1.5rem 1.5rem 1rem;">
-            <h3 style="margin:0; font-size:1.25rem; font-weight:700; color:var(--text-primary);">Indisponibilité / Réunion</h3>
-            <button onclick="closeModal()" style="background:none; border:none; cursor:pointer; color:var(--text-secondary, #64748b); padding:4px; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:background 0.2s;" onmouseover="this.style.background='var(--bg-surface, #f1f5f9)'" onmouseout="this.style.background='none'">
+            <h3 style="margin:0; font-size:1.25rem; font-weight:700; color:var(--text-primary);">Indisponibilité /
+                Réunion</h3>
+            <button onclick="closeModal()"
+                style="background:none; border:none; cursor:pointer; color:var(--text-secondary, #64748b); padding:4px; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:background 0.2s;"
+                onmouseover="this.style.background='var(--bg-surface, #f1f5f9)'"
+                onmouseout="this.style.background='none'">
                 <i data-lucide="x" style="width:20px; height:20px;"></i>
             </button>
         </div>
 
         <!-- Body -->
         <div style="padding:0 1.5rem 1.5rem; overflow-y:auto; display:flex; flex-direction:column; gap:1.25rem;">
-            
-            <p style="margin:0 0 0.5rem; font-size:0.9rem; color:var(--text-secondary, #64748b);">Configurez un blocage horaire ou une réunion interne pour le planning d'un tuteur.</p>
+
+            <p style="margin:0 0 0.5rem; font-size:0.9rem; color:var(--text-secondary, #64748b);">Configurez un blocage
+                horaire ou une réunion interne pour le planning d'un tuteur.</p>
             <input type="hidden" id="creneau-id" value="">
 
             <!-- Tuteur -->
             <div class="form-group" style="display:flex; flex-direction:column; gap:0.5rem;">
-                <label class="form-label" style="font-size:0.875rem; font-weight:600; color:var(--text-primary);">Tuteur <span style="color:#ef4444;">*</span></label>
+                <label class="form-label" style="font-size:0.875rem; font-weight:600; color:var(--text-primary);">Tuteur
+                    <span style="color:#ef4444;">*</span></label>
                 <div class="input-validated-wrap" style="position:relative;">
-                    <select id="creneau-tuteur" class="select iv-field" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border-color, #cbd5e1); border-radius:8px; background-color:transparent; appearance:auto; outline:none; transition:border-color 0.2s;" data-min="1" data-label="Tuteur">
+                    <select id="creneau-tuteur" class="select iv-field"
+                        style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border-color, #cbd5e1); border-radius:8px; background-color:transparent; appearance:auto; outline:none; transition:border-color 0.2s;"
+                        data-min="1" data-label="Tuteur">
                         <option value="">Sélectionnez un tuteur...</option>
                         <?php foreach ($tuteursList as $t): ?>
                             <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['nom']); ?></option>
                         <?php endforeach; ?>
                     </select>
                     <!-- Ajustement ici aussi pour ne pas superposer la flèche du select -->
-                    <span class="iv-status" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);display:none;"></span>
+                    <span class="iv-status"
+                        style="position:absolute;right:32px;top:50%;transform:translateY(-50%);display:none;"></span>
                 </div>
             </div>
 
             <!-- Motif -->
             <div class="form-group" style="display:flex; flex-direction:column; gap:0.5rem;">
-                <label class="form-label" style="font-size:0.875rem; font-weight:600; color:var(--text-primary);">Motif de l'événement</label>
+                <label class="form-label" style="font-size:0.875rem; font-weight:600; color:var(--text-primary);">Motif
+                    de l'événement</label>
                 <div class="input-validated-wrap" style="position:relative;">
-                    <input type="text" id="creneau-titre" class="input" placeholder="Ex: Congés, Réunion d'équipe..." style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border-color, #cbd5e1); border-radius:8px; outline:none; background-color:transparent; transition:border-color 0.2s;">
+                    <input type="text" id="creneau-titre" class="input" placeholder="Ex: Congés, Réunion d'équipe..."
+                        style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border-color, #cbd5e1); border-radius:8px; outline:none; background-color:transparent; transition:border-color 0.2s;">
                 </div>
             </div>
 
             <!-- Dates Grid -->
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                 <div class="form-group" style="display:flex; flex-direction:column; gap:0.5rem;">
-                    <label class="form-label" style="font-size:0.875rem; font-weight:600; color:var(--text-primary);">Début <span style="color:#ef4444;">*</span></label>
+                    <label class="form-label"
+                        style="font-size:0.875rem; font-weight:600; color:var(--text-primary);">Début <span
+                            style="color:#ef4444;">*</span></label>
                     <div class="input-validated-wrap" style="position:relative;">
-                        <input type="datetime-local" id="creneau-debut" class="input iv-field" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border-color, #cbd5e1); border-radius:8px; outline:none; background-color:transparent; transition:border-color 0.2s;" data-min="1" data-label="Date de début">
+                        <input type="datetime-local" id="creneau-debut" class="input iv-field"
+                            style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border-color, #cbd5e1); border-radius:8px; outline:none; background-color:transparent; transition:border-color 0.2s;"
+                            data-min="1" data-label="Date de début">
                         <!-- FIX: right: 40px pour laisser la place à l'icône native du calendrier -->
-                        <span class="iv-status" style="position:absolute;right:40px;top:50%;transform:translateY(-50%);display:none;"></span>
+                        <span class="iv-status"
+                            style="position:absolute;right:40px;top:50%;transform:translateY(-50%);display:none;"></span>
                     </div>
                 </div>
                 <div class="form-group" style="display:flex; flex-direction:column; gap:0.5rem;">
-                    <label class="form-label" style="font-size:0.875rem; font-weight:600; color:var(--text-primary);">Fin <span style="color:#ef4444;">*</span></label>
+                    <label class="form-label"
+                        style="font-size:0.875rem; font-weight:600; color:var(--text-primary);">Fin <span
+                            style="color:#ef4444;">*</span></label>
                     <div class="input-validated-wrap" style="position:relative;">
-                        <input type="datetime-local" id="creneau-fin" class="input iv-field" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border-color, #cbd5e1); border-radius:8px; outline:none; background-color:transparent; transition:border-color 0.2s;" data-min="1" data-label="Date de fin">
+                        <input type="datetime-local" id="creneau-fin" class="input iv-field"
+                            style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border-color, #cbd5e1); border-radius:8px; outline:none; background-color:transparent; transition:border-color 0.2s;"
+                            data-min="1" data-label="Date de fin">
                         <!-- FIX: right: 40px pour laisser la place à l'icône native du calendrier -->
-                        <span class="iv-status" style="position:absolute;right:40px;top:50%;transform:translateY(-50%);display:none;"></span>
+                        <span class="iv-status"
+                            style="position:absolute;right:40px;top:50%;transform:translateY(-50%);display:none;"></span>
                     </div>
                 </div>
             </div>
@@ -253,23 +275,32 @@ if (!isset($content)) {
             <div style="display:flex; align-items:center; gap:2rem; margin-top:0.5rem;">
                 <div style="display:flex; align-items:center; gap:0.75rem;">
                     <label style="font-size:0.875rem; font-weight:600; color:var(--text-primary);">Couleur</label>
-                    <div style="position:relative; width:32px; height:32px; border-radius:6px; overflow:hidden; border:1px solid var(--border-color, #cbd5e1); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                        <input type="color" id="creneau-couleur" value="#8b5cf6" style="position:absolute; top:-10px; left:-10px; width:60px; height:60px; cursor:pointer; border:none; padding:0; background:none;">
+                    <div
+                        style="position:relative; width:32px; height:32px; border-radius:6px; overflow:hidden; border:1px solid var(--border-color, #cbd5e1); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                        <input type="color" id="creneau-couleur" value="#8b5cf6"
+                            style="position:absolute; top:-10px; left:-10px; width:60px; height:60px; cursor:pointer; border:none; padding:0; background:none;">
                     </div>
                 </div>
-                <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.875rem; font-weight:500; cursor:pointer; color:var(--text-primary);">
-                    <input type="checkbox" id="creneau-recurrent" style="width:16px; height:16px; accent-color:var(--accent-primary, #4f46e5); cursor:pointer; border-radius:4px;">
+                <label
+                    style="display:flex; align-items:center; gap:0.5rem; font-size:0.875rem; font-weight:500; cursor:pointer; color:var(--text-primary);">
+                    <input type="checkbox" id="creneau-recurrent"
+                        style="width:16px; height:16px; accent-color:var(--accent-primary, #4f46e5); cursor:pointer; border-radius:4px;">
                     Événement récurrent
                 </label>
             </div>
         </div>
 
         <!-- Footer -->
-        <div style="padding:1rem 1.5rem; border-top:1px solid var(--border-color, #f1f5f9); display:flex; justify-content:flex-end; gap:0.75rem; background:var(--bg-surface-light, #f8fafc); border-bottom-left-radius:12px; border-bottom-right-radius:12px;">
-            <button onclick="closeModal()" class="btn" style="padding:0.625rem 1.25rem; border-radius:8px; background:white; color:var(--text-primary); border:1px solid var(--border-color, #cbd5e1); cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.background='var(--bg-surface, #f1f5f9)';" onmouseout="this.style.background='white';">
+        <div
+            style="padding:1rem 1.5rem; border-top:1px solid var(--border-color, #f1f5f9); display:flex; justify-content:flex-end; gap:0.75rem; background:var(--bg-surface-light, #f8fafc); border-bottom-left-radius:12px; border-bottom-right-radius:12px;">
+            <button onclick="closeModal()" class="btn"
+                style="padding:0.625rem 1.25rem; border-radius:8px; background:white; color:var(--text-primary); border:1px solid var(--border-color, #cbd5e1); cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;"
+                onmouseover="this.style.background='var(--bg-surface, #f1f5f9)';"
+                onmouseout="this.style.background='white';">
                 Annuler
             </button>
-            <button onclick="submitCreneau()" id="btn-save-creneau" class="btn btn-primary" style="padding:0.625rem 1.25rem; border-radius:8px; background:linear-gradient(to right, #1a8ed9, #8a2594); color:white; border:none; cursor:pointer; font-weight:600; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem; box-shadow: 0 4px 12px rgba(138, 37, 148, 0.3);">
+            <button onclick="submitCreneau()" id="btn-save-creneau" class="btn btn-primary"
+                style="padding:0.625rem 1.25rem; border-radius:8px; background:linear-gradient(to right, #1a8ed9, #8a2594); color:white; border:none; cursor:pointer; font-weight:600; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem; box-shadow: 0 4px 12px rgba(138, 37, 148, 0.3);">
                 Enregistrer
             </button>
         </div>
@@ -279,28 +310,39 @@ if (!isset($content)) {
 <!-- ════════════ Modal : Choix action créneau ════════════ -->
 <div id="modal-creneau-action"
     style="display:none;position:fixed;inset:0;background:var(--bg-overlay, rgba(15, 23, 42, 0.6));backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:1rem;transition: all 0.3s ease;">
-    
-    <div style="background:var(--bg-card, #ffffff); color:var(--text-primary, #1e293b); border-radius:12px; width:100%; max-width:400px; box-shadow:0 10px 25px -5px rgba(0, 0, 0, 0.1); position:relative; display:flex; flex-direction:column;">
-        
+
+    <div
+        style="background:var(--bg-card, #ffffff); color:var(--text-primary, #1e293b); border-radius:12px; width:100%; max-width:400px; box-shadow:0 10px 25px -5px rgba(0, 0, 0, 0.1); position:relative; display:flex; flex-direction:column;">
+
         <!-- Header -->
         <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:1.5rem 1.5rem 0.5rem;">
             <div>
-                <h3 style="margin:0 0 0.25rem; font-size:1.15rem; font-weight:700; color:var(--text-primary);">Gérer le créneau</h3>
-                <p id="creneau-action-desc" style="margin:0; font-size:0.85rem; color:var(--text-secondary, #64748b); line-height:1.4;"></p>
+                <h3 style="margin:0 0 0.25rem; font-size:1.15rem; font-weight:700; color:var(--text-primary);">Gérer le
+                    créneau</h3>
+                <p id="creneau-action-desc"
+                    style="margin:0; font-size:0.85rem; color:var(--text-secondary, #64748b); line-height:1.4;"></p>
             </div>
-            <button onclick="document.getElementById('modal-creneau-action').style.display='none'" style="background:none; border:none; cursor:pointer; color:var(--text-secondary, #64748b); padding:4px; margin-top:-4px; margin-right:-4px; border-radius:6px;" onmouseover="this.style.background='var(--bg-surface, #f1f5f9)'" onmouseout="this.style.background='none'">
+            <button onclick="document.getElementById('modal-creneau-action').style.display='none'"
+                style="background:none; border:none; cursor:pointer; color:var(--text-secondary, #64748b); padding:4px; margin-top:-4px; margin-right:-4px; border-radius:6px;"
+                onmouseover="this.style.background='var(--bg-surface, #f1f5f9)'"
+                onmouseout="this.style.background='none'">
                 <i data-lucide="x" style="width:20px; height:20px;"></i>
             </button>
         </div>
 
         <!-- Body / Actions -->
         <div style="padding:1.5rem; display:flex; flex-direction:column; gap:0.75rem;">
-            <button id="btn-creneau-modifier" class="btn btn-primary" style="width:100%; padding:0.75rem; border-radius:8px; background:var(--bg-surface, #f8fafc); color:var(--text-primary); border:1px solid var(--border-color, #e2e8f0); cursor:pointer; font-weight:600; font-size:0.9rem; display:flex; align-items:center; justify-content:center; gap:0.5rem; transition:background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='var(--bg-surface, #f8fafc)'">
+            <button id="btn-creneau-modifier" class="btn btn-primary"
+                style="width:100%; padding:0.75rem; border-radius:8px; background:var(--bg-surface, #f8fafc); color:var(--text-primary); border:1px solid var(--border-color, #e2e8f0); cursor:pointer; font-weight:600; font-size:0.9rem; display:flex; align-items:center; justify-content:center; gap:0.5rem; transition:background 0.2s;"
+                onmouseover="this.style.background='#e2e8f0'"
+                onmouseout="this.style.background='var(--bg-surface, #f8fafc)'">
                 <i data-lucide="edit-2" style="width:16px; height:16px;"></i>
                 Modifier les détails
             </button>
-            
-            <button id="btn-creneau-supprimer" class="btn btn-danger" style="width:100%; padding:0.75rem; border-radius:8px; background:#fef2f2; color:#ef4444; border:1px solid #fecaca; cursor:pointer; font-weight:600; font-size:0.9rem; display:flex; align-items:center; justify-content:center; gap:0.5rem; transition:background 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+
+            <button id="btn-creneau-supprimer" class="btn btn-danger"
+                style="width:100%; padding:0.75rem; border-radius:8px; background:#fef2f2; color:#ef4444; border:1px solid #fecaca; cursor:pointer; font-weight:600; font-size:0.9rem; display:flex; align-items:center; justify-content:center; gap:0.5rem; transition:background 0.2s;"
+                onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
                 <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
                 Supprimer le créneau
             </button>
@@ -714,7 +756,7 @@ if (!isset($content)) {
     // ── DONNÉES PHP → JS ──────────────────────────────────────────
     // ── DONNÉES INJECTÉES (MVC) ──────────────────────────────────
     const calendarEvents = <?php echo $calendarEventsJSON; ?>;
-    const tuteurColors   = <?php echo $tuteurColorsJSON; ?>;
+    const tuteurColors = <?php echo $tuteurColorsJSON; ?>;
 
     // ── VARIABLES CLÉS ──────────────────────────────────────────
 
@@ -834,9 +876,9 @@ if (!isset($content)) {
             selectMirror: true,
 
             // Source unique consolidée via le contrôleur
-            events: calendarEvents.map(e => ({ 
-                ...e, 
-                editable: e.extendedProps && e.extendedProps.type !== 'formation' 
+            events: calendarEvents.map(e => ({
+                ...e,
+                editable: e.extendedProps && e.extendedProps.type !== 'formation'
             })),
 
             // Cliquer-glisser sur une zone vide → ouvrir le modal d'ajout

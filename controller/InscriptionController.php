@@ -96,6 +96,26 @@ class InscriptionController
     }
 
     // --- ALGORITHME SMART PROGRESSION ---
+    /**
+     * Valide mathématiquement la progression basée sur le temps de lecture (Smart Dwell Time).
+     * Empêche la triche en vérifiant le ratio temps passé / mots lus.
+     */
+    public function validateDwellProgression($dwell_seconds, $word_count, $new_prog, $current_prog)
+    {
+        // Algorithme de validation (Loi de lecture moyenne : 250 mots/min => 4.17 mots/sec)
+        // Plancher technique de 180 secondes (3 min) pour assurer une imprégnation minimale
+        $min_required = max(180, ($word_count > 0) ? ($word_count / 4.17) : 180);
+        
+        $ratio = ($dwell_seconds > 0) ? min($dwell_seconds / $min_required, 1.0) : 0;
+        $calc_prog = (int)round($ratio * 100);
+
+        // On ne valide jamais plus que ce que l'IA a calculé
+        $validated = min($new_prog, $calc_prog);
+        
+        // On retourne le maximum pour ne jamais régresser dans l'apprentissage
+        return max($current_prog, $validated);
+    }
+
     // Recalcule la progression réelle basée sur les chapitres vus
     public function calculateSmartPercentage($id_user, $id_formation, $total_chapters)
     {

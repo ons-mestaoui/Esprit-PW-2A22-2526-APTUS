@@ -31,7 +31,8 @@ class AIController
         require_once __DIR__ . '/FormationController.php';
         $formC = new FormationController();
         $f = $formC->getFormationById($id_formation);
-        if (!$f) return ['success' => false, 'message' => 'Formation introuvable.'];
+        if (!$f)
+            return ['success' => false, 'message' => 'Formation introuvable.'];
 
         $mermaid = $this->generateMindMap($f['description']);
         if ($mermaid) {
@@ -59,7 +60,8 @@ class AIController
         require_once __DIR__ . '/FormationController.php';
         $formC = new FormationController();
         $f = $formC->getFormationById($id_formation);
-        if (!$f) return ['success' => false, 'message' => 'Formation introuvable.'];
+        if (!$f)
+            return ['success' => false, 'message' => 'Formation introuvable.'];
 
         $markdown = $this->generateCheatSheet($f['description']);
         if ($markdown) {
@@ -101,26 +103,27 @@ class AIController
     /**
      * 🛠️ PARSER MARKDOWN MINIMALISTE (Pour les fiches AI)
      */
-    public function markdownToHtml($markdown) {
+    public function markdownToHtml($markdown)
+    {
         // Nettoyage initial
         $markdown = trim($markdown);
 
         // Headers (Seul le H1 reste en bleu, les autres en noir)
-        $markdown = preg_replace('/^# (.*)$/m', '<h1 style="color:#00A3DA; font-size:1.75rem; margin:2rem 0 1.5rem; text-align:center; font-weight:800; text-transform:uppercase; letter-spacing:0.05em;">$1</h1>', $markdown);
+        $markdown = preg_replace('/^# (.*)$/m', '<h1 style="color:#00A3DA; font-size:1.8rem; margin:2.5rem 0; text-align:center; font-weight:800; text-transform:uppercase; letter-spacing:0.05em;">$1</h1>', $markdown);
         $markdown = preg_replace('/^## (.*)$/m', '<h2 style="color:#111827; font-size:1.25rem; margin:1.8rem 0 1rem; border-left:4px solid #00A3DA; padding-left:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">$1</h2>', $markdown);
-        $markdown = preg_replace('/^### (.*)$/m', '<h3 style="color:#111827; font-size:1.1rem; margin:1.5rem 0 0.8rem; font-weight:700; display:flex; align-items:center; gap:10px;">$1</h3>', $markdown);
+        $markdown = preg_replace('/^### (.*)$/m', '<h3 style="color:#111827; font-size:1.1rem; margin:1.5rem 0 0.8rem; font-weight:700;">$1</h3>', $markdown);
         $markdown = preg_replace('/^#### (.*)$/m', '<h4 style="color:#111827; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em; margin:1.2rem 0 0.6rem; font-weight:800;">• $1</h4>', $markdown);
-        
+
         // Bold
         $markdown = preg_replace('/\*\*(.*?)\*\*/', '<strong style="color:#111827; font-weight:700;">$1</strong>', $markdown);
-        
+
         // Lists (Sobres)
         $markdown = preg_replace('/^\* (.*)$/m', '<div style="margin-bottom:0.8rem; padding-left:1.5rem; position:relative; color:#374151; line-height:1.6;"><span style="position:absolute; left:0; color:#00A3DA;">■</span> $1</div>', $markdown);
         $markdown = preg_replace('/^- (.*)$/m', '<div style="margin-bottom:0.8rem; padding-left:1.5rem; position:relative; color:#374151; line-height:1.6;"><span style="position:absolute; left:0; color:#00A3DA;">→</span> $1</div>', $markdown);
-        
+
         // Paragraphs
         $markdown = nl2br($markdown);
-        
+
         return '<div class="aptus-fiche-content" style="font-family:\'Inter\', -apple-system, sans-serif; color:#374151;">' . $markdown . '</div>';
     }
 
@@ -342,15 +345,14 @@ class AIController
             return ['success' => false, 'message' => 'L\'historique est vide.'];
         }
 
-        $system_prompt = "Tu es un tuteur pédagogique expert Aptus AI. Ton but est d'aider un étudiant à réviser de manière académique et professionnelle. 
-        L'utilisateur va te fournir une transcription brute d'une conversation entre un étudiant et une IA concernant un cours.
-        Tâche : Analyse cette conversation et extrais-en une 'Fiche de Synthèse' claire, structurée et sobre.
-        Règles :
-        1. Ne garde que les concepts fondamentaux, les définitions et les points techniques abordés.
-        2. INTERDICTION ABSOLUE : N'utilise aucun emoji (pas d'icônes, pas de smileys).
-        3. Formate le résultat en Markdown propre avec des titres hiérarchisés.
-        4. Le ton doit être purement pédagogique, formel et synthétique.
-        5. Ne fais aucune introduction ni conclusion, commence directement par le titre du cours.";
+        $system_prompt = "Tu es l'IA Pédagogique Aptus. Ton but est de créer une fiche de révision riche, structurée et motivante.
+        L'utilisateur te fournit une conversation : analyse-la pour en extraire le savoir essentiel.
+        RÈGLES CRITIQUES :
+        1. AUCUN EMOJI. Utilise uniquement du texte et des tirets.
+        2. Structure claire avec titres (#, ##, ###).
+        3. Sois précis et académique.
+        4. Focus sur : Définitions, Avantages, Points clés, et Méthodologie.
+        Ne fais pas de blabla inutile, pas de 'Bonjour', va droit au contenu.";
 
         $data = [
             "model" => "llama-3.3-70b-versatile",

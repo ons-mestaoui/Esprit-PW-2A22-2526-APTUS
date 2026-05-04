@@ -358,6 +358,7 @@ if (!isset($content)) {
                 <p>Aucune formation assignée.</p>
             </div>
         <?php else: ?>
+            <?php foreach ($formations as $f): ?>
                 <div class="side-card <?php echo $f['is_online'] ? 'online' : 'offline'; ?>">
                     <div class="side-card__header">
                         <div>

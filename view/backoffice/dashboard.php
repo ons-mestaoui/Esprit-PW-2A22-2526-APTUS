@@ -2,9 +2,9 @@
 
 <?php
 if (!isset($content)) {
-    $content = __FILE__;
-    include 'layout_back.php';
-    exit();
+  $content = __FILE__;
+  include 'layout_back.php';
+  exit();
 }
 ?>
 <!-- Included inside layout_back.php -->
@@ -87,7 +87,8 @@ if (!isset($content)) {
       </select>
     </div>
     <div id="dashboard-bar-chart" style="height:280px;"></div>
-    <div class="flex items-center justify-center gap-6 mt-4" style="font-size:var(--fs-xs);color:var(--text-secondary);">
+    <div class="flex items-center justify-center gap-6 mt-4"
+      style="font-size:var(--fs-xs);color:var(--text-secondary);">
       <span style="display:flex;align-items:center;gap:6px;">
         <span style="width:10px;height:10px;border-radius:3px;background:var(--chart-1);"></span>
         Candidatures
@@ -129,7 +130,8 @@ if (!isset($content)) {
         <tr>
           <td>
             <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px;background:var(--accent-secondary);">TS</div>
+              <div class="avatar avatar-sm avatar-initials"
+                style="width:28px;height:28px;font-size:10px;background:var(--accent-secondary);">TS</div>
               <span class="text-sm fw-medium">TechSphere Inc.</span>
             </div>
           </td>
@@ -151,7 +153,8 @@ if (!isset($content)) {
         <tr>
           <td>
             <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px;background:var(--accent-secondary);">DG</div>
+              <div class="avatar avatar-sm avatar-initials"
+                style="width:28px;height:28px;font-size:10px;background:var(--accent-secondary);">DG</div>
               <span class="text-sm fw-medium">DevGroup SA</span>
             </div>
           </td>
@@ -188,49 +191,49 @@ if (!isset($content)) {
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Bar Chart: Candidatures vs Formations
-  AptusCharts.bar('dashboard-bar-chart', [
-    { label: 'Jan', value1: 240, value2: 180, label1: 'Candidatures', label2: 'Formations' },
-    { label: 'Fév', value1: 310, value2: 220, label1: 'Candidatures', label2: 'Formations' },
-    { label: 'Mar', value1: 420, value2: 280, label1: 'Candidatures', label2: 'Formations' },
-    { label: 'Avr', value1: 380, value2: 340, label1: 'Candidatures', label2: 'Formations' },
-    { label: 'Mai', value1: 290, value2: 190, label1: 'Candidatures', label2: 'Formations' },
-    { label: 'Jun', value1: 350, value2: 260, label1: 'Candidatures', label2: 'Formations' },
-  ], {
-    dualBars: true,
-    barColor: 'var(--chart-1)',
-    barColor2: 'var(--chart-2)',
-    height: 280
+  document.addEventListener('DOMContentLoaded', function () {
+    // Bar Chart: Candidatures vs Formations
+    AptusCharts.bar('dashboard-bar-chart', [
+      { label: 'Jan', value1: 240, value2: 180, label1: 'Candidatures', label2: 'Formations' },
+      { label: 'Fév', value1: 310, value2: 220, label1: 'Candidatures', label2: 'Formations' },
+      { label: 'Mar', value1: 420, value2: 280, label1: 'Candidatures', label2: 'Formations' },
+      { label: 'Avr', value1: 380, value2: 340, label1: 'Candidatures', label2: 'Formations' },
+      { label: 'Mai', value1: 290, value2: 190, label1: 'Candidatures', label2: 'Formations' },
+      { label: 'Jun', value1: 350, value2: 260, label1: 'Candidatures', label2: 'Formations' },
+    ], {
+      dualBars: true,
+      barColor: 'var(--chart-1)',
+      barColor2: 'var(--chart-2)',
+      height: 280
+    });
+
+    // Donut Chart: Roles
+    AptusCharts.donut('role-donut-chart', [
+      { label: 'Candidats', value: 12450 },
+      { label: 'Entreprises', value: 845 },
+      { label: 'Admins', value: 12 },
+    ], {
+      size: 180,
+      strokeWidth: 30,
+      centerValue: '13.3k',
+      centerLabel: 'Total'
+    });
+
+    // Weekly Activity
+    AptusCharts.bar('weekly-chart', [
+      { label: 'Lun', value: 45 },
+      { label: 'Mar', value: 62 },
+      { label: 'Mer', value: 78 },
+      { label: 'Jeu', value: 55 },
+      { label: 'Ven', value: 90 },
+      { label: 'Sam', value: 34 },
+      { label: 'Dim', value: 22 },
+    ], { barColor: 'var(--chart-3)', height: 200 });
+
+    // Animate counters
+    AptusCharts.counter('counter-hunters', 12450);
+    AptusCharts.counter('counter-enterprises', 845);
+    AptusCharts.counter('counter-cvs', 34102);
+    AptusCharts.counter('counter-formations', 4520);
   });
-
-  // Donut Chart: Roles
-  AptusCharts.donut('role-donut-chart', [
-    { label: 'Candidats', value: 12450 },
-    { label: 'Entreprises', value: 845 },
-    { label: 'Admins', value: 12 },
-  ], {
-    size: 180,
-    strokeWidth: 30,
-    centerValue: '13.3k',
-    centerLabel: 'Total'
-  });
-
-  // Weekly Activity
-  AptusCharts.bar('weekly-chart', [
-    { label: 'Lun', value: 45 },
-    { label: 'Mar', value: 62 },
-    { label: 'Mer', value: 78 },
-    { label: 'Jeu', value: 55 },
-    { label: 'Ven', value: 90 },
-    { label: 'Sam', value: 34 },
-    { label: 'Dim', value: 22 },
-  ], { barColor: 'var(--chart-3)', height: 200 });
-
-  // Animate counters
-  AptusCharts.counter('counter-hunters', 12450);
-  AptusCharts.counter('counter-enterprises', 845);
-  AptusCharts.counter('counter-cvs', 34102);
-  AptusCharts.counter('counter-formations', 4520);
-});
 </script>

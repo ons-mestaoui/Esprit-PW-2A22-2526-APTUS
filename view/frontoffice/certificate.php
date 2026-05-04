@@ -58,8 +58,9 @@ try {
 <head>
     <meta charset="UTF-8">
     <title>Certificat de Réussite - Aptus AI</title>
-    <!-- Inclure HTML2PDF -->
+    <!-- Inclure HTML2PDF et Lucide Icons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&family=Playfair+Display:ital,wght@1,700&display=swap');
         
@@ -132,21 +133,67 @@ try {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #0f172a;
-            color: white;
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
+            background: transparent;
+            padding: 0;
             border: none;
             cursor: pointer;
-            font-weight: 600;
             z-index: 1000;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
-    <button class="no-print" id="downloadBtn" style="right: 170px; background: #6B34A3;">📥 Télécharger en PDF</button>
-    <button class="no-print" onclick="window.print()" style="right: 20px;">🖨️ Imprimer</button>
+    <div class="no-print" style="display: flex; gap: 1rem; background: transparent; padding: 0; align-items: center;">
+        
+        <!-- Bouton Télécharger -->
+        <button onclick="telechargerCertificatPDF()" style="
+            background: linear-gradient(90deg, #1882c4 0%, #8a2594 100%);
+            color: #ffffff;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-family: 'Inter', system-ui, sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(138, 37, 148, 0.2);
+            transition: all 0.2s ease;"
+            onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)';" 
+            onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';"
+            onmousedown="this.style.transform='scale(0.97)';"
+            onmouseup="this.style.transform='translateY(-1px)';">
+            
+            <i data-lucide="download" style="width: 16px; height: 16px;"></i> 
+            Télécharger en PDF
+        </button>
+
+        <!-- Bouton Imprimer -->
+        <button onclick="window.print()" style="
+            background: linear-gradient(90deg, #1882c4 0%, #8a2594 100%);
+            color: #ffffff;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-family: 'Inter', system-ui, sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(138, 37, 148, 0.2);
+            transition: all 0.2s ease;"
+            onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)';" 
+            onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';"
+            onmousedown="this.style.transform='scale(0.97)';"
+            onmouseup="this.style.transform='translateY(-1px)';">
+            
+            <i data-lucide="printer" style="width: 16px; height: 16px;"></i> 
+            Imprimer
+        </button>
+    </div>
 
     <!-- id=certificate-content added for html2pdf target -->
     <div class="certificate-wrapper" id="certificate-content">
@@ -192,7 +239,10 @@ try {
     </div>
 
     <script>
-        document.getElementById('downloadBtn').addEventListener('click', function() {
+        // Initialisation des icônes Lucide
+        lucide.createIcons();
+
+        function telechargerCertificatPDF() {
             var element = document.getElementById('certificate-content');
             var opt = {
                 margin:       0,
@@ -202,7 +252,7 @@ try {
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
             };
             html2pdf().set(opt).from(element).save();
-        });
+        }
     </script>
 </body>
 </html>
