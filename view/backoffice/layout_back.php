@@ -28,8 +28,18 @@ if ($userId) {
     }
 }
 ?>
+<?php
+// Load user personal preferences (theme)
+$userTheme = 'light';
+if ($userId) {
+    include_once __DIR__ . '/../../controller/UtilisateurC.php';
+    $utC = new UtilisateurC();
+    $userPrefs = $utC->getPreferences($userId);
+    $userTheme = $userPrefs['theme'] ?? 'light';
+}
+?>
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr" data-theme="<?php echo $userTheme; ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,6 +69,15 @@ if ($userId) {
       $settingsC = new SettingsAdminC();
   }
   echo $settingsC->getAppearanceCSS();
+  
+  // Ensure localStorage is in sync with database theme
+  if (isset($userPrefs['theme'])) {
+      echo "<script>
+        if (localStorage.getItem('aptus-theme') !== '" . ($userPrefs['theme']) . "') {
+            localStorage.setItem('aptus-theme', '" . ($userPrefs['theme']) . "');
+        }
+      </script>\n";
+  }
   ?>
 
   <script>
@@ -146,7 +165,7 @@ if ($userId) {
       <div class="back-topbar__actions">
         <!-- Theme Toggle -->
         <button class="theme-toggle" id="admin-theme-toggle" aria-label="Toggle theme">
-          <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
+          <i data-lucide="sun" class="icon-sun"></i>
           <i data-lucide="moon" class="icon-moon"></i>
         </button>
 

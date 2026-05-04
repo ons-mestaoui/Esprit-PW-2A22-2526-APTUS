@@ -45,7 +45,7 @@
         <i data-lucide="moon" class="icon-moon"></i>
       </button>
       <a href="login.php" class="btn btn-ghost nav-btn-login">Se connecter</a>
-      <a href="signup_choice.php" class="btn btn-primary glow-btn">S'inscrire</a>
+      <a href="login.php?panel=signup" class="btn btn-primary glow-btn">S'inscrire</a>
     </div>
     <button class="hamburger-landing" id="hamburger-landing" aria-label="Menu">
       <span></span><span></span><span></span>
@@ -60,7 +60,7 @@
       <a href="#resources" class="nav-anchor">Ressources</a>
       <div class="mobile-menu-actions mt-4">
         <a href="login.php" class="btn btn-ghost w-100 mb-2">Se connecter</a>
-        <a href="signup_choice.php" class="btn btn-primary w-100">S'inscrire</a>
+        <a href="login.php?panel=signup" class="btn btn-primary w-100">S'inscrire</a>
       </div>
   </div>
 
@@ -89,7 +89,7 @@
             Aptus connecte instantanément les meilleurs talents et les entreprises visionnaires grâce à un matching prédictif, un générateur de CV intelligent et un parcours d'apprentissage gamifié.
           </p>
           <div class="hero__ctas mt-5">
-            <a href="signup_choice.php" class="btn btn-primary btn-lg glow-btn splash-hover magnetic-btn">
+            <a href="login.php?panel=signup" class="btn btn-primary btn-lg glow-btn splash-hover magnetic-btn">
               <i data-lucide="rocket"></i> S'inscrire
             </a>
             <a href="#showcase-jobs" class="btn btn-ghost btn-lg nav-anchor">
@@ -149,7 +149,7 @@
           <li><div class="feature-icon bg-teal-light"><i data-lucide="scan-line" class="text-teal"></i></div> <div><strong class="text-high-contrast">Analyse sémantique</strong><br><span class="text-sm text-muted">Compréhension profonde des compétences</span></div></li>
           <li><div class="feature-icon bg-teal-light"><i data-lucide="percent" class="text-teal"></i></div> <div><strong class="text-high-contrast">Score de compatibilité</strong><br><span class="text-sm text-muted">Match affiché instantanément</span></div></li>
         </ul>
-        <a href="signup_choice.php" class="btn btn-outline-teal mt-4 rounded-pill">Explorer les offres</a>
+        <a href="login.php?panel=signup" class="btn btn-outline-teal mt-4 rounded-pill">Explorer les offres</a>
       </div>
       <div class="showcase-visual reveal-right">
         <div class="mockup-card glass-panel tilt-card text-high-contrast" data-tilt data-tilt-perspective="1000" data-tilt-max="10" data-tilt-speed="400">
@@ -193,7 +193,7 @@
           <li><div class="feature-icon bg-purple-light"><i data-lucide="wand-2" class="text-purple"></i></div> <div><strong class="text-high-contrast">Rédaction Assistée</strong><br><span class="text-sm text-muted">Phrases d'accroche générées par l'IA</span></div></li>
           <li><div class="feature-icon bg-purple-light"><i data-lucide="layout-template" class="text-purple"></i></div> <div><strong class="text-high-contrast">Templates Premium</strong><br><span class="text-sm text-muted">Designs modernes et percutants</span></div></li>
         </ul>
-        <a href="signup_choice.php" class="btn btn-outline-purple mt-4 rounded-pill">Créer mon CV</a>
+        <a href="login.php?panel=signup" class="btn btn-outline-purple mt-4 rounded-pill">Créer mon CV</a>
       </div>
       <div class="showcase-visual reveal-left relative">
         <div class="mockup-cv-wrapper floating-slow" data-tilt data-tilt-perspective="1000" data-tilt-max="10">
@@ -232,14 +232,14 @@
         <h2 class="section-title accent-font">Évoluez, Gagnez de l'XP et <span class="text-blue text-gradient-blue">dominez</span>.</h2>
         <p class="section-desc text-muted">La formation continue réinventée. Suivez nos cours certifiants, montez en niveau, affrontez la communauté et dévoilez votre expertise aux recruteurs.</p>
         <div class="gamification-features mt-4 grid-2 offset-hover">
-           <a href="signup_choice.php" class="text-decoration-none">
+           <a href="login.php?panel=signup" class="text-decoration-none">
            <div class="gf-item glass-panel p-3 rounded-xl border border-blue-subtle hover-extend-glow hover-lift text-high-contrast">
              <div class="gf-icon mb-2"><i data-lucide="graduation-cap" class="text-blue" style="width:32px;height:32px;"></i></div>
              <div class="h5 mb-1 accent-font">Catalogue de Cours</div>
              <div class="text-sm text-muted">Découvrez nos formations.</div>
            </div>
            </a>
-           <a href="signup_choice.php" class="text-decoration-none">
+           <a href="login.php?panel=signup" class="text-decoration-none">
            <div class="gf-item glass-panel p-3 rounded-xl border border-blue-subtle hover-extend-glow hover-lift text-high-contrast" id="showcase-leaderboard">
              <div class="gf-icon mb-2"><i data-lucide="trophy" class="text-blue" style="width:32px;height:32px;"></i></div>
              <div class="h5 mb-1 accent-font">Leaderboard</div>
@@ -487,7 +487,7 @@
       </div>
       
       <div class="text-center mt-12 reveal-up">
-          <a href="signup_choice.php" class="btn btn-primary glow-btn px-8 py-3 rounded-pill h5 mb-0">Découvrir tout le Blog</a>
+          <a href="login.php?panel=signup" class="btn btn-primary glow-btn px-8 py-3 rounded-pill h5 mb-0">Découvrir tout le Blog</a>
       </div>
     </div>
   </section>

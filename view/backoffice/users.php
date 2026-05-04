@@ -148,7 +148,7 @@ if (!isset($content)) {
   <div class="back-page-header__row">
     <div>
       <h1>Utilisateurs</h1>
-      <p>Gérez les comptes candidats, entreprises et administrateurs</p>
+      <p>Gérez les comptes candidats, entreprises, tuteurs et administrateurs</p>
     </div>
     <div class="flex gap-3" style="align-items: center;">
       <?php if ($action !== 'add' && $action !== 'edit'): ?>
@@ -161,6 +161,7 @@ if (!isset($content)) {
               <option value="">Tous les rôles</option>
               <option value="Admin">Admin</option>
               <option value="Entreprise">Entreprise</option>
+              <option value="Tuteur">Tuteur</option>
               <option value="Candidat">Candidat</option>
           </select>
       </div>
@@ -206,7 +207,7 @@ if (!isset($content)) {
     <!-- Les erreurs de validation serveur (PHP) sont affichées ici -->
     
     <?php if (!empty($error)): ?>
-        <div class="alert alert-danger" style="color:red; margin-top:15px; margin-bottom:15px; padding:10px; border:1px solid red; background:#ffeaea; border-radius:5px;">
+        <div class="alert alert-danger" style="color:var(--text-danger); margin-top:var(--space-4); margin-bottom:var(--space-4); padding:var(--space-3); border:1px solid var(--text-danger); background:var(--bg-danger); border-radius:var(--radius-sm);">
             <?php echo $error; ?>
         </div>
     <?php endif; ?>
@@ -243,6 +244,7 @@ if (!isset($content)) {
                 <select name="role" class="select">
                     <option value="Candidat" <?php echo (isset($userToEdit['role']) && $userToEdit['role'] === 'Candidat') ? 'selected' : ''; ?>>Candidat</option>
                     <option value="Entreprise" <?php echo (isset($userToEdit['role']) && $userToEdit['role'] === 'Entreprise') ? 'selected' : ''; ?>>Entreprise</option>
+                    <option value="Tuteur" <?php echo (isset($userToEdit['role']) && $userToEdit['role'] === 'Tuteur') ? 'selected' : ''; ?>>Tuteur</option>
                     <option value="Admin" <?php echo (isset($userToEdit['role']) && $userToEdit['role'] === 'Admin') ? 'selected' : ''; ?>>Admin</option>
                 </select>
             </div>
@@ -269,7 +271,7 @@ if (!isset($content)) {
 <?php else: ?>
 <!-- ═══ Users Table ═══ -->
 <?php if (!empty($error)): ?>
-    <div class="alert alert-danger" style="color:red; margin-bottom:15px; padding:10px; border:1px solid red; background:#ffeaea; border-radius:5px;">
+    <div class="alert alert-danger" style="color:var(--text-danger); margin-bottom:var(--space-4); padding:var(--space-3); border:1px solid var(--text-danger); background:var(--bg-danger); border-radius:var(--radius-sm);">
         <?php echo htmlspecialchars($error); ?>
     </div>
 <?php endif; ?>
@@ -313,9 +315,10 @@ if (!isset($content)) {
             <td class="text-sm text-secondary"><?php echo htmlspecialchars($u['email']); ?></td>
             <td>
                 <?php 
-                $badge = 'badge-info';
+                $badge = 'badge-primary'; // Default for Candidat
                 if ($u['role'] === 'Admin') $badge = 'badge-danger';
-                elseif ($u['role'] === 'Entreprise') $badge = 'badge-primary';
+                elseif ($u['role'] === 'Entreprise') $badge = 'badge-info';
+                elseif ($u['role'] === 'Tuteur') $badge = 'badge-warning';
                 ?>
                 <span class="badge <?php echo $badge; ?>"><?php echo htmlspecialchars($u['role']); ?></span>
             </td>
@@ -359,22 +362,22 @@ if (!isset($content)) {
 
 <!-- Generic Delete Confirmation Modal -->
 <div id="generalDeleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:9999; backdrop-filter: blur(4px);">
-  <div style="background:var(--bg-card, #ffffff); border-radius:16px; padding:32px 24px; text-align:center; max-width:400px; width:90%; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.1); display:flex; flex-direction:column; align-items:center;">
+  <div style="background:var(--bg-card); border-radius:var(--radius-lg); padding:var(--space-8) var(--space-6); text-align:center; max-width:400px; width:90%; position:relative; box-shadow:var(--shadow-xl); display:flex; flex-direction:column; align-items:center;">
     <button type="button" onclick="document.getElementById('generalDeleteModal').style.display='none';" style="position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; color:var(--text-secondary); padding:4px;">
       <i data-lucide="x" style="width:20px;height:20px;"></i>
     </button>
     
-    <div style="width:64px; height:64px; background:#fee2e2; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto;">
-        <i data-lucide="alert-triangle" style="width:32px;height:32px;color:#ef4444;"></i>
+    <div style="width:64px; height:64px; background:var(--bg-danger); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto var(--space-4) auto;">
+        <i data-lucide="alert-triangle" style="width:32px;height:32px;color:var(--text-danger);"></i>
     </div>
     
-    <h3 style="font-size:24px; font-weight:700; color:var(--text-primary, #1e293b); margin-bottom:12px; font-family:'Inter', sans-serif;">Confirmation de suppression</h3>
+    <h3 style="font-size:var(--fs-lg); font-weight:var(--fw-bold); color:var(--text-primary); margin-bottom:var(--space-3);">Confirmation de suppression</h3>
     
-    <p id="deleteModalText" style="font-size:16px; color:var(--text-secondary, #64748b); margin-bottom:32px; line-height:1.5;">Êtes-vous sûr de vouloir supprimer cet élément ?</p>
+    <p id="deleteModalText" style="font-size:var(--fs-base); color:var(--text-secondary); margin-bottom:var(--space-8); line-height:var(--lh-normal);">Êtes-vous sûr de vouloir supprimer cet élément ?</p>
     
     <div style="display:flex; gap:16px; width:100%;">
-      <button type="button" onclick="document.getElementById('generalDeleteModal').style.display='none';" style="flex:1; padding:12px; border-radius:8px; border:1px solid var(--border-color, #e2e8f0); background:transparent; font-weight:600; color:var(--text-primary, #1e293b); cursor:pointer; font-size:15px; transition:all 0.2s;">Annuler</button>
-      <button type="button" id="deleteModalConfirmBtn" style="flex:1; padding:12px; border-radius:8px; border:none; background:#ef4444; font-weight:600; color:#ffffff; cursor:pointer; font-size:15px; transition:all 0.2s; display:inline-flex; align-items:center; justify-content:center;">Oui, Supprimer</button>
+      <button type="button" onclick="document.getElementById('generalDeleteModal').style.display='none';" style="flex:1; padding:var(--space-3); border-radius:var(--radius-sm); border:1px solid var(--border-color); background:transparent; font-weight:var(--fw-semibold); color:var(--text-primary); cursor:pointer; font-size:var(--fs-sm); transition:var(--transition-fast);">Annuler</button>
+      <button type="button" id="deleteModalConfirmBtn" style="flex:1; padding:var(--space-3); border-radius:var(--radius-sm); border:none; background:var(--text-danger); font-weight:var(--fw-semibold); color:#ffffff; cursor:pointer; font-size:var(--fs-sm); transition:var(--transition-fast); display:inline-flex; align-items:center; justify-content:center;">Oui, Supprimer</button>
     </div>
   </div>
 </div>

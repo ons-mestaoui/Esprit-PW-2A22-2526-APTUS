@@ -56,6 +56,103 @@
       font-size: var(--fs-xs);
       color: var(--text-secondary);
     }
+    
+    .auth-card h1 {
+      font-size: var(--fs-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-1);
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+    .auth-card p {
+      margin-bottom: var(--space-6);
+      color: var(--text-secondary);
+      font-size: var(--fs-sm);
+      text-align: center;
+    }
+    .social-auth-container {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-4);
+      width: 100%;
+      margin-top: var(--space-4);
+    }
+    .btn-social {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: var(--fs-sm);
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-decoration: none;
+    }
+    
+    [data-theme="dark"] .btn-social {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-social:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent-primary);
+      background: var(--bg-card);
+    }
+    
+    [data-theme="dark"] .btn-social:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent-primary);
+    }
+
+    .btn-social.google:hover {
+      background: rgba(234, 67, 53, 0.08);
+      border-color: rgba(234, 67, 53, 0.4);
+      color: #EA4335 !important;
+    }
+    .btn-social.github:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--text-primary);
+      color: var(--text-primary) !important;
+    }
+    .social-icon {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.3s ease;
+      fill: currentColor;
+    }
+    .btn-social:hover .social-icon {
+      transform: rotate(10deg);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      width: 100%;
+      margin-top: var(--space-8);
+      color: var(--text-tertiary);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      opacity: 0.6;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-color);
+    }
   </style>
 </head>
 <body>
@@ -103,6 +200,7 @@
         </a>
 
       </div>
+
 
       <!-- Footer -->
       <div class="auth-footer">

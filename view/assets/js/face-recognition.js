@@ -247,7 +247,7 @@ const FaceAuth = (() => {
     const requiredFrames = 3; // Reduced for faster capturing
     
     // Tiny Face Detector is much faster for real-time tracking
-    const detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+    const detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.5 });
 
     while (Date.now() - start < timeout) {
       if (onCancel && onCancel()) return false;
@@ -305,7 +305,7 @@ const FaceAuth = (() => {
         consecutiveFrames = 0;
       }
 
-      await sleep(80);
+      await sleep(16); // Reduced from 80ms for buttery smooth ~60 FPS feedback
     }
 
     return false; // timed out

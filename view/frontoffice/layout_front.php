@@ -23,16 +23,24 @@ $userName = $_SESSION['nom'] ?? 'Utilisateur';
 $currentRole = $_SESSION['role'] ?? 'Candidat';
 
 $userPhoto = null;
+$userPrefs = null;
 if ($userId) {
     $profilC = new ProfilC();
     $userProfil = $profilC->getProfilByIdUtilisateur($userId);
     if ($userProfil && !empty($userProfil['photo'])) {
         $userPhoto = $userProfil['photo'];
     }
+    
+    include_once __DIR__ . '/../../controller/UtilisateurC.php';
+    $utC = new UtilisateurC();
+    $userPrefs = $utC->getPreferences($userId);
 }
+
+// Initialize theme from preferences early
+$currentTheme = $userPrefs['theme'] ?? 'light';
 ?>
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr" data-theme="<?php echo $currentTheme; ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -63,12 +71,8 @@ if ($userId) {
   $platformSettingsC = new SettingsAdminC();
   echo $platformSettingsC->getAppearanceCSS();
   
-  // Load user personal preferences overrides (theme, accent color, font size)
-  if (isset($userId)) {
-      include_once __DIR__ . '/../../controller/UtilisateurC.php';
-      $utC = new UtilisateurC();
-      $userPrefs = $utC->getPreferences($userId);
-      
+  // Load user personal preferences overrides (accent color, font size)
+  if ($userPrefs) {
       $userCSS = '';
       if (!empty($userPrefs['accent_color'])) {
           $hex = $userPrefs['accent_color'];
@@ -100,15 +104,6 @@ if ($userId) {
           ];
           $rv = $radiusMap[$userPrefs['border_radius']] ?? '12px';
           echo "<style>:root { --radius-lg: {$rv} !important; --radius-md: " . (intval($rv)*0.75) . "px !important; --radius-sm: " . (intval($rv)*0.5) . "px !important; }</style>\n";
-      }
-      
-      if (!empty($userPrefs['theme'])) {
-          echo "<script>
-            if (localStorage.getItem('aptus-theme') !== '" . ($userPrefs['theme']) . "') {
-                localStorage.setItem('aptus-theme', '" . ($userPrefs['theme']) . "');
-                document.documentElement.setAttribute('data-theme', '" . ($userPrefs['theme']) . "');
-            }
-          </script>\n";
       }
   }
   ?>

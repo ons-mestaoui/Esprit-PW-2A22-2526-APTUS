@@ -84,6 +84,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Veuillez remplir tous les champs.";
     }
 }
+
+// Handle social login errors from URL
+if (isset($_GET['error'])) {
+    if ($_GET['error'] == 'no_account') {
+        $error = "Aucun compte associé à cet email. Veuillez vous inscrire d'abord.";
+    } elseif ($_GET['error'] == 'social_error') {
+        $error = "Erreur lors de la connexion sociale. Veuillez réessayer.";
+    } elseif ($_GET['error'] == 'auth_failed') {
+        $error = "Identifiants invalides ou compte non vérifié.";
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
@@ -110,8 +121,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       overflow: hidden;
       width: 1000px;
       max-width: 95vw;
-      min-height: 620px;
-      margin: 20px;
+      min-height: 780px;
+      margin: 20px auto;
       background: var(--bg-card);
       border-radius: var(--radius-xl);
       box-shadow: var(--shadow-2xl);
@@ -193,10 +204,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      padding: 0 40px;
+      padding: var(--space-8) 40px;
       height: 100%;
       text-align: center;
-      gap: var(--space-5); /* Overall vertical spacing */
+      gap: var(--space-4);
+      overflow-y: auto;
+    }
+    
+    .auth-split-form h1 {
+      font-size: var(--fs-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-1);
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .auth-split-form p {
+      margin-bottom: var(--space-4);
+      color: var(--text-secondary);
+      font-size: var(--fs-sm);
     }
 
     .role-grid-mini {
@@ -383,6 +410,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.15);
     }
     .btn-faceid svg, .btn-faceid i { color: var(--accent-primary, #6366f1); }
+    /* Social Login Buttons - Glassmorphism & Premium Style */
+    .social-auth-container {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-4);
+      width: 100%;
+      margin-top: var(--space-2);
+    }
+    .btn-social {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: var(--fs-sm);
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-decoration: none;
+    }
+    
+    [data-theme="dark"] .btn-social {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-social:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent-primary);
+      background: var(--bg-card);
+    }
+    
+    [data-theme="dark"] .btn-social:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent-primary);
+    }
+
+    .btn-social.google:hover {
+      background: rgba(234, 67, 53, 0.08);
+      border-color: rgba(234, 67, 53, 0.4);
+      color: #EA4335 !important;
+    }
+    .btn-social.github:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--text-primary);
+      color: var(--text-primary) !important;
+    }
+    .social-icon {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.3s ease;
+      fill: currentColor;
+    }
+    .btn-social:hover .social-icon {
+      transform: rotate(10deg);
+    }
+    
+    .faceid-divider {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      width: 100%;
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.5;
+      margin: var(--space-1) 0;
+      font-weight: 600;
+    }
+    .faceid-divider::before, .faceid-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-color);
+    }
   </style>
 
   <script>
@@ -438,7 +546,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p>Encadrez et suivez vos étudiants.</p>
               </div>
             </a>
-
           </div>
 
           <a href="landing.php" class="back-to-site" style="margin-top: var(--space-8);">

@@ -248,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label" for="ent-email">Email Professionnel</label>
             <div class="input-icon-wrapper">
               <i data-lucide="mail" style="width:18px;height:18px;"></i>
-              <input type="text" class="input" id="ent-email" name="email" placeholder="contact@entreprise.com" data-required="true" data-type="email">
+            <input type="text" class="input" id="ent-email" name="email" placeholder="contact@entreprise.com" data-required="true" data-type="email">
             </div>
           </div>
           <div class="form-group">

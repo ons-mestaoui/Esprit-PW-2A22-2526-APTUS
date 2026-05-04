@@ -647,9 +647,9 @@
   box-shadow: var(--shadow-2xl);
   position: relative;
   overflow: hidden;
-  width: 1000px;
+  width: 850px;
   max-width: 100%;
-  min-height: 600px;
+  min-height: 520px;
   animation: scaleUp 0.5s var(--transition-bounce);
 }
 

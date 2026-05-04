@@ -9,6 +9,7 @@ try {
     $db = config::getConnexion();
     $nbCandidats = $db->query("SELECT COUNT(*) FROM utilisateur WHERE role = 'Candidat'")->fetchColumn();
     $nbEntreprises = $db->query("SELECT COUNT(*) FROM utilisateur WHERE role = 'Entreprise'")->fetchColumn();
+    $nbTuteurs = $db->query("SELECT COUNT(*) FROM utilisateur WHERE role = 'Tuteur'")->fetchColumn();
     $nbAdmins = $db->query("SELECT COUNT(*) FROM utilisateur WHERE role = 'Admin'")->fetchColumn();
     
     $recentUsers = $db->query("SELECT u.nom, u.prenom, u.role, p.photo, p.dateCreation 
@@ -32,12 +33,13 @@ try {
 } catch (Exception $e) {
     $nbCandidats = 12450;
     $nbEntreprises = 845;
+    $nbTuteurs = 150;
     $nbAdmins = 12;
     $recentUsers = [];
     $weeklyActivity = [0, 0, 0, 0, 0, 0, 0];
 }
 
-$totalUsers = $nbCandidats + $nbEntreprises + $nbAdmins;
+$totalUsers = $nbCandidats + $nbEntreprises + $nbTuteurs + $nbAdmins;
 // ---------------------
 ?>
 
@@ -60,7 +62,7 @@ if (!isset($content)) {
 </div>
 
 <!-- ═══ Stat Cards ═══ -->
-<div class="grid grid-3 gap-6 mb-8 stagger">
+<div class="grid grid-4 gap-6 mb-8 stagger">
   <div class="stat-card animate-on-scroll" id="stat-hunters">
     <div>
       <div class="stat-card__label">Job Hunters Inscrits</div>
@@ -89,13 +91,26 @@ if (!isset($content)) {
 
   <div class="stat-card animate-on-scroll" id="stat-admins">
     <div>
+      <div class="stat-card__label">Tuteurs / Formateurs</div>
+      <div class="stat-card__value" id="counter-tuteurs"><?php echo $nbTuteurs; ?></div>
+      <div class="stat-card__trend up">
+        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +8% ce mois
+      </div>
+    </div>
+    <div class="stat-card__icon orange" style="background:var(--accent-warning-light); color:var(--text-warning);">
+      <i data-lucide="graduation-cap" style="width:22px;height:22px;"></i>
+    </div>
+  </div>
+
+  <div class="stat-card animate-on-scroll" id="stat-admins">
+    <div>
       <div class="stat-card__label">Administrateurs</div>
       <div class="stat-card__value" id="counter-admins"><?php echo $nbAdmins; ?></div>
       <div class="stat-card__trend" style="color:var(--text-secondary);">
         <i data-lucide="shield-check" style="width:14px;height:14px;"></i> Système
       </div>
     </div>
-    <div class="stat-card__icon" style="background:var(--bg-danger, #fee2e2); color:var(--text-danger, #ef4444);">
+    <div class="stat-card__icon" style="background:var(--bg-danger); color:var(--text-danger);">
       <i data-lucide="shield-alert" style="width:22px;height:22px;"></i>
     </div>
   </div>
@@ -129,15 +144,19 @@ if (!isset($content)) {
                 $badgeClass = '';
                 $roleLabel = '';
                 if ($user['role'] === 'Candidat') {
-                    $avatarBg = ''; 
-                    $badgeClass = 'badge-info';
+                    $avatarBg = 'background:var(--accent-primary);'; 
+                    $badgeClass = 'badge-primary';
                     $roleLabel = 'Job Hunter';
                 } elseif ($user['role'] === 'Entreprise') {
-                    $avatarBg = 'background:var(--accent-secondary);';
-                    $badgeClass = 'badge-primary';
+                    $avatarBg = 'background:var(--accent-secondary);'; 
+                    $badgeClass = 'badge-info';
                     $roleLabel = 'Entreprise';
+                } elseif ($user['role'] === 'Tuteur') {
+                    $avatarBg = 'background:var(--accent-warning);'; 
+                    $badgeClass = 'badge-warning';
+                    $roleLabel = 'Tuteur';
                 } else {
-                    $avatarBg = 'background:var(--bg-danger, #fee2e2);color:var(--text-danger, #ef4444);';
+                    $avatarBg = 'background:var(--bg-danger);color:var(--text-danger);';
                     $badgeClass = 'badge-danger';
                     $roleLabel = 'Admin';
                 }
@@ -166,6 +185,8 @@ if (!isset($content)) {
                 $iaStatus = '<span class="badge badge-success">● Analysé</span>';
                 if ($user['role'] === 'Entreprise') {
                     $iaStatus = '<span class="badge badge-warning">● En attente</span>';
+                } elseif ($user['role'] === 'Tuteur') {
+                    $iaStatus = '<span class="badge badge-primary">● Vérifié</span>';
                 } elseif ($user['role'] === 'Admin') {
                     $iaStatus = '<span class="badge badge-info">● Système</span>';
                 }
@@ -218,6 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
   AptusCharts.donut('role-donut-chart', [
     { label: 'Candidats', value: <?php echo $nbCandidats; ?> },
     { label: 'Entreprises', value: <?php echo $nbEntreprises; ?> },
+    { label: 'Tuteurs', value: <?php echo $nbTuteurs; ?> },
     { label: 'Admins', value: <?php echo $nbAdmins; ?> },
   ], {
     size: 180,
@@ -240,6 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Animate counters
   AptusCharts.counter('counter-hunters', <?php echo $nbCandidats; ?>);
   AptusCharts.counter('counter-enterprises', <?php echo $nbEntreprises; ?>);
+  AptusCharts.counter('counter-tuteurs', <?php echo $nbTuteurs; ?>);
   AptusCharts.counter('counter-admins', <?php echo $nbAdmins; ?>);
 });
 </script>

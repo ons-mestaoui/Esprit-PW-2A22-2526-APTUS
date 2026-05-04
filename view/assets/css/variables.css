@@ -111,6 +111,16 @@
   --accent-info:       #3B82F6;
   --accent-info-light: #DBEAFE;
 
+  /* ── Semantic Colors ── */
+  --bg-danger:    #FEE2E2;
+  --text-danger:  #EF4444;
+  --bg-success:   #D1FAE5;
+  --text-success: #10B981;
+  --bg-warning:   #FEF3C7;
+  --text-warning: #F59E0B;
+  --bg-info:      #DBEAFE;
+  --text-info:    #3B82F6;
+
   /* ── Gradients ──────────────────────────────── */
   --gradient-primary:  linear-gradient(135deg, #00A3DA 0%, #6B34A3 50%, #8D2587 100%);
   --gradient-accent:   linear-gradient(135deg, #6B34A3 0%, #00A3DA 100%);
@@ -160,7 +170,8 @@
    ══════════════════════════════════════════════════ */
 [data-theme="dark"] {
   /* ── Backgrounds ────────────────────────────── */
-  --bg-body:       radial-gradient(circle at top left, #0F172A 0%, #1E1B4B 50%, #0F172A 100%) fixed;
+  --bg-body:       #0F172A;
+  --bg-body-gradient: radial-gradient(circle at top left, #0F172A 0%, #1E1B4B 50%, #0F172A 100%) fixed;
   --bg-primary:    #0F172A;
   --bg-secondary:  #1E293B;
   --bg-tertiary:   #334155;
@@ -184,17 +195,27 @@
 
   /* ── Accent Colors ──────────────────────────── */
   --accent-primary:    #A275D3;
-  --accent-primary-light: #2A1742;
+  --accent-primary-light: rgba(162, 117, 211, 0.15);
   --accent-primary-dark:  #6B34A3;
   --accent-secondary:  #29BFFF;
-  --accent-secondary-light: #00364A;
+  --accent-secondary-light: rgba(41, 191, 255, 0.15);
   --accent-secondary-dark:  #00A3DA;
   --accent-tertiary:   #A947A3;
-  --accent-tertiary-light:  #3A1238;
+  --accent-tertiary-light:  rgba(169, 71, 163, 0.15);
   --accent-warning:    #FCD34D;
-  --accent-warning-light:   #3D3013;
+  --accent-warning-light:   rgba(252, 211, 77, 0.15);
   --accent-info:       #60A5FA;
-  --accent-info-light: #1E2D4A;
+  --accent-info-light: rgba(96, 165, 250, 0.15);
+
+  /* ── Semantic Colors ── */
+  --bg-danger:    rgba(248, 113, 113, 0.18);
+  --text-danger:  #F87171;
+  --bg-success:   rgba(52, 211, 153, 0.18);
+  --text-success: #34D399;
+  --bg-warning:   rgba(251, 191, 36, 0.18);
+  --text-warning: #FBBF24;
+  --bg-info:      rgba(96, 165, 250, 0.18);
+  --text-info:    #60A5FA;
 
   /* ── Gradients ──────────────────────────────── */
   --gradient-primary:  linear-gradient(135deg, #29BFFF 0%, #A275D3 50%, #A947A3 100%);
@@ -221,13 +242,13 @@
   --shadow-sidebar: 2px 0 12px rgba(0, 0, 0, 0.3);
 
   /* ── Stat Card Accent Colors ────────────────── */
-  --stat-purple-bg: #2A1742;
+  --stat-purple-bg: rgba(162, 117, 211, 0.15);
   --stat-purple:    #A275D3;
-  --stat-teal-bg:   #00364A;
+  --stat-teal-bg:   rgba(41, 191, 255, 0.15);
   --stat-teal:      #29BFFF;
-  --stat-blue-bg:   #3A1238;
+  --stat-blue-bg:   rgba(169, 71, 163, 0.15);
   --stat-blue:      #A947A3;
-  --stat-orange-bg: #3D3013;
+  --stat-orange-bg: rgba(252, 211, 77, 0.15);
   --stat-orange:    #FCD34D;
 
   /* ── Chart Colors ───────────────────────────── */
@@ -241,9 +262,9 @@
 }
 
 /* ── Theme Transition ─────────────────────────── */
-html, html * {
-  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+html {
+  transition: background-color 0.3s ease;
+}
+body {
+  transition: background 0.3s ease, color 0.3s ease;
 }

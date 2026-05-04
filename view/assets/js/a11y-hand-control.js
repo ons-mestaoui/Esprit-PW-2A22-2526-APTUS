@@ -160,6 +160,8 @@ function processResults(results) {
         dragStartY = wrist.y * window.innerHeight; // Track wrist for stable dragging
         scrollStartY = window.scrollY;
         hasDragged = false;
+        clickX = currentX;
+        clickY = currentY;
         cursor.style.backgroundColor = 'var(--accent-tertiary)';
         cursor.style.borderColor = 'var(--accent-tertiary)';
       } else {
@@ -188,7 +190,7 @@ function processResults(results) {
         
         // If we didn't drag enough, AND it was a relatively quick pinch (<1000ms), it's a solid click!
         if (!hasDragged && (Date.now() - pinchStartTime < 1000)) {
-           performClick(currentX, currentY);
+           performClick(clickX, clickY);
         }
       }
     }
@@ -208,8 +210,8 @@ function animateCursor() {
   if (!webcamRunning) return;
   
   // Linear Interpolation (smooths out the MediaPipe frame rate)
-  currentX += (targetX - currentX) * 0.35;
-  currentY += (targetY - currentY) * 0.35;
+  currentX += (targetX - currentX) * 0.15;
+  currentY += (targetY - currentY) * 0.15;
   
   // Hardware accelerated transform instead of left/top style updates
   const scale = isPinching ? 0.6 : 1;
@@ -252,6 +254,41 @@ function performClick(x, y) {
             clientX: x,
             clientY: y
           }));
+    }
+  }
+}
+
+        }));
+    }
+  }
+}
+
+ick();
+    } else {
+         // Generic synthetic event
+         element.dispatchEvent(new MouseEvent('click', {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            clientX: x,
+            clientY: y
+          }));
+    }
+  }
+}
+
+        }));
+    }
+  }
+}
+
+Y: y
+          }));
+    }
+  }
+}
+
+        }));
     }
   }
 }
