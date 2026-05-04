@@ -247,9 +247,15 @@ if (!isset($content)) {
 
                         <div style="grid-column: span 2; margin-top: 1rem;">
                             <div style="background: rgba(168, 100, 228, 0.05); padding: 1.5rem; border-radius: 20px; border: 1px solid rgba(168, 100, 228, 0.1); margin-bottom: 1.5rem;">
-                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-                                    <div style="width: 10px; height: 10px; background: var(--accent-primary); border-radius: 50%;"></div>
-                                    <span style="font-weight: 800; color: var(--text-primary);"><?php echo htmlspecialchars($offre['question'] ?? 'Parlez-nous de vous'); ?></span>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                        <div style="width: 10px; height: 10px; background: var(--accent-primary); border-radius: 50%;"></div>
+                                        <span style="font-weight: 800; color: var(--text-primary);"><?php echo htmlspecialchars($offre['question'] ?? 'Parlez-nous de vous'); ?></span>
+                                    </div>
+                                    <button type="button" id="btn-dictation" style="display: flex; align-items: center; gap: 0.5rem; color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.5rem 1rem; border-radius: 20px; transition: all 0.3s; font-weight: 600; font-size: 0.85rem; background: rgba(16, 185, 129, 0.1); cursor: pointer;" title="Dicter la réponse au lieu d'écrire" onmouseover="this.style.background='rgba(16, 185, 129, 0.2)';" onmouseout="this.style.background='rgba(16, 185, 129, 0.1)';">
+                                        <i data-lucide="mic" id="mic-icon" style="width: 18px; height: 18px;"></i>
+                                        <span id="dictation-text">Dicter ma réponse</span>
+                                    </button>
                                 </div>
                                 <div id="quill-editor" style="height: 250px; background: var(--bg-card); border-radius: 14px; border: 1px solid var(--border-color); color: var(--text-primary);"><?php echo $_POST['reponses_ques'] ?? ''; ?></div>
                                 <?php if(isset($cand_errors['reponses'])): ?><p style="color:#ef4444; font-size:0.8rem; margin-top:1rem; font-weight:600;"><?php echo $cand_errors['reponses']; ?></p><?php endif; ?>
@@ -324,6 +330,85 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- SPEECH TO TEXT LOGIC ---
+    const btnDictation = document.getElementById('btn-dictation');
+    const dictationText = document.getElementById('dictation-text');
+    
+    // Check support
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (SpeechRecognition && btnDictation) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'fr-FR'; // Support français
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        
+        let isRecording = false;
+        let dictationAnimation = null;
+        
+        recognition.onstart = function() {
+            isRecording = true;
+            btnDictation.style.background = 'rgba(239, 68, 68, 0.1)';
+            btnDictation.style.color = '#ef4444';
+            btnDictation.style.borderColor = '#ef4444';
+            dictationText.innerText = 'Écoute en cours...';
+            
+            // Pulsing animation
+            dictationAnimation = btnDictation.animate([
+                { boxShadow: '0 0 0 0 rgba(239, 68, 68, 0.4)' },
+                { boxShadow: '0 0 0 10px rgba(239, 68, 68, 0)' }
+            ], {
+                duration: 1500,
+                iterations: Infinity
+            });
+        };
+        
+        recognition.onresult = function(event) {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                }
+            }
+            
+            if (finalTranscript) {
+                const range = quill.getSelection(true);
+                quill.insertText(range.index, finalTranscript + ' ', 'user');
+                quill.setSelection(range.index + finalTranscript.length + 1);
+            }
+        };
+        
+        recognition.onend = function() {
+            isRecording = false;
+            btnDictation.style.background = 'rgba(16, 185, 129, 0.1)';
+            btnDictation.style.color = '#10b981';
+            btnDictation.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            dictationText.innerText = 'Dicter ma réponse';
+            if(dictationAnimation) dictationAnimation.cancel();
+        };
+        
+        recognition.onerror = function(event) {
+            console.error('Erreur reconnaissance vocale:', event.error);
+            isRecording = false;
+            btnDictation.style.background = 'rgba(16, 185, 129, 0.1)';
+            btnDictation.style.color = '#10b981';
+            dictationText.innerText = 'Erreur (Dicter)';
+            if(dictationAnimation) dictationAnimation.cancel();
+        };
+        
+        btnDictation.addEventListener('click', function() {
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                quill.focus(); // Focus editor before speaking
+                recognition.start();
+            }
+        });
+    } else if (btnDictation) {
+        btnDictation.style.display = 'none'; // Hide if not supported
+    }
+
 });
 </script>
 
