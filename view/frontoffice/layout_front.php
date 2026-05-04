@@ -1,10 +1,10 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Aptus — Plateforme intelligente de recrutement et d'apprentissage. Trouvez votre prochaine opportunité avec l'IA.">
-  <title><?php echo isset($pageTitle) ? $pageTitle . ' — Aptus' : 'Aptus'; ?></title>
+  <meta name="description" content="Aptus —  Plateforme intelligente de recrutement et d'apprentissage. Trouvez votre prochaine opportunité avec l'IA.">
+  <title><?php echo isset($pageTitle) ? $pageTitle . ' —  Aptus' : 'Aptus'; ?></title>
 
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,9 +40,9 @@
       <div class="grid-overlay" style="opacity: 0.05;"></div>
   </div>
 
-  <!-- ═══════════════════════════════════════════
+  <!-- ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ 
        TOP NAVIGATION BAR
-       ═══════════════════════════════════════════ -->
+       ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═  -->
   <nav class="landing-nav glass-nav" id="landing-nav">
     <?php $currentRole = isset($userRole) ? $userRole : 'Candidat'; ?>
     <!-- Logo -->
@@ -131,9 +131,9 @@
     <?php endif; ?>
   </div>
 
-  <!-- ═══════════════════════════════════════════
+  <!-- ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ 
        MAIN CONTENT
-       ═══════════════════════════════════════════ -->
+       ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═  -->
   <main class="front-main">
     <div class="front-content">
       <?php
@@ -144,9 +144,9 @@
     </div>
   </main>
 
-  <!-- ═══════════════════════════════════════════
+  <!-- ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ 
        FOOTER
-       ═══════════════════════════════════════════ -->
+       ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═  -->
   <footer class="front-footer">
     <div class="front-footer__grid">
       <div class="front-footer__brand">
@@ -185,7 +185,7 @@
     </div>
     <div class="front-footer__bottom">
       <span>&copy; <?php echo date('Y'); ?> Aptus. Tous droits réservés.</span>
-      <span>Fait avec ✨¤Ã¯Â¸Â en Tunisie</span>
+      <span>Fait avec ✨ en Tunisie</span>
     </div>
   </footer>
 

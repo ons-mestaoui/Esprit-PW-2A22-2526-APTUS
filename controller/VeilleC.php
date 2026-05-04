@@ -322,32 +322,56 @@ class VeilleC
             $baseSalaire * 0.98, $baseSalaire * 1.02, $baseSalaire
         ];
         
-        // 3. Top Secteurs (based on rapport_marche secteur_principal)
-        $sql = "SELECT secteur_principal FROM rapport_marche";
+        // 3. Top Secteurs (improved with salary data for better utility)
+        $sql = "SELECT secteur_principal, salaire_moyen_global FROM rapport_marche";
         try {
             $req = $this->db->query($sql);
-            $secteurs_raw = $req->fetchAll();
-            $secteurs_count = [];
-            $total_secteurs = 0;
-            foreach($secteurs_raw as $row) {
+            $rows = $req->fetchAll();
+            $secteur_data = [];
+            foreach($rows as $row) {
                 if (!empty($row['secteur_principal'])) {
                     $tags = explode(',', $row['secteur_principal']);
                     foreach($tags as $t) {
                         $t = trim($t);
                         if ($t) {
-                            if (!isset($secteurs_count[$t])) $secteurs_count[$t] = 0;
-                            $secteurs_count[$t]++;
-                            $total_secteurs++;
+                            if (!isset($secteur_data[$t])) {
+                                $secteur_data[$t] = ['count' => 0, 'total_salary' => 0, 'salary_count' => 0];
+                            }
+                            $secteur_data[$t]['count']++;
+                            if ($row['salaire_moyen_global'] > 0) {
+                                $secteur_data[$t]['total_salary'] += $row['salaire_moyen_global'];
+                                $secteur_data[$t]['salary_count']++;
+                            }
                         }
                     }
                 }
             }
-            arsort($secteurs_count);
-            $stats['top_secteurs'] = array_slice($secteurs_count, 0, 4, true);
-            $stats['total_secteurs_tags'] = $total_secteurs;
+            
+            $final_secteurs = [];
+            foreach($secteur_data as $sec => $data) {
+                $final_secteurs[$sec] = [
+                    'count' => $data['count'],
+                    'avg_salary' => $data['salary_count'] > 0 ? round($data['total_salary'] / $data['salary_count']) : 0
+                ];
+            }
+            
+            // Sort by count primarily, then by salary
+            uasort($final_secteurs, function($a, $b) {
+                if ($b['count'] === $a['count']) return $b['avg_salary'] - $a['avg_salary'];
+                return $b['count'] - $a['count'];
+            });
+            
+            $stats['top_secteurs'] = array_slice($final_secteurs, 0, 4, true);
+            
+            // Find max salary for relative bar scaling
+            $max_sal = 1;
+            foreach($stats['top_secteurs'] as $s) {
+                if ($s['avg_salary'] > $max_sal) $max_sal = $s['avg_salary'];
+            }
+            $stats['max_sector_salary'] = $max_sal;
+            
         } catch (Exception $e) {
             $stats['top_secteurs'] = [];
-            $stats['total_secteurs_tags'] = 0;
         }
 
         // 4. Sujets tendance (Top tags by vues)

@@ -145,7 +145,7 @@ foreach ($dbReports as $r) {
         <a href="veille_details.php?id=<?php echo $featured['id_rapport_marche']; ?>" class="btn btn-sm btn-primary">
           <i data-lucide="book-open" style="width:14px;height:14px;"></i> Lire le rapport
         </a>
-          <button class="btn btn-sm btn-secondary" onclick="if(window.AIAgentUtils && window.AIAgentUtils.triggerFlashBriefing) window.AIAgentUtils.triggerFlashBriefing(<?php echo $featured['id_rapport_marche']; ?>, '<?php echo addslashes(htmlspecialchars($featured['titre'])); ?>'); else alert('L\'agent IA n\'est pas disponible.')" title="Briefing Audio"><i data-lucide="mic" style="width:14px;height:14px;"></i> Écouter</button>
+          <button class="btn btn-sm btn-secondary" onclick="if(window.AIAgentUtils && window.AIAgentUtils.triggerFlashBriefing) window.AIAgentUtils.triggerFlashBriefing(<?php echo $featured['id_rapport_marche']; ?>, '<?php echo htmlspecialchars(addslashes($featured['titre']), ENT_QUOTES, 'UTF-8'); ?>'); else alert('L\'agent IA n\'est pas disponible.')" title="Briefing Audio"><i data-lucide="mic" style="width:14px;height:14px;"></i> Écouter</button>
         <div class="flex gap-2">
           <button class="btn btn-sm btn-ghost"><i data-lucide="bookmark" style="width:14px;height:14px;"></i></button>
           <button class="btn btn-sm btn-ghost"><i data-lucide="share-2" style="width:14px;height:14px;"></i></button>
@@ -188,7 +188,7 @@ foreach ($dbReports as $r) {
         <a href="veille_details.php?id=<?php echo $r['id_rapport_marche']; ?>" class="btn btn-sm btn-secondary">
           <i data-lucide="book-open" style="width:14px;height:14px;"></i> Lire le rapport
         </a>
-          <button class="btn btn-sm btn-ghost" onclick="if(window.AIAgentUtils && window.AIAgentUtils.triggerFlashBriefing) window.AIAgentUtils.triggerFlashBriefing(<?php echo $r['id_rapport_marche']; ?>, '<?php echo addslashes(htmlspecialchars($r['titre'])); ?>'); else alert('L\'agent IA n\'est pas disponible.')" title="Briefing Audio"><i data-lucide="mic" style="width:14px;height:14px;color:var(--accent-primary);"></i> Écouter</button>
+          <button class="btn btn-sm btn-ghost" onclick="if(window.AIAgentUtils && window.AIAgentUtils.triggerFlashBriefing) window.AIAgentUtils.triggerFlashBriefing(<?php echo $r['id_rapport_marche']; ?>, '<?php echo htmlspecialchars(addslashes($r['titre']), ENT_QUOTES, 'UTF-8'); ?>'); else alert('L\'agent IA n\'est pas disponible.')" title="Briefing Audio"><i data-lucide="mic" style="width:14px;height:14px;color:var(--accent-primary);"></i> Écouter</button>
         <div class="flex gap-2">
           <button class="btn btn-sm btn-ghost"><i data-lucide="bookmark" style="width:14px;height:14px;"></i></button>
           <button class="btn btn-sm btn-ghost"><i data-lucide="share-2" style="width:14px;height:14px;"></i></button>
@@ -208,7 +208,7 @@ foreach ($dbReports as $r) {
 <div id="ar-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
     <div style="background:var(--bg-primary); padding:30px; border-radius:12px; text-align:center; max-width:400px;">
         <h3 style="margin-bottom:15px; color:var(--text-primary);">Scanner pour l'AR</h3>
-        <p style="margin-bottom:20px; color:var(--text-secondary);">Ouvrez cette page sur votre tà©là©phone pour voir le bureau holographique WebXR.</p>
+        <p style="margin-bottom:20px; color:var(--text-secondary);">Ouvrez cette page sur votre téléphone pour voir le bureau holographique WebXR.</p>
         <div id="qrcode" style="margin: 0 auto 20px auto; display:flex; justify-content:center;"></div>
         <button class="btn btn-secondary" onclick="closeARModal()">Fermer</button>
     </div>
@@ -221,10 +221,7 @@ foreach ($dbReports as $r) {
         Chargement de la carte...
     </div>
 
-    <h2 style="margin-top: 40px; margin-bottom: 20px; font-size: 24px; color: var(--text-primary);"><i data-lucide="network" style="width:24px;height:24px;color:var(--accent-primary);"></i> Skill DNA Graph</h2>
-    <div id="skill-dna-graph" style="min-height: 400px; background: var(--bg-secondary); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; position: relative;">
-        Chargement du graphe...
-    </div>
+
 </div>
 
       <!-- AI Forecast Dashboard Section (Moved to Bottom) -->
@@ -269,7 +266,7 @@ foreach ($dbReports as $r) {
   <!-- ═══ SIDEBAR ═══ -->
   <aside class="veille-sidebar">
     <!-- Quick Stats -->
-    <div class="data-card-mini">
+    <div class="data-card-mini" data-tilt data-tilt-max="5" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1">
       <div class="data-card-mini__header">
         <span class="data-card-mini__title">Données analysées</span>
       </div>
@@ -277,7 +274,7 @@ foreach ($dbReports as $r) {
       <div class="data-card-mini__chart" id="sparkline-offres"></div>
     </div>
 
-    <div class="data-card-mini">
+    <div class="data-card-mini" data-tilt data-tilt-max="5" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1">
       <div class="data-card-mini__header">
         <span class="data-card-mini__title">Salaire moyen global</span>
         <span class="badge badge-info">TND</span>
@@ -287,21 +284,29 @@ foreach ($dbReports as $r) {
     </div>
 
     <!-- Top Sectors Chart -->
-    <div class="data-card-mini">
-      <div class="data-card-mini__title" style="margin-bottom:var(--space-4);">Top Secteurs</div>
+    <div class="data-card-mini" data-tilt data-tilt-max="3" data-tilt-speed="400">
+      <div class="data-card-mini__title" style="margin-bottom:var(--space-4); display:flex; justify-content:space-between; align-items:center;">
+        Top Secteurs 
+        <span style="font-size:10px; opacity:0.5; font-weight:400;">Moy. Salaire</span>
+      </div>
       <div class="simple-bar-chart">
         <?php 
         $colors = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)'];
         $i = 0;
         if (!empty($sidebarStats['top_secteurs'])):
-        foreach ($sidebarStats['top_secteurs'] as $sec => $count): 
-            $pct = $sidebarStats['total_secteurs_tags'] > 0 ? round(($count / $sidebarStats['total_secteurs_tags']) * 100) : 0;
+        foreach ($sidebarStats['top_secteurs'] as $sec => $data): 
+            $salary = $data['avg_salary'];
+            $pct = $sidebarStats['max_sector_salary'] > 0 ? round(($salary / $sidebarStats['max_sector_salary']) * 100) : 0;
             $color = $colors[$i % count($colors)];
         ?>
-        <div class="simple-bar-chart__row">
-          <span class="simple-bar-chart__label"><?php echo htmlspecialchars($sec); ?></span>
-          <div class="simple-bar-chart__bar"><div class="simple-bar-chart__fill" style="width:<?php echo $pct; ?>%;background:<?php echo $color; ?>;"></div></div>
-          <span class="simple-bar-chart__value"><?php echo $pct; ?>%</span>
+        <div class="simple-bar-chart__row" title="<?php echo $data['count']; ?> rapports disponibles">
+          <span class="simple-bar-chart__label" style="font-size:12px;"><?php echo htmlspecialchars($sec); ?></span>
+          <div class="simple-bar-chart__bar" style="height:8px; background:var(--bg-secondary);">
+            <div class="simple-bar-chart__fill" style="width:<?php echo $pct; ?>%; background:<?php echo $color; ?>; border-radius:4px; box-shadow:0 0 10px <?php echo $color; ?>44;"></div>
+          </div>
+          <span class="simple-bar-chart__value" style="font-size:11px; font-weight:700; color:var(--text-primary); min-width:45px; text-align:right;">
+            <?php echo number_format($salary, 0, '.', ' '); ?>
+          </span>
         </div>
         <?php $i++; endforeach; else: ?>
         <p style="font-size:12px; color:var(--text-tertiary);">Aucune donnée disponible</p>
@@ -310,7 +315,7 @@ foreach ($dbReports as $r) {
     </div>
 
     <!-- Trending Topics -->
-    <div class="data-card-mini">
+    <div class="data-card-mini" data-tilt data-tilt-max="5" data-tilt-speed="400">
       <div class="data-card-mini__title" style="margin-bottom:var(--space-3);">Sujets tendance</div>
       <div class="trending-list">
         <?php 
@@ -318,10 +323,10 @@ foreach ($dbReports as $r) {
         if (!empty($sidebarStats['sujets_tendance'])):
         foreach ($sidebarStats['sujets_tendance'] as $sujet => $vues): 
         ?>
-        <div class="trending-item">
+        <div class="trending-item" style="transition: transform 0.2s ease;">
             <span class="trending-item__rank"><?php echo $rank; ?></span>
-            <span class="trending-item__text"><?php echo htmlspecialchars($sujet); ?></span>
-            <span class="trending-item__count"><?php echo $vues; ?> vues</span>
+            <span class="trending-item__text" style="font-weight:600;"><?php echo htmlspecialchars($sujet); ?></span>
+            <span class="trending-item__count" style="font-size:11px; opacity:0.7;"><?php echo number_format($vues); ?> vues</span>
         </div>
         <?php $rank++; endforeach; else: ?>
         <p style="font-size:12px; color:var(--text-tertiary);">Aucune donnée disponible</p>
@@ -336,6 +341,16 @@ foreach ($dbReports as $r) {
 document.addEventListener('DOMContentLoaded', function() {
   AptusCharts.sparkline('sparkline-offres', <?php echo json_encode($sidebarStats['sparkline_donnees']); ?>, 'var(--chart-2)');
   AptusCharts.sparkline('sparkline-salary', <?php echo json_encode($sidebarStats['sparkline_salaire']); ?>, 'var(--chart-3)');
+  
+  // Explicitly init VanillaTilt for stats cards
+  if (typeof VanillaTilt !== 'undefined') {
+      VanillaTilt.init(document.querySelectorAll(".data-card-mini"), {
+          max: 5,
+          speed: 400,
+          glare: true,
+          "max-glare": 0.1
+      });
+  }
 });
 
 function filterFeed(sector, btnEl, isDropdown = false) {
@@ -552,11 +567,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 </script>
 
-
-<script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="/aptus_first_official_version/view/assets/js/market_heatmap.js"></script>
-<script src="/aptus_first_official_version/view/assets/js/skill_dna_graph.js"></script>
-
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <?php

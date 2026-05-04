@@ -32,7 +32,7 @@ $stats = $vc->getRegionalMarketStats();
             <!-- Desk Base -->
             <a-box position="0 0 0" width="3" height="0.1" depth="3" color="#1e1e2f" opacity="0.8"></a-box>
             
-            <a-text value="Marchà© Rà©gional" position="-1 0.5 -1" rotation="-90 0 0" color="#fff" width="4"></a-text>
+            <a-text value="Marché Régional" position="-1 0.5 -1" rotation="-90 0 0" color="#fff" width="4"></a-text>
 
             <?php
             $maxSalary = 5000;
