@@ -238,6 +238,11 @@ if (!isset($content)) {
               </button>
           </form>
 
+          <!-- BOUTON RAPPORT IA -->
+          <button onclick="handleAiReport(currentOpenedCandidatureId)" class="btn-ai-generate">
+              <i data-lucide="sparkles"></i> Rapport IA
+          </button>
+
 
 
           <button onclick="closeDetailsModal()" style="background: none; border: none; cursor: pointer; color: var(--text-tertiary); margin-left: 0.5rem;">
@@ -377,14 +382,176 @@ if (!isset($content)) {
 }
 
 .candidate-cards-grid.view-list .candidate-card__actions .btn-success,
-.candidate-cards-grid.view-list .candidate-card__actions .btn-ghost {
-    width: 36px !important;
-    height: 36px !important;
-    padding: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+/* --- AI REPORT ADAPTIVE DESIGN --- */
+:root {
+    --ai-report-bg: rgba(255, 255, 255, 0.4);
+    --ai-report-text: #334155;
+    --ai-report-header-text: #0f172a;
+    --ai-report-card-bg: #ffffff;
+    --ai-report-border: rgba(0, 0, 0, 0.08);
+    --ai-report-section-bg: rgba(248, 250, 252, 0.8);
+    --ai-report-content-bg: #ffffff;
+    --ai-report-badge-blue-bg: rgba(14, 165, 233, 0.15);
+    --ai-report-badge-blue-text: #0284c7;
 }
+
+/* Support Mode Sombre */
+body.dark-mode, [data-theme="dark"], .dark-theme {
+    --ai-report-bg: rgba(10, 15, 28, 0.6);
+    --ai-report-text: #f8fafc;
+    --ai-report-header-text: #ffffff;
+    --ai-report-card-bg: rgba(255, 255, 255, 0.05);
+    --ai-report-border: rgba(255, 255, 255, 0.1);
+    --ai-report-section-bg: rgba(255, 255, 255, 0.03);
+    --ai-report-content-bg: rgba(0,0,0,0.3);
+    --ai-report-badge-blue-bg: rgba(79, 181, 255, 0.2);
+    --ai-report-badge-blue-text: #4fb5ff;
+}
+
+.ai-report-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--ai-report-bg);
+    backdrop-filter: blur(12px);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 9999; padding: 20px;
+}
+
+.ai-report-card {
+    background: var(--ai-report-card-bg);
+    border: 1px solid var(--ai-report-border);
+    color: var(--ai-report-text);
+    border-radius: 24px;
+    width: 100%; max-width: 800px;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideIn {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.ai-report-header {
+    padding: 25px 30px;
+    background: linear-gradient(135deg, rgba(79, 181, 255, 0.12) 0%, rgba(168, 100, 228, 0.12) 100%);
+    border-bottom: 1px solid var(--ai-report-border);
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--ai-report-header-text);
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-report-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 4px;
+    background: linear-gradient(90deg, #4fb5ff, #a864e4, #4fb5ff);
+    background-size: 200% auto;
+    animation: shine 3s linear infinite;
+}
+
+.ai-report-body { padding: 30px; line-height: 1.9; }
+
+.report-content {
+    background: var(--ai-report-content-bg);
+    padding: 30px; border-radius: 24px;
+    border: 1px solid var(--ai-report-border);
+    line-height: 1.9; color: var(--ai-report-text);
+    font-size: 1.05rem;
+    font-weight: 400;
+}
+
+.report-card-section {
+    background: var(--ai-report-section-bg);
+    border-left: 6px solid #4fb5ff;
+    padding: 20px 25px;
+    margin-bottom: 25px;
+    border-radius: 0 16px 16px 0;
+}
+
+.report-card-section.warning { border-left-color: #fbbf24; background: rgba(251, 191, 36, 0.05); }
+.report-card-section.success { border-left-color: #34d399; background: rgba(52, 211, 153, 0.05); }
+
+.ai-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 16px; border-radius: 12px;
+    font-size: 0.85rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    background: var(--ai-report-badge-blue-bg); 
+    color: var(--ai-report-badge-blue-text);
+    margin-bottom: 15px;
+}
+
+/* LOADER AI SCANNER */
+.ai-loader {
+    display: none;
+    flex-direction: column; align-items: center; gap: 25px;
+    padding: 40px 0;
+}
+
+.ai-scanner {
+    position: relative;
+    width: 80px; height: 80px;
+    border-radius: 16px;
+    background: rgba(79, 181, 255, 0.05);
+    border: 2px solid rgba(79, 181, 255, 0.2);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 0 20px rgba(79, 181, 255, 0.1);
+}
+
+.ai-scanner i {
+    color: rgba(79, 181, 255, 0.4);
+    width: 40px; height: 40px;
+}
+
+.ai-scanner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 4px;
+    background: #4fb5ff;
+    box-shadow: 0 0 15px #4fb5ff, 0 0 30px #a864e4;
+    animation: scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+@keyframes scan {
+    0% { top: 0; opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { top: 100%; opacity: 0.5; }
+}
+
+.ai-loading-text {
+    background: linear-gradient(90deg, #4fb5ff, #a864e4, #4fb5ff);
+    background-size: 200% auto;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    font-weight: 700;
+    font-size: 1.1rem;
+    animation: shine 2s linear infinite;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+@keyframes shine {
+    to { background-position: 200% center; }
+}
+
+.btn-ai-generate {
+    background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%);
+    color: white; border: none;
+    padding: 12px 24px; border-radius: 12px;
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600; cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 20px -5px rgba(168, 100, 228, 0.4);
+}
+
+.btn-ai-generate:hover { transform: translateY(-2px); box-shadow: 0 15px 25px -5px rgba(168, 100, 228, 0.6); }
+.btn-ai-generate:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 </style>
 
 <script>
@@ -420,35 +587,54 @@ function setViewMode(mode) {
 // ═══ DETAILS MODAL LOGIC (UNIFIED) ═══
 let currentOpenedCandidatureId = null;
 
-function triggerAiReportFromDetails() {
-    const aiBtn = document.querySelector('button[onclick="triggerAiReportFromDetails()"]');
-    const val = aiBtn ? aiBtn.getAttribute('data-report') : null;
+// Fonction pour générer ou voir le rapport IA
+function handleAiReport(id) {
+    currentOpenedCandidatureId = id;
+    const modal = document.getElementById('ai-report-modal-overlay');
+    const content = document.getElementById('ai-report-content-area');
+    const loader = document.getElementById('ai-report-loader');
     
-    if (!val || val.trim() === "") {
-        alert("Le rapport IA n'est pas disponible pour cette candidature.");
-        return;
-    }
+    modal.style.display = 'flex';
+    content.style.display = 'none';
+    loader.style.display = 'flex';
 
-    try {
-        const data = JSON.parse(val);
-        document.getElementById('ai-report-score').innerText = (data.score || 0) + '%';
-        document.getElementById('ai-report-cv').innerText = data.analyse_cv || 'N/A';
-        document.getElementById('ai-report-reponse').innerText = data.analyse_reponse || 'N/A';
-        document.getElementById('ai-report-verdict').innerText = data.verdict || 'Analyse terminée.';
-        
-        const forts = document.getElementById('ai-report-forts');
-        const faibles = document.getElementById('ai-report-faibles');
-        forts.innerHTML = '';
-        faibles.innerHTML = '';
-        
-        if (data.points_forts) data.points_forts.forEach(p => forts.innerHTML += `<li>${p}</li>`);
-        if (data.points_faibles) data.points_faibles.forEach(p => faibles.innerHTML += `<li>${p}</li>`);
+    // Appel AJAX
+    fetch('ajax_generate_report.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `id_candidature=${id}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        loader.style.display = 'none';
+        if (data.status === 'success') {
+            loader.style.display = 'none';
+            content.style.display = 'block';
+            
+            // Formatage intelligent du texte
+            let formattedReport = data.report
+                .replace(/💎/g, '<div class="report-card-section success"><span class="ai-badge" style="background:rgba(16,185,129,0.2);color:#10b981">Points Forts</span><br>')
+                .replace(/⚠️/g, '</div><div class="report-card-section warning"><span class="ai-badge" style="background:rgba(245,158,11,0.2);color:#f59e0b">Vigilance</span><br>')
+                .replace(/🚀/g, '</div><div class="report-card-section"><span class="ai-badge">Impression</span><br>')
+                .replace(/\n/g, '<br>');
+            
+            formattedReport += '</div>'; // Fermeture de la dernière section
+            
+            document.getElementById('report-text-container').innerHTML = formattedReport;
+        } else {
+            alert("Erreur: " + data.message);
+            modal.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("Une erreur est survenue lors de la génération.");
+        modal.style.display = 'none';
+    });
+}
 
-        document.getElementById('ai-report-modal-overlay').style.display = 'flex';
-        if (window.lucide) lucide.createIcons();
-    } catch (e) {
-        alert("Erreur de lecture du rapport IA.");
-    }
+function closeAiReportModal() {
+    document.getElementById('ai-report-modal-overlay').style.display = 'none';
 }
 
 function openDetailsModal(event, id) {
@@ -606,6 +792,39 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+
+<!-- MODAL RAPPORT IA PREMIUM -->
+<div id="ai-report-modal-overlay" class="ai-report-modal">
+    <div class="ai-report-card">
+        <div class="ai-report-header">
+            <h3 style="display:flex; align-items:center; gap:10px; margin:0; color: inherit;">
+                <i data-lucide="sparkles" style="color:#4fb5ff"></i>
+                Rapport d'Analyse IA Aptus
+            </h3>
+            <button onclick="closeAiReportModal()" class="btn-ghost" style="border-radius:50%; width:40px; height:40px; color: inherit;">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        
+        <div class="ai-report-body">
+            <!-- LOADER -->
+            <div id="ai-report-loader" class="ai-loader">
+                <div class="ai-scanner">
+                    <i data-lucide="cpu"></i>
+                </div>
+                <p class="ai-loading-text">Analyse experte en cours par Llama 3.3...</p>
+            </div>
+
+            <!-- CONTENT -->
+            <div id="ai-report-content-area" style="display:none;">
+                <div class="report-section">
+                    <h4><i data-lucide="file-text"></i> Rapport de Synthèse</h4>
+                    <div id="report-text-container" class="report-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

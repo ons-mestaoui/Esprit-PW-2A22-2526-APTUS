@@ -7,7 +7,7 @@ class candidature{
     private $prenom;
     private $email;
     private $date_candidature;
-    private $reponses_ques;
+    private $reponses_ques; 
     private $cv_cand;
     private $note;
     private $statut;

@@ -110,18 +110,7 @@ class candidatureC {
         }
     }
 
-    // Supprimer une candidature
-    public function deleteCandidature($id_candidature) {
-        $sql = "DELETE FROM candidatures WHERE id_candidature = :id";
-        $db = config::getConnexion();
-        $req = $db->prepare($sql);
-        $req->bindValue(':id', $id_candidature);
-        try {
-            $req->execute();
-        } catch (Exception $e) {
-            die('Error:' . $e->getMessage());
-        }
-    }
+
 
     // Mettre à jour le statut d'une candidature + créer une notification
     public function updateStatut($id_candidature, $nouveau_statut) {
@@ -247,6 +236,21 @@ class candidatureC {
                 'id_o' => $id_offre
             ]);
             return $req->fetchColumn() > 0;
+        } catch (Exception $e) {
+            die('Error:' . $e->getMessage());
+        }
+    }
+
+    public function saveAiReport($id_candidature, $report) {
+        $sql = "UPDATE candidatures SET ai_report = :report WHERE id_candidature = :id";
+        $db = config::getConnexion();
+        try {
+            $req = $db->prepare($sql);
+            $req->execute([
+                'report' => $report,
+                'id' => $id_candidature
+            ]);
+            return true;
         } catch (Exception $e) {
             die('Error:' . $e->getMessage());
         }
