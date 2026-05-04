@@ -5,7 +5,7 @@
  */
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../controller/AIController.php';
+require_once __DIR__ . '/../../controller/CVC.php';
 
 $data = json_decode(file_get_contents('php://input'), true);
 $text = $data['text'] ?? '';
@@ -18,7 +18,7 @@ if (empty($text) || empty($value)) {
     exit;
 }
 
-$ai = new AIController();
+$cvc = new CVC();
 
 $prompt = "Tu es un expert en branding personnel et optimisation de CV (Impact ROI).
 Ta mission est de transformer une tâche banale en un accomplissement chiffré percutant.
@@ -39,7 +39,7 @@ Données d'entrée :
 $userInput = "Tâche : $text\nValeur : $value\nMétrique : $metric\nPoste : $role";
 
 try {
-    $result = $ai->generateJSON($prompt, $userInput);
+    $result = $cvc->generateJSON($prompt, $userInput);
     echo json_encode(['success' => true, 'suggestion' => $result['suggestion']]);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

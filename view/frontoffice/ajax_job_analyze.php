@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../controller/AIController.php';
+require_once __DIR__ . '/../../controller/GuideController.php';
 require_once __DIR__ . '/../../controller/CVC.php';
 
 header('Content-Type: application/json');
@@ -17,7 +17,7 @@ if (!$cvId || !$url) {
 }
 
 try {
-    $ai = new AIController();
+    $gc = new GuideController();
     $cvc = new CVC();
     $pdo = config::getConnexion();
 
@@ -40,14 +40,14 @@ try {
 
     if (empty($jobText)) {
         error_log("Tailor Step 1: Scraping URL...");
-        $jobText = $ai->scrapeUrl($url);
+        $jobText = $gc->scrapeUrl($url);
         error_log("Tailor Step 1: Scraped Length: " . strlen($jobText));
         
         error_log("Tailor Step 1.5: Analyzing Job with Gemini...");
-        $jobData = $ai->analyzeJobPosting($jobText);
+        $jobData = $gc->analyzeJobPosting($jobText);
     } else {
         error_log("Tailor Step 1.5: Refining Internal Job with Gemini...");
-        $jobData = $ai->analyzeJobPosting($jobText);
+        $jobData = $gc->analyzeJobPosting($jobText);
     }
 
     if (!$jobData || isset($jobData['error'])) {
@@ -64,7 +64,7 @@ try {
 
     // 3. Tailor CV (Groq)
     error_log("Tailor Step 3: Tailoring CV with Groq...");
-    $tailoredData = $ai->tailorCV($cv, $jobData);
+    $tailoredData = $gc->tailorCV($cv, $jobData);
     error_log("Tailor Step 3: Done");
 
     // 4. Store in Session for cv_form.php

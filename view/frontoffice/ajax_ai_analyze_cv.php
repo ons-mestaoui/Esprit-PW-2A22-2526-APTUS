@@ -15,13 +15,14 @@ if (!$id_cv || empty(trim($cvText))) {
     exit;
 }
 
-require_once __DIR__ . '/../../controller/AIController.php';
 require_once __DIR__ . '/../../controller/CVC.php';
+require_once __DIR__ . '/../../controller/RapportIAController.php';
 require_once __DIR__ . '/../../model/CV.php';
+require_once __DIR__ . '/../../model/RapportIA.php';
 
-// 1. Appeler l'IA via Groq Cloud (Ultra Rapide)
-$ai = new AIController();
-$analysisJsonString = $ai->analyzeCV($cvText);
+// 1. Appeler l'IA via le contrôleur spécialisé
+$riac = new RapportIAController();
+$analysisJsonString = $riac->analyzeCV($cvText);
 
 // Vérifier si c'est du JSON valide
 $decoded = json_decode($analysisJsonString, true);
@@ -32,9 +33,11 @@ if (!$decoded || !isset($decoded['score_ats'])) {
 
 // 2. Sauvegarder dans la base de données
 $cvc = new CVC();
+// $riac est déjà instancié plus haut
 $cvData = $cvc->getCVById($id_cv);
 
 if ($cvData) {
+    // A. Mise à jour dans la table CV (Ancienne méthode - pour compatibilité)
     $cvModel = new CV(
         $cvData['id_cv'],
         $cvData['id_candidat'],
@@ -56,6 +59,18 @@ if ($cvData) {
         $analysisJsonString // AI analysis
     );
     $cvc->updateCV($id_cv, $cvModel);
+
+    // B. Nouvelle méthode MVC : Sauvegarde dans rapport_ia
+    $rapportIA = new RapportIA(
+        null,
+        (int)$id_cv,
+        (int)($decoded['score_ats'] ?? 0),
+        json_encode($decoded['points_forts'] ?? []),
+        json_encode($decoded['points_faibles'] ?? []),
+        json_encode($decoded['missing_skills'] ?? []), // Mapping suggestions/missing skills
+        json_encode($decoded['detailed_recommendations'] ?? [])
+    );
+    $riac->addRapport($rapportIA);
 }
 
 // 3. Renvoyer le JSON au frontend

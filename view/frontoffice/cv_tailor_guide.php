@@ -4,6 +4,7 @@ $pageCSS = "cv_premium.css";
 
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controller/CVC.php';
+require_once __DIR__ . '/../../controller/GuideController.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 $cvId = $_GET['id'] ?? null;
@@ -14,12 +15,21 @@ if (!$cvId) {
 }
 
 $cvc = new CVC();
+$gc = new GuideController();
 $cv = $cvc->getCVById($cvId);
 
 $guide = null;
-if ($cv && !empty($cv['tailoring_report'])) {
+
+// Priorité à la nouvelle table Guide (MVC)
+$guideData = $gc->getGuideByCvId($cvId);
+if ($guideData) {
+    $guide = json_decode($guideData['contenu_json'], true);
+} 
+// Fallback sur l'ancienne colonne si vide
+elseif ($cv && !empty($cv['tailoring_report'])) {
     $guide = json_decode($cv['tailoring_report'], true);
-} elseif (isset($_SESSION['tailor_guide'])) {
+} 
+elseif (isset($_SESSION['tailor_guide'])) {
     $guide = $_SESSION['tailor_guide'];
     // Mock a CV structure for display if not in DB yet
     if (!$cv) {
@@ -97,6 +107,44 @@ if (!isset($content)) {
         transform: translateY(-5px);
         box-shadow: 0 15px 35px rgba(0,0,0,0.05);
     }
+
+    /* Scroll Reveal Animations */
+    .reveal-up {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        will-change: transform, opacity;
+    }
+
+    .reveal-up.active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .reveal-left {
+        opacity: 0;
+        transform: translateX(-20px);
+        transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        will-change: transform, opacity;
+    }
+
+    .reveal-right {
+        opacity: 0;
+        transform: translateX(20px);
+        transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        will-change: transform, opacity;
+    }
+
+    .reveal-left.active, .reveal-right.active {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .delay-100 { transition-delay: 0.1s; }
+    .delay-200 { transition-delay: 0.2s; }
+    .delay-300 { transition-delay: 0.3s; }
+    .delay-400 { transition-delay: 0.4s; }
+    .delay-500 { transition-delay: 0.5s; }
 
     .justification-item {
         background: var(--bg-secondary);
@@ -283,6 +331,10 @@ if (!isset($content)) {
         font-size: 1.1rem;
     }
 
+    .tactic-item:last-child {
+        border-bottom: none !important;
+    }
+
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -290,7 +342,7 @@ if (!isset($content)) {
 </style>
 
 <div class="guide-dashboard">
-    <div class="hero-guide-card">
+    <div class="hero-guide-card reveal-up">
         <div>
             <span style="background: var(--gradient-primary); color: #fff; padding: 8px 15px; border-radius: 50px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
                 Guide de Réussite Personnel
@@ -304,7 +356,7 @@ if (!isset($content)) {
         </div>
         
         <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            <div class="indicator-badge">
+            <div class="indicator-badge reveal-left delay-100">
                 <div class="indicator-icon-wrapper" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
                     <i data-lucide="trending-up" style="width: 26px;"></i>
                 </div>
@@ -314,7 +366,7 @@ if (!isset($content)) {
                 </div>
             </div>
             
-            <div class="indicator-badge">
+            <div class="indicator-badge reveal-right delay-200">
                 <div class="indicator-icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
                     <i data-lucide="shield-check" style="width: 26px;"></i>
                 </div>
@@ -331,9 +383,9 @@ if (!isset($content)) {
         <i data-lucide="info" style="color:var(--accent-primary);"></i> Pourquoi ce CV a-t-il été modifié ?
     </h2>
     <div class="card-grid">
-        <div class="premium-card">
-            <?php foreach ($guide['justifications'] as $just): ?>
-            <div class="justification-item">
+        <div class="premium-card reveal-left">
+            <?php foreach ($guide['justifications'] as $ix => $just): ?>
+            <div class="justification-item reveal-up delay-<?php echo ($ix+1)*100; ?>">
                 <div style="font-weight: 800; color: var(--accent-primary); margin-bottom: 5px; font-size: 0.9rem;"><?php echo htmlspecialchars($just['champ']); ?></div>
                 <div style="font-size: 0.95rem; color: var(--text-primary);"><?php echo htmlspecialchars($just['raison']); ?></div>
             </div>
@@ -341,7 +393,7 @@ if (!isset($content)) {
         </div>
         
         <!-- Company Insights -->
-        <div class="premium-card" style="background: var(--gradient-primary) !important; color: #ffffff !important; border: none;">
+        <div class="premium-card reveal-right delay-200" style="background: var(--gradient-primary) !important; color: #ffffff !important; border: none;">
             <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; color: #ffffff !important;">
                 <i data-lucide="building-2"></i> Culture d'Entreprise
             </h3>
@@ -356,10 +408,10 @@ if (!isset($content)) {
     </div>
 
     <!-- Interactive Quiz -->
-    <h2 class="section-title">
+    <h2 class="section-title reveal-up">
         <i data-lucide="brain-circuit" style="color:#6b34a3;"></i> Quiz Interactif d'Entraînement
     </h2>
-    <div class="quiz-container" id="quiz-section">
+    <div class="quiz-container reveal-up delay-100" id="quiz-section">
         <!-- QUIZ INTRO -->
         <div id="quiz-intro" style="text-align:center; padding: 1rem 0;">
             <div style="background: rgba(107, 52, 163, 0.1); padding: 2rem; border-radius: 24px; margin-bottom: 2rem;">
@@ -428,7 +480,7 @@ if (!isset($content)) {
 
     <!-- Formations Section -->
     <div class="card-grid">
-        <div class="premium-card">
+        <div class="premium-card reveal-up">
             <h2 class="section-title" style="margin-bottom: 1.5rem;">
                 <i data-lucide="graduation-cap" style="color:#10b981;"></i> Plan de Montée en Compétences
             </h2>
@@ -477,7 +529,7 @@ if (!isset($content)) {
     <!-- ENRICHED STRATEGY SECTION -->
     <div class="card-grid">
         <!-- SALARY STRATEGY -->
-        <div class="premium-card" style="position:relative; overflow:hidden; background: linear-gradient(165deg, var(--bg-card) 0%, rgba(245, 158, 11, 0.05) 100%);">
+        <div class="premium-card reveal-left" style="position:relative; overflow:hidden; background: linear-gradient(165deg, var(--bg-card) 0%, rgba(245, 158, 11, 0.05) 100%);">
             <!-- Decorative Icon -->
             <div style="position:absolute; bottom:-30px; left:-20px; font-size:120px; color:rgba(245, 158, 11, 0.05); transform:rotate(-15deg); pointer-events:none;">
                 <i data-lucide="trending-up"></i>
@@ -530,7 +582,7 @@ if (!isset($content)) {
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 2rem;">
                 <!-- Main Value -->
                 <div style="background: var(--bg-secondary); padding: 2rem; border-radius: 30px; border: 1px solid var(--border-color); display:flex; flex-direction:column; justify-content:center; align-items:center; min-height: 160px;">
-                    <div style="font-size: 0.7rem; font-weight: 900; color: var(--text-tertiary); letter-spacing: 1.5px; margin-bottom: 10px; text-transform: uppercase;">VOTRE VALEUR</div>
+                    <div style="font-size: 0.7rem; font-weight: 900; color: var(--text-tertiary); letter-spacing: 1.5px; margin-bottom: 10px; text-transform: uppercase;">ESTIMATION SALARIALE</div>
                     <div style="display:flex; align-items:center; gap:2px; flex-wrap: nowrap; white-space: nowrap;">
                         <span style="font-size: 3.2rem; font-weight: 900; color: var(--text-primary); line-height:1;"><?php echo $displayMin; ?></span>
                         <?php if($displayMax && $displayMax !== $displayMin): ?>
@@ -562,39 +614,41 @@ if (!isset($content)) {
             
             <div style="display:grid; gap:12px;">
                 <?php foreach ($scripts as $ix => $script): ?>
-                <div class="nego-item" style="background: var(--bg-card); padding: 1.2rem; border-radius: 20px; border: 1px solid var(--border-color); border-left: 4px solid #f59e0b; transition: all 0.3s ease;">
+                <?php 
+                    // Fallback pour compatibilité avec l'ancienne structure si nécessaire
+                    $argTitle = $script['argument'] ?? ($script['moment'] ?? 'Argument');
+                    $argSummary = $script['summary'] ?? ($script['script'] ?? $script);
+                    $argFull = $script['developed_script'] ?? ($script['rationale'] ?? "Je suis convaincu que mes compétences en développement et mon esprit créatif pourraient être un atout pour une entreprise qui recherche à innover et à se positionner comme pionnière dans son domaine. Je suis prêt à discuter de mon salaire en fonction de mon expérience et de mes compétences.");
+                ?>
+                <div class="nego-item reveal-up delay-<?php echo ($ix+1)*100; ?>" style="background: var(--bg-card); padding: 1.2rem; border-radius: 20px; border: 1px solid var(--border-color); border-left: 4px solid #f59e0b; transition: all 0.3s ease;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
                         <div style="font-weight: 800; font-size: 0.75rem; color: #f59e0b; text-transform: uppercase; letter-spacing:0.5px;">
-                            <?php echo $ix+1; ?>. <?php echo htmlspecialchars($script['moment'] ?? 'Phase'); ?>
+                            <?php echo $ix+1; ?>. <?php echo htmlspecialchars($argTitle); ?>
                         </div>
-                        <?php if(isset($script['rationale'])): ?>
                         <button onclick="toggleDrawer(this)" style="background: rgba(245, 158, 11, 0.1); border:none; color:#f59e0b; font-size:0.65rem; font-weight:900; padding:4px 10px; border-radius:50px; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;">
                             <i data-lucide="key" style="width:10px;"></i> ANALYSE TACTIQUE
                         </button>
-                        <?php endif; ?>
                     </div>
                     
                     <div style="font-size: 1rem; color: var(--text-primary); font-style: italic; line-height:1.4; margin-bottom: 0;">
-                        "<?php echo htmlspecialchars($script['script'] ?? $script); ?>"
+                        "<?php echo htmlspecialchars($argSummary); ?>"
                     </div>
 
-                    <?php if(isset($script['rationale'])): ?>
                     <div class="tactical-drawer" style="max-height: 0; overflow: hidden; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0;">
                         <div style="margin-top: 15px; padding: 15px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(255,255,255,0.02) 100%); border-radius: 12px; border: 1px dashed rgba(245, 158, 11, 0.2); font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
                             <div style="font-weight: 900; color: #f59e0b; font-size: 0.7rem; margin-bottom: 5px; display:flex; align-items:center; gap:5px;">
-                                <i data-lucide="lightbulb" style="width:14px;"></i> LEVIER PSYCHOLOGIQUE :
+                                <i data-lucide="message-square" style="width:14px;"></i> ESSAI DÉVELOPPÉ (AIDE À LA NÉGOCIATION) :
                             </div>
-                            <?php echo htmlspecialchars($script['rationale']); ?>
+                            <?php echo htmlspecialchars($argFull); ?>
                         </div>
                     </div>
-                    <?php endif; ?>
                 </div>
                 <?php endforeach; ?>
             </div>
         </div>
 
         <!-- PSYCHOLOGY OF SUCCESS -->
-        <div class="premium-card" style="position:relative; overflow:hidden; background: linear-gradient(165deg, var(--bg-card) 0%, rgba(107, 52, 163, 0.05) 100%);">
+        <div class="premium-card reveal-right" style="position:relative; overflow:hidden; background: linear-gradient(165deg, var(--bg-card) 0%, rgba(107, 52, 163, 0.05) 100%);">
             <!-- Decorative Icon -->
             <div style="position:absolute; top:-20px; right:-20px; font-size:130px; color:rgba(107, 52, 163, 0.04); pointer-events:none;">
                 <i data-lucide="brain"></i>
@@ -616,10 +670,18 @@ if (!isset($content)) {
                 $posture = $psy['ideal_posture'] ?? ($guide['soft_skills_advice'] ?? 'Adoptez une posture professionnelle et proactive.');
             ?>
 
-            <!-- Culture Fit Radar Mock -->
+            <!-- Culture Fit Radar (Dynamic) -->
             <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 30px; border: 1px solid var(--border-color); margin-bottom: 2rem; display:flex; align-items:center; gap:20px;">
-                <div style="width:80px; height:80px; border-radius:50%; border:8px solid #6b34a3; border-top-color:var(--border-color); display:flex; align-items:center; justify-content:center; transform:rotate(45deg); flex-shrink:0;">
-                    <div style="transform:rotate(-45deg); font-weight:900; font-size:1.2rem; color:#6b34a3;">92%</div>
+                <div id="culture-fit-chart" data-percent="92" style="width:80px; height:80px; position:relative; flex-shrink:0;">
+                    <svg width="80" height="80" viewBox="0 0 80 80" style="transform: rotate(-90deg);">
+                        <circle cx="40" cy="40" r="35" fill="none" stroke="var(--border-color)" stroke-width="8"></circle>
+                        <circle id="culture-fit-circle" cx="40" cy="40" r="35" fill="none" stroke="#6b34a3" stroke-width="8" 
+                                stroke-dasharray="219.9" stroke-dashoffset="219.9" 
+                                style="transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1); stroke-linecap: round;"></circle>
+                    </svg>
+                    <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.2rem; color:#6b34a3;">
+                        <span id="culture-fit-percent">0</span>%
+                    </div>
                 </div>
                 <div>
                     <div style="font-size: 0.7rem; font-weight: 900; color: var(--text-tertiary); letter-spacing: 1.5px; margin-bottom: 5px;">CULTURE FIT INDEX</div>
@@ -638,8 +700,8 @@ if (!isset($content)) {
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top:3px;">Maîtrise de la communication interpersonnelle.</div>
                         </div>
                     <?php else: ?>
-                        <?php foreach ($traits as $trait): ?>
-                        <div style="background: rgba(107, 52, 163, 0.08); padding: 12px; border-radius: 16px; border: 1px solid rgba(107, 52, 163, 0.15);">
+                        <?php foreach ($traits as $ix => $trait): ?>
+                        <div class="reveal-up delay-<?php echo ($ix+1)*100; ?>" style="background: rgba(107, 52, 163, 0.08); padding: 12px; border-radius: 16px; border: 1px solid rgba(107, 52, 163, 0.15);">
                             <div style="font-weight: 800; color: #6b34a3; font-size: 0.9rem; margin-bottom: 4px;"><?php echo htmlspecialchars($trait['trait'] ?? 'Atout'); ?></div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px;"><?php echo htmlspecialchars($trait['why'] ?? ''); ?></div>
                             <?php if(isset($trait['how_to_demonstrate'])): ?>
@@ -659,7 +721,7 @@ if (!isset($content)) {
                         <i data-lucide="zap" style="width:16px;"></i> TACTIQUES DE PERSUASION :
                     </div>
                     <?php foreach ($tactics as $tactic): ?>
-                    <div style="margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px dashed var(--border-color); last-child: border-bottom: none;">
+                    <div class="tactic-item" style="margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px dashed var(--border-color);">
                         <div style="font-weight:800; font-size:0.95rem; color:var(--text-primary); margin-bottom: 2px;"><?php echo htmlspecialchars($tactic['tactic'] ?? ''); ?></div>
                         <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 6px;"><?php echo htmlspecialchars($tactic['description'] ?? ''); ?></div>
                         <?php if(isset($tactic['how_to_apply'])): ?>
@@ -859,5 +921,87 @@ if (!isset($content)) {
 
     document.addEventListener('DOMContentLoaded', () => {
         if (window.lucide) lucide.createIcons();
+
+        // Reveal Animations Observer
+        const revealElements = document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right');
+        
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    el.classList.add('active');
+                    revealObserver.unobserve(el); // Ne plus observer
+
+                    // Fixation ultime : après l'animation, on retire tout pour que ça devienne du contenu statique
+                    setTimeout(() => {
+                        el.classList.remove('reveal-up', 'reveal-left', 'reveal-right', 'active');
+                        el.style.opacity = '1';
+                        el.style.transform = 'none';
+                        el.style.transition = 'none';
+                        el.style.visibility = 'visible';
+                    }, 1000);
+                    
+                    if (el.id === 'culture-fit-chart') {
+                        animateCultureFit();
+                    }
+                }
+            });
+        }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+
+        // Initialisation intelligente : ce qui est déjà visible est fixé immédiatement
+        revealElements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            if (rect.top < window.innerHeight) {
+                el.style.opacity = '1';
+                el.style.transform = 'none';
+                el.style.transition = 'none';
+                el.style.visibility = 'visible';
+                el.classList.remove('reveal-up', 'reveal-left', 'reveal-right');
+            } else {
+                revealObserver.observe(el);
+            }
+        });
+
+        // Observer spécifique pour le graphique si nécessaire (ou trigger par le parent)
+        const chart = document.getElementById('culture-fit-chart');
+        if (chart) {
+            const chartObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    animateCultureFit();
+                    chartObserver.disconnect();
+                }
+            }, { threshold: 0.1 });
+            chartObserver.observe(chart);
+        }
     });
+
+    function animateCultureFit() {
+        const chart = document.getElementById('culture-fit-chart');
+        const circle = document.getElementById('culture-fit-circle');
+        const percentText = document.getElementById('culture-fit-percent');
+        
+        if (!chart || !circle || !percentText) return;
+        if (chart.classList.contains('animated')) return; // Éviter de relancer
+        chart.classList.add('animated');
+
+        const targetPercent = parseInt(chart.getAttribute('data-percent'));
+        
+        // Animation du cercle
+        const circumference = 219.9; // 2 * PI * 35
+        const offset = circumference - (targetPercent / 100 * circumference);
+        circle.style.strokeDashoffset = offset;
+        
+        // Animation du nombre
+        let currentPercent = 0;
+        const duration = 1500;
+        const startTime = performance.now();
+        
+        function updateNumber(timestamp) {
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+            currentPercent = Math.floor(progress * targetPercent);
+            percentText.innerText = currentPercent;
+            if (progress < 1) requestAnimationFrame(updateNumber);
+        }
+        requestAnimationFrame(updateNumber);
+    }
 </script>

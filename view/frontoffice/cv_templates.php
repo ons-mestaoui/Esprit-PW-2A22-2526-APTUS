@@ -114,128 +114,124 @@ if (!isset($content)) {
   <!-- ═══════════════════════════════════════════
        CV LANDING HERO (ULTIMATE IA EXPERIENCE)
        ═══════════════════════════════════════════ -->
-  <header class="cv-hero" style="padding: 4rem 2rem; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%); overflow: hidden; position: relative; min-height: 650px; display: flex; align-items: center; border-radius: 0 0 50px 50px; margin: -20px -20px 40px -20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);">
+  <header class="cv-hero" style="margin: 2rem auto; max-width: 1250px; padding: 4rem 2rem; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%); overflow: hidden; position: relative; min-height: 550px; display: flex; align-items: center; border-radius: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.2);">
     
     <!-- ✨ PATTERN BACKGROUND -->
     <div style="position:absolute; inset:0; opacity:0.1; pointer-events:none; background-image: radial-gradient(white 1px, transparent 0); background-size: 40px 40px;"></div>
     
-    <div class="container mx-auto" style="width: 100%; max-width: 1200px; position: relative; z-index: 10;">
-      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 40px;">
+    <div class="container mx-auto" style="width: 100%; max-width: 1100px; position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 500px;">
         
-        <!-- 📝 LEFT COLUMN: TEXT & FEATURES -->
-        <div style="flex: 1; min-width: 300px; text-align: left;">
-          <div style="background: linear-gradient(90deg, #fbbf24, #f59e0b); color: #000; width: fit-content; padding: 6px 18px; border-radius: 50px; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); display: flex; align-items: center; gap: 8px;">
-              🚀 RÉVOLUTION IA INTÉGRÉE
+        <!-- 📝 CENTERED CONTENT -->
+        <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+          <div style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); color: white; width: fit-content; padding: 8px 20px; border-radius: 50px; font-size: 0.85rem; font-weight: 800; margin-bottom: 2rem; display: flex; align-items: center; gap: 10px;">
+              <i data-lucide="sparkles" style="width:18px; height:18px; color: #fbbf24;"></i> Propulsé par l'IA
           </div>
           
-          <h1 style="font-size: 3.5rem; font-weight: 950; line-height: 1; margin-bottom: 25px; color: white; letter-spacing: -1.5px;">
-            Créez votre CV Professionnel <br><span style="color: #fbbf24;">en Quelques Minutes.</span>
+          <h1 style="font-size: 4rem; font-weight: 950; line-height: 1.1; margin-bottom: 25px; color: white; letter-spacing: -2px; max-width: 950px;">
+            Créez votre CV Professionnel en Quelques Minutes.
           </h1>
           
-          <p style="color: white; opacity: 0.95; font-size: 1.15rem; margin-bottom: 2.5rem; max-width: 580px; line-height: 1.6; font-weight: 500;">
-            Choisissez parmi nos templates premium, personnalisez avec l'assistance IA, et téléchargez votre CV prêt à l'emploi. 
+          <p style="color: white; opacity: 0.9; font-size: 1.2rem; margin-bottom: 3.5rem; max-width: 700px; line-height: 1.6; font-weight: 500;">
+            Choisissez parmi nos templates premium, personnalisez avec l'assistance IA,<br>
+            et téléchargez votre CV prêt à l'emploi.
           </p>
 
-          <div style="margin-bottom: 3rem;">
-            <span style="display:inline-block; font-weight:800; color: #fbbf24; background: rgba(0,0,0,0.25); padding: 8px 15px; border-radius: 8px; border-left: 4px solid #fbbf24; backdrop-filter: blur(10px);">
-                L'IA analyse votre offre et adapte chaque mot pour votre victoire.
-            </span>
-          </div>
-
-          <!-- Features Grid (Spaced Out) -->
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:40px; margin-bottom: 4rem;">
-              <div style="display:flex; align-items:flex-start; gap:15px; color:white;">
-                  <div style="background:rgba(255,255,255,0.15); padding:12px; border-radius:50%; backdrop-filter: blur(5px);"><i data-lucide="target" style="width:20px; height:20px;"></i></div>
-                  <div>
-                      <div style="font-weight: 900; font-size: 1.05rem; margin-bottom: 4px;">Adaptation "Sur Mesure"</div>
-                      <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.4;">Réécriture automatique selon l'offre.</div>
-                  </div>
-              </div>
-              <div style="display:flex; align-items:flex-start; gap:15px; color:white;">
-                  <div style="background:rgba(255,255,255,0.15); padding:12px; border-radius:50%; backdrop-filter: blur(5px);"><i data-lucide="shield-check" style="width:20px; height:20px;"></i></div>
-                  <div>
-                      <div style="font-weight: 900; font-size: 1.05rem; margin-bottom: 4px;">Audit ATS High-Tech</div>
-                      <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.4;">Découvrez votre score et battez les algorithmes.</div>
-                  </div>
-              </div>
-              <div style="display:flex; align-items:flex-start; gap:15px; color:white;">
-                  <div style="background:rgba(255,255,255,0.15); padding:12px; border-radius:50%; backdrop-filter: blur(5px);"><i data-lucide="trending-up" style="width:20px; height:20px;"></i></div>
-                  <div>
-                      <div style="font-weight: 900; font-size: 1.05rem; margin-bottom: 4px;">Stratégie Salariale</div>
-                      <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.4;">Scripts tactiques pour maximiser le salaire.</div>
-                  </div>
-              </div>
-              <div style="display:flex; align-items:flex-start; gap:15px; color:white;">
-                  <div style="background:rgba(255,255,255,0.15); padding:12px; border-radius:50%; backdrop-filter: blur(5px);"><i data-lucide="brain" style="width:20px; height:20px;"></i></div>
-                  <div>
-                      <div style="font-weight: 900; font-size: 1.05rem; margin-bottom: 4px;">Coaching IA</div>
-                      <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.4;">Psychologie et réussite d'entretien.</div>
-                  </div>
-              </div>
-          </div>
-
-          <div style="display:flex; flex-wrap: wrap; gap: 15px; margin-bottom: 3rem;">
-            <a href="cv_my.php?mode=tailor" class="btn" style="background:white; color:#4f46e5; border:none; font-weight:900; padding: 12px 35px; border-radius:15px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px;">
-              <i data-lucide="zap" style="width:20px; height:20px;"></i> Commencer Maintenant
-            </a>
-            <a href="cv_my.php" class="btn" style="border: 1px solid rgba(255,255,255,0.3); color:white; background:rgba(255,255,255,0.1); backdrop-filter:blur(10px); font-weight:800; padding: 12px 35px; border-radius:15px; display: flex; align-items: center; gap: 10px;">
-              <i data-lucide="folder" style="width:20px; height:20px;"></i> Mes CVs
-            </a>
-          </div>
-
-          <!-- Stats Bar -->
-          <div style="display: flex; align-items: center; gap: 30px; pt: 30px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px;">
-              <div>
-                  <div style="font-size: 1.5rem; font-weight: 900; color: white;"><?php echo $totalAvailable; ?></div>
-                  <div style="font-size: 0.65rem; color: rgba(255,255,255,0.6); text-transform: uppercase;">Templates</div>
-              </div>
-              <div style="width:1px; height:30px; background:rgba(255,255,255,0.2);"></div>
-              <div>
-                  <div style="font-size: 1.5rem; font-weight: 900; color: white;">100%</div>
-                  <div style="font-size: 0.65rem; color: rgba(255,255,255,0.6); text-transform: uppercase;">Gratuit</div>
-              </div>
-              <div style="width:1px; height:30px; background:rgba(255,255,255,0.2);"></div>
-              <div>
-                  <div style="font-size: 1.5rem; font-weight: 900; color: white;">PDF</div>
-                  <div style="font-size: 0.65rem; color: rgba(255,255,255,0.6); text-transform: uppercase;">HD Export</div>
-              </div>
-          </div>
-        </div>
-
-        <!-- 🎨 RIGHT COLUMN: DUAL FLOATING CVs -->
-        <div style="flex: 1; display: flex; justify-content: flex-end; position: relative; min-width: 400px;">
-          <div style="position:relative; width:450px; height:450px;">
-              <!-- CV Card Back -->
-              <div style="position:absolute; right:80px; top:20px; width:200px; height:300px; background:white; border-radius:12px; box-shadow: 20px 40px 80px rgba(0,0,0,0.3); transform: rotate(-5deg); z-index:4; padding: 25px; border-top: 8px solid #7c3aed;">
-                  <div style="width:80%; height:8px; background:#e5e7eb; border-radius:4px; margin-bottom:15px;"></div>
-                  <div style="width:100%; height:4px; background:#f3f4f6; border-radius:2px; margin-bottom:8px;"></div>
-                  <div style="width:100%; height:4px; background:#f3f4f6; border-radius:2px; margin-bottom:8px;"></div>
-                  <div style="width:60%; height:4px; background:#f3f4f6; border-radius:2px; margin-bottom:25px;"></div>
-                  <div style="width:40%; height:12px; background:rgba(124, 58, 237, 0.2); border-radius:4px; margin-bottom:15px;"></div>
-              </div>
-
-              <!-- CV Card Front -->
-              <div style="position:absolute; right:0; top:60px; width:200px; height:300px; background:white; border-radius:12px; box-shadow: 30px 60px 100px rgba(0,0,0,0.4); transform: rotate(4deg); z-index:5; display:flex; overflow:hidden;">
-                  <div style="width:90px; height:100%; background:#ecfdf5; padding: 20px; display:flex; flex-direction:column; align-items:center;">
-                      <div style="width:40px; height:40px; background:#d1fae5; border-radius:50%; margin-bottom:20px;"></div>
-                      <div style="width:100%; height:3px; background:#d1fae5; border-radius:2px; margin-bottom:8px;"></div>
-                      <div style="width:100%; height:3px; background:#d1fae5; border-radius:2px; margin-bottom:8px;"></div>
-                  </div>
-                  <div style="flex-grow:1; padding:25px;">
-                      <div style="width:70%; height:8px; background:#e5e7eb; border-radius:4px; margin-bottom:20px;"></div>
-                      <div style="width:100%; height:4px; background:#f3f4f6; border-radius:2px; margin-bottom:8px;"></div>
-                      <div style="width:100%; height:4px; background:#f3f4f6; border-radius:2px; margin-bottom:8px;"></div>
-                  </div>
-              </div>
+          <!-- 🚀 AI FEATURES GRID (REFINED & DYNAMIC) -->
+          <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:20px; max-width: 750px; margin-bottom: 4rem;">
               
-              <!-- 🚀 Floating AI Badge (Refined & Well-Placed) -->
-              <div style="position:absolute; left:140px; bottom:180px; background:#fbbf24; color:black; padding:8px 18px; border-radius:30px; font-weight:900; box-shadow:0 15px 40px rgba(251, 191, 36, 0.6); z-index:10; display:flex; align-items:center; justify-content:center; gap:8px; animation: float 3s ease-in-out infinite;">
-                  <i data-lucide="sparkles" style="width:16px; height:16px;"></i>
-                  <span style="font-size:0.75rem; letter-spacing:1.5px; text-transform:uppercase;">IA ACTIVE</span>
+              <!-- CV Sur Mesure -->
+              <div class="ai-feature-card" style="display:flex; align-items:center; gap:15px; background: rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease; cursor: default;">
+                  <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.4), rgba(124, 58, 237, 0.4)); padding:10px; border-radius:12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);"><i data-lucide="target" style="width:20px; height:20px; color:white;"></i></div>
+                  <div style="text-align: left;">
+                      <div style="font-weight: 800; font-size: 0.95rem; color: white; letter-spacing: -0.3px;">CV Sur Mesure</div>
+                      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); font-weight: 500;">Réécriture par offre.</div>
+                  </div>
+              </div>
+
+              <!-- Audit ATS -->
+              <div class="ai-feature-card" style="display:flex; align-items:center; gap:15px; background: rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease; cursor: default;">
+                  <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(5, 150, 105, 0.4)); padding:10px; border-radius:12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);"><i data-lucide="shield-check" style="width:20px; height:20px; color:white;"></i></div>
+                  <div style="text-align: left;">
+                      <div style="font-weight: 800; font-size: 0.95rem; color: white; letter-spacing: -0.3px;">Audit ATS High-Tech</div>
+                      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); font-weight: 500;">Score & Algorithmes.</div>
+                  </div>
+              </div>
+
+              <!-- Stratégie Salariale -->
+              <div class="ai-feature-card" style="display:flex; align-items:center; gap:15px; background: rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease; cursor: default;">
+                  <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.4), rgba(217, 119, 6, 0.4)); padding:10px; border-radius:12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);"><i data-lucide="trending-up" style="width:20px; height:20px; color:white;"></i></div>
+                  <div style="text-align: left;">
+                      <div style="font-weight: 800; font-size: 0.95rem; color: white; letter-spacing: -0.3px;">Stratégie Salariale</div>
+                      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); font-weight: 500;">Maximisez vos revenus.</div>
+                  </div>
+              </div>
+
+              <!-- Psychologie d'Entretien -->
+              <div class="ai-feature-card" style="display:flex; align-items:center; gap:15px; background: rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease; cursor: default;">
+                  <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.4), rgba(219, 39, 119, 0.4)); padding:10px; border-radius:12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);"><i data-lucide="brain" style="width:20px; height:20px; color:white;"></i></div>
+                  <div style="text-align: left;">
+                      <div style="font-weight: 800; font-size: 0.95rem; color: white; letter-spacing: -0.3px;">Psychologie d'Entretien</div>
+                      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); font-weight: 500;">Convainquez les recruteurs.</div>
+                  </div>
+              </div>
+
+          </div>
+
+          <style>
+              .ai-feature-card:hover {
+                  background: rgba(255, 255, 255, 0.12) !important;
+                  transform: translateY(-5px);
+                  border-color: rgba(255, 255, 255, 0.3) !important;
+                  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+              }
+          </style>
+
+          <!-- Boutons d'action centrés -->
+          <div style="display:flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 5rem;">
+            <a href="cv_my.php?mode=tailor" class="btn" style="background:white; color:#4f46e5; border:none; font-weight:900; padding: 15px 45px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 12px; font-size: 1.1rem;">
+              <i data-lucide="zap" style="width:24px; height:24px;"></i> Commencer Maintenant
+            </a>
+            <a href="cv_my.php" class="btn" style="border: 2px solid rgba(255,255,255,0.3); color:white; background:rgba(255,255,255,0.1); backdrop-filter:blur(10px); font-weight:800; padding: 15px 45px; border-radius: 50px; display: flex; align-items: center; gap: 12px; font-size: 1.1rem;">
+              <i data-lucide="folder" style="width:24px; height:24px;"></i> Mes CVs
+            </a>
+          </div>
+
+          <!-- 🎨 BOTTOM VISUAL: SMALLER CVs -->
+          <div style="position:relative; width:100%; height:180px; display: flex; justify-content: center; transform: scale(0.7) translateY(40px);">
+              <div style="position:relative; width:400px; height:100%;">
+                <!-- CV Card Back -->
+                <div style="position:absolute; left:20px; top:0; width:250px; height:320px; background:white; border-radius:12px; box-shadow: 20px 40px 80px rgba(0,0,0,0.3); transform: rotate(-5deg); z-index:4; padding: 25px; border-top: 8px solid #7c3aed; pointer-events:none;"></div>
+                <!-- CV Card Front -->
+                <div style="position:absolute; left:130px; top:20px; width:250px; height:320px; background:white; border-radius:12px; box-shadow: 30px 60px 100px rgba(0,0,0,0.4); transform: rotate(4deg); z-index:5; display:flex; overflow:hidden; pointer-events:none;">
+                    <div style="width:70px; height:100%; background:#ecfdf5; padding: 20px;"></div>
+                    <div style="flex-grow:1; padding:25px;"></div>
+                </div>
+              </div>
+          </div>
+
+          <!-- Barre de Stats centrée -->
+          <div style="display: flex; justify-content: center; align-items: center; gap: 40px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 30px; width: 100%;">
+              <div>
+                  <div style="font-size: 1.8rem; font-weight: 900; color: white;"><?php echo $totalAvailable; ?></div>
+                  <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase; font-weight:700;">Templates</div>
+              </div>
+              <div style="width:1px; height:40px; background:rgba(255,255,255,0.2);"></div>
+              <div>
+                  <div style="font-size: 1.8rem; font-weight: 900; color: white;">100%</div>
+                  <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase; font-weight:700;">Gratuit</div>
+              </div>
+              <div style="width:1px; height:40px; background:rgba(255,255,255,0.2);"></div>
+              <div>
+                  <div style="font-size: 1.8rem; font-weight: 900; color: white;">PDF</div>
+                  <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase; font-weight:700;">Export Instant</div>
+              </div>
+              <div style="width:1px; height:40px; background:rgba(255,255,255,0.2);"></div>
+              <div>
+                  <div style="font-size: 1.8rem; font-weight: 900; color: white;">IA</div>
+                  <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase; font-weight:700;">Polish Intégré</div>
               </div>
           </div>
         </div>
-
       </div>
     </div>
   </header>

@@ -17,10 +17,10 @@ if (empty(trim($text))) {
     exit;
 }
 
-require_once __DIR__ . '/../../controller/AIController.php';
+require_once __DIR__ . '/../../controller/CVC.php';
 
-$ai = new AIController();
-$polishedText = $ai->polishText($text, $context, $mode);
+$cvc = new CVC();
+$polishedText = $cvc->polishText($text, $context, $mode);
 
 if (strpos($polishedText, '[Erreur') === 0) {
     echo json_encode(['success' => false, 'error' => $polishedText]);

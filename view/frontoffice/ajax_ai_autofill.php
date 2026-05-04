@@ -5,7 +5,7 @@
  */
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../controller/AIController.php';
+require_once __DIR__ . '/../../controller/CVC.php';
 
 $data = json_decode(file_get_contents('php://input'), true);
 $rawText = $data['text'] ?? '';
@@ -15,7 +15,7 @@ if (empty($rawText)) {
     exit;
 }
 
-$ai = new AIController();
+$cvc = new CVC();
 
 // Custom prompt for structuring data
 $prompt = "Tu es un expert en recrutement. Analyse le texte brut suivant (qui peut être un profil LinkedIn ou un vieux CV) et extrait les informations pour remplir un formulaire de CV.
@@ -51,7 +51,7 @@ Texte à analyser :
 $rawText";
 
 try {
-    $jsonResponse = $ai->generateJSON($prompt);
+    $jsonResponse = $cvc->generateJSON($prompt);
     echo json_encode(['success' => true, 'data' => $jsonResponse]);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

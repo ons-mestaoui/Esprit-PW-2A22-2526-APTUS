@@ -581,7 +581,6 @@ if (!isset($content)) {
                         if(stripos($url, 'linkedin') !== false) $icon = 'linkedin';
                         else if(stripos($url, 'indeed') !== false) $icon = 'globe';
                     ?>
-                    <i data-lucide="<?php echo $icon; ?>" style="width: 13px; color: var(--accent-primary);"></i>
                     <span style="color: var(--accent-primary);">OPTIMISÉ SUR MESURE</span>
                 </div>
                 <?php endif; ?>
@@ -657,8 +656,11 @@ if (!isset($content)) {
 <!-- AI MODAL (Centered Aptus Theme) -->
 <div id="view-audit-modal"  class="aptus-modal-overlay" onclick="if(event.target===this) this.classList.remove('active');">
     <div class="aptus-modal-content" style="max-width: 700px; max-height: 90vh; overflow: hidden; background: #f8fafc; border: none; border-radius: 20px; padding: 0; text-align: center; position: relative;">
+        <!-- Close Button -->
+        <button onclick="document.getElementById('view-audit-modal').classList.remove('active')" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 5px; transition: all 0.2s; z-index: 20;">
+            <i data-lucide="x" style="width: 24px; height: 24px;"></i>
+        </button>
         <!-- Move absolute elements outside the scrollable area if needed, or keep inside -->
-        <i data-lucide="sparkles" style="color: #f59e0b; position: absolute; top: 30px; left: 30px; width: 30px; height: 30px; z-index: 10;"></i>
         
         <div class="stylish-scrollbar" style="max-height: 90vh; overflow-y: auto; padding: 3.5rem;">
             <h2 style="color: #1e293b; font-size: 2.2rem; font-weight: 800; margin-bottom: 5px;">Audit IA Stratégique</h2>
@@ -761,6 +763,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if(link) {
         document.querySelectorAll('.nav-anchor').forEach(a => a.classList.remove('active'));
         link.classList.add('active');
+    }
+
+    // Auto-open tailor modal if mode=tailor is in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('mode') === 'tailor') {
+        const firstCv = document.querySelector('.cv-miniature-card');
+        if (firstCv) {
+            const cvId = firstCv.id.replace('cv-card-', '');
+            openTailorModal(cvId);
+        }
     }
 });
 

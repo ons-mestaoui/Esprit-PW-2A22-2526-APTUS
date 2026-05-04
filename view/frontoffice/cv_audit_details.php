@@ -4,7 +4,7 @@ $pageCSS = "cv_premium.css"; // Reuse existing premium styles
 
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controller/CVC.php';
-require_once __DIR__ . '/../../controller/CVAnalysisService.php';
+require_once __DIR__ . '/../../controller/RapportIAController.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 $cvId = $_GET['id'] ?? null;
@@ -15,19 +15,42 @@ if (!$cvId) {
 }
 
 $cvc = new CVC();
+$riac = new RapportIAController();
 $cv = $cvc->getCVById($cvId);
 
-if (!$cv || empty($cv['ai_analysis'])) {
+$analysis = null;
+
+// Priorité au nouveau modèle MVC (table rapport_ia)
+$rapportData = $riac->getRapportByCvId($cvId);
+if ($rapportData) {
+    // On reconstruit l'objet analysis attendu par la vue à partir des colonnes
+    $analysis = [
+        'score_ats' => $rapportData['scoreGlobal'],
+        'points_forts' => json_decode($rapportData['pointsForts'], true),
+        'points_faibles' => json_decode($rapportData['pointsFaibles'], true),
+        'missing_skills' => json_decode($rapportData['sectionsManquantes'], true),
+        'detailed_recommendations' => json_decode($rapportData['suggestions'], true),
+    ];
+    
+    // Si on a l'original complet dans cv table, on merge pour récupérer les scores détaillés
+    if ($cv && !empty($cv['ai_analysis'])) {
+        $oldAnalysis = json_decode($cv['ai_analysis'], true);
+        $analysis = array_merge($oldAnalysis, $analysis);
+    }
+} 
+// Fallback sur l'ancienne méthode
+elseif ($cv && !empty($cv['ai_analysis'])) {
+    $analysis = json_decode($cv['ai_analysis'], true);
+}
+
+if (!$analysis) {
     header('Location: cv_my.php');
     exit;
 }
 
-$analysis = json_decode($cv['ai_analysis'], true);
-$service = new CVAnalysisService();
-
-// Matching Logic
-$jobMatches = $service->matchJobs($analysis['keywords'] ?? []);
-$trainingMatches = $service->matchTrainingsByDomain($analysis['suggested_training_domains'] ?? []);
+// Matching Logic (via le nouveau contrôleur MVC)
+$jobMatches = $riac->matchJobs($analysis['keywords'] ?? []);
+$trainingMatches = $riac->matchTrainingsByDomain($analysis['suggested_training_domains'] ?? []);
 
 if (!isset($content)) {
     $content = __FILE__;
@@ -390,7 +413,149 @@ if (!isset($content)) {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Premium Loading Modal Styles */
+    .aptus-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(8px);
+        z-index: 10000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .aptus-modal-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    .aptus-modal-content {
+        background: #fff;
+        border-radius: 30px;
+        padding: 2.5rem;
+        width: 90%;
+        max-width: 450px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        text-align: center;
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
+
+    .aptus-modal-overlay.active .aptus-modal-content {
+        transform: translateY(0);
+    }
+
+    [data-theme='dark'] .aptus-modal-content {
+        background: #1e293b;
+    }
+
+    .spin {
+        width: 60px; height: 60px;
+        border: 4px solid var(--accent-primary);
+        border-top-color: transparent;
+        border-radius: 50%;
+        margin: 0 auto 1.5rem;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .tailor-progress-bar {
+        height: 6px;
+        background: var(--bg-secondary);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 1.5rem 0;
+    }
+
+    .tailor-progress-fill {
+        height: 100%;
+        width: 0%;
+        background: var(--gradient-primary);
+        transition: width 0.5s ease;
+    }
+
+    .tailor-steps-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        text-align: left;
+    }
+
+    .tailor-step {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        opacity: 0.4;
+        transition: all 0.4s ease;
+        color: var(--text-secondary);
+    }
+
+    .tailor-step.active {
+        opacity: 1;
+        color: var(--accent-primary);
+        font-weight: 700;
+    }
+
+    .tailor-step.completed {
+        opacity: 1;
+        color: #10b981;
+    }
+
+    .tailor-step-icon {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        background: var(--bg-secondary);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.85rem; font-weight: 800;
+        flex-shrink: 0;
+    }
+
+    .tailor-step.active .tailor-step-icon {
+        background: var(--accent-primary);
+        color: #fff;
+        box-shadow: 0 0 15px rgba(107, 52, 163, 0.3);
+    }
+
+    .tailor-step.completed .tailor-step-icon {
+        background: #10b981;
+        color: #fff;
+    }
 </style>
+
+<div id="ai-loading-overlay" class="aptus-modal-overlay">
+    <div class="aptus-modal-content">
+        <div class="spin"></div>
+        <h2 style="font-size: 1.6rem; font-weight: 850; color: var(--text-primary); margin-bottom: 8px;">Analyse IA Stratégique</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Veuillez patienter, nos agents IA travaillent sur votre dossier...</p>
+        
+        <div class="tailor-progress-bar">
+            <div class="tailor-progress-fill" id="load-progress"></div>
+        </div>
+
+        <div class="tailor-steps-container">
+            <div class="tailor-step active" id="rescan-step-1">
+                <div class="tailor-step-icon">1</div>
+                <div style="font-size: 0.95rem;">Initialisation de l'audit...</div>
+            </div>
+            <div class="tailor-step" id="rescan-step-2">
+                <div class="tailor-step-icon">2</div>
+                <div style="font-size: 0.95rem;">Analyse des sections et compétences...</div>
+            </div>
+            <div class="tailor-step" id="rescan-step-3">
+                <div class="tailor-step-icon">3</div>
+                <div style="font-size: 0.95rem;">Génération des corrections stratégiques...</div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="audit-dashboard">
     <!-- HERO SCORE REDESIGNED -->
@@ -666,13 +831,36 @@ if (!isset($content)) {
 
         // Rescan Logic
         const rescanBtn = document.getElementById('rescan-btn');
+        const overlay = document.getElementById('ai-loading-overlay');
+        const progressFill = document.getElementById('load-progress');
+
+        function updateStep(step) {
+            document.querySelectorAll('.tailor-step').forEach((item, i) => {
+                const idx = i + 1;
+                if (idx < step) {
+                    item.classList.add('completed');
+                    item.classList.remove('active');
+                    item.querySelector('.tailor-step-icon').innerHTML = '<i data-lucide="check" style="width:16px;"></i>';
+                } else if (idx === step) {
+                    item.classList.add('active');
+                    item.classList.remove('completed');
+                    item.querySelector('.tailor-step-icon').innerHTML = idx;
+                } else {
+                    item.classList.remove('active', 'completed');
+                    item.querySelector('.tailor-step-icon').innerHTML = idx;
+                }
+            });
+            if(window.lucide) lucide.createIcons();
+            progressFill.style.width = ((step / 3) * 100) + '%';
+        }
+
         if (rescanBtn) {
             rescanBtn.addEventListener('click', async () => {
-                const originalContent = rescanBtn.innerHTML;
-                rescanBtn.innerHTML = '<i data-lucide="refresh-cw" class="animate-spin" style="width:16px;"></i> Analyse en cours...';
-                if(window.lucide) lucide.createIcons();
-                rescanBtn.disabled = true;
-                rescanBtn.style.opacity = '0.7';
+                overlay.classList.add('active');
+                updateStep(1);
+
+                setTimeout(() => updateStep(2), 2000);
+                setTimeout(() => updateStep(3), 5000);
 
                 try {
                     const response = await fetch('ajax_ai_analyze_cv.php', {
@@ -685,20 +873,16 @@ if (!isset($content)) {
                     });
                     const result = await response.json();
                     if (result.success) {
-                        window.location.reload();
+                        updateStep(4); // Mark all as done
+                        progressFill.style.width = '100%';
+                        setTimeout(() => window.location.reload(), 800);
                     } else {
+                        overlay.classList.remove('active');
                         alert("Erreur : " + result.error);
-                        rescanBtn.innerHTML = originalContent;
-                        rescanBtn.disabled = false;
-                        rescanBtn.style.opacity = '1';
-                        if(window.lucide) lucide.createIcons();
                     }
                 } catch (e) {
+                    overlay.classList.remove('active');
                     alert("Une erreur est survenue lors de l'analyse.");
-                    rescanBtn.innerHTML = originalContent;
-                    rescanBtn.disabled = false;
-                    rescanBtn.style.opacity = '1';
-                    if(window.lucide) lucide.createIcons();
                 }
             });
         }

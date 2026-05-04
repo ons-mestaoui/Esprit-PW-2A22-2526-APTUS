@@ -8,7 +8,6 @@ require_once __DIR__ . '/../../model/Template.php';
 require_once __DIR__ . '/../../controller/TemplateC.php';
 require_once __DIR__ . '/../../model/CV.php';
 require_once __DIR__ . '/../../controller/CVC.php';
-require_once __DIR__ . '/../../controller/AIController.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -145,6 +144,32 @@ if (!isset($content)) {
     }
     .audit-card-v3 li:last-child { margin-bottom: 0; }
 
+    /* New Premium AI Report Cards (Aligned with cv_my) */
+    .ai-report-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1.5rem;
+        text-align: left;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease;
+    }
+    .ai-report-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent-primary);
+    }
+    .stylish-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .stylish-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .stylish-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
     /* --- ADVANCED FEATURES STYLES --- */
     :root { --stat-teal: #10b981; }
     
@@ -182,7 +207,7 @@ if (!isset($content)) {
         color: white;
         padding: 12px 20px;
         border-radius: 14px;
-        margin-bottom: 25px;
+        margin: 20px;
         display: flex;
         align-items: center;
         gap: 15px;
@@ -452,8 +477,8 @@ if (!isset($content)) {
 </script>
 
 <?php if ($tailorMode && $jobData): ?>
-    <div class="tailor-banner" style="margin: 20px; border: 2px dashed #6366f1;">
-        <div>
+    <div class="tailor-banner">
+        <div style="flex: 1;">
             <strong>✨ Mode Sur Mesure Activé</strong><br>
             <span style="font-size:0.8rem; opacity:0.9;">Ce CV a été forgé par l'IA pour le poste de <strong><?php echo htmlspecialchars($jobData['title'] ?? 'Poste'); ?></strong> chez <strong><?php echo htmlspecialchars($jobData['company'] ?? 'l\'entreprise'); ?></strong>.</span>
         </div>
@@ -537,23 +562,6 @@ if (!isset($content)) {
     <!-- CENTER: Form Area -->
     <main class="builder-form-area" id="form-container">
 
-        <!-- TAILOR BANNER -->
-        <?php if($tailorMode && $jobData): ?>
-        <div class="tailor-banner">
-            <div style="flex: 1;">
-                <h4 style="margin:0; font-size: 1.1rem; font-weight: 850;">CV Sur Mesure en cours</h4>
-                <p style="margin:0; font-size: 0.85rem; opacity: 0.9;">Optimisé pour le poste de <strong><?php echo htmlspecialchars($jobData['title'] ?? 'Inconnu'); ?></strong> chez <strong><?php echo htmlspecialchars($jobData['company'] ?? 'Aptus'); ?></strong>.</p>
-                <?php if(isset($tailorReport['template_suggestion']) && $tailorReport['template_suggestion'] !== ($template['nom'] ?? '')): ?>
-                <p style="margin:5px 0 0 0; font-size: 0.75rem; background: rgba(255,255,255,0.2); display:inline-block; padding: 2px 8px; border-radius: 4px;">
-                    💡 L'IA suggère le modèle <strong><?php echo $tailorReport['template_suggestion']; ?></strong> pour ce poste.
-                </p>
-                <?php endif; ?>
-            </div>
-            <button onclick="window.location.href='cv_tailor_guide.php?id=<?php echo $cv_id; ?>'" style="background: #fff; color: #6366f1; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
-                Voir le Guide
-            </button>
-        </div>
-        <?php endif; ?>
 
         <!-- STEP 1: Personal Info -->
         <div class="step-content active" id="step-1">
@@ -840,7 +848,12 @@ if (!isset($content)) {
 <!-- SYSTEME IA AUDIT ATS -->
 <div id="ai-audit-overlay" class="aptus-modal-overlay">
     <!-- Étape 1 : Le Choix -->
-    <div id="ai-audit-prompt" class="aptus-modal-content">
+    <div id="ai-audit-prompt" class="aptus-modal-content" style="position: relative;">
+        <!-- Close Button -->
+        <button onclick="document.getElementById('ai-audit-overlay').style.display='none'" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 5px; transition: all 0.2s;">
+            <i data-lucide="x" style="width: 24px; height: 24px;"></i>
+        </button>
+
         <div class="modal-icon-circle" style="background: rgba(107, 52, 163, 0.1); color: var(--accent-primary); margin: 0 auto 1.5rem auto; display:flex; align-items:center; justify-content:center;">
             <i data-lucide="<?php echo $tailorMode ? 'book-open' : 'sparkles'; ?>" style="width: 40px; height: 40px;"></i>
         </div>
@@ -874,81 +887,73 @@ if (!isset($content)) {
         </div>
     </div>
 
-    <!-- Étape 3 : Le Dashboard V3 -->
-    <div id="ai-audit-dashboard" class="aptus-modal-content" style="display:none; max-width: 750px; text-align:left; border-radius: 24px; padding: 40px;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 35px; gap: 20px;">
-            <div>
-                <h2 style="font-size:2.2rem; font-weight:800; display:flex; align-items:center; gap:15px; color:#1e293b; margin:0;">
-                    <i data-lucide="bar-chart-2" style="color:var(--accent-primary); width:36px; height:36px;"></i> Rapport d'Audit ATS
-                </h2>
-                <p style="color:#64748b; margin-top:8px; font-size:1.1rem; font-weight:500;">
-                    Score de compatibilité avec les systèmes ATS de recrutement
-                </p>
-            </div>
-            <div class="ats-score-badge" id="ats-score-circle">
-                <span id="ats-score-value">0</span>%
-            </div>
-        </div>
-        
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom:35px;">
-            <div class="audit-card-v3 strengths">
-                <div class="card-header">
-                    <i data-lucide="check-circle" style="width:24px; height:24px; color:#10b981;"></i>
-                    <h4>Points Forts</h4>
-                </div>
-                <ul id="ats-strengths" style="padding-left:0;"></ul>
-            </div>
-            <div class="audit-card-v3 weaknesses">
-                <div class="card-header">
-                    <i data-lucide="alert-circle" style="width:24px; height:24px; color:#f59e0b;"></i>
-                    <h4>À Améliorer</h4>
-                </div>
-                <ul id="ats-weaknesses" style="padding-left:0;"></ul>
-            </div>
-        </div>
-
-        <!-- NEW: Tailoring Report Section -->
-        <div id="tailor-report-section" style="display:none; margin-top: 25px; border-top: 2px solid var(--border-color); padding-top: 25px; margin-bottom: 30px;">
-             <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%); border-radius: 20px; padding: 25px; border: 1px solid var(--border-color);">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-                    <i data-lucide="wand-2" style="color:var(--accent-primary); width:24px;"></i>
-                    <h3 style="margin:0; font-size:1.3rem; font-weight:800; color:var(--text-primary);">Analyse Sur Mesure</h3>
-                </div>
-                
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom: 25px;">
-                    <div>
-                        <h4 style="font-size:0.75rem; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; font-weight:800;">Culture & Fit</h4>
-                        <div id="tailor-culture" class="culture-badge" style="display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:8px; font-size:0.75rem; font-weight:800; text-transform:uppercase;"></div>
-                        <p id="tailor-culture-desc" style="font-size:0.85rem; margin-top:10px; line-height:1.5; color:var(--text-secondary);"></p>
-                    </div>
-                    <div>
-                        <h4 style="font-size:0.75rem; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; font-weight:800;">Négociation Salariale</h4>
-                        <div id="tailor-salary" style="font-size:1.4rem; font-weight:900; color:#10b981;"></div>
-                        <p id="tailor-salary-tips" style="font-size:0.8rem; margin-top:5px; color:var(--text-tertiary); line-height:1.4;"></p>
-                    </div>
-                </div>
-
-                <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
-                    <h4 style="font-size:0.9rem; font-weight:800; margin-bottom:15px; display:flex; align-items:center; gap:8px; color:var(--text-primary);">
-                        <i data-lucide="graduation-cap" style="width:18px; color:#10b981;"></i> Formations suggérées (Lacunes)
-                    </h4>
-                    <div id="tailor-trainings" style="display:flex; flex-direction:column; gap:10px;"></div>
-                </div>
-             </div>
-        </div>
-
-        <button class="btn-modal-confirm" style="width:100%; padding: 18px; font-size: 1.15rem; border-radius: 16px; background: #6D3AB7; box-shadow: 0 8px 20px rgba(109, 58, 183, 0.3); font-weight: 700;" 
-                onclick="window.location.href = (typeof TAILOR_REPORT !== 'undefined' && TAILOR_REPORT) ? 'cv_tailor_guide.php?id='+CV_ID : 'cv_my.php'">
-            <?php echo $tailorMode ? 'Voir mon Guide de Réussite' : 'Terminer et aller à Mes CVs'; ?>
+    <!-- Étape 3 : Le Dashboard V3 (Centered Premium Version) -->
+    <div id="ai-audit-dashboard" class="aptus-modal-content" style="display:none; max-width: 700px; max-height: 90vh; overflow: hidden; background: #f8fafc; border: none; border-radius: 20px; padding: 0; text-align: center; position: relative;">
+        <!-- Close Button -->
+        <button onclick="document.getElementById('ai-audit-overlay').style.display='none'" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 5px; transition: all 0.2s; z-index: 20;">
+            <i data-lucide="x" style="width: 24px; height: 24px;"></i>
         </button>
+        
+        <div class="stylish-scrollbar" style="max-height: 90vh; overflow-y: auto; padding: 3.5rem;">
+            <h2 style="color: #1e293b; font-size: 2.2rem; font-weight: 800; margin-bottom: 5px;">Audit IA Stratégique</h2>
+            <div style="font-size: 3.5rem; font-weight: 900; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 2.5rem;"><span id="ats-score-value">0</span>%</div>
+            
+            <div class="ai-report-card">
+                <h4 style="color: #10b981; font-size: 0.9rem; font-weight: 800; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase;">Points Forts</h4>
+                <div id="ats-strengths" style="color: #475569; font-size: 1rem; line-height: 1.6; display: flex; flex-direction: column; gap: 12px;"></div>
+            </div>
+            
+            <div class="ai-report-card">
+                <h4 style="color: #f59e0b; font-size: 0.9rem; font-weight: 800; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase;">À Améliorer</h4>
+                <div id="ats-weaknesses" style="color: #475569; font-size: 1rem; line-height: 1.6; display: flex; flex-direction: column; gap: 12px;"></div>
+            </div>
+
+            <!-- NEW: Tailoring Report Section -->
+            <div id="tailor-report-section" style="display:none; margin-top: 25px; border-top: 2px solid var(--border-color); padding-top: 25px; margin-bottom: 30px;">
+                 <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%); border-radius: 20px; padding: 25px; border: 1px solid var(--border-color); text-align: left;">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+                        <i data-lucide="wand-2" style="color:var(--accent-primary); width:24px;"></i>
+                        <h3 style="margin:0; font-size:1.3rem; font-weight:800; color:var(--text-primary);">Analyse Sur Mesure</h3>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom: 25px;">
+                        <div>
+                            <h4 style="font-size:0.75rem; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; font-weight:800;">Culture & Fit</h4>
+                            <div id="tailor-culture" class="culture-badge" style="display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:8px; font-size:0.75rem; font-weight:800; text-transform:uppercase;"></div>
+                            <p id="tailor-culture-desc" style="font-size:0.85rem; margin-top:10px; line-height:1.5; color:var(--text-secondary);"></p>
+                        </div>
+                        <div>
+                            <h4 style="font-size:0.75rem; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; font-weight:800;">Négociation Salariale</h4>
+                            <div id="tailor-salary" style="font-size:1.4rem; font-weight:900; color:#10b981;"></div>
+                            <p id="tailor-salary-tips" style="font-size:0.8rem; margin-top:5px; color:var(--text-tertiary); line-height:1.4;"></p>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
+                        <h4 style="font-size:0.9rem; font-weight:800; margin-bottom:15px; display:flex; align-items:center; gap:8px; color:var(--text-primary);">
+                            <i data-lucide="graduation-cap" style="width:18px; color:#10b981;"></i> Formations suggérées (Lacunes)
+                        </h4>
+                        <div id="tailor-trainings" style="display:flex; flex-direction:column; gap:10px;"></div>
+                    </div>
+                 </div>
+            </div>
+
+            <button class="btn-modal-confirm" style="width:100%; padding: 18px; font-size: 1.1rem; border-radius: 16px; background: var(--gradient-primary); box-shadow: 0 8px 20px rgba(109, 58, 183, 0.3); font-weight: 700; border: none; color: white;" 
+                    onclick="window.location.href = (typeof TAILOR_REPORT !== 'undefined' && TAILOR_REPORT) ? 'cv_tailor_guide.php?id='+CV_ID : 'cv_my.php'">
+                <?php echo $tailorMode ? 'Voir mon Guide de Réussite' : 'Terminer et aller à Mes CVs'; ?>
+            </button>
+        </div>
     </div>
 </div>
 
 <!-- MODALE IA POLISH -->
 <div id="ai-polish-modal" class="aptus-modal-overlay">
-    <div class="aptus-modal-content" style="max-width: 450px; text-align: center;">
+    <div class="aptus-modal-content" style="max-width: 450px; text-align: center; position: relative;">
+        <!-- Close Button -->
+        <button onclick="document.getElementById('ai-polish-modal').classList.remove('active')" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 5px; transition: all 0.2s;">
+            <i data-lucide="x" style="width: 24px; height: 24px;"></i>
+        </button>
         <div class="modal-icon-circle" style="background: rgba(107, 52, 163, 0.1); color: var(--accent-primary); margin: 0 auto 1.5rem auto; display:flex; align-items:center; justify-content:center;">
-            <i data-lucide="sparkles" style="width: 40px; height: 40px;"></i>
         </div>
         <h2 style="font-size:1.5rem; margin-bottom:0.5rem;">Optimisation IA</h2>
         <p style="color:var(--text-secondary); margin-bottom:1.5rem; font-size:0.9rem;">
@@ -2738,23 +2743,30 @@ Compétences: ${document.getElementById('input-skills').value}
             document.getElementById('ai-audit-dashboard').style.display = 'block';
             
             const r = data.report;
-            const circle = document.getElementById('ats-score-circle');
             
             // Lancer l'animation dynamique du score
             animateATSScore(r.score_ats || 0, 'ats-score-value');
-            
-            circle.className = 'ats-score-badge';
 
             const sList = document.getElementById('ats-strengths');
             sList.innerHTML = '';
             (r.points_forts || []).forEach(pt => {
-                const li = document.createElement('li'); li.textContent = pt; sList.appendChild(li);
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.gap = '10px';
+                item.innerHTML = `<i data-lucide="check-circle" style="width:18px; color:#10b981; flex-shrink:0;"></i> <span>${pt}</span>`;
+                sList.appendChild(item);
             });
 
             const wList = document.getElementById('ats-weaknesses');
             wList.innerHTML = '';
             (r.points_faibles || []).forEach(pt => {
-                const li = document.createElement('li'); li.textContent = pt; wList.appendChild(li);
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.gap = '10px';
+                item.innerHTML = `<i data-lucide="alert-circle" style="width:18px; color:#f59e0b; flex-shrink:0;"></i> <span>${pt}</span>`;
+                wList.appendChild(item);
             });
             
             if (typeof lucide !== 'undefined') lucide.createIcons();
