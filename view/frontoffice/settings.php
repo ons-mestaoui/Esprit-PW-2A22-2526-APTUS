@@ -599,33 +599,231 @@ if (!isset($content)) {
     }
   </style>
 
+  <!-- ═══ 2FA SECTION ═══ -->
   <div class="settings-card">
-    <div class="settings-card__title"><i data-lucide="smartphone" style="width:20px;height:20px;color:var(--accent-primary);"></i> Authentification à deux facteurs</div>
-    <div class="settings-card__desc">Ajoutez une couche de sécurité supplémentaire</div>
-    <div class="setting-row">
-      <div class="setting-row__info"><div class="setting-row__label">Activer la 2FA</div><div class="setting-row__hint">Utilisez une application d'authentification pour sécuriser votre compte</div></div>
-      <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
+    <div class="settings-card__title"><i data-lucide="smartphone" style="width:20px;height:20px;color:var(--accent-primary);"></i> Authentification à deux facteurs (2FA)</div>
+    <div class="settings-card__desc">Ajoutez une couche de sécurité supplémentaire en utilisant une application d'authentification (Google Authenticator, Authy, etc.).</div>
+    
+    <div class="toggle-row" id="2fa-status-row" style="border-bottom:none; padding-bottom:0; display: flex; align-items: center; justify-content: space-between;">
+      <div class="toggle-row__info">
+        <div class="toggle-row__label" id="2fa-status-label" style="font-weight: 600; font-size: var(--fs-md);">Chargement...</div>
+        <div class="toggle-row__hint" id="2fa-status-hint">Vérification de l'état de la 2FA</div>
+      </div>
+      <div id="2fa-actions">
+        <!-- Buttons will be injected here by JS -->
+      </div>
     </div>
   </div>
 
-  <div class="settings-card">
-    <div class="settings-card__title"><i data-lucide="monitor" style="width:20px;height:20px;color:var(--accent-secondary);"></i> Sessions actives</div>
-    <div class="settings-card__desc">Gérez les appareils connectés à votre compte</div>
-    <div class="setting-row">
-      <div class="setting-row__info" style="display:flex;align-items:center;gap:var(--space-3);">
-        <i data-lucide="monitor" style="width:20px;height:20px;color:var(--accent-primary);"></i>
-        <div><div class="setting-row__label">Chrome — Windows 11</div><div class="setting-row__hint">Tunis, Tunisie • Actif maintenant</div></div>
+  <style>
+    /* Premium 2FA Modal Styles */
+    .modal-2fa {
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      background-color: rgba(255, 255, 255, 0.7);
+    }
+    [data-theme="dark"] .modal-2fa {
+      background-color: rgba(15, 23, 42, 0.8);
+    }
+    .modal-2fa-content {
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      background: var(--bg-card);
+      position: relative;
+    }
+    .modal-2fa-header {
+      background: var(--gradient-primary);
+      padding: var(--space-8) var(--space-6);
+      color: white;
+      text-align: center;
+      position: relative;
+    }
+    .modal-2fa-header h3 { color: white; margin: 0; font-weight: 800; font-size: 24px; }
+    .modal-2fa-header p { color: rgba(255,255,255,0.8); margin-top: 8px; font-size: 14px; }
+    
+    .modal-2fa-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .modal-2fa-close:hover { background: rgba(255,255,255,0.2); transform: rotate(90deg); }
+
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: var(--space-6);
+    }
+    .step-dot {
+      width: 40px;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border-color);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .step-dot.active {
+      background: var(--accent-primary);
+      width: 60px;
+      box-shadow: 0 0 15px var(--accent-primary-light);
+    }
+
+    .qr-container {
+      background: white;
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      display: inline-block;
+      margin-bottom: var(--space-6);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+    }
+    .qr-container:hover {
+      transform: scale(1.02);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .otp-display {
+      background: var(--bg-secondary);
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 2px;
+      font-weight: 700;
+      color: var(--accent-primary);
+      border: 1px dashed var(--border-color);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .otp-display:hover { background: var(--bg-input); }
+
+    .verify-input-wrapper {
+      position: relative;
+      margin: var(--space-8) 0;
+    }
+    .verify-input {
+      width: 100%;
+      height: 70px;
+      text-align: center;
+      font-size: 32px !important;
+      letter-spacing: 12px;
+      font-weight: 800;
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border-color);
+      background: var(--bg-input);
+      transition: all 0.3s;
+    }
+    .verify-input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 6px var(--accent-primary-light);
+      background: var(--bg-card);
+    }
+
+    @keyframes success-pop {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .success-icon-anim {
+      width: 80px;
+      height: 80px;
+      background: #10b9811a;
+      color: #10b981;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--space-6);
+      animation: success-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+  </style>
+
+  <!-- ═══ 2FA SETUP MODAL (Improved) ═══ -->
+  <div id="2fa-modal" class="modal-overlay modal-2fa" style="z-index: 10000;">
+    <div class="modal-content modal-2fa-content" style="max-width: 500px; border-radius: var(--radius-xl);">
+      
+      <div class="modal-2fa-header">
+        <button type="button" class="modal-2fa-close" onclick="document.getElementById('2fa-modal').classList.remove('active')">&times;</button>
+        <div style="margin-bottom: var(--space-4);">
+          <i data-lucide="shield-check" style="width: 48px; height: 48px;"></i>
+        </div>
+        <h3 id="2fa-modal-title">Sécurité Renforcée</h3>
+        <p id="2fa-modal-desc">Protégez votre compte avec l'authentification 2FA</p>
       </div>
-      <span class="badge badge-success">Actuel</span>
-    </div>
-    <div class="setting-row">
-      <div class="setting-row__info" style="display:flex;align-items:center;gap:var(--space-3);">
-        <i data-lucide="smartphone" style="width:20px;height:20px;color:var(--text-tertiary);"></i>
-        <div><div class="setting-row__label">Safari — iPhone 15</div><div class="setting-row__hint">Tunis, Tunisie • Il y a 3 heures</div></div>
+
+      <div class="modal-body" style="padding: var(--space-8); text-align: center; display: flex; flex-direction: column; align-items: center;">
+        
+        <!-- Step Indicators -->
+        <div class="step-indicator" id="2fa-step-indicator" style="width: 100%; display: flex; justify-content: center;">
+          <div class="step-dot active" id="dot-1"></div>
+          <div class="step-dot" id="dot-2"></div>
+        </div>
+
+        <!-- STEP 1: SCAN QR -->
+        <div id="2fa-step-1" style="width: 100%;">
+          <div class="qr-container" style="margin: 0 auto var(--space-6) auto;">
+            <img id="2fa-qr-code" src="" alt="QR Code" style="display: block; width: 200px; height: 200px; image-rendering: pixelated;">
+          </div>
+          
+          <div style="margin-bottom: var(--space-6);">
+            <p style="font-size: 15px; font-weight: 500; margin-bottom: 8px;">Scannez ce code QR</p>
+            <p style="font-size: 13px; color: var(--text-secondary);">Utilisez Google Authenticator ou Authy pour scanner ce code.</p>
+          </div>
+
+          <div style="margin-bottom: var(--space-8);">
+            <p style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Ou entrez le code manuellement</p>
+            <div class="otp-display" id="2fa-secret-text" style="display: inline-block; margin: 0 auto;" onclick="navigator.clipboard.writeText(this.innerText); alert('Copié !')"></div>
+          </div>
+
+          <button type="button" class="btn btn-primary w-full btn-lg" onclick="TwoFactor.goToStep(2)">
+            Continuer <i data-lucide="arrow-right" style="width:18px;height:18px;margin-left:8px;"></i>
+          </button>
+        </div>
+
+        <!-- STEP 2: VERIFY -->
+        <div id="2fa-step-2" style="display: none; width: 100%;">
+          <div class="verify-input-wrapper">
+            <input type="text" id="2fa-verify-code" class="verify-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+          </div>
+          
+          <div style="margin-bottom: var(--space-8);">
+            <p style="font-size: 15px; font-weight: 500; margin-bottom: 8px;">Vérification du code</p>
+            <p style="font-size: 13px; color: var(--text-secondary);">Saisissez le code à 6 chiffres affiché dans votre application.</p>
+          </div>
+
+          <div id="2fa-verify-error" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 12px; border-radius: var(--radius-md); font-size: 13px; margin-bottom: var(--space-6); display: none; border: 1px solid rgba(239, 68, 68, 0.2);"></div>
+
+          <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
+            <button type="button" class="btn btn-secondary" onclick="TwoFactor.goToStep(1)">
+              <i data-lucide="arrow-left" style="width:18px;height:18px;"></i>
+            </button>
+            <button type="button" id="2fa-confirm-btn" class="btn btn-primary btn-lg">
+              Activer la 2FA
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 3: SUCCESS (Animated) -->
+        <div id="2fa-step-success" style="display: none; padding: var(--space-4) 0; width: 100%;">
+            <div class="success-icon-anim">
+                <i data-lucide="check" style="width: 40px; height: 40px;"></i>
+            </div>
+            <h3 style="font-weight: 800; font-size: 20px; margin-bottom: 8px;">Configuration Réussie !</h3>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: var(--space-8);">Votre compte est désormais protégé par l'authentification à deux facteurs.</p>
+            <button type="button" class="btn btn-primary w-full" onclick="document.getElementById('2fa-modal').classList.remove('active')">Génial !</button>
+        </div>
       </div>
-      <button class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);">Révoquer</button>
     </div>
-  </div>
 </div>
 
 <script>
@@ -930,4 +1128,129 @@ document.addEventListener('DOMContentLoaded', async function() {
   // ── Initial status check ──
   refreshStatus();
 });
+</script>
+
+<script>
+  const TwoFactor = {
+    apiUrl: '/aptus_first_official_version/controller/TwoFactorC.php',
+    
+    async apiCall(data) {
+      const res = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      return res.json();
+    },
+
+    async refreshStatus() {
+      const label = document.getElementById('2fa-status-label');
+      const hint = document.getElementById('2fa-status-hint');
+      const actions = document.getElementById('2fa-actions');
+      if (!label) return;
+
+      try {
+        const res = await this.apiCall({ action: 'status' });
+        if (res.enabled) {
+          label.textContent = 'Protection Activée';
+          label.style.color = '#10b981';
+          hint.textContent = 'Votre compte bénéficie d\'une sécurité maximale.';
+          actions.innerHTML = '<button type="button" class="btn btn-ghost" onclick="TwoFactor.disable()" style="color: #ef4444; font-size: 13px; padding: 6px 12px; border: 1px solid rgba(239, 68, 68, 0.2);"><i data-lucide="trash-2" style="width:14px;height:14px;vertical-align:-2px;"></i> Désactiver</button>';
+        } else {
+          label.textContent = 'Sécurité Non Configurée';
+          label.style.color = 'var(--text-secondary)';
+          hint.textContent = 'Activez la 2FA pour bloquer les tentatives de piratage.';
+          actions.innerHTML = '<button type="button" class="btn btn-primary" onclick="TwoFactor.setup()" style="padding: 10px 24px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px var(--accent-primary-light);">Configurer la 2FA</button>';
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      } catch (e) {
+        console.error(e);
+      }
+    },
+
+    async setup() {
+      const modal = document.getElementById('2fa-modal');
+      const qrImg = document.getElementById('2fa-qr-code');
+      const secretText = document.getElementById('2fa-secret-text');
+      
+      this.goToStep(1);
+      
+      try {
+        const res = await this.apiCall({ action: 'setup' });
+        if (res.success) {
+          qrImg.src = res.qrCodeUrl;
+          secretText.textContent = res.secret;
+          modal.classList.add('active');
+        }
+      } catch (e) {
+        alert('Erreur lors de la configuration.');
+      }
+    },
+
+    goToStep(step) {
+      document.getElementById('2fa-step-1').style.display = (step === 1) ? 'block' : 'none';
+      document.getElementById('2fa-step-2').style.display = (step === 2) ? 'block' : 'none';
+      document.getElementById('2fa-step-success').style.display = (step === 'success') ? 'block' : 'none';
+      document.getElementById('2fa-step-indicator').style.display = (step === 'success') ? 'none' : 'flex';
+      
+      const dot1 = document.getElementById('dot-1');
+      const dot2 = document.getElementById('dot-2');
+      if (dot1 && dot2) {
+        dot1.className = (step === 1) ? 'step-dot active' : 'step-dot';
+        dot2.className = (step === 2) ? 'step-dot active' : 'step-dot';
+      }
+
+      if (step === 2) {
+        setTimeout(() => document.getElementById('2fa-verify-code').focus(), 100);
+      }
+    },
+
+    async disable() {
+      if (confirm('Voulez-vous vraiment désactiver la 2FA ? Votre compte sera moins protégé.')) {
+        const res = await this.apiCall({ action: 'disable' });
+        if (res.success) this.refreshStatus();
+      }
+    }
+  };
+
+  document.getElementById('2fa-confirm-btn').addEventListener('click', async () => {
+    const code = document.getElementById('2fa-verify-code').value;
+    const errorEl = document.getElementById('2fa-verify-error');
+    const confirmBtn = document.getElementById('2fa-confirm-btn');
+    
+    if (code.length !== 6) {
+      errorEl.textContent = 'Veuillez entrer le code à 6 chiffres.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    errorEl.style.display = 'none';
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i data-lucide="loader" class="animate-spin" style="width:18px;height:18px;"></i> Vérification...';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    try {
+      const res = await TwoFactor.apiCall({ action: 'confirm', code });
+      if (res.success) {
+        TwoFactor.goToStep('success');
+        TwoFactor.refreshStatus();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      } else {
+        errorEl.textContent = res.message;
+        errorEl.style.display = 'block';
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Activer la 2FA';
+      }
+    } catch (e) {
+      errorEl.textContent = 'Erreur lors de la vérification.';
+      errorEl.style.display = 'block';
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Activer la 2FA';
+    }
+  });
+
+  // Re-init status on page load
+  window.addEventListener('load', () => {
+    TwoFactor.refreshStatus();
+  });
 </script>

@@ -57,6 +57,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($passwordOk) {
+                // Check if 2FA is enabled
+                if ($user['two_factor_enabled']) {
+                    $_SESSION['pending_2fa_user_id'] = $user['id_utilisateur'];
+                    header("Location: verify_2fa.php");
+                    exit();
+                }
+
                 // Connexion réussie : on simplifie et on connecte directement l'utilisateur
                 $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
                 $_SESSION['nom'] = $user['nom'];

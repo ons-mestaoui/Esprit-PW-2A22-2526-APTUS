@@ -26,7 +26,7 @@
     "notif_weekly": false,
     "min_pass_length": 8,
     "session_expiry": 120,
-    "force_2fa": false,
+    "force_2fa": true,
     "block_after_5": true,
     "maintenance_mode": false,
     "maintenance_msg": "Le site est en cours de maintenance. Nous serons de retour très bientôt !"
