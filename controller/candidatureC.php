@@ -149,15 +149,16 @@ class candidatureC {
 
             $this->addNotification($cand['id_candidat'], $id_candidature, $message);
 
-            // 4. SI REFUS : Envoyer le mail via Brevo (Dynamique)
+            // 4. SI CHANGEMENT DE STATUT : Envoyer le mail via Brevo (Dynamique)
+            $mailC = new mailC();
+            $nomComplet = $cand['prenom'] . ' ' . $cand['nom'];
+            $nomEnt = $cand['nom_entreprise'] ?? 'Aptus Recruitment';
+            $emailEnt = $cand['email_entreprise'] ?? 'contact@aptus.tn';
+
             if ($nouveau_statut === 'Refusé') {
-                $mailC = new mailC();
-                $mailC->envoyerMailRefus(
-                    $cand['email'], 
-                    $cand['prenom'] . ' ' . $cand['nom'],
-                    $cand['nom_entreprise'] ?? 'Aptus Recruitment',
-                    $cand['email_entreprise'] ?? 'contact@aptus.tn'
-                );
+                $mailC->envoyerMailRefus($cand['email'], $nomComplet, $nomEnt, $emailEnt);
+            } elseif ($nouveau_statut === 'Accepté') {
+                $mailC->envoyerMailAcceptation($cand['email'], $nomComplet, $nomEnt, $emailEnt);
             }
 
             return true;

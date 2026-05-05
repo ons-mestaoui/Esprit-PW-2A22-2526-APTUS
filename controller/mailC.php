@@ -78,8 +78,56 @@ class mailC {
         if ($httpCode == 201) {
             return true; // Mail envoyé avec succès
         } else {
-            error_log("Erreur Brevo ($httpCode): " . $response);
             return false;
         }
+    }
+
+    public function envoyerMailAcceptation($emailCandidat, $nomCandidat, $nomEntreprise, $emailEntreprise) {
+        $url = 'https://api.brevo.com/v3/smtp/email';
+
+        $data = [
+            'sender' => [
+                'name' => $nomEntreprise,
+                'email' => $this->senderEmail ?? 'no-reply@aptus.tn'
+            ],
+            'to' => [
+                [
+                    'email' => $emailCandidat,
+                    'name' => $nomCandidat
+                ]
+            ],
+            'replyTo' => [
+                'email' => $emailEntreprise,
+                'name' => $nomEntreprise
+            ],
+            'subject' => "Bonne nouvelle ! Votre candidature chez $nomEntreprise",
+            'htmlContent' => "
+                <div style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                    <h2 style='color: #10b981;'>Félicitations $nomCandidat !</h2>
+                    <p>Nous avons le plaisir de vous informer que votre candidature pour rejoindre <strong>$nomEntreprise</strong> a été sélectionnée pour l'étape suivante (Shortlist).</p>
+                    <p>Notre équipe de recrutement a été impressionnée par votre parcours et vos réponses. Nous souhaiterions échanger plus amplement avec vous très prochainement.</p>
+                    <p><strong>Prochaine étape :</strong> Un responsable de chez $nomEntreprise prendra contact avec vous par téléphone ou par email pour fixer un entretien.</p>
+                    <p>Nous vous remercions de votre patience et de l'intérêt que vous portez à notre entreprise.</p>
+                    <br>
+                    <p>À très bientôt,<br><strong>L'équipe de recrutement $nomEntreprise</strong></p>
+                    <hr style='border: none; border-top: 1px solid #eee;'>
+                    <small style='color: #777;'>Ceci est un message envoyé via la plateforme <strong>Aptus</strong>.</small>
+                </div>
+            "
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'api-key: ' . $this->apiKey,
+            'Content-Type: application/json',
+            'Accept: application/json'
+        ]);
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+        return true;
     }
 }
