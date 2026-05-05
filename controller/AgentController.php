@@ -168,10 +168,53 @@ L'objet 'action' est optionnel. Si l'utilisateur demande juste une info ou discu
             
             $groqApiKey = $_ENV['GROQ_API_KEY'] ?? $_SERVER['GROQ_API_KEY'] ?? getenv('GROQ_API_KEY') ?? '';
             if (!empty($groqApiKey)) {
+                
+                // 1. STT Fallback with Groq Whisper if audio is present
+                $transcribedAudioText = '';
+                if (isset($data['audio']) && !empty($data['audio'])) {
+                    $audioData = base64_decode($data['audio']);
+                    $ext = '.webm';
+                    if (isset($data['mimeType'])) {
+                        if (strpos($data['mimeType'], 'mp4') !== false) $ext = '.mp4';
+                        elseif (strpos($data['mimeType'], 'mp3') !== false) $ext = '.mp3';
+                        elseif (strpos($data['mimeType'], 'wav') !== false) $ext = '.wav';
+                    }
+                    $tmpFilePath = sys_get_temp_dir() . '/agent_audio_' . uniqid() . $ext;
+                    file_put_contents($tmpFilePath, $audioData);
+
+                    if (function_exists('curl_file_create')) {
+                        $cFile = curl_file_create($tmpFilePath);
+                        $whisperData = [
+                            'file' => $cFile,
+                            'model' => 'whisper-large-v3-turbo',
+                            'language' => 'fr'
+                        ];
+
+                        $wCh = curl_init("https://api.groq.com/openai/v1/audio/transcriptions");
+                        curl_setopt($wCh, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($wCh, CURLOPT_POST, true);
+                        curl_setopt($wCh, CURLOPT_POSTFIELDS, $whisperData);
+                        curl_setopt($wCh, CURLOPT_HTTPHEADER, [
+                            'Authorization: Bearer ' . $groqApiKey
+                        ]);
+                        curl_setopt($wCh, CURLOPT_SSL_VERIFYPEER, false);
+                        
+                        $wRes = curl_exec($wCh);
+                        curl_close($wCh);
+                        
+                        $wData = json_decode($wRes, true);
+                        if (isset($wData['text']) && !empty(trim($wData['text']))) {
+                            $transcribedAudioText = trim($wData['text']);
+                        }
+                    }
+                    @unlink($tmpFilePath);
+                }
+
                 $messages = [
                     ["role" => "system", "content" => $systemPrompt]
                 ];
-                foreach ($_SESSION['agent_history'] as $msg) {
+                
+                foreach ($_SESSION['agent_history'] as $i => $msg) {
                     $role = ($msg['role'] === 'model') ? 'assistant' : 'user';
                     $text = '';
                     foreach ($msg['parts'] as $part) {
@@ -179,6 +222,12 @@ L'objet 'action' est optionnel. Si l'utilisateur demande juste une info ou discu
                             $text .= $part['text'] . " ";
                         }
                     }
+                    
+                    // Inject Whisper transcription for the latest message if available
+                    if ($i === count($_SESSION['agent_history']) - 1 && !empty($transcribedAudioText)) {
+                        $text = "Transcription audio : \"" . $transcribedAudioText . "\"\n" . $text;
+                    }
+
                     if (!empty(trim($text))) {
                         $messages[] = ["role" => $role, "content" => trim($text)];
                     }
