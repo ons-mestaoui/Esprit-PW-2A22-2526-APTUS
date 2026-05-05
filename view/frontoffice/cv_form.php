@@ -699,16 +699,26 @@ if (!isset($content)) {
             <div style="display: flex; flex-direction: column; gap: 35px;">
                 <!-- TOP: Hard Skills -->
                 <div style="background: rgba(107, 52, 163, 0.02); padding: 20px; border-radius: 16px; border: 1px solid rgba(107, 52, 163, 0.1);">
-                    <h3 style="font-size:1.1rem; margin-bottom:15px; display:flex; align-items:center; gap:10px;">
-                        <i data-lucide="cpu" style="color:var(--accent-primary); width:20px;"></i> Compétences Techniques
-                    </h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="font-size:1.1rem; margin:0; display:flex; align-items:center; gap:10px;">
+                            <i data-lucide="cpu" style="color:var(--accent-primary); width:20px;"></i> Compétences Techniques
+                        </h3>
+                        <button type="button" class="btn-ai-premium" id="btn-suggest-skills" onclick="suggestSkillsWithAI()" style="padding: 5px 12px; font-size: 0.75rem; border-radius: 8px;">
+                            <i data-lucide="sparkles" style="width:14px;"></i> Suggérer avec IA
+                        </button>
+                    </div>
                     <div class="form-group" style="margin-bottom:0;">
                         <div style="display:flex; gap:10px; position:relative;">
                             <div class="input-icon-group" style="flex:1;">
                                 <i data-lucide="search"></i>
-                                <input type="text" id="input-skill-search" class="form-control <?php echo $tailorMode ? 'tailor-highlight' : ''; ?>" placeholder="ex: React, Python, Finance, Gestion de projet..." autocomplete="off" onkeydown="if(event.key==='Enter'){ event.preventDefault(); addSkillFromInput(); }">
+                                <input type="text" id="input-skill-search" class="form-control <?php echo $tailorMode ? 'tailor-highlight' : ''; ?>" placeholder="ex: HTML, CSS, React, Python..." autocomplete="off" onkeydown="if(event.key==='Enter'){ event.preventDefault(); addSkillFromInput(); }">
                             </div>
                         </div>
+                    </div>
+                    <!-- Zone de suggestions IA dynamiques -->
+                    <div id="ai-skill-suggestions" style="display:none; margin-top:15px; padding-top:15px; border-top:1px dashed var(--border-color);">
+                        <p style="font-size:0.7rem; color:var(--text-tertiary); margin-bottom:10px; text-transform:uppercase; font-weight:700;">Suggestions IA pour votre poste :</p>
+                        <div id="ai-skills-chips" class="chip-container"></div>
                     </div>
                 </div>
 
@@ -1258,13 +1268,31 @@ const LOCATIONS_DB = [
 ];
 const LANGUAGES_DB = ['Français', 'Anglais', 'Arabe', 'Allemand', 'Espagnol', 'Italien', 'Portugais', 'Russe', 'Chinois', 'Japonais'];
 const SKILL_DB = [
-    'PHP', 'JavaScript', 'React', 'Vue.js', 'Angular', 'Node.js', 'Python', 'SQL', 'Git', 'Docker',
-    'Photoshop', 'Illustrator', 'Figma', 'Indesign', 'Adobe Premiere',
+    // Web Development
+    'HTML5', 'CSS3', 'JavaScript', 'TypeScript', 'React', 'Vue.js', 'Angular', 'Next.js', 'Nuxt.js', 'Svelte',
+    'Node.js', 'Express.js', 'PHP', 'Laravel', 'Symfony', 'Python', 'Django', 'Flask', 'FastAPI', 'Ruby on Rails',
+    'Go', 'Rust', 'Java', 'Spring Boot', 'C#', '.NET Core', 'C++',
+    // Styling & Design
+    'Tailwind CSS', 'Bootstrap', 'Sass', 'SCSS', 'Less', 'Styled Components', 'Framer Motion',
+    'Photoshop', 'Illustrator', 'Figma', 'Indesign', 'Adobe XD', 'Sketch', 'Canva',
+    // Databases
+    'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'SQLite', 'Oracle', 'SQL Server', 'Firebase', 'Supabase',
+    // DevOps & Tools
+    'Git', 'GitHub', 'GitLab', 'Docker', 'Kubernetes', 'AWS', 'Google Cloud', 'Azure', 'Vercel', 'Netlify',
+    'Jenkins', 'CI/CD', 'Linux', 'Bash', 'Nginx', 'Apache',
+    // Mobile
+    'React Native', 'Flutter', 'Swift', 'Kotlin', 'Ionic', 'Dart',
+    // Business & Marketing
+    'SEO', 'SEA', 'Google Ads', 'Google Analytics', 'Copywriting', 'CRM', 'HubSpot', 'Salesforce',
+    'Stratégie Marketing', 'Growth Hacking', 'E-commerce', 'Shopify', 'WordPress',
+    // Soft Skills (as fallback for hard)
+    'Gestion de projet', 'Agile', 'Scrum', 'Kanban', 'Management', 'Communication', 'Négociation',
+    // specialized
     'HACCP', 'Gestion des stocks', 'Cuisine Française', 'Pâtisserie fine',
     'Audit Financier', 'Liasse Fiscale', 'SAP', 'Sage', 'IFRS', 'Fiscalité',
-    'SEO', 'Google Ads', 'Copywriting', 'CRM', 'Stratégie Marketing',
     'AutoCAD', 'BIM', 'Gestion de chantier', 'Réglementation Thermique',
-    'Droit du Travail', 'Gestion de la Paie', 'Recrutement IT', 'Formation'
+    'Droit du Travail', 'Gestion de la Paie', 'Recrutement IT', 'Formation',
+    'Deep Learning', 'Machine Learning', 'NLP', 'Computer Vision', 'PyTorch', 'TensorFlow', 'Pandas', 'NumPy'
 ];
 
 const TEMPLATE_HTML = <?php echo json_encode($templateHtml); ?>;
@@ -2555,25 +2583,46 @@ function setupSmartAutocomplete(inp, db, isSkill = false) {
     }
     inp.addEventListener('input', () => {
         const v = inp.value.toLowerCase().trim();
+        const vNorm = normalizeText(v);
         sD.innerHTML = '';
         if (v.length < 1) { sD.style.display = 'none'; return; }
 
-        // Algorithme de recherche intelligent : priorité aux mots commençant par la saisie
-        const startsWith = db.filter(x => x.toLowerCase().startsWith(v));
-        const includes = db.filter(x => x.toLowerCase().includes(v) && !x.toLowerCase().startsWith(v));
+        // 1. Priorité aux correspondances exactes ou commençant par
+        const startsWith = db.filter(x => normalizeText(x).startsWith(vNorm));
         
-        // Fusion et limitation à 6 résultats
-        const m = [...startsWith, ...includes].slice(0, 6);
+        // 2. Correspondances contenant le terme
+        const includes = db.filter(x => normalizeText(x).includes(vNorm) && !normalizeText(x).startsWith(vNorm));
+        
+        // 3. Correspondances floues (Levenshtein pour les typos)
+        let fuzzy = [];
+        if (vNorm.length >= 3) {
+            fuzzy = db.filter(x => {
+                const xNorm = normalizeText(x);
+                if (startsWith.includes(x) || includes.includes(x)) return false;
+                // On tolère une distance de 1 pour les mots courts, 2 pour les longs
+                const maxDist = xNorm.length > 5 ? 2 : 1;
+                return getLevenshteinDistance(vNorm, xNorm) <= maxDist;
+            });
+        }
+        
+        // Fusion et limitation à 8 résultats (plus varié)
+        const m = [...startsWith, ...includes, ...fuzzy].slice(0, 8);
 
         if (m.length > 0) {
             m.forEach(match => {
                 const d = document.createElement('div');
                 d.className = 'tag-suggest-item';
                 
-                // Mise en gras de la partie correspondante
-                const regex = new RegExp(`(${v})`, 'gi');
-                const highlighted = match.replace(regex, '<strong>$1</strong>');
-                d.innerHTML = highlighted;
+                // Mise en gras de la partie correspondante si possible
+                let content = match;
+                if (normalizeText(match).includes(vNorm)) {
+                    const regex = new RegExp(`(${v})`, 'gi');
+                    content = match.replace(regex, '<strong>$1</strong>');
+                } else {
+                    // Pour le fuzzy, on met juste un indicateur subtil ou on laisse tel quel
+                    content = `<em>${match}</em> <small style="color:var(--text-tertiary)">(suggestion)</small>`;
+                }
+                d.innerHTML = content;
 
                 d.onclick = () => {
                     if (isSkill) { 
@@ -2593,6 +2642,72 @@ function setupSmartAutocomplete(inp, db, isSkill = false) {
         } else { sD.style.display = 'none'; }
     });
     document.addEventListener('click', (e) => { if (e.target !== inp && e.target !== sD) sD.style.display = 'none'; });
+}
+
+async function suggestSkillsWithAI() {
+    const jobTitle = document.getElementById('input-title').value.trim();
+    const btn = document.getElementById('btn-suggest-skills');
+    const container = document.getElementById('ai-skill-suggestions');
+    const chipsBox = document.getElementById('ai-skills-chips');
+
+    if (!jobTitle) {
+        showToast("Indiquez d'abord votre titre de poste à l'étape 1.", 'alert-circle');
+        return;
+    }
+
+    btn.disabled = true;
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Analyse...';
+    if(window.lucide) window.lucide.createIcons();
+
+    try {
+        const response = await fetch('ajax_ai_suggest_skills.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jobTitle: jobTitle })
+        });
+        const result = await response.json();
+
+        if (result.success && result.suggestions) {
+            container.style.display = 'block';
+            chipsBox.innerHTML = '';
+            
+            const allSuggestions = [
+                ...(result.suggestions.hard_skills || []).map(s => ({ name: s, type: 'hard' })),
+                ...(result.suggestions.soft_skills || []).map(s => ({ name: s, type: 'soft' }))
+            ];
+
+            allSuggestions.forEach(s => {
+                // Skip if already in currentSkills
+                if (currentSkills.some(cs => (cs.name || cs) === s.name)) return;
+
+                const chip = document.createElement('div');
+                chip.className = `skill-chip ${s.type === 'soft' ? 'soft-chip' : ''}`;
+                if(s.type === 'soft') {
+                    chip.style.borderColor = '#10b981';
+                    chip.style.color = '#065f46';
+                }
+                chip.innerHTML = `<i data-lucide="${s.type==='hard'?'cpu':'sparkles'}" style="width:10px; margin-right:4px;"></i> ${s.name}`;
+                chip.onclick = () => {
+                    addSkillFromInput(s.name, s.type);
+                    chip.remove();
+                    if (chipsBox.children.length === 0) container.style.display = 'none';
+                };
+                chipsBox.appendChild(chip);
+            });
+            
+            if (window.lucide) window.lucide.createIcons();
+            showToast("Suggestions IA générées ! ✨", 'sparkles');
+        } else {
+            showToast("Erreur IA : " + (result.error || "Inconnu"), 'alert-octagon');
+        }
+    } catch (e) {
+        showToast("Erreur de connexion.", 'alert-octagon');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        if(window.lucide) window.lucide.createIcons();
+    }
 }
 
 let AUDIT_CV_ID = null;

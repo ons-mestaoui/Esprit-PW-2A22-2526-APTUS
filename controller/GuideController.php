@@ -380,10 +380,18 @@ class GuideController {
         return $query->fetch();
     }
 
-    public function deleteGuideByCvId($id_cv) {
-        $db = config::getConnexion();
-        $query = $db->prepare('DELETE FROM guide_recrutement WHERE id_cv = :id');
-        $query->execute(['id' => $id_cv]);
+    /**
+     * Suggère des compétences pertinentes basées sur un titre de poste
+     */
+    public function suggestSkills(string $jobTitle): array {
+        $prompt = "Tu es un expert en recrutement. Suggère une liste de compétences techniques (Hard Skills) et humaines (Soft Skills) pertinentes pour le titre de poste fourni.
+        Renvoie un JSON structuré avec deux listes distinctes.
+        JSON : {
+          \"hard_skills\": [\"Skill 1\", \"Skill 2\", ...],
+          \"soft_skills\": [\"Skill 1\", \"Skill 2\", ...]
+        }";
+
+        return $this->generateJSON($prompt, "Titre du poste : " . $jobTitle, "llama-3.1-8b-instant");
     }
 }
 ?>
