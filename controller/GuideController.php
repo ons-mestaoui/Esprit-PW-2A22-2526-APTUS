@@ -155,9 +155,9 @@ class GuideController {
           \"template_suggestion\": \"Moderne\"|\"Professionnel\"|\"Classique\"
         }";
 
-        // Utilisation du modèle 8B (plus léger et rapide) pour l'extraction de données
+        // Utilisation du modèle 70B pour plus de stabilité et de limites TPM plus hautes
         // On utilise la clé Tailor
-        return $this->generateJSON($prompt, "Offre d'emploi (Extrait) :\n" . $truncatedContent, "llama-3.1-8b-instant", true);
+        return $this->generateJSON($prompt, "Offre d'emploi (Extrait) :\n" . $truncatedContent, "llama-3.3-70b-versatile", true);
     }
 
     /**
@@ -206,8 +206,8 @@ class GuideController {
           \"titrePoste\": \"...\"
         }";
 
-        // Utilisation de la clé Tailor
-        return $this->generateJSON($prompt, "Données CV : " . json_encode($cleanCV) . "\n\nCible Poste : " . json_encode($jobData), "llama-3.1-8b-instant", true);
+        // Utilisation du modèle 70B
+        return $this->generateJSON($prompt, "Données CV : " . json_encode($cleanCV) . "\n\nCible Poste : " . json_encode($jobData), "llama-3.3-70b-versatile", true);
     }
 
     /**
@@ -283,7 +283,7 @@ class GuideController {
                      "CV ORIGINAL : " . json_encode($cleanOldCV) . "\n\n" .
                      "CV OPTIMISÉ (CIBLE) : " . json_encode($cleanNewCV);
         
-        $guide = $this->generateJSON($prompt, $userInput, "llama-3.1-8b-instant");
+        $guide = $this->generateJSON($prompt, $userInput, "llama-3.3-70b-versatile");
 
         // 3. Enrichir avec les formations RÉELLES du site pour ces manques
         if (isset($guide['skill_gaps'])) {
@@ -298,10 +298,15 @@ class GuideController {
     /**
      * Cherche une formation réelle dans la base de données basée sur une compétence
      */
+    /**
+     * Cherche une formation réelle dans la base de données basée sur une compétence
+     * Utilise une recherche par mots-clés plus flexible pour éviter les échecs sur les phrases
+     */
     private function findFormationMatch(string $skill): ?array {
         try {
             $pdo = config::getConnexion();
-            // Recherche par mot-clé dans le titre ou la description
+            
+            // 1. Essayer d'abord la recherche exacte (avec wildcards)
             $stmt = $pdo->prepare("SELECT id_formation, titre, description, domaine 
                                  FROM formation 
                                  WHERE titre LIKE :skill 
@@ -310,8 +315,35 @@ class GuideController {
                                  LIMIT 1");
             $stmt->execute(['skill' => '%' . $skill . '%']);
             $match = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($match) return $match;
+
+            // 2. Si ça échoue, on découpe par mots-clés (mots de plus de 3 lettres)
+            $words = explode(' ', $skill);
+            $keywords = [];
+            foreach ($words as $w) {
+                $w = trim($w, " ,.()'");
+                if (mb_strlen($w) > 3) $keywords[] = $w;
+            }
+
+            if (!empty($keywords)) {
+                $where = [];
+                $params = [];
+                foreach ($keywords as $idx => $kw) {
+                    $where[] = "(titre LIKE :kw$idx OR description LIKE :kw$idx)";
+                    $params["kw$idx"] = '%' . $kw . '%';
+                }
+                
+                $sql = "SELECT id_formation, titre, description, domaine 
+                        FROM formation 
+                        WHERE " . implode(" OR ", $where) . " 
+                        LIMIT 1";
+                
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+                return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            }
             
-            return $match ?: null;
+            return null;
         } catch (Exception $e) {
             error_log("Search Formation Error: " . $e->getMessage());
             return null;

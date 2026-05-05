@@ -100,29 +100,100 @@ class RapportIAController {
         return $content ?: json_encode(['error' => 'Réponse vide de l\'IA']);
     }
 
+    /**
+     * Match des offres d'emploi réelles de la base de données
+     */
     public function matchJobs(array $keywords): array {
-        return [
-            ['title' => 'Développeur Fullstack Senior', 'domain' => 'Développement Software', 'match_score' => 95, 'location' => 'Tunis (Hybride)', 'salary' => '2500 - 3500 DT'],
-            ['title' => 'Product Manager IT', 'domain' => 'Management / Produit', 'match_score' => 82, 'location' => 'Remote', 'salary' => '3000 - 4500 DT']
-        ];
-    }
-
-    public function matchTrainingsByDomain(array $domains): array {
         $db = config::getConnexion();
         try {
-            $query = $db->prepare("SELECT * FROM formation LIMIT 3");
-            $query->execute();
-            $results = $query->fetchAll();
+            // Recherche par mots-clés (titre, domaine ou compétences)
+            $where = [];
+            $params = [];
+            foreach ($keywords as $idx => $kw) {
+                if (strlen($kw) < 3) continue;
+                $where[] = "(o.titre LIKE :kw$idx OR o.domaine LIKE :kw$idx OR o.competences_requises LIKE :kw$idx)";
+                $params["kw$idx"] = '%' . $kw . '%';
+            }
+
+            if (empty($where)) return []; // Pas de mots-clés -> pas de match ciblé
+
+            $whereStr = "WHERE " . implode(" OR ", $where);
+            $sql = "SELECT o.*, e.raisonSociale as company, p.ville 
+                    FROM offreemploi o 
+                    JOIN entreprise e ON o.id_entreprise = e.id_entreprise 
+                    LEFT JOIN profil p ON e.id_entreprise = p.id_utilisateur 
+                    $whereStr 
+                    ORDER BY o.date_publication DESC LIMIT 3";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $results = $stmt->fetchAll();
+
             if ($results) {
-                return array_map(function($f) {
-                    return ['title' => $f['nomFormation'] ?? $f['titre'] ?? 'Formation Aptus', 'domain' => $f['domaine'] ?? 'Expertise', 'duration' => $f['duree'] ?? '20h', 'level' => 'Intermédiaire', 'match_score' => rand(85, 98)];
+                return array_map(function($o) {
+                    return [
+                        'title' => $o['titre'],
+                        'domain' => $o['domaine'] ?: 'IT / Tech',
+                        'match_score' => rand(75, 95), // Score simulé basé sur la présence en DB
+                        'location' => ($o['ville'] ?: 'Tunis') . ' (Aptus)',
+                        'salary' => $o['salaire'] ? ($o['salaire'] . '€ / an') : 'Non précisé'
+                    ];
                 }, $results);
             }
-        } catch (Exception $e) {}
-        return [
-            ['title' => 'Masterclass Architecture Microservices', 'domain' => 'Backend', 'duration' => '15h', 'level' => 'Avancé', 'match_score' => 92],
-            ['title' => 'UI/UX Design & Psychologie Cognitive', 'domain' => 'Design', 'duration' => '12h', 'level' => 'Intermédiaire', 'match_score' => 88]
-        ];
+        } catch (Exception $e) {
+            error_log("MatchJobs Error: " . $e->getMessage());
+        }
+
+        // Fallback vide si vraiment rien en DB (mieux que du hardcoded faux)
+        return [];
+    }
+
+    /**
+     * Match des formations réelles de la base de données basées sur les lacunes
+     */
+    public function matchTrainingsByDomain(array $searchTerms): array {
+        $db = config::getConnexion();
+        try {
+            $where = [];
+            $params = [];
+            
+            // On nettoie les termes de recherche (souvent des listes d'IA)
+            $cleanTerms = [];
+            foreach ($searchTerms as $term) {
+                $trimmed = trim($term);
+                if (strlen($trimmed) > 2) $cleanTerms[] = $trimmed;
+            }
+
+            if (!empty($cleanTerms)) {
+                foreach ($cleanTerms as $idx => $t) {
+                    $where[] = "(domaine LIKE :t$idx OR titre LIKE :t$idx OR description LIKE :t$idx)";
+                    $params["t$idx"] = '%' . $t . '%';
+                }
+                $whereStr = "WHERE " . implode(" OR ", $where);
+                $stmt = $db->prepare("SELECT * FROM formation $whereStr LIMIT 3");
+                $stmt->execute($params);
+                $results = $stmt->fetchAll();
+            } else {
+                // Si rien n'est passé, on ne renvoie rien pour éviter le hors-sujet
+                return [];
+            }
+
+            if ($results) {
+                return array_map(function($f) {
+                    return [
+                        'id' => $f['id_formation'],
+                        'title' => $f['titre'],
+                        'domain' => $f['domaine'] ?: 'Expertise',
+                        'duration' => 'Flexible',
+                        'level' => $f['niveau'] ?: 'Intermédiaire'
+                    ];
+                }, $results);
+            }
+        } catch (Exception $e) {
+            error_log("MatchTrainings Error: " . $e->getMessage());
+        }
+        
+        return [];
     }
 
     

@@ -50,7 +50,9 @@ if (!$analysis) {
 
 // Matching Logic (via le nouveau contrôleur MVC)
 $jobMatches = $riac->matchJobs($analysis['keywords'] ?? []);
-$trainingMatches = $riac->matchTrainingsByDomain($analysis['suggested_training_domains'] ?? []);
+// Fusion des lacunes et des domaines suggérés pour une recherche précise
+$trainingSearchTerms = array_merge($analysis['missing_skills'] ?? [], $analysis['suggested_training_domains'] ?? []);
+$trainingMatches = $riac->matchTrainingsByDomain($trainingSearchTerms);
 
 if (!isset($content)) {
     $content = __FILE__;
@@ -744,19 +746,35 @@ if (!isset($content)) {
         <i data-lucide="briefcase" style="color:var(--accent-primary);"></i> Opportunités de Carrière
     </h2>
     <div class="matching-grid">
-        <?php foreach ($jobMatches as $job): 
-            $lvl = $job['match_score'] >= 80 ? 'match-high' : ($job['match_score'] >= 50 ? 'match-medium' : 'match-low');
-        ?>
-        <div class="match-card">
-            <span class="match-badge <?php echo $lvl; ?>"><?php echo $job['match_score']; ?>% Match</span>
-            <h3 class="match-title"><?php echo htmlspecialchars($job['title']); ?></h3>
-            <p class="match-subtitle"><?php echo htmlspecialchars($job['domain']); ?> • <?php echo htmlspecialchars($job['location']); ?></p>
-            <div class="match-footer">
-                <span style="font-size: 0.75rem; color:#64748b;">Postuler sur Aptus</span>
-                <button class="btn-apply-small" onclick="window.location.href='hr_posts.php'">Voir l'offre</button>
+        <?php if (empty($jobMatches)): ?>
+            <div class="match-card" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 3rem; background: rgba(249, 250, 251, 0.5); border: 2px dashed var(--border-color);">
+                <div style="background: rgba(99, 102, 241, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                    <i data-lucide="search" style="color: var(--accent-primary); width: 30px; height: 30px;"></i>
+                </div>
+                <h3 style="font-weight: 850; margin-bottom: 10px; color: var(--text-primary);">Analyse en cours : Votre profil est en pleine évolution</h3>
+                <p style="color: var(--text-secondary); max-width: 600px; line-height: 1.6; font-size: 0.95rem;">
+                    Actuellement, nous ne trouvons pas d'offres correspondant à 100% à votre expertise unique en base de données. 
+                    C'est l'opportunité idéale pour <strong>peaufiner votre CV</strong> en suivant nos recommandations stratégiques ci-dessus afin de débloquer des opportunités à haut potentiel.
+                </p>
+                <div style="margin-top: 1.5rem; font-size: 0.85rem; font-weight: 700; color: var(--accent-primary); background: var(--accent-primary-light); padding: 8px 20px; border-radius: 50px;">
+                    🎯 Optimisez votre CV pour voir de nouvelles opportunités
+                </div>
             </div>
-        </div>
-        <?php endforeach; ?>
+        <?php else: ?>
+            <?php foreach ($jobMatches as $job): 
+                $lvl = $job['match_score'] >= 80 ? 'match-high' : ($job['match_score'] >= 50 ? 'match-medium' : 'match-low');
+            ?>
+            <div class="match-card">
+                <span class="match-badge <?php echo $lvl; ?>"><?php echo $job['match_score']; ?>% Match</span>
+                <h3 class="match-title"><?php echo htmlspecialchars($job['title']); ?></h3>
+                <p class="match-subtitle"><?php echo htmlspecialchars($job['domain']); ?> • <?php echo htmlspecialchars($job['location']); ?></p>
+                <div class="match-footer">
+                    <span style="font-size: 0.75rem; color:#64748b;">Postuler sur Aptus</span>
+                    <button class="btn-apply-small" onclick="window.location.href='hr_posts.php'">Voir l'offre</button>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 
     <!-- TRAINING MATCHING -->
@@ -764,19 +782,32 @@ if (!isset($content)) {
         <i data-lucide="graduation-cap" style="color:#10b981;"></i> Combler vos lacunes
     </h2>
     <div class="matching-grid">
-        <?php foreach ($trainingMatches as $tr): 
-            $lvlTr = ($tr['match_score'] ?? 80) >= 80 ? 'match-high' : (($tr['match_score'] ?? 80) >= 50 ? 'match-medium' : 'match-low');
-        ?>
-        <div class="match-card">
-            <span class="match-badge <?php echo $lvlTr; ?>"><?php echo $tr['match_score'] ?? 80; ?>% Recommandé</span>
-            <h3 class="match-title"><?php echo htmlspecialchars($tr['title']); ?></h3>
-            <p class="match-subtitle"><?php echo htmlspecialchars($tr['domain']); ?> • Niveau <?php echo htmlspecialchars($tr['level']); ?></p>
-            <div class="match-footer">
-                <span style="font-size: 0.75rem; color:#64748b;">Formation certifiante</span>
-                <button class="btn-apply-small" style="color:#10b981;" onclick="window.location.href='formations_catalog.php'">Découvrir</button>
+        <?php if (empty($trainingMatches)): ?>
+            <div class="match-card" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 3rem; background: rgba(240, 253, 244, 0.3); border: 2px dashed #10b981;">
+                <div style="background: rgba(16, 185, 129, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                    <i data-lucide="graduation-cap" style="color: #10b981; width: 30px; height: 30px;"></i>
+                </div>
+                <h3 style="font-weight: 850; margin-bottom: 10px; color: var(--text-primary);">Analyse Pédagogique : Optimisation de vos compétences</h3>
+                <p style="color: var(--text-secondary); max-width: 600px; line-height: 1.6; font-size: 0.95rem;">
+                    Nous n'avons pas trouvé de formations correspondant exactement à vos lacunes actuelles dans notre catalogue pour le moment. 
+                    Restez à l'écoute, de nouveaux modules sont ajoutés chaque semaine pour vous aider à atteindre vos objectifs professionnels.
+                </p>
+                <div style="margin-top: 1.5rem; font-size: 0.85rem; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 8px 20px; border-radius: 50px;">
+                    📚 De nouvelles formations arrivent bientôt
+                </div>
             </div>
-        </div>
-        <?php endforeach; ?>
+        <?php else: ?>
+            <?php foreach ($trainingMatches as $tr): ?>
+            <div class="match-card">
+                <h3 class="match-title"><?php echo htmlspecialchars($tr['title']); ?></h3>
+                <p class="match-subtitle"><?php echo htmlspecialchars($tr['domain']); ?> • Niveau <?php echo htmlspecialchars($tr['level']); ?></p>
+                <div class="match-footer">
+                    <span style="font-size: 0.75rem; color:#64748b;">Formation certifiante</span>
+                    <button class="btn-apply-small" style="color:#10b981;" onclick="window.location.href='formations_catalog.php?id=<?php echo $tr['id']; ?>'">Découvrir</button>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 </div>
 
