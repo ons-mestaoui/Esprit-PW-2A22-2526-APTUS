@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/scoreAIC.php';
+require_once __DIR__ . '/mailC.php';
 
 class candidatureC {
 
@@ -116,14 +117,21 @@ class candidatureC {
     public function updateStatut($id_candidature, $nouveau_statut) {
         $db = config::getConnexion();
         try {
-            // 1. Récupérer les infos de la candidature
-            $sql = "SELECT c.*, o.titre as titre_offre FROM candidatures c 
+            // 1. Récupérer les infos de la candidature + l'entreprise (via table utilisateur)
+            $sql = "SELECT c.*, o.titre as titre_offre, u.nom as nom_entreprise, u.email as email_entreprise 
+                    FROM candidatures c 
                     LEFT JOIN offreemploi o ON c.id_offre = o.id_offre 
+                    LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur
                     WHERE c.id_candidature = :id";
             $req = $db->prepare($sql);
             $req->execute(['id' => $id_candidature]);
             $cand = $req->fetch();
             if (!$cand) return false;
+
+            // SECURITÉ : Si le statut est déjà celui-là, on arrête tout (évite les doublons au refresh)
+            if ($cand['statut'] === $nouveau_statut) {
+                return true;
+            }
 
             // 2. Mettre à jour le statut
             $sql2 = "UPDATE candidatures SET statut = :statut WHERE id_candidature = :id";
@@ -134,12 +142,24 @@ class candidatureC {
             $nom = $cand['prenom'] . ' ' . $cand['nom'];
             $poste = $cand['titre_offre'] ?? 'un poste';
             if ($nouveau_statut === 'Accepté') {
-                $message = "Bonjour $nom, félicitations ! Votre candidature pour le poste \"$poste\" a été retenue. Veuillez consulter votre email pour plus d'informations.";
+                $message = "Bonjour $nom, félicitations ! Votre candidature pour le poste \"$poste\" a été retenue.";
             } else {
-                $message = "Bonjour $nom, nous vous informons que votre candidature pour le poste \"$poste\" n'a malheureusement pas été retenue. Veuillez consulter votre email pour plus de détails.";
+                $message = "Bonjour $nom, nous vous informons que votre candidature pour le poste \"$poste\" n'a malheureusement pas été retenue.";
             }
 
             $this->addNotification($cand['id_candidat'], $id_candidature, $message);
+
+            // 4. SI REFUS : Envoyer le mail via Brevo (Dynamique)
+            if ($nouveau_statut === 'Refusé') {
+                $mailC = new mailC();
+                $mailC->envoyerMailRefus(
+                    $cand['email'], 
+                    $cand['prenom'] . ' ' . $cand['nom'],
+                    $cand['nom_entreprise'] ?? 'Aptus Recruitment',
+                    $cand['email_entreprise'] ?? 'contact@aptus.tn'
+                );
+            }
+
             return true;
         } catch (Exception $e) {
             die('Error:' . $e->getMessage());
