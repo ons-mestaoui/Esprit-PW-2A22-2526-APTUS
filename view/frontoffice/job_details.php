@@ -155,9 +155,9 @@ if (!isset($content)) {
                                 <div style="font-weight: 800; color: var(--text-primary);"><?php echo htmlspecialchars($offre['lieu'] ?? 'Tunis, Tunisie'); ?></div>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-sm btn-primary" style="padding: 0.5rem 1rem; border-radius: 12px; font-weight: 700; cursor: default;">
-                            Afficher Maps <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
-                        </button>
+                        <a href="jobs_map.php?id=<?php echo $id_offre; ?>" class="btn btn-sm btn-primary" style="padding: 0.5rem 1rem; border-radius: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                            Afficher Maps <i data-lucide="map" style="width: 14px; height: 14px;"></i>
+                        </a>
                 </div>
 
                 <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
@@ -187,12 +187,18 @@ if (!isset($content)) {
         <!-- Main Content -->
         <main class="stagger-2">
             <div class="glass-card" style="padding: 4rem;">
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-                    <div style="width: 4px; height: 32px; background: var(--accent-primary); border-radius: 50px;"></div>
-                    <h2 style="font-size: 2rem; font-weight: 900; color: var(--text-primary); letter-spacing: -0.02em;">Description du poste</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="width: 4px; height: 32px; background: var(--accent-primary); border-radius: 50px;"></div>
+                        <h2 style="font-size: 2rem; font-weight: 900; color: var(--text-primary); letter-spacing: -0.02em; margin: 0;">Description du poste</h2>
+                    </div>
+                    <button type="button" id="btn-read-desc" style="display: flex; align-items: center; gap: 0.5rem; color: #a864e4; border: 1px solid rgba(168, 100, 228, 0.3); padding: 0.6rem 1.2rem; border-radius: 20px; transition: all 0.3s; font-weight: 700; font-size: 0.9rem; background: rgba(168, 100, 228, 0.1); cursor: pointer;" title="Écouter la description" onmouseover="this.style.background='rgba(168, 100, 228, 0.2)';" onmouseout="this.style.background='rgba(168, 100, 228, 0.1)';">
+                        <i data-lucide="volume-2" id="read-desc-icon" style="width: 20px; height: 20px;"></i>
+                        <span id="read-desc-text">Écouter l'offre</span>
+                    </button>
                 </div>
 
-                <div style="color: var(--text-secondary); line-height: 1.8; font-size: 1.15rem; white-space: pre-wrap; font-weight: 400; margin-bottom: 4rem;">
+                <div id="job-description-text" style="color: var(--text-secondary); line-height: 1.8; font-size: 1.15rem; white-space: pre-wrap; font-weight: 400; margin-bottom: 4rem;">
                     <?php echo htmlspecialchars($offre['description']); ?>
                 </div>
 
@@ -279,6 +285,73 @@ function toggleFavori(id) {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (window.lucide) lucide.createIcons();
+
+    // --- TEXT TO SPEECH LOGIC (READ DESCRIPTION) ---
+    const btnReadDesc = document.getElementById('btn-read-desc');
+    const descTextElement = document.getElementById('job-description-text');
+    const readDescIcon = document.getElementById('read-desc-icon');
+    const readDescText = document.getElementById('read-desc-text');
+
+    if ('speechSynthesis' in window && btnReadDesc && descTextElement) {
+        let isPlaying = false;
+        let utterance = null;
+        let readAnimation = null;
+
+        btnReadDesc.addEventListener('click', function() {
+            if (isPlaying) {
+                window.speechSynthesis.cancel();
+                isPlaying = false;
+                readDescText.innerText = "Écouter l'offre";
+                readDescIcon.setAttribute('data-lucide', 'volume-2');
+                lucide.createIcons();
+                btnReadDesc.style.background = 'rgba(168, 100, 228, 0.1)';
+                if(readAnimation) readAnimation.cancel();
+            } else {
+                window.speechSynthesis.cancel(); // Stop any previous
+                const textToRead = descTextElement.innerText || descTextElement.textContent;
+                utterance = new SpeechSynthesisUtterance(textToRead);
+                utterance.lang = 'fr-FR'; 
+                
+                utterance.onstart = function() {
+                    isPlaying = true;
+                    readDescText.innerText = 'Arrêter';
+                    readDescIcon.setAttribute('data-lucide', 'square');
+                    lucide.createIcons();
+                    btnReadDesc.style.background = 'rgba(168, 100, 228, 0.2)';
+                    
+                    readAnimation = btnReadDesc.animate([
+                        { boxShadow: '0 0 0 0 rgba(168, 100, 228, 0.4)' },
+                        { boxShadow: '0 0 0 10px rgba(168, 100, 228, 0)' }
+                    ], {
+                        duration: 1500,
+                        iterations: Infinity
+                    });
+                };
+                
+                utterance.onend = function() {
+                    isPlaying = false;
+                    readDescText.innerText = "Écouter l'offre";
+                    readDescIcon.setAttribute('data-lucide', 'volume-2');
+                    lucide.createIcons();
+                    btnReadDesc.style.background = 'rgba(168, 100, 228, 0.1)';
+                    if(readAnimation) readAnimation.cancel();
+                };
+                
+                utterance.onerror = function() {
+                    isPlaying = false;
+                    readDescText.innerText = "Écouter l'offre";
+                    readDescIcon.setAttribute('data-lucide', 'volume-2');
+                    lucide.createIcons();
+                    btnReadDesc.style.background = 'rgba(168, 100, 228, 0.1)';
+                    if(readAnimation) readAnimation.cancel();
+                };
+
+                window.speechSynthesis.speak(utterance);
+            }
+        });
+    } else if (btnReadDesc) {
+        btnReadDesc.style.display = 'none';
+    }
 });
 </script>
 

@@ -250,12 +250,18 @@ if (!isset($content)) {
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                                         <div style="width: 10px; height: 10px; background: var(--accent-primary); border-radius: 50%;"></div>
-                                        <span style="font-weight: 800; color: var(--text-primary);"><?php echo htmlspecialchars($offre['question'] ?? 'Parlez-nous de vous'); ?></span>
+                                        <span id="question-text" style="font-weight: 800; color: var(--text-primary);"><?php echo htmlspecialchars($offre['question'] ?? 'Parlez-nous de vous'); ?></span>
                                     </div>
-                                    <button type="button" id="btn-dictation" style="display: flex; align-items: center; gap: 0.5rem; color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.5rem 1rem; border-radius: 20px; transition: all 0.3s; font-weight: 600; font-size: 0.85rem; background: rgba(16, 185, 129, 0.1); cursor: pointer;" title="Dicter la réponse au lieu d'écrire" onmouseover="this.style.background='rgba(16, 185, 129, 0.2)';" onmouseout="this.style.background='rgba(16, 185, 129, 0.1)';">
-                                        <i data-lucide="mic" id="mic-icon" style="width: 18px; height: 18px;"></i>
-                                        <span id="dictation-text">Dicter ma réponse</span>
-                                    </button>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button type="button" id="btn-read-question" style="display: flex; align-items: center; gap: 0.5rem; color: #a864e4; border: 1px solid rgba(168, 100, 228, 0.3); padding: 0.5rem 1rem; border-radius: 20px; transition: all 0.3s; font-weight: 600; font-size: 0.85rem; background: rgba(168, 100, 228, 0.1); cursor: pointer;" title="Écouter la question" onmouseover="this.style.background='rgba(168, 100, 228, 0.2)';" onmouseout="this.style.background='rgba(168, 100, 228, 0.1)';">
+                                            <i data-lucide="volume-2" id="read-icon" style="width: 18px; height: 18px;"></i>
+                                            <span id="read-text">Écouter</span>
+                                        </button>
+                                        <button type="button" id="btn-dictation" style="display: flex; align-items: center; gap: 0.5rem; color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.5rem 1rem; border-radius: 20px; transition: all 0.3s; font-weight: 600; font-size: 0.85rem; background: rgba(16, 185, 129, 0.1); cursor: pointer;" title="Dicter la réponse au lieu d'écrire" onmouseover="this.style.background='rgba(16, 185, 129, 0.2)';" onmouseout="this.style.background='rgba(16, 185, 129, 0.1)';">
+                                            <i data-lucide="mic" id="mic-icon" style="width: 18px; height: 18px;"></i>
+                                            <span id="dictation-text">Dicter ma réponse</span>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div id="quill-editor" style="height: 250px; background: var(--bg-card); border-radius: 14px; border: 1px solid var(--border-color); color: var(--text-primary);"><?php echo $_POST['reponses_ques'] ?? ''; ?></div>
                                 <?php if(isset($cand_errors['reponses'])): ?><p style="color:#ef4444; font-size:0.8rem; margin-top:1rem; font-weight:600;"><?php echo $cand_errors['reponses']; ?></p><?php endif; ?>
@@ -407,6 +413,75 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     } else if (btnDictation) {
         btnDictation.style.display = 'none'; // Hide if not supported
+    }
+
+    // --- TEXT TO SPEECH LOGIC (READ QUESTION) ---
+    const btnRead = document.getElementById('btn-read-question');
+    const questionTextElement = document.getElementById('question-text');
+    const readIcon = document.getElementById('read-icon');
+    const readText = document.getElementById('read-text');
+
+    if ('speechSynthesis' in window && btnRead && questionTextElement) {
+        let isPlaying = false;
+        let utterance = null;
+        let readAnimation = null;
+
+        btnRead.addEventListener('click', function() {
+            if (isPlaying) {
+                window.speechSynthesis.cancel();
+                isPlaying = false;
+                readText.innerText = 'Écouter';
+                readIcon.setAttribute('data-lucide', 'volume-2');
+                lucide.createIcons();
+                btnRead.style.background = 'rgba(168, 100, 228, 0.1)';
+                btnRead.style.color = '#a864e4';
+                btnRead.style.borderColor = 'rgba(168, 100, 228, 0.3)';
+                if(readAnimation) readAnimation.cancel();
+            } else {
+                window.speechSynthesis.cancel(); // Stop any previous
+                const textToRead = questionTextElement.innerText || questionTextElement.textContent;
+                utterance = new SpeechSynthesisUtterance(textToRead);
+                utterance.lang = 'fr-FR'; 
+                
+                utterance.onstart = function() {
+                    isPlaying = true;
+                    readText.innerText = 'Arrêter';
+                    readIcon.setAttribute('data-lucide', 'square');
+                    lucide.createIcons();
+                    btnRead.style.background = 'rgba(168, 100, 228, 0.15)';
+                    
+                    readAnimation = btnRead.animate([
+                        { boxShadow: '0 0 0 0 rgba(168, 100, 228, 0.4)' },
+                        { boxShadow: '0 0 0 10px rgba(168, 100, 228, 0)' }
+                    ], {
+                        duration: 1500,
+                        iterations: Infinity
+                    });
+                };
+                
+                utterance.onend = function() {
+                    isPlaying = false;
+                    readText.innerText = 'Écouter';
+                    readIcon.setAttribute('data-lucide', 'volume-2');
+                    lucide.createIcons();
+                    btnRead.style.background = 'rgba(168, 100, 228, 0.1)';
+                    if(readAnimation) readAnimation.cancel();
+                };
+                
+                utterance.onerror = function() {
+                    isPlaying = false;
+                    readText.innerText = 'Écouter';
+                    readIcon.setAttribute('data-lucide', 'volume-2');
+                    lucide.createIcons();
+                    btnRead.style.background = 'rgba(168, 100, 228, 0.1)';
+                    if(readAnimation) readAnimation.cancel();
+                };
+
+                window.speechSynthesis.speak(utterance);
+            }
+        });
+    } else if (btnRead) {
+        btnRead.style.display = 'none';
     }
 
 });

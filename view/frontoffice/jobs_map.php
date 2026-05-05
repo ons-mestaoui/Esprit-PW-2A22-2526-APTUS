@@ -646,7 +646,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let jobMarkers = []; // Stocker les marqueurs pour le filtrage
     
     async function displayOffres(offresList) {
-        // Nettoyer les anciens marqueurs
         jobMarkers.forEach(m => map.removeLayer(m));
         jobMarkers = [];
 
@@ -661,59 +660,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.length > 0) {
                     const lat = data[0].lat;
                     const lon = data[0].lon;
+                    const markerHtml = `<div class="custom-marker"><i class="fas fa-briefcase"></i></div>`;
+                    const customIcon = L.divIcon({ html: markerHtml, className: 'dummy', iconSize: [40, 40], iconAnchor: [20, 40] });
+                    const marker = L.marker([lat, lon], { icon: customIcon }).addTo(map);
 
-                    const markerHtml = `
-                        <div class="custom-marker">
-                            <i class="fas fa-briefcase"></i>
-                        </div>
-                    `;
-                    const customIcon = L.divIcon({
-                        html: markerHtml,
-                        className: 'dummy',
-                        iconSize: [40, 40],
-                        iconAnchor: [20, 40]
-                    });
+                    marker.on('click', () => openDrawer(offre, lat, lon));
+                    marker.bindTooltip(`<div class="hover-card"><span class="hover-card-title">${offre.titre}</span><span class="hover-card-company">${offre.nom_entreprise || 'Aptus'}</span></div>`, { className: 'leaflet-tooltip-aptus', direction: 'top', offset: [0, -35], opacity: 1 });
 
-                    const marker = L.marker([lat, lon], { 
-                        icon: customIcon,
-                        jobTitle: offre.titre // Stocker le titre pour le filtre
-                    }).addTo(map);
-
-                    // Au lieu d'un popup, on ouvre le Side Drawer au clic
-                    marker.on('click', () => {
-                        openDrawer(offre, lat, lon);
-                    });
-
-                    // Hover Card (Tooltip)
-                    marker.bindTooltip(`
-                        <div class="hover-card">
-                            <span class="hover-card-title">${offre.titre}</span>
-                            <span class="hover-card-company">${offre.nom_entreprise || offre.entreprise || 'Entreprise'}</span>
-                        </div>
-                    `, {
-                        className: 'leaflet-tooltip-aptus',
-                        direction: 'top',
-                        offset: [0, -35],
-                        opacity: 1
-                    });
-
-                    jobMarkers.push(marker); // Garder trace du marqueur
-                    jobMarkers.push(marker); // Garder trace du marqueur
-                } else {
-                    console.warn(`Lieu non trouvé pour l'offre #${offre.id_offre}: ${offre.lieu}`);
+                    jobMarkers.push(marker);
                 }
-            } catch (err) {
-                console.error("Erreur de géocodage:", err);
-            }
-
-            // Attendre 1 seconde entre chaque requête pour ne pas être banni par Nominatim
+            } catch (err) { console.error(err); }
             await new Promise(resolve => setTimeout(resolve, 50));
         }
     }
 
     displayOffres(offres).then(() => {
-        // Initialiser le compteur au premier chargement
         document.getElementById('current-count').innerText = jobMarkers.length;
+        const urlParams = new URLSearchParams(window.location.search);
+        const jobId = urlParams.get('id');
+        if (jobId) {
+            const targetOffre = offres.find(o => o.id_offre == jobId);
+            if (targetOffre) {
+                setTimeout(() => {
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(targetOffre.lieu)}`)
+                        .then(r => r.json())
+                        .then(data => { if (data.length > 0) openDrawer(targetOffre, data[0].lat, data[0].lon); });
+                }, 500);
+            }
+        }
     });
 
     // 6. Gestion du Side Drawer
@@ -898,7 +872,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!radiusCircle) {
                 radiusCircle = L.circle(userLocation, {
                     radius: radiusInMeters,
-                    color: '#c00d0dff', // Violet Aptus pour le cercle
+                    color: '#c00d0dff',
                     fillColor: '#ea3535ff',
                     fillOpacity: 0.08,
                     weight: 2,
@@ -917,7 +891,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         jobMarkers.forEach(marker => {
-            const title = marker.options.jobTitle.toLowerCase();
+            const title = (marker.options.jobTitle || "").toLowerCase();
             const markerPos = marker.getLatLng();
             const distanceToUser = userLocation ? (getDistance(userLocation, [markerPos.lat, markerPos.lng])) : 0;
             
