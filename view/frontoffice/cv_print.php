@@ -82,21 +82,64 @@ $cvPayload = json_encode([
                 const clean = d.infoContact.split('|').map(s => s.trim()).join('<br>');
                 setVal('.contact-info, #preview-infoContact, .cv-contact, .contact-details', clean, true);
             }
+
+            // PHOTO INJECTION FIX
             if (d.urlPhoto) { 
-                const pi = document.querySelectorAll('#preview-photo, .cv-photo img, .profile-img'); 
-                pi.forEach(i => { i.src = d.urlPhoto; i.style.display = 'block'; }); 
+                // Expanded selectors to match ALL templates
+                const pi = document.querySelectorAll('#preview-photo, .cv-photo img, .profile-img, #profile-pic, .photo-wrapper img'); 
+                pi.forEach(i => { 
+                    i.src = d.urlPhoto; 
+                    i.style.display = 'block'; 
+                    // Ensure parent wrapper shows it
+                    if(i.parentElement && i.parentElement.classList.contains('photo-wrapper')) {
+                        i.parentElement.style.display = 'flex';
+                    }
+                }); 
+
                 const pt = document.querySelectorAll('#photo-text, .photo-text');
                 pt.forEach(i => i.style.display = 'none');
+
                 const hp = document.querySelector('.header-photo');
                 if (hp && !hp.querySelector('img')) {
-                    hp.innerHTML = '<img src=\"' + d.urlPhoto + '\" style=\"width:100%;height:100%;object-fit:cover;border-radius:8px;\">';
+                    hp.innerHTML = '<img src="' + d.urlPhoto + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">';
                 }
             }
             
-            // Print automatically after injection is complete and images load
-            setTimeout(() => {
-                window.print();
-            }, 300);
+            // WAIT FOR IMAGES TO LOAD BEFORE PRINTING
+            const images = document.querySelectorAll('img');
+            let loadedCount = 0;
+            const totalImages = images.length;
+
+            let hasTriggered = false;
+            const triggerPrint = () => {
+                if (hasTriggered) return;
+                hasTriggered = true;
+                setTimeout(() => {
+                    window.print();
+                }, 500); // Small extra buffer for rendering
+            };
+
+            if (totalImages === 0) {
+                triggerPrint();
+            } else {
+                images.forEach(img => {
+                    if (img.complete) {
+                        loadedCount++;
+                        if (loadedCount === totalImages) triggerPrint();
+                    } else {
+                        img.addEventListener('load', () => {
+                            loadedCount++;
+                            if (loadedCount === totalImages) triggerPrint();
+                        });
+                        img.addEventListener('error', () => {
+                            loadedCount++;
+                            if (loadedCount === totalImages) triggerPrint();
+                        });
+                    }
+                });
+                // Fallback timeout in case something hangs
+                setTimeout(triggerPrint, 2500);
+            }
         });
     </script>
 </body>

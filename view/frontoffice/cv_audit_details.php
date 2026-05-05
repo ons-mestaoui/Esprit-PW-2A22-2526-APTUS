@@ -360,12 +360,19 @@ if (!isset($content)) {
 
     .match-badge {
         position: absolute;
-        top: 15px;
-        right: 15px;
-        padding: 4px 10px;
-        border-radius: 8px;
-        font-size: 0.75rem;
-        font-weight: 800;
+        top: 0.7rem;
+        right: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.6rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        z-index: 5;
+        left: auto;
+        transform: none;
     }
 
     .match-high { background: #dcfce7; color: #166534; }
@@ -747,17 +754,19 @@ if (!isset($content)) {
     </h2>
     <div class="matching-grid">
         <?php if (empty($jobMatches)): ?>
-            <div class="match-card" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 3rem; background: rgba(249, 250, 251, 0.5); border: 2px dashed var(--border-color);">
-                <div style="background: rgba(99, 102, 241, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
-                    <i data-lucide="search" style="color: var(--accent-primary); width: 30px; height: 30px;"></i>
+            <div class="match-card" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 4rem 3rem; background: rgba(249, 250, 251, 0.4); border: 1px dashed var(--border-color); border-radius: 30px;">
+                <div style="background: var(--bg-card); width: 80px; height: 80px; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; box-shadow: var(--shadow-md);">
+                    <i data-lucide="target" style="color: var(--accent-primary); width: 40px; height: 40px;"></i>
                 </div>
-                <h3 style="font-weight: 850; margin-bottom: 10px; color: var(--text-primary);">Analyse en cours : Votre profil est en pleine évolution</h3>
-                <p style="color: var(--text-secondary); max-width: 600px; line-height: 1.6; font-size: 0.95rem;">
-                    Actuellement, nous ne trouvons pas d'offres correspondant à 100% à votre expertise unique en base de données. 
-                    C'est l'opportunité idéale pour <strong>peaufiner votre CV</strong> en suivant nos recommandations stratégiques ci-dessus afin de débloquer des opportunités à haut potentiel.
+                <h3 style="font-weight: 850; font-size: 1.5rem; margin-bottom: 12px; color: var(--text-primary); letter-spacing: -0.5px;">Découvrez votre prochain défi stratégique</h3>
+                <p style="color: var(--text-secondary); max-width: 550px; line-height: 1.7; font-size: 1rem;">
+                    Nos algorithmes analysent actuellement des milliers d'opportunités. Pour le moment, aucune offre ne correspond à 100% à votre expertise unique. 
+                    <strong>C'est le moment idéal pour peaufiner votre profil</strong> grâce à nos conseils personnalisés afin de débloquer les meilleures opportunités du marché.
                 </p>
-                <div style="margin-top: 1.5rem; font-size: 0.85rem; font-weight: 700; color: var(--accent-primary); background: var(--accent-primary-light); padding: 8px 20px; border-radius: 50px;">
-                    🎯 Optimisez votre CV pour voir de nouvelles opportunités
+                <div style="margin-top: 2rem; display: flex; gap: 10px;">
+                    <span style="font-size: 0.8rem; font-weight: 800; color: var(--accent-primary); background: var(--accent-primary-light); padding: 10px 25px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        🎯 Profil en cours d'optimisation
+                    </span>
                 </div>
             </div>
         <?php else: ?>
@@ -783,17 +792,19 @@ if (!isset($content)) {
     </h2>
     <div class="matching-grid">
         <?php if (empty($trainingMatches)): ?>
-            <div class="match-card" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 3rem; background: rgba(240, 253, 244, 0.3); border: 2px dashed #10b981;">
-                <div style="background: rgba(16, 185, 129, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
-                    <i data-lucide="graduation-cap" style="color: #10b981; width: 30px; height: 30px;"></i>
+            <div class="match-card" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 4rem 3rem; background: rgba(240, 253, 244, 0.2); border: 1px dashed #10b981; border-radius: 30px;">
+                <div style="background: var(--bg-card); width: 80px; height: 80px; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; box-shadow: var(--shadow-md);">
+                    <i data-lucide="book-open" style="color: #10b981; width: 40px; height: 40px;"></i>
                 </div>
-                <h3 style="font-weight: 850; margin-bottom: 10px; color: var(--text-primary);">Analyse Pédagogique : Optimisation de vos compétences</h3>
-                <p style="color: var(--text-secondary); max-width: 600px; line-height: 1.6; font-size: 0.95rem;">
-                    Nous n'avons pas trouvé de formations correspondant exactement à vos lacunes actuelles dans notre catalogue pour le moment. 
-                    Restez à l'écoute, de nouveaux modules sont ajoutés chaque semaine pour vous aider à atteindre vos objectifs professionnels.
+                <h3 style="font-weight: 850; font-size: 1.5rem; margin-bottom: 12px; color: var(--text-primary); letter-spacing: -0.5px;">Investissez dans votre avenir professionnel</h3>
+                <p style="color: var(--text-secondary); max-width: 550px; line-height: 1.7; font-size: 1rem;">
+                    Nous n'avons pas de formations correspondant à vos lacunes spécifiques dans notre catalogue immédiat. 
+                    <strong>Ne ralentissez pas votre progression !</strong> De nouveaux modules de haute qualité sont ajoutés chaque semaine pour vous aider à atteindre l'excellence technique.
                 </p>
-                <div style="margin-top: 1.5rem; font-size: 0.85rem; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 8px 20px; border-radius: 50px;">
-                    📚 De nouvelles formations arrivent bientôt
+                <div style="margin-top: 2rem;">
+                    <span style="font-size: 0.8rem; font-weight: 800; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 10px 25px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        📚 Nouvelles formations en préparation
+                    </span>
                 </div>
             </div>
         <?php else: ?>

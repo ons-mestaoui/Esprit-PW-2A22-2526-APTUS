@@ -82,11 +82,12 @@ class RapportIAController {
               \"correction\": \"Action concrète pour corriger\"
             }
           ], 
-          \"keywords\": [\"string\"], 
+          \"keywords\": [\"Mots-clés techniques précis (ex: PHP 8, React, Docker, Kubernetes)\"], 
           \"missing_skills\": [\"string\"], 
           \"suggested_training_domains\": [\"string\"]
         }
-        IMPORTANT : Fournis MINIMUM 3 recommandations détaillées dans 'detailed_recommendations'.";
+        IMPORTANT : Fournis MINIMUM 3 recommandations détaillées dans 'detailed_recommendations'.
+        IMPORTANT : Pour les profils techniques (Informatique, Ingénierie, Science), privilégie ABSOLUMENT les compétences techniques manquantes (Frameworks, Langages, Outils) plutôt que le management ou les soft skills dans 'missing_skills'. Ne suggère du management que si le profil est explicitement orienté vers la gestion d'équipe.";
         $payload = json_encode([
             "model" => $this->model,
             "messages" => [["role" => "system", "content" => $systemPrompt], ["role" => "user", "content" => "CV à analyser :\n" . $cvText]],
@@ -123,7 +124,7 @@ class RapportIAController {
                     JOIN entreprise e ON o.id_entreprise = e.id_entreprise 
                     LEFT JOIN profil p ON e.id_entreprise = p.id_utilisateur 
                     $whereStr 
-                    ORDER BY o.date_publication DESC LIMIT 3";
+                    ORDER BY RAND() LIMIT 3";
             
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
@@ -170,7 +171,7 @@ class RapportIAController {
                     $params["t$idx"] = '%' . $t . '%';
                 }
                 $whereStr = "WHERE " . implode(" OR ", $where);
-                $stmt = $db->prepare("SELECT * FROM formation $whereStr LIMIT 3");
+                $stmt = $db->prepare("SELECT * FROM formation $whereStr ORDER BY RAND() LIMIT 3");
                 $stmt->execute($params);
                 $results = $stmt->fetchAll();
             } else {

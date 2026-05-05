@@ -33,10 +33,18 @@ class CVC
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Authorization: Bearer ' . $this->apiKey]);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 40);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 45); // Augmenté un peu pour les gros CV
         $response = curl_exec($ch);
+        
+        if (curl_errno($ch)) {
+            $error_msg = curl_error($ch);
+            curl_close($ch);
+            error_log("Groq API Connection Error: " . $error_msg);
+            return json_encode(['error' => 'Connection failed', 'details' => $error_msg]);
+        }
+        
         curl_close($ch);
-        return $response;
+        return $response ?: json_encode(['error' => 'Empty response from API']);
     }
 
     public function generateJSON(string $prompt, string $userInput = "", string $specificModel = null): array {

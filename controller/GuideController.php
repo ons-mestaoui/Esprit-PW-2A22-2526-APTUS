@@ -277,7 +277,8 @@ class GuideController {
              ]
           },
           \"soft_skills_advice\": \"Conseil comportemental global.\"
-        }";
+        }
+        IMPORTANT : Pour les profils techniques (IT, Ingénierie), privilégie les manques techniques réels (ex: Docker, React, AWS) plutôt que des soft skills ou du management dans 'skill_gaps'.";
 
         $userInput = "OFFRE D'EMPLOI : " . json_encode($jobData) . "\n\n" .
                      "CV ORIGINAL : " . json_encode($cleanOldCV) . "\n\n" .
@@ -312,6 +313,7 @@ class GuideController {
                                  WHERE titre LIKE :skill 
                                  OR description LIKE :skill 
                                  OR domaine LIKE :skill 
+                                 ORDER BY RAND() 
                                  LIMIT 1");
             $stmt->execute(['skill' => '%' . $skill . '%']);
             $match = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -336,6 +338,7 @@ class GuideController {
                 $sql = "SELECT id_formation, titre, description, domaine 
                         FROM formation 
                         WHERE " . implode(" OR ", $where) . " 
+                        ORDER BY RAND() 
                         LIMIT 1";
                 
                 $stmt = $pdo->prepare($sql);

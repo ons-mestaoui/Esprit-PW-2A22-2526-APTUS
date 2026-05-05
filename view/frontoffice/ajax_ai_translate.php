@@ -5,7 +5,7 @@
  */
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../controller/AIController.php';
+require_once __DIR__ . '/../../controller/CVC.php';
 
 $data = json_decode(file_get_contents('php://input'), true);
 $cvData = $data['cvData'] ?? null;
@@ -16,10 +16,10 @@ if (!$cvData) {
     exit;
 }
 
-$ai = new AIController();
+$cvc = new CVC();
 
 try {
-    $translatedData = $ai->translateCV($cvData, $targetLang);
+    $translatedData = $cvc->translateCV($cvData, $targetLang);
     echo json_encode(['success' => true, 'data' => $translatedData]);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

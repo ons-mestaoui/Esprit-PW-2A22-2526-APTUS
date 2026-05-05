@@ -29,7 +29,8 @@ body.dyslexia-mode h3 {
     margin: 1rem 0; /* Align to the left edge of front-content */
     width: 100%;
     gap: 1.5rem;
-    height: calc(100vh - 100px);
+    height: calc(100vh - 80px);
+    min-height: 700px;
 }
 
 /* ── Left Sidebar (Step Navigation) ───────────── */
@@ -43,12 +44,25 @@ body.dyslexia-mode h3 {
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-sm);
+    height: 100%;
+    overflow: hidden; /* Internal scrolling handled below */
 }
 
 .stepper-container {
     display: flex;
     flex-direction: column;
-    margin-bottom: auto;
+    margin-bottom: 20px;
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 5px;
+}
+
+.stepper-container::-webkit-scrollbar {
+    width: 4px;
+}
+.stepper-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
 }
 
 .wizard-step-link {

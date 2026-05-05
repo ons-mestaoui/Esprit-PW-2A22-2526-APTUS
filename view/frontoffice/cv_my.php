@@ -98,6 +98,55 @@ if (!isset($content)) {
     box-shadow: var(--shadow-xl);
 }
 
+.ready-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 14px;
+    font-size: 0.65rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(255,255,255,0.2);
+    border: 2px solid #fff;
+    overflow: hidden;
+}
+
+.ready-badge::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    transform: rotate(45deg);
+    animation: shineBadge 3s infinite;
+}
+
+@keyframes shineBadge {
+    0% { left: -150%; }
+    20% { left: 150%; }
+    100% { left: 150%; }
+}
+
+@keyframes badgeFloating {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0); }
+}
+
+.cv-miniature-card:has(.ready-badge) {
+    animation: badgeFloating 4s ease-in-out infinite;
+}
+
 .cv-miniature__preview {
     width: 100%;
     aspect-ratio: 1 / 1.414; /* A4 Ratio */
@@ -244,6 +293,30 @@ if (!isset($content)) {
     border-color: #ef4444;
     color: #fff;
     box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+}
+
+/* Tailor Hover */
+.btn-action-small.tailor {
+    color: #8b5cf6;
+    border-color: rgba(139, 92, 246, 0.2);
+}
+.btn-action-small.tailor:hover {
+    background: #8b5cf6;
+    color: #fff;
+    border-color: #8b5cf6;
+    box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+}
+
+/* Guide Hover */
+.btn-action-small.guide {
+    color: #0ea5e9;
+    border-color: rgba(14, 165, 233, 0.2);
+}
+.btn-action-small.guide:hover {
+    background: #0ea5e9;
+    color: #fff;
+    border-color: #0ea5e9;
+    box-shadow: 0 5px 15px rgba(14, 165, 233, 0.4);
 }
 
 /* ── TOTAL COMPLETE MODAL ── */
@@ -566,6 +639,17 @@ if (!isset($content)) {
         ?>
         
         <div class="cv-miniature-card" id="cv-card-<?php echo $cv['id_cv']; ?>">
+            <?php 
+                $isReady = false;
+                if ($aiData && isset($aiData['score_ats']) && $aiData['score_ats'] >= 80) $isReady = true;
+            ?>
+            <?php if($isReady): ?>
+                <div class="ready-badge">
+                    <i data-lucide="rocket" style="width:14px; height:14px;"></i>
+                    Prêt à l'envoi
+                </div>
+            <?php endif; ?>
+
             <div class="cv-miniature__preview">
                 <iframe id="iframe-<?php echo $cv['id_cv']; ?>" srcdoc="<?php echo htmlspecialchars($previewHtml); ?>" class="cv-miniature__iframe"></iframe>
                 <div class="cv-miniature__overlay">
@@ -601,11 +685,11 @@ if (!isset($content)) {
                         <button onclick="generatePDF(<?php echo $cv['id_cv']; ?>)" class="btn-action-small print" title="Imprimer">
                             <i data-lucide="printer" style="width: 14px;"></i>
                         </button>
-                        <button onclick="openTailorModal(<?php echo $cv['id_cv']; ?>)" class="btn-action-small tailor" title="Sur Mesure" style="color: #8b5cf6; border-color: rgba(139, 92, 246, 0.2);">
+                        <button onclick="openTailorModal(<?php echo $cv['id_cv']; ?>)" class="btn-action-small tailor" title="Sur Mesure">
                             <i data-lucide="wand-2" style="width: 14px;"></i>
                         </button>
                         <?php if(isset($cv['is_tailored']) && $cv['is_tailored']): ?>
-                        <a href="cv_tailor_guide.php?id=<?php echo $cv['id_cv']; ?>" class="btn-action-small guide" title="Voir le Guide" style="color: #0ea5e9; border-color: rgba(14, 165, 233, 0.2);">
+                        <a href="cv_tailor_guide.php?id=<?php echo $cv['id_cv']; ?>" class="btn-action-small guide" title="Voir le Guide">
                             <i data-lucide="book-open" style="width: 14px;"></i>
                         </a>
                         <?php endif; ?>
@@ -820,7 +904,6 @@ function closeTotalPreview() {
 function generatePDF(cvId) {
     const frame = document.getElementById('print-frame');
     frame.src = 'cv_print.php?id=' + cvId;
-    frame.onload = function() { frame.contentWindow.print(); };
 }
 
 async function deleteCV(cvId) {
