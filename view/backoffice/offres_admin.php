@@ -27,32 +27,32 @@ if (!isset($content)) {
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Offres Actives</div>
-      <div class="stat-card__value">156</div>
-      <div class="stat-card__trend up"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> +12 cette semaine</div>
+      <div class="stat-card__value">0</div>
+      <div class="stat-card__trend"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> 0 cette semaine</div>
     </div>
     <div class="stat-card__icon purple"><i data-lucide="briefcase" style="width:22px;height:22px;"></i></div>
   </div>
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Candidatures Totales</div>
-      <div class="stat-card__value">2,340</div>
-      <div class="stat-card__trend up"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> +8.5%</div>
+      <div class="stat-card__value">0</div>
+      <div class="stat-card__trend"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> +0%</div>
     </div>
     <div class="stat-card__icon teal"><i data-lucide="file-text" style="width:22px;height:22px;"></i></div>
   </div>
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Catégorie #1</div>
-      <div class="stat-card__value" style="font-size:var(--fs-md);">IT & Dev</div>
-      <div class="stat-card__trend"><span class="text-tertiary">42% des offres</span></div>
+      <div class="stat-card__value" style="font-size:var(--fs-md);">—</div>
+      <div class="stat-card__trend"><span class="text-tertiary">0% des offres</span></div>
     </div>
     <div class="stat-card__icon blue"><i data-lucide="crown" style="width:22px;height:22px;"></i></div>
   </div>
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Offres / Mois</div>
-      <div class="stat-card__value">38</div>
-      <div class="stat-card__trend up"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> +5 vs dernier mois</div>
+      <div class="stat-card__value">0</div>
+      <div class="stat-card__trend"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> +0 vs dernier mois</div>
     </div>
     <div class="stat-card__icon orange"><i data-lucide="calendar" style="width:22px;height:22px;"></i></div>
   </div>
@@ -102,46 +102,16 @@ if (!isset($content)) {
       </tr>
     </thead>
     <tbody>
-      <?php
-      $offers = [
-        ['title' => 'Senior Full Stack Developer', 'company' => 'TechSphere Inc.', 'cat' => 'IT & Dev', 'type' => 'CDI', 'applicants' => 18, 'status' => 'Actif', 'date' => '08 Avr.', 'badge' => 'badge-success'],
-        ['title' => 'Data Engineer', 'company' => 'DataFlow Analytics', 'cat' => 'Data & IA', 'type' => 'CDI', 'applicants' => 12, 'status' => 'Actif', 'date' => '05 Avr.', 'badge' => 'badge-success'],
-        ['title' => 'UI/UX Designer', 'company' => 'InnoLab Design', 'cat' => 'Design', 'type' => 'Freelance', 'applicants' => 8, 'status' => 'Actif', 'date' => '01 Avr.', 'badge' => 'badge-success'],
-        ['title' => 'DevOps Engineer', 'company' => 'CloudPeak', 'cat' => 'IT & Dev', 'type' => 'CDI', 'applicants' => 5, 'status' => 'En pause', 'date' => '28 Mar.', 'badge' => 'badge-warning'],
-        ['title' => 'Product Manager', 'company' => 'TechSphere Inc.', 'cat' => 'Business', 'type' => 'CDI', 'applicants' => 22, 'status' => 'Actif', 'date' => '25 Mar.', 'badge' => 'badge-success'],
-        ['title' => 'Marketing Intern', 'company' => 'GrowthLab', 'cat' => 'Marketing', 'type' => 'Stage', 'applicants' => 45, 'status' => 'Clôturé', 'date' => '15 Mar.', 'badge' => 'badge-neutral'],
-        ['title' => 'Cybersecurity Analyst', 'company' => 'SecureNet SA', 'cat' => 'IT & Dev', 'type' => 'CDI', 'applicants' => 9, 'status' => 'Actif', 'date' => '10 Mar.', 'badge' => 'badge-success'],
-      ];
-      foreach ($offers as $o):
-      ?>
       <tr>
-        <td class="fw-medium"><?php echo $o['title']; ?></td>
-        <td class="text-secondary"><?php echo $o['company']; ?></td>
-        <td><span class="badge badge-primary"><?php echo $o['cat']; ?></span></td>
-        <td><span class="badge badge-neutral"><?php echo $o['type']; ?></span></td>
-        <td class="fw-medium"><?php echo $o['applicants']; ?></td>
-        <td><span class="badge <?php echo $o['badge']; ?>"><?php echo $o['status']; ?></span></td>
-        <td class="text-sm text-secondary"><?php echo $o['date']; ?></td>
-        <td>
-          <div class="flex gap-1">
-            <button class="btn btn-sm btn-ghost" title="Voir"><i data-lucide="eye" style="width:14px;height:14px;"></i></button>
-            <button class="btn btn-sm btn-ghost" title="Éditer"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
-            <button class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+        <td colspan="8">
+          <div class="empty-state-mini" style="padding:var(--space-12);text-align:center;background:var(--bg-secondary);border-radius:var(--radius-lg);opacity:0.6;">
+            <i data-lucide="briefcase" style="width:40px;height:40px;margin:0 auto var(--space-3);display:block;color:var(--text-tertiary);"></i>
+            <p style="color:var(--text-secondary);">Aucune offre d'emploi disponible</p>
           </div>
         </td>
       </tr>
-      <?php endforeach; ?>
     </tbody>
   </table>
-  <div class="pagination" style="padding:var(--space-4);">
-    <button class="pagination__btn">&laquo;</button>
-    <button class="pagination__btn active">1</button>
-    <button class="pagination__btn">2</button>
-    <button class="pagination__btn">3</button>
-    <button class="pagination__btn">...</button>
-    <button class="pagination__btn">12</button>
-    <button class="pagination__btn">&raquo;</button>
-  </div>
 </div>
 
 <!-- ═══ Add Offer Modal ═══ -->

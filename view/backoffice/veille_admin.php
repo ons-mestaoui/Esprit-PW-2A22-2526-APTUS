@@ -15,8 +15,8 @@ if (!isset($content)) {
       <h1>Veille du Marché — Publisher</h1>
       <p>Rédigez et publiez les rapports et données du marché</p>
     </div>
-    <span class="badge badge-success">
-      <i data-lucide="check-circle" style="width:12px;height:12px;"></i> 12 rapports publiés
+    <span class="badge badge-secondary">
+      <i data-lucide="check-circle" style="width:12px;height:12px;"></i> 0 rapports publiés
     </span>
   </div>
 </div>
@@ -26,24 +26,24 @@ if (!isset($content)) {
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Rapports Publiés</div>
-      <div class="stat-card__value">12</div>
-      <div class="stat-card__trend up"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> +3 ce mois</div>
+      <div class="stat-card__value">0</div>
+      <div class="stat-card__trend"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> 0 ce mois</div>
     </div>
     <div class="stat-card__icon purple"><i data-lucide="file-text" style="width:22px;height:22px;"></i></div>
   </div>
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Vues totales</div>
-      <div class="stat-card__value">8,920</div>
-      <div class="stat-card__trend up"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> +24%</div>
+      <div class="stat-card__value">0</div>
+      <div class="stat-card__trend"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> +0%</div>
     </div>
     <div class="stat-card__icon teal"><i data-lucide="eye" style="width:22px;height:22px;"></i></div>
   </div>
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Engagement moyen</div>
-      <div class="stat-card__value">4.8m</div>
-      <div class="stat-card__trend up"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> +12%</div>
+      <div class="stat-card__value">0</div>
+      <div class="stat-card__trend"><i data-lucide="trending-up" style="width:14px;height:14px;"></i> +0%</div>
     </div>
     <div class="stat-card__icon blue"><i data-lucide="timer" style="width:22px;height:22px;"></i></div>
   </div>
@@ -129,26 +129,10 @@ if (!isset($content)) {
       Rapports publiés
     </h4>
     <div class="published-list">
-      <?php
-      $published = [
-        ['title' => 'Tendances IT Q1 2026', 'date' => '08 Avr.', 'views' => '1.2k', 'status' => 'Publié'],
-        ['title' => 'Compétences clés 2026', 'date' => '02 Avr.', 'views' => '890', 'status' => 'Publié'],
-        ['title' => 'Salaires digital comparatif', 'date' => '28 Mar.', 'views' => '1.5k', 'status' => 'Publié'],
-        ['title' => 'Impact IA recrutement', 'date' => '20 Mar.', 'views' => '2.1k', 'status' => 'Publié'],
-        ['title' => 'Freelancing vs CDI', 'date' => '15 Mar.', 'views' => '756', 'status' => 'Publié'],
-        ['title' => 'Rapport Q2 (brouillon)', 'date' => '10 Avr.', 'views' => '—', 'status' => 'Brouillon'],
-      ];
-      foreach ($published as $p):
-      ?>
-      <div class="published-item">
-        <div class="published-item__title"><?php echo $p['title']; ?></div>
-        <div class="published-item__meta">
-          <span><i data-lucide="calendar" style="width:11px;height:11px;display:inline;vertical-align:-1px;"></i> <?php echo $p['date']; ?></span>
-          <span><i data-lucide="eye" style="width:11px;height:11px;display:inline;vertical-align:-1px;"></i> <?php echo $p['views']; ?></span>
-          <span class="badge <?php echo $p['status'] === 'Publié' ? 'badge-success' : 'badge-warning'; ?>" style="font-size:10px;"><?php echo $p['status']; ?></span>
-        </div>
+      <div class="empty-state-mini" style="padding:var(--space-8);text-align:center;background:var(--bg-secondary);border-radius:var(--radius-lg);border:1px dashed var(--border-color);opacity:0.6;">
+        <i data-lucide="file-x" style="width:32px;height:32px;margin:0 auto var(--space-2);display:block;color:var(--text-tertiary);"></i>
+        <p style="font-size:var(--fs-xs);color:var(--text-secondary);">Aucun rapport publié</p>
       </div>
-      <?php endforeach; ?>
     </div>
   </div>
 </div>

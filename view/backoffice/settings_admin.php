@@ -30,10 +30,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $settingsC->resetSettings();
             $successMsg = "Les paramètres ont été réinitialisés aux valeurs par défaut.";
         }
+    } elseif ($_POST['action'] === 'setup_2fa') {
+        include_once __DIR__ . '/../../controller/TwoFactorC.php';
+        include_once __DIR__ . '/../../controller/UtilisateurC.php';
+        $uC = new UtilisateurC();
+        $id = $_SESSION['id_utilisateur'];
+        $secret = $_POST['two_factor_secret'] ?? '';
+        $code = $_POST['two_factor_code'] ?? '';
+        
+        if (TwoFactorC::verifyCode($secret, $code)) {
+            $uC->updatePreferences($id, [
+                'two_factor_enabled' => true,
+                'two_factor_secret' => $secret
+            ]);
+            $successMsg = "Votre authentification à deux facteurs est maintenant activée !";
+        } else {
+            $errorMsg = "Code de vérification incorrect. Veuillez réessayer.";
+        }
+    } elseif ($_POST['action'] === 'disable_2fa') {
+        include_once __DIR__ . '/../../controller/UtilisateurC.php';
+        $uC = new UtilisateurC();
+        $uC->updatePreferences($_SESSION['id_utilisateur'], [
+            'two_factor_enabled' => false
+        ]);
+        $successMsg = "L'authentification à deux facteurs a été désactivée.";
     }
 }
 
 $settings = $settingsC->getSettings();
+include_once __DIR__ . '/../../controller/UtilisateurC.php';
+$uC = new UtilisateurC();
+$prefs = $uC->getPreferences($_SESSION['id_utilisateur']);
+$user = $uC->getUtilisateurById($_SESSION['id_utilisateur']);
 ?>
 
 <?php
@@ -388,9 +416,79 @@ if (!isset($content)) {
 <div class="settings-section" id="tab-security">
   <form method="POST" action="">
     <input type="hidden" name="action" value="save_settings">
+    
+    <!-- Personal 2FA Card -->
+    <div class="settings-card">
+      <div class="settings-card__title"><i data-lucide="smartphone" style="width:20px;height:20px;color:var(--accent-primary);"></i> Votre Authentification 2FA</div>
+      <div class="settings-card__desc">Sécurisez votre propre compte administrateur</div>
+      
+      <?php if (!empty($prefs['two_factor_enabled'])): ?>
+        <div class="toggle-row">
+          <div class="toggle-row__info">
+            <div class="toggle-row__label">Protection activée</div>
+            <div class="toggle-row__hint">Votre compte est protégé par une application TOTP</div>
+          </div>
+          <button type="button" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" onclick="if(confirm('Désactiver la 2FA ?')) { const f=document.createElement('form'); f.method='POST'; const a=document.createElement('input'); a.name='action'; a.value='disable_2fa'; f.appendChild(a); document.body.appendChild(f); f.submit(); }">Désactiver</button>
+        </div>
+      <?php else: 
+        include_once __DIR__ . '/../../controller/TwoFactorC.php';
+        $newSecret = TwoFactorC::generateSecret();
+        $otpAuthUrl = TwoFactorC::getOtpAuthUrl($user['email'], $newSecret);
+      ?>
+        <div class="toggle-row">
+          <div class="toggle-row__info">
+            <div class="toggle-row__label">Configurer la 2FA</div>
+            <div class="toggle-row__hint">Ajoutez une couche de sécurité supplémentaire à votre accès admin</div>
+          </div>
+          <button type="button" class="btn btn-sm btn-primary" onclick="document.getElementById('modal-2fa-admin').style.display='flex';">Configurer</button>
+        </div>
+
+        <!-- Personal 2FA Modal -->
+        <div id="modal-2fa-admin" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(6px);">
+          <div style="background:var(--bg-card); border-radius:var(--radius-xl); padding:var(--space-8); text-align:center; max-width:440px; width:95%; position:relative; box-shadow:0 25px 60px rgba(0,0,0,0.3);">
+            <button type="button" onclick="document.getElementById('modal-2fa-admin').style.display='none';" style="position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; color:var(--text-secondary); padding:4px;">
+              <i data-lucide="x" style="width:22px;height:22px;"></i>
+            </button>
+            <h3 style="font-size:20px; font-weight:700; margin-bottom:var(--space-2);">Sécurité Administrateur</h3>
+            <p style="font-size:14px; color:var(--text-secondary); margin-bottom:var(--space-6);">Scannez ce QR code pour sécuriser votre session.</p>
+            
+            <div style="background:#fff; padding:var(--space-4); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; margin:0 auto var(--space-5) auto; border:1px solid var(--border-color); width:fit-content;">
+              <div id="qrcode-admin"></div>
+            </div>
+            
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                const otpUrl = "<?= addslashes($otpAuthUrl) ?>";
+                new QRCode(document.getElementById("qrcode-admin"), {
+                  text: otpUrl,
+                  width: 180,
+                  height: 180,
+                  colorDark : "#1e293b",
+                  colorLight : "#ffffff",
+                  correctLevel : QRCode.CorrectLevel.H
+                });
+              });
+            </script>
+
+            <form method="POST" action="">
+              <input type="hidden" name="action" value="setup_2fa">
+              <input type="hidden" name="two_factor_secret" value="<?= $newSecret ?>">
+              <div class="form-group">
+                <label class="form-label" style="text-align:center; display:block;">Code de vérification</label>
+                <input type="text" name="two_factor_code" class="input" placeholder="000000" maxlength="6" pattern="\d{6}" required style="text-align:center; font-size:24px; letter-spacing:8px; height:56px;">
+              </div>
+              <button type="submit" class="btn btn-primary btn-lg w-full" style="margin-top:var(--space-4);">Activer la protection</button>
+            </form>
+          </div>
+        </div>
+      <?php endif; ?>
+    </div>
+
+    <!-- Global Policies -->
     <div class="settings-card">
       <div class="settings-card__title"><i data-lucide="shield" style="width:20px;height:20px;color:var(--accent-primary);"></i> Politique de sécurité</div>
-      <div class="settings-card__desc">Règles de sécurité appliquées aux comptes</div>
+      <div class="settings-card__desc">Règles de sécurité appliquées à l'ensemble de la plateforme</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
         <div class="form-group">
           <label class="form-label">Longueur min. mot de passe</label>
@@ -402,7 +500,7 @@ if (!isset($content)) {
         </div>
       </div>
       <div class="toggle-row" style="margin-top:var(--space-4);">
-        <div class="toggle-row__info"><div class="toggle-row__label">Forcer la 2FA pour les admins</div><div class="toggle-row__hint">Exiger l'authentification à deux facteurs</div></div>
+        <div class="toggle-row__info"><div class="toggle-row__label">Forcer la 2FA pour les admins</div><div class="toggle-row__hint">Exiger l'authentification à deux facteurs pour toute l'équipe</div></div>
         <div class="toggle-sw <?= $settings['force_2fa'] ? 'active' : '' ?>" onclick="this.classList.toggle('active'); document.getElementById('input_force_2fa').value = this.classList.contains('active') ? 'true' : 'false';"></div>
         <input type="hidden" name="force_2fa" id="input_force_2fa" value="<?= $settings['force_2fa'] ? 'true' : 'false' ?>">
       </div>

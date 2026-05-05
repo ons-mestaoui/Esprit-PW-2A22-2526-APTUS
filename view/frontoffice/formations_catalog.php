@@ -81,51 +81,17 @@ if (!isset($content)) {
   <!-- ═══ COURSE CARDS GRID ═══ -->
   <div>
     <div class="results-info mb-4">
-      <strong>12</strong> formations disponibles
+      <strong>0</strong> formations disponibles
     </div>
 
     <div class="courses-grid stagger">
-      <?php
-      $courses = [
-        ['title' => 'React.js Avancé : Hooks, Context & Performance', 'level' => 'Avancé', 'level_class' => 'advanced', 'tutor' => 'Ahmed Ben Ali', 'domain' => 'Développement', 'students' => 245, 'duration' => '24h'],
-        ['title' => 'Introduction à Python & Data Science', 'level' => 'Débutant', 'level_class' => 'beginner', 'tutor' => 'Sara Khediri', 'domain' => 'Data Science', 'students' => 890, 'duration' => '32h'],
-        ['title' => 'UI/UX Design : De Figma au Prototype', 'level' => 'Intermédiaire', 'level_class' => 'intermediate', 'tutor' => 'Nour Maalej', 'domain' => 'Design', 'students' => 312, 'duration' => '18h'],
-        ['title' => 'Cybersécurité Fondamentale', 'level' => 'Débutant', 'level_class' => 'beginner', 'tutor' => 'Youssef Hamdi', 'domain' => 'Cybersécurité', 'students' => 178, 'duration' => '20h'],
-        ['title' => 'Machine Learning avec TensorFlow', 'level' => 'Expert', 'level_class' => 'expert', 'tutor' => 'Mohamed Dridi', 'domain' => 'Data Science', 'students' => 156, 'duration' => '40h'],
-        ['title' => 'Marketing Digital & SEO', 'level' => 'Intermédiaire', 'level_class' => 'intermediate', 'tutor' => 'Fatma Jelassi', 'domain' => 'Marketing', 'students' => 423, 'duration' => '16h'],
-        ['title' => 'Docker & Kubernetes en Production', 'level' => 'Avancé', 'level_class' => 'advanced', 'tutor' => 'Ahmed Ben Ali', 'domain' => 'Cloud & DevOps', 'students' => 198, 'duration' => '28h'],
-        ['title' => 'JavaScript ES2025 Masterclass', 'level' => 'Intermédiaire', 'level_class' => 'intermediate', 'tutor' => 'Sara Khediri', 'domain' => 'Développement', 'students' => 567, 'duration' => '22h'],
-        ['title' => 'Node.js Backend Development', 'level' => 'Avancé', 'level_class' => 'advanced', 'tutor' => 'Youssef Hamdi', 'domain' => 'Développement', 'students' => 334, 'duration' => '30h'],
-      ];
-      foreach ($courses as $i => $c):
-      ?>
-      <div class="course-card animate-on-scroll" id="course-<?php echo $i; ?>">
-        <div class="course-card__image">
-          <div class="course-card__image-placeholder" style="animation-delay:<?php echo $i * 0.5; ?>s;">
-            <i data-lucide="graduation-cap" style="width:40px;height:40px;"></i>
-          </div>
-          <span class="course-card__level <?php echo $c['level_class']; ?>"><?php echo $c['level']; ?></span>
+      <div class="empty-state" style="grid-column: 1 / -1; padding: var(--space-20); text-align: center; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color); opacity: 0.8;">
+        <div style="width: 80px; height: 80px; background: var(--bg-secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-6);">
+            <i data-lucide="graduation-cap" style="width: 40px; height: 40px; color: var(--text-tertiary);"></i>
         </div>
-        <div class="course-card__body">
-          <h3 class="course-card__title"><?php echo $c['title']; ?></h3>
-          <div class="course-card__meta">
-            <span class="course-card__meta-item"><i data-lucide="users" style="width:12px;height:12px;"></i> <?php echo $c['students']; ?></span>
-            <span class="course-card__meta-item"><i data-lucide="clock" style="width:12px;height:12px;"></i> <?php echo $c['duration']; ?></span>
-            <span class="badge badge-neutral"><?php echo $c['domain']; ?></span>
-          </div>
-          <div class="course-card__tutor">
-            <div class="avatar avatar-sm avatar-initials" style="width:24px;height:24px;font-size:10px;"><?php echo strtoupper(substr($c['tutor'], 0, 1) . substr(strstr($c['tutor'], ' '), 1, 1)); ?></div>
-            <?php echo $c['tutor']; ?>
-          </div>
-          <div class="course-card__footer">
-            <span class="badge badge-primary"><?php echo $c['domain']; ?></span>
-            <button class="btn btn-sm btn-primary">
-              <i data-lucide="eye" style="width:14px;height:14px;"></i> Voir détails
-            </button>
-          </div>
-        </div>
+        <h3 style="margin-bottom: var(--space-2);">Aucune formation</h3>
+        <p style="color: var(--text-secondary);">Notre catalogue de formations est en cours de mise à jour.</p>
       </div>
-      <?php endforeach; ?>
     </div>
   </div>
 </div>

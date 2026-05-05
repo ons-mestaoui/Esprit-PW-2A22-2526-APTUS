@@ -27,28 +27,28 @@ if (!isset($content)) {
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Total Formations</div>
-      <div class="stat-card__value">18</div>
+      <div class="stat-card__value">0</div>
     </div>
     <div class="stat-card__icon purple"><i data-lucide="graduation-cap" style="width:22px;height:22px;"></i></div>
   </div>
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Étudiants inscrits</div>
-      <div class="stat-card__value">3,420</div>
+      <div class="stat-card__value">0</div>
     </div>
     <div class="stat-card__icon teal"><i data-lucide="users" style="width:22px;height:22px;"></i></div>
   </div>
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Certificats délivrés</div>
-      <div class="stat-card__value">892</div>
+      <div class="stat-card__value">0</div>
     </div>
     <div class="stat-card__icon blue"><i data-lucide="award" style="width:22px;height:22px;"></i></div>
   </div>
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Taux de complétion</div>
-      <div class="stat-card__value">68%</div>
+      <div class="stat-card__value">0%</div>
     </div>
     <div class="stat-card__icon orange"><i data-lucide="target" style="width:22px;height:22px;"></i></div>
   </div>
@@ -77,38 +77,14 @@ if (!isset($content)) {
       </tr>
     </thead>
     <tbody>
-      <?php
-      $formations = [
-        ['title' => 'React.js Avancé', 'domain' => 'Développement', 'level' => 'Avancé', 'lieu' => 'En ligne', 'tutor' => 'Ahmed Ben Ali', 'students' => 245, 'date' => '15 Jan.'],
-        ['title' => 'Python & Data Science', 'domain' => 'Data Science', 'level' => 'Débutant', 'lieu' => 'En ligne', 'tutor' => 'Sara Khediri', 'students' => 890, 'date' => '22 Jan.'],
-        ['title' => 'UI/UX Design', 'domain' => 'Design', 'level' => 'Intermédiaire', 'lieu' => 'Présentiel', 'tutor' => 'Nour Maalej', 'students' => 312, 'date' => '05 Fév.'],
-        ['title' => 'Cybersécurité', 'domain' => 'Cybersécurité', 'level' => 'Débutant', 'lieu' => 'En ligne', 'tutor' => 'Youssef Hamdi', 'students' => 178, 'date' => '18 Fév.'],
-        ['title' => 'ML avec TensorFlow', 'domain' => 'Data Science', 'level' => 'Expert', 'lieu' => 'Présentiel', 'tutor' => 'Mohamed Dridi', 'students' => 156, 'date' => '10 Mar.'],
-        ['title' => 'Docker & Kubernetes', 'domain' => 'Cloud & DevOps', 'level' => 'Avancé', 'lieu' => 'En ligne', 'tutor' => 'Ahmed Ben Ali', 'students' => 198, 'date' => '25 Mar.'],
-      ];
-      foreach ($formations as $f):
-        $levelBadge = 'badge-neutral';
-        if ($f['level'] === 'Débutant') $levelBadge = 'badge-success';
-        if ($f['level'] === 'Intermédiaire') $levelBadge = 'badge-warning';
-        if ($f['level'] === 'Avancé') $levelBadge = 'badge-danger';
-        if ($f['level'] === 'Expert') $levelBadge = 'badge-primary';
-      ?>
       <tr>
-        <td class="fw-medium"><?php echo $f['title']; ?></td>
-        <td><span class="badge badge-info"><?php echo $f['domain']; ?></span></td>
-        <td><span class="badge <?php echo $levelBadge; ?>"><?php echo $f['level']; ?></span></td>
-        <td class="text-sm"><?php echo $f['lieu']; ?></td>
-        <td class="text-sm text-secondary"><?php echo $f['tutor']; ?></td>
-        <td class="fw-medium"><?php echo $f['students']; ?></td>
-        <td class="text-sm text-secondary"><?php echo $f['date']; ?></td>
-        <td>
-          <div class="flex gap-1">
-            <button class="btn btn-sm btn-ghost" title="Éditer"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
-            <button class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+        <td colspan="8">
+          <div class="empty-state-mini" style="padding:var(--space-12);text-align:center;background:var(--bg-secondary);border-radius:var(--radius-lg);opacity:0.6;">
+            <i data-lucide="graduation-cap" style="width:40px;height:40px;margin:0 auto var(--space-3);display:block;color:var(--text-tertiary);"></i>
+            <p style="color:var(--text-secondary);">Aucune formation n'a été créée pour le moment</p>
           </div>
         </td>
       </tr>
-      <?php endforeach; ?>
     </tbody>
   </table>
 </div>

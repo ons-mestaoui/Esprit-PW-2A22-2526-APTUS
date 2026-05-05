@@ -25,6 +25,8 @@ let dragStartY = 0;
 let scrollStartY = 0;
 let hasDragged = false;
 let pinchStartTime = 0;
+let clickX = 0;
+let clickY = 0;
 
 
 
@@ -140,16 +142,28 @@ function processResults(results) {
     
     // 1. Move Cursor (Index fingertip = landmark 8)
     const indexTip = landmarks[8];
-    targetX = (1 - indexTip.x) * window.innerWidth;
-    targetY = indexTip.y * window.innerHeight;
+    
+    // Map the center 60% of the camera to 100% of the screen so user doesn't have to reach the edges
+    let rawX = 1 - indexTip.x;
+    let rawY = indexTip.y;
+    
+    let mappedX = (rawX - 0.2) / 0.6;
+    let mappedY = (rawY - 0.2) / 0.6;
+    
+    // Clamp to screen bounds
+    mappedX = Math.max(0, Math.min(1, mappedX));
+    mappedY = Math.max(0, Math.min(1, mappedY));
+
+    targetX = mappedX * window.innerWidth;
+    targetY = mappedY * window.innerHeight;
 
     // 2. Click Logic (Pinch to Drag or Click)
     const thumbTip = landmarks[4];
     const wrist = landmarks[0]; // Wrist used for stable scroll tracking
     const dist = Math.sqrt(Math.pow(thumbTip.x - indexTip.x, 2) + Math.pow(thumbTip.y - indexTip.y, 2));
     
-    // Hysteresis: makes it harder to accidentally unpinch 
-    const pinchThreshold = isPinching ? 0.07 : 0.05;
+    // Hysteresis: increased thresholds to make pinching (clicking) much easier to detect
+    const pinchThreshold = isPinching ? 0.1 : 0.08;
 
     if (dist < pinchThreshold) { 
       // Finger is pinched (Pressed)
@@ -170,13 +184,11 @@ function processResults(results) {
         const deltaY = dragStartY - wristY;
         const timeElapsed = Date.now() - pinchStartTime;
         
-        // Drag threshold: movement > 40px, OR movement > 20px if held for longer than 300ms
-        if (Math.abs(deltaY) > 40 || (timeElapsed > 300 && Math.abs(deltaY) > 20)) { 
+        // Drag threshold: increased so shaky clicks aren't registered as drags
+        if (Math.abs(deltaY) > 60 || (timeElapsed > 400 && Math.abs(deltaY) > 30)) { 
           hasDragged = true;
-          // deltaY is positive when hand moves UP. 
-          // Hand moving up -> pull page up -> scroll down
           window.scrollTo({
-            top: scrollStartY + (deltaY * 1.5), 
+            top: scrollStartY + (deltaY * 2), 
             behavior: 'instant' 
           });
         }
@@ -188,7 +200,6 @@ function processResults(results) {
         cursor.style.backgroundColor = 'var(--accent-primary)';
         cursor.style.borderColor = 'white';
         
-        // If we didn't drag enough, AND it was a relatively quick pinch (<1000ms), it's a solid click!
         if (!hasDragged && (Date.now() - pinchStartTime < 1000)) {
            performClick(clickX, clickY);
         }
@@ -209,9 +220,9 @@ function processResults(results) {
 function animateCursor() {
   if (!webcamRunning) return;
   
-  // Linear Interpolation (smooths out the MediaPipe frame rate)
-  currentX += (targetX - currentX) * 0.15;
-  currentY += (targetY - currentY) * 0.15;
+  // Linear Interpolation (smooths out the MediaPipe frame rate, lowered to 0.1 for more fluidity/less jitter)
+  currentX += (targetX - currentX) * 0.1;
+  currentY += (targetY - currentY) * 0.1;
   
   // Hardware accelerated transform instead of left/top style updates
   const scale = isPinching ? 0.6 : 1;
@@ -257,39 +268,3 @@ function performClick(x, y) {
     }
   }
 }
-
-        }));
-    }
-  }
-}
-
-ick();
-    } else {
-         // Generic synthetic event
-         element.dispatchEvent(new MouseEvent('click', {
-            view: window,
-            bubbles: true,
-            cancelable: true,
-            clientX: x,
-            clientY: y
-          }));
-    }
-  }
-}
-
-        }));
-    }
-  }
-}
-
-Y: y
-          }));
-    }
-  }
-}
-
-        }));
-    }
-  }
-}
-

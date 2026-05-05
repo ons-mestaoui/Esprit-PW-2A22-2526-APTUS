@@ -57,7 +57,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($passwordOk) {
-                // Connexion réussie : on simplifie et on connecte directement l'utilisateur
+                // Check if 2FA is enabled
+                $utilisateurC = new UtilisateurC();
+                $prefs = $utilisateurC->getPreferences($user['id_utilisateur']);
+                
+                if (!empty($prefs['two_factor_enabled'])) {
+                    // Redirect to 2FA verification page
+                    $_SESSION['temp_2fa_user'] = [
+                        'id' => $user['id_utilisateur'],
+                        'nom' => $user['nom'],
+                        'prenom' => $user['prenom'] ?? '',
+                        'role' => $user['role']
+                    ];
+                    header("Location: two_factor.php");
+                    exit();
+                }
+
+                // Normal Login (no 2FA)
                 $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
                 $_SESSION['nom'] = $user['nom'];
                 $_SESSION['prenom'] = $user['prenom'] ?? '';

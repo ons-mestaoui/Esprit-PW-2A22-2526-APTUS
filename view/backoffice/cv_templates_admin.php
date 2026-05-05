@@ -27,9 +27,9 @@ if (!isset($content)) {
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Total Templates</div>
-      <div class="stat-card__value">24</div>
-      <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +3 ce mois
+      <div class="stat-card__value">0</div>
+      <div class="stat-card__trend">
+        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> 0 ce mois
       </div>
     </div>
     <div class="stat-card__icon purple"><i data-lucide="layout-template" style="width:22px;height:22px;"></i></div>
@@ -37,9 +37,9 @@ if (!isset($content)) {
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Plus utilisé</div>
-      <div class="stat-card__value" style="font-size:var(--fs-md);">Tech Stack</div>
-      <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> 1,240 utilisations
+      <div class="stat-card__value" style="font-size:var(--fs-md);">—</div>
+      <div class="stat-card__trend">
+        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> 0 utilisations
       </div>
     </div>
     <div class="stat-card__icon teal"><i data-lucide="star" style="width:22px;height:22px;"></i></div>
@@ -47,9 +47,9 @@ if (!isset($content)) {
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">CVs générés (total)</div>
-      <div class="stat-card__value">8,432</div>
-      <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +18% ce mois
+      <div class="stat-card__value">0</div>
+      <div class="stat-card__trend">
+        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +0% ce mois
       </div>
     </div>
     <div class="stat-card__icon blue"><i data-lucide="file-check" style="width:22px;height:22px;"></i></div>
@@ -57,7 +57,7 @@ if (!isset($content)) {
   <div class="stat-card animate-on-scroll">
     <div>
       <div class="stat-card__label">Ajouts récents</div>
-      <div class="stat-card__value">3</div>
+      <div class="stat-card__value">0</div>
       <div class="stat-card__trend">
         <span class="text-tertiary">Cette semaine</span>
       </div>
@@ -88,53 +88,26 @@ if (!isset($content)) {
         </tr>
       </thead>
       <tbody>
-        <?php
-        $adminTemplates = [
-          ['name' => 'Tech Stack', 'cat' => 'Technologie', 'uses' => 1240, 'date' => '15 Jan 2026'],
-          ['name' => 'Executive Pro', 'cat' => 'Business', 'uses' => 980, 'date' => '20 Jan 2026'],
-          ['name' => 'Créatif Bold', 'cat' => 'Design', 'uses' => 856, 'date' => '02 Fév 2026'],
-          ['name' => 'Modern Flow', 'cat' => 'Moderne', 'uses' => 723, 'date' => '10 Fév 2026'],
-          ['name' => 'Data Analyst', 'cat' => 'Technologie', 'uses' => 654, 'date' => '18 Mar 2026'],
-          ['name' => 'Marketing Pro', 'cat' => 'Marketing', 'uses' => 512, 'date' => '25 Mar 2026'],
-          ['name' => 'Minimaliste', 'cat' => 'Minimaliste', 'uses' => 489, 'date' => '01 Avr 2026'],
-        ];
-        foreach ($adminTemplates as $i => $t):
-        ?>
         <tr>
-          <td>
-            <div class="flex items-center gap-3">
-              <div style="width:32px;height:40px;border-radius:4px;background:var(--gradient-card);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-                <i data-lucide="file-text" style="width:14px;height:14px;color:var(--text-tertiary);"></i>
-              </div>
-              <span class="fw-medium"><?php echo $t['name']; ?></span>
-            </div>
-          </td>
-          <td><span class="badge badge-primary"><?php echo $t['cat']; ?></span></td>
-          <td class="fw-medium"><?php echo number_format($t['uses']); ?></td>
-          <td class="text-secondary text-sm"><?php echo $t['date']; ?></td>
-          <td>
-            <div class="flex gap-1">
-              <button class="btn btn-sm btn-ghost" title="Éditer"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
-              <button class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+          <td colspan="5">
+            <div class="empty-state-mini" style="padding:var(--space-8);text-align:center;background:var(--bg-secondary);border-radius:var(--radius-lg);opacity:0.6;">
+              <i data-lucide="layout-template" style="width:32px;height:32px;margin:0 auto var(--space-2);display:block;color:var(--text-tertiary);"></i>
+              <p style="font-size:var(--fs-xs);color:var(--text-secondary);">Aucun template disponible</p>
             </div>
           </td>
         </tr>
-        <?php endforeach; ?>
       </tbody>
     </table>
-    <div class="pagination" style="padding:var(--space-4);">
-      <button class="pagination__btn">&laquo;</button>
-      <button class="pagination__btn active">1</button>
-      <button class="pagination__btn">2</button>
-      <button class="pagination__btn">3</button>
-      <button class="pagination__btn">&raquo;</button>
-    </div>
   </div>
 
   <!-- Top Used Chart -->
   <div class="card">
     <h4 class="text-sm fw-semibold mb-6">Templates les plus utilisés</h4>
-    <div id="template-usage-chart"></div>
+    <div id="template-usage-chart">
+       <div class="empty-state-mini" style="padding:var(--space-8);text-align:center;opacity:0.6;">
+          <p style="font-size:var(--fs-xs);color:var(--text-secondary);">Données insuffisantes</p>
+       </div>
+    </div>
   </div>
 </div>
 
@@ -200,13 +173,6 @@ if (!isset($content)) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Template usage chart
-  AptusCharts.bar('template-usage-chart', [
-    { label: 'Tech Stack', value: 1240 },
-    { label: 'Exec Pro', value: 980 },
-    { label: 'Créatif', value: 856 },
-    { label: 'Modern', value: 723 },
-    { label: 'Data', value: 654 },
-  ], { barColor: 'var(--chart-1)', height: 220 });
+  // Chart is only rendered if data exists, here it's empty
 });
 </script>

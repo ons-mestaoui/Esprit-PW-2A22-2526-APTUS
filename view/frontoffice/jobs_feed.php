@@ -59,50 +59,18 @@ if (!isset($content)) {
 
 <!-- Results Info -->
 <div class="results-info mb-4">
-  <strong>24</strong> results found
+  <strong>0</strong> results found
 </div>
 
 <!-- ═══ JOB CARDS GRID ═══ -->
 <div class="job-cards-grid stagger">
-  <?php
-  $jobs = [
-    ['title' => 'Senior Full Stack Developer', 'company' => 'TechSphere Inc.', 'logo' => 'TS', 'desc' => 'We are looking for an experienced Full Stack Developer to join our growing team and build innovative web applications.', 'location' => 'Tunis, Tunisia', 'type' => 'Full-time', 'mode' => 'Hybrid', 'salary' => '3,500 - 5,000 TND', 'date' => 'Il y a 2h', 'badge' => 'Job', 'badge_class' => 'badge-info'],
-    ['title' => 'Data Engineer', 'company' => 'DataFlow Analytics', 'logo' => 'DF', 'desc' => 'Join our data team to build robust data pipelines and infrastructure supporting real-time analytics and ML models.', 'location' => 'Remote', 'type' => 'Full-time', 'mode' => 'Remote', 'salary' => '4,000 - 6,000 TND', 'date' => 'Il y a 5h', 'badge' => 'Job', 'badge_class' => 'badge-info'],
-    ['title' => 'UI/UX Designer', 'company' => 'InnoLab Design', 'logo' => 'IL', 'desc' => 'Passionate about user-centered design? Join us to create stunning interfaces for our SaaS products.', 'location' => 'Sfax, Tunisia', 'type' => 'Part-time', 'mode' => 'On-site', 'salary' => '2,000 - 3,500 TND', 'date' => 'Il y a 1j', 'badge' => 'Job', 'badge_class' => 'badge-info'],
-    ['title' => 'DevOps Engineer', 'company' => 'CloudPeak Systems', 'logo' => 'CP', 'desc' => 'Automate, monitor, and optimize our cloud infrastructure. Experience with AWS, Docker, and Kubernetes required.', 'location' => 'Tunis, Tunisia', 'type' => 'Full-time', 'mode' => 'Hybrid', 'salary' => '4,500 - 7,000 TND', 'date' => 'Il y a 1j', 'badge' => 'Job', 'badge_class' => 'badge-info'],
-    ['title' => 'Marketing Digital Intern', 'company' => 'GrowthLab', 'logo' => 'GL', 'desc' => 'Stage de 6 mois en marketing digital : SEO, campagnes ads, analytics. Encadrement par une équipe senior.', 'location' => 'Sousse, Tunisia', 'type' => 'Internship', 'mode' => 'On-site', 'salary' => '800 - 1,200 TND', 'date' => 'Il y a 2j', 'badge' => 'Stage', 'badge_class' => 'badge-warning'],
-    ['title' => 'Mobile Developer (React Native)', 'company' => 'AppForge', 'logo' => 'AF', 'desc' => 'Build cross-platform mobile apps with React Native. Strong understanding of mobile UX patterns required.', 'location' => 'Remote', 'type' => 'Freelance', 'mode' => 'Remote', 'salary' => '3,000 - 4,500 TND', 'date' => 'Il y a 3j', 'badge' => 'Freelance', 'badge_class' => 'badge-success'],
-    ['title' => 'Cybersecurity Analyst', 'company' => 'SecureNet SA', 'logo' => 'SN', 'desc' => 'Monitor and respond to security threats. Conduct vulnerability assessments and implement security solutions.', 'location' => 'Tunis, Tunisia', 'type' => 'Full-time', 'mode' => 'On-site', 'salary' => '3,800 - 5,500 TND', 'date' => 'Il y a 3j', 'badge' => 'Job', 'badge_class' => 'badge-info'],
-    ['title' => 'Product Manager', 'company' => 'TechSphere Inc.', 'logo' => 'TS', 'desc' => 'Drive product strategy and roadmap for our B2B SaaS platform. Experience in agile methodologies preferred.', 'location' => 'Tunis, Tunisia', 'type' => 'Full-time', 'mode' => 'Hybrid', 'salary' => '5,000 - 8,000 TND', 'date' => 'Il y a 4j', 'badge' => 'Job', 'badge_class' => 'badge-info'],
-  ];
-  foreach ($jobs as $i => $j):
-  ?>
-  <div class="job-card animate-on-scroll" id="job-card-<?php echo $i; ?>">
-    <div class="job-card__header">
-      <div class="job-card__company-logo"><?php echo $j['logo']; ?></div>
-      <div class="job-card__title-group">
-        <h3 class="job-card__title"><?php echo $j['title']; ?></h3>
-        <span class="job-card__company"><?php echo $j['company']; ?></span>
-      </div>
-      <span class="badge <?php echo $j['badge_class']; ?> job-card__type-badge"><?php echo $j['badge']; ?></span>
+  <div class="empty-state" style="grid-column: 1 / -1; padding: var(--space-20); text-align: center; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color); opacity: 0.8;">
+    <div style="width: 80px; height: 80px; background: var(--bg-secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-6);">
+        <i data-lucide="briefcase" style="width: 40px; height: 40px; color: var(--text-tertiary);"></i>
     </div>
-    <p class="job-card__description"><?php echo $j['desc']; ?></p>
-    <div class="job-card__tags">
-      <span class="job-card__tag"><i data-lucide="map-pin"></i> <?php echo $j['location']; ?></span>
-      <span class="job-card__tag"><i data-lucide="clock"></i> <?php echo $j['type']; ?></span>
-      <span class="job-card__tag"><i data-lucide="wifi"></i> <?php echo $j['mode']; ?></span>
-      <span class="job-card__tag"><i data-lucide="banknote"></i> <?php echo $j['salary']; ?></span>
-    </div>
-    <div class="job-card__footer">
-      <span class="job-card__date">
-        <i data-lucide="calendar" style="width:12px;height:12px;"></i> <?php echo $j['date']; ?>
-      </span>
-      <button class="btn btn-sm btn-primary">
-        <i data-lucide="send" style="width:14px;height:14px;"></i> Postuler
-      </button>
-    </div>
+    <h3 style="margin-bottom: var(--space-2);">Aucune offre d'emploi</h3>
+    <p style="color: var(--text-secondary);">Revenez plus tard pour découvrir de nouvelles opportunités.</p>
   </div>
-  <?php endforeach; ?>
 </div>
 
 <!-- Pagination -->

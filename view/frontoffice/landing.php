@@ -99,10 +99,10 @@
 
           <!-- Dynamic Stats -->
           <div class="hero__stats hero-stats-glass mt-5 text-high-contrast mb-4">
-            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="12450">0</div><div class="hero__stat-label">Offres</div></div>
-            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="845">0</div><div class="hero__stat-label">Entreprises</div></div>
-            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="34102">0</div><div class="hero__stat-label">CVs créés</div></div>
-            <div class="hero__stat"><div class="hero__stat-value accent-font" id="stat-rate">94%</div><div class="hero__stat-label">Satisfaction</div></div>
+            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="0">0</div><div class="hero__stat-label">Offres</div></div>
+            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="0">0</div><div class="hero__stat-label">Entreprises</div></div>
+            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="0">0</div><div class="hero__stat-label">CVs créés</div></div>
+            <div class="hero__stat"><div class="hero__stat-value accent-font" id="stat-rate">—</div><div class="hero__stat-label">Satisfaction</div></div>
           </div>
         </div>
 

@@ -21,6 +21,7 @@ $id = $_SESSION['id_utilisateur'];
 $user = $utilisateurC->getUtilisateurById($id);
 $admin = $adminC->getAdminById($id);
 $profil = $profilC->getProfilByIdUtilisateur($id);
+$prefs = $utilisateurC->getPreferences($id);
 
 $success = "";
 $error = "";
@@ -35,7 +36,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pays = $_POST['pays'] ?? null;
     $date_naissance = !empty($_POST['date_naissance']) ? $_POST['date_naissance'] : null;
 
-    if (empty($nom) || empty($email)) {
+    if (isset($_POST['action']) && $_POST['action'] === 'setup_2fa') {
+        include_once __DIR__ . '/../../controller/TwoFactorC.php';
+        $secret = $_POST['two_factor_secret'] ?? '';
+        $code = $_POST['two_factor_code'] ?? '';
+        
+        if (TwoFactorC::verifyCode($secret, $code)) {
+            $utilisateurC->updatePreferences($id, [
+                'two_factor_enabled' => true,
+                'two_factor_secret' => $secret
+            ]);
+            $success = "L'authentification à deux facteurs a été activée !";
+        } else {
+            $error = "Code de vérification incorrect. Veuillez réessayer.";
+        }
+    } elseif (isset($_POST['action']) && $_POST['action'] === 'disable_2fa') {
+        $utilisateurC->updatePreferences($id, [
+            'two_factor_enabled' => false
+        ]);
+        $success = "L'authentification à deux facteurs a été désactivée.";
+    } elseif (empty($nom) || empty($email)) {
         $error = "Le nom entier et l'email sont obligatoires.";
     } else {
         try {
@@ -197,9 +217,76 @@ if (!isset($content)) {
         <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:var(--space-6);margin-bottom:var(--space-6);">
           <h3 style="font-size:var(--fs-lg);font-weight:600;margin-bottom:var(--space-5);display:flex;align-items:center;gap:var(--space-2);">
             <i data-lucide="lock" style="width:20px;height:20px;color:var(--accent-secondary);"></i>
-            Changer le mot de passe
+            Sécurité du compte
           </h3>
-          <p class="text-sm text-secondary" style="margin-bottom:10px;">La gestion du mot de passe se fait via les paramètres de sécurité globaux.</p>
+          
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:var(--space-4); background:var(--bg-secondary); border-radius:var(--radius-md); border:1px solid var(--border-color);">
+            <div style="display:flex; align-items:center; gap:var(--space-4);">
+              <div style="width:40px; height:40px; background:rgba(99,102,241,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                <i data-lucide="smartphone" style="width:20px; height:20px; color:var(--accent-primary);"></i>
+              </div>
+              <div>
+                <div style="font-weight:600; font-size:14px;">Authentification à deux facteurs</div>
+                <div style="font-size:12px; color:var(--text-secondary);"><?= !empty($prefs['two_factor_enabled']) ? 'Activée - Votre compte est sécurisé' : 'Désactivée - Ajoutez une couche de sécurité' ?></div>
+              </div>
+            </div>
+            
+            <?php if (!empty($prefs['two_factor_enabled'])): ?>
+              <form method="POST" action="" style="margin:0;">
+                <input type="hidden" name="action" value="disable_2fa">
+                <button type="submit" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);">Désactiver</button>
+              </form>
+            <?php else: 
+              include_once __DIR__ . '/../../controller/TwoFactorC.php';
+              $newSecret = TwoFactorC::generateSecret();
+              $otpAuthUrl = TwoFactorC::getOtpAuthUrl($user['email'], $newSecret);
+            ?>
+              <button type="button" class="btn btn-sm btn-primary" onclick="document.getElementById('modal-2fa-setup').style.display='flex';">Configurer</button>
+              
+              <!-- 2FA Setup Modal -->
+              <div id="modal-2fa-setup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(6px);">
+                <div style="background:var(--bg-card); border-radius:var(--radius-xl); padding:var(--space-8); text-align:center; max-width:440px; width:95%; position:relative; box-shadow:0 25px 60px rgba(0,0,0,0.3);">
+                  <button type="button" onclick="document.getElementById('modal-2fa-setup').style.display='none';" style="position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; color:var(--text-secondary); padding:4px;">
+                    <i data-lucide="x" style="width:22px;height:22px;"></i>
+                  </button>
+                  
+                  <h3 style="font-size:20px; font-weight:700; margin-bottom:var(--space-2);">Configurer la 2FA</h3>
+                  <p style="font-size:14px; color:var(--text-secondary); margin-bottom:var(--space-6);">Scannez ce code avec votre application de sécurité.</p>
+                  
+                  <div style="background:#fff; padding:var(--space-4); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; margin:0 auto var(--space-5) auto; border:1px solid var(--border-color); width:fit-content;">
+                    <div id="qrcode"></div>
+                  </div>
+                  
+                  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                  <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                      const otpUrl = "<?= addslashes($otpAuthUrl) ?>";
+                      new QRCode(document.getElementById("qrcode"), {
+                        text: otpUrl,
+                        width: 180,
+                        height: 180,
+                        colorDark : "#1e293b",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                      });
+                    });
+                  </script>
+
+                  <form method="POST" action="">
+                    <input type="hidden" name="action" value="setup_2fa">
+                    <input type="hidden" name="two_factor_secret" value="<?= $newSecret ?>">
+                    <div class="form-group" style="text-align:left;">
+                      <label class="form-label" style="text-align:center; display:block;">Code de vérification</label>
+                      <input type="text" name="two_factor_code" class="input" placeholder="000000" maxlength="6" pattern="\d{6}" required style="text-align:center; font-size:24px; letter-spacing:8px; height:56px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-full" style="margin-top:var(--space-4);">
+                      Activer maintenant
+                    </button>
+                  </form>
+                </div>
+              </div>
+            <?php endif; ?>
+          </div>
         </div>
 
         <!-- Save -->
