@@ -113,8 +113,8 @@ class candidatureC {
 
 
 
-    // Mettre à jour le statut d'une candidature + créer une notification
-    public function updateStatut($id_candidature, $nouveau_statut) {
+    // Mettre à jour le statut d'une candidature + créer une notification + (Optionnel) Date Entretien
+    public function updateStatut($id_candidature, $nouveau_statut, $date_entretien = null) {
         $db = config::getConnexion();
         try {
             // 1. Récupérer les infos de la candidature + l'entreprise (via table utilisateur)
@@ -128,28 +128,33 @@ class candidatureC {
             $cand = $req->fetch();
             if (!$cand) return false;
 
-            // SECURITÉ : Si le statut est déjà celui-là, on arrête tout (évite les doublons au refresh)
-            if ($cand['statut'] === $nouveau_statut) {
+            // SECURITÉ : Si le statut est déjà celui-là, on arrête tout
+            if ($cand['statut'] === $nouveau_statut && $nouveau_statut !== 'Accepté') {
                 return true;
             }
 
-            // 2. Mettre à jour le statut
-            $sql2 = "UPDATE candidatures SET statut = :statut WHERE id_candidature = :id";
+            // 2. Mettre à jour le statut et la date d'entretien
+            $sql2 = "UPDATE candidatures SET statut = :statut, date_entretien = :date_e WHERE id_candidature = :id";
             $req2 = $db->prepare($sql2);
-            $req2->execute(['statut' => $nouveau_statut, 'id' => $id_candidature]);
+            $req2->execute([
+                'statut' => $nouveau_statut, 
+                'date_e' => $date_entretien,
+                'id' => $id_candidature
+            ]);
 
             // 3. Créer la notification
             $nom = $cand['prenom'] . ' ' . $cand['nom'];
             $poste = $cand['titre_offre'] ?? 'un poste';
             if ($nouveau_statut === 'Accepté') {
-                $message = "Bonjour $nom, félicitations ! Votre candidature pour le poste \"$poste\" a été retenue.";
+                $msgDate = $date_entretien ? " prévue le " . date('d/m/Y à H:i', strtotime($date_entretien)) : "";
+                $message = "Bonjour $nom, félicitations ! Votre candidature pour le poste \"$poste\" a été retenue. Une entrevue est$msgDate.";
             } else {
                 $message = "Bonjour $nom, nous vous informons que votre candidature pour le poste \"$poste\" n'a malheureusement pas été retenue.";
             }
 
             $this->addNotification($cand['id_candidat'], $id_candidature, $message);
 
-            // 4. SI CHANGEMENT DE STATUT : Envoyer le mail via Brevo (Dynamique)
+            // 4. SI CHANGEMENT DE STATUT : Envoyer le mail via Brevo
             $mailC = new mailC();
             $nomComplet = $cand['prenom'] . ' ' . $cand['nom'];
             $nomEnt = $cand['nom_entreprise'] ?? 'Aptus Recruitment';
@@ -158,7 +163,7 @@ class candidatureC {
             if ($nouveau_statut === 'Refusé') {
                 $mailC->envoyerMailRefus($cand['email'], $nomComplet, $nomEnt, $emailEnt);
             } elseif ($nouveau_statut === 'Accepté') {
-                $mailC->envoyerMailAcceptation($cand['email'], $nomComplet, $nomEnt, $emailEnt);
+                $mailC->envoyerMailAcceptation($cand['email'], $nomComplet, $nomEnt, $emailEnt, $date_entretien);
             }
 
             return true;

@@ -13,8 +13,10 @@ $listeOffresDisponibles = $offreC->afficherOffres();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_statut'])) {
     $id_cand = intval($_POST['id_candidature']);
     $statut = $_POST['update_statut'];
+    $date_entretien = isset($_POST['date_entretien']) ? $_POST['date_entretien'] : null;
+
     if (in_array($statut, ['Accepté', 'Refusé'])) {
-        $candidatureC->updateStatut($id_cand, $statut);
+        $candidatureC->updateStatut($id_cand, $statut, $date_entretien);
     }
     header('Location: hr_candidatures.php');
     exit();
@@ -223,13 +225,57 @@ if (!isset($content)) {
           </div>
       </div>
       <div style="display: flex; gap: 0.75rem; align-items: center;">
-          <form method="POST" action="hr_candidatures.php" id="form-shortlister" style="margin:0;">
-              <input type="hidden" name="id_candidature" id="action-cand-id-1" value="">
-              <input type="hidden" name="update_statut" value="Accepté">
-              <button type="submit" class="btn btn-success" style="padding: 0.5rem 1rem; display:flex; align-items:center; gap:0.4rem; font-size:0.85rem; color:white; background:#10b981; border:none; border-radius:8px; cursor:pointer;" title="Shortlister">
-                  <i data-lucide="check" style="width:16px;height:16px;"></i> Shortlister
-              </button>
-          </form>
+          <!-- BOUTON SHORTLISTER AVEC CALENDRIER ANIMÉ -->
+          <div id="shortlist-container" style="position: relative; display: flex; align-items: center;">
+              <form method="POST" action="hr_candidatures.php" id="form-shortlister" style="margin:0; display: flex; align-items: center; gap: 10px;">
+                  <input type="hidden" name="id_candidature" id="action-cand-id-1" value="">
+                  <input type="hidden" name="update_statut" value="Accepté">
+                  
+                  <!-- Sélecteur de date caché par défaut -->
+                  <div id="date-picker-wrapper" style="display: none; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out; background: rgba(16, 185, 129, 0.05); padding: 5px 15px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                      <label style="font-size: 0.75rem; font-weight: 700; color: #065f46; text-transform: uppercase;">Date d'entretien :</label>
+                      <input type="datetime-local" name="date_entretien" required style="padding: 0.5rem; border-radius: 8px; border: 1px solid #10b981; font-size: 0.85rem; background: white; color: #1e293b; outline: none; box-shadow: 0 2px 10px rgba(16, 185, 129, 0.1);">
+                  </div>
+
+                  <button type="button" id="btn-show-calendar" onclick="showCalendar()" class="btn btn-success" style="padding: 0.6rem 1.25rem; display:flex; align-items:center; gap:0.6rem; font-size:0.9rem; color:white; background:#10b981; border:none; border-radius:10px; cursor:pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                      <i data-lucide="check" style="width:18px;height:18px;"></i> 
+                      <span id="btn-text">Shortlister</span>
+                  </button>
+              </form>
+          </div>
+
+          <script>
+              function showCalendar() {
+                  const wrapper = document.getElementById('date-picker-wrapper');
+                  const btn = document.getElementById('btn-show-calendar');
+                  const btnText = document.getElementById('btn-text');
+                  const form = document.getElementById('form-shortlister');
+
+                  if (wrapper.style.display === 'none') {
+                      wrapper.style.display = 'flex';
+                      btnText.innerText = 'Confirmer';
+                      btn.style.transform = 'scale(1.05)';
+                      btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                  } else {
+                      // Si la date est remplie, on soumet
+                      const dateInput = form.querySelector('input[name="date_entretien"]');
+                      if (dateInput.value) {
+                          form.submit();
+                      } else {
+                          dateInput.focus();
+                          dateInput.style.borderColor = '#ef4444';
+                          setTimeout(() => { dateInput.style.borderColor = '#10b981'; }, 1000);
+                      }
+                  }
+              }
+          </script>
+
+          <style>
+              @keyframes slideIn {
+                  from { opacity: 0; transform: translateX(20px); }
+                  to { opacity: 1; transform: translateX(0); }
+              }
+          </style>
           <form method="POST" action="hr_candidatures.php" id="form-refuser" style="margin:0;">
               <input type="hidden" name="id_candidature" id="action-cand-id-2" value="">
               <input type="hidden" name="update_statut" value="Refusé">

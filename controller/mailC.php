@@ -82,8 +82,21 @@ class mailC {
         }
     }
 
-    public function envoyerMailAcceptation($emailCandidat, $nomCandidat, $nomEntreprise, $emailEntreprise) {
+    public function envoyerMailAcceptation($emailCandidat, $nomCandidat, $nomEntreprise, $emailEntreprise, $dateEntretien = null) {
         $url = 'https://api.brevo.com/v3/smtp/email';
+
+        $msgDate = "";
+        if ($dateEntretien) {
+            $dateF = date('d/m/Y', strtotime($dateEntretien));
+            $heureF = date('H:i', strtotime($dateEntretien));
+            $msgDate = "
+                <div style='background: #f0fdf4; border: 1px solid #10b981; padding: 15px; border-radius: 10px; margin: 20px 0;'>
+                    <p style='margin: 0; color: #065f46; font-weight: 700;'>📅 Votre entretien est planifié :</p>
+                    <p style='margin: 5px 0 0 0; font-size: 1.1rem;'>Le <strong>$dateF</strong> à <strong>$heureF</strong></p>
+                    <p style='margin: 5px 0 0 0; font-size: 0.85rem; color: #065f46;'>L'entretien se déroulera en ligne sur la plateforme Aptus.</p>
+                </div>
+            ";
+        }
 
         $data = [
             'sender' => [
@@ -106,7 +119,10 @@ class mailC {
                     <h2 style='color: #10b981;'>Félicitations $nomCandidat !</h2>
                     <p>Nous avons le plaisir de vous informer que votre candidature pour rejoindre <strong>$nomEntreprise</strong> a été sélectionnée pour l'étape suivante (Shortlist).</p>
                     <p>Notre équipe de recrutement a été impressionnée par votre parcours et vos réponses. Nous souhaiterions échanger plus amplement avec vous très prochainement.</p>
-                    <p><strong>Prochaine étape :</strong> Un responsable de chez $nomEntreprise prendra contact avec vous par téléphone ou par email pour fixer un entretien.</p>
+                    
+                    $msgDate
+
+                    <p><strong>Prochaine étape :</strong> Un responsable de chez $nomEntreprise prendra contact avec vous si nécessaire pour finaliser les détails techniques de l'entretien.</p>
                     <p>Nous vous remercions de votre patience et de l'intérêt que vous portez à notre entreprise.</p>
                     <br>
                     <p>À très bientôt,<br><strong>L'équipe de recrutement $nomEntreprise</strong></p>
