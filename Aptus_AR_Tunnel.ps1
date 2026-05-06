@@ -1,6 +1,6 @@
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$logFile = Join-Path $ScriptDir "tunnel_log.txt"
-$urlFile = Join-Path $ScriptDir "tunnel_url.txt"
+$logFile = Join-Path $ScriptDir "pinggy_tunnel_log.txt"
+$urlFile = Join-Path $ScriptDir "pinggy_tunnel_url.txt"
 
 function Write-Box {
     param($text, $color="Cyan")
@@ -22,13 +22,13 @@ if (Test-Path $logFile) { try { Remove-Item $logFile -Force -ErrorAction Silentl
 if (Test-Path $urlFile) { try { Remove-Item $urlFile -Force -ErrorAction SilentlyContinue } catch {} }
 
 Write-Box "Serveur Securise Aptus" "Cyan"
-Write-Host "Connexion au tunnel (Localtunnel - HTTPS certifie)..."
+Write-Host "Connexion au tunnel (Pinggy - HTTPS certifie)..."
 
 Write-Host "Démarrage du tunnel sécurisé..." -ForegroundColor Gray
 
 # Utilisation de cmd /c pour rediriger proprement stdout et stderr (2>&1) 
 # Cela évite l'erreur PowerShell sur les redirections identiques.
-$fullCmd = "npx localtunnel --port 80 > `"$logFile`" 2>&1"
+$fullCmd = "ssh -o StrictHostKeyChecking=no -T -p 443 -R0:localhost:80 a.pinggy.io > `"$logFile`" 2>&1"
 $proc = Start-Process -FilePath "cmd.exe" -ArgumentList "/c $fullCmd" -PassThru -WindowStyle Hidden
 
 $foundUrl = $false
@@ -39,7 +39,7 @@ while ($stopwatch.Elapsed.TotalSeconds -lt $timeout) {
     if (Test-Path $logFile) {
         try {
             $content = Get-Content $logFile -Raw -ErrorAction SilentlyContinue
-            if ($content -match "(https://[a-zA-Z0-9\-]+\.loca\.lt)") {
+            if ($content -match "(https://[a-zA-Z0-9\-.]+\.pinggy(?:-free)?\.link)") {
                 $url = $matches[1]
                 $url | Out-File -FilePath $urlFile -Encoding utf8
                 Write-Host "`n>>> Tunnel Securise etabli avec succes ! <<<" -ForegroundColor Green

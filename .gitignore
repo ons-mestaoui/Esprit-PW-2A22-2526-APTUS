@@ -1,6 +1,6 @@
-view/assets/video/IMG_E8245_1.mp4
-.env.php
 .env
+.env.php
+view/assets/video/IMG_E8245_1.mp4
 
 # Tunnel generated files
 *tunnel_log.txt
