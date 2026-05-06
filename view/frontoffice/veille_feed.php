@@ -571,7 +571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <?php
-$tunnelUrlFile = dirname(__DIR__, 2) . '/tunnel_url.txt';
+$tunnelUrlFile = dirname(__DIR__, 2) . '/pinggy_tunnel_url.txt';
 $arBaseUrl = "http://192.168.0.66";
 if (file_exists($tunnelUrlFile)) {
     $fileUrl = trim(file_get_contents($tunnelUrlFile));

@@ -1,0 +1,5 @@
+Allocated port 9 for remote forward to localhost:80
+You are not authenticated.
+Your tunnel will expire in 60 minutes. Upgrade to Pinggy Pro to get unrestricted tunnels. https://dashboard.pinggy.io
+http://byysy-2c0f-f698-c500-c32-dddb-96bf-ca46-d036.run.pinggy-free.link
+https://byysy-2c0f-f698-c500-c32-dddb-96bf-ca46-d036.run.pinggy-free.link
