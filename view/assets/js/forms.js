@@ -287,7 +287,7 @@
              var errorEl = getOrCreateErrorEl(pw);
              if (errorEl) errorEl.textContent = 'Les mots de passe ne correspondent pas';
            }
-        });
+         });
 
         // Si une erreur est détectée, on bloque la soumission et on scrolle vers l'erreur
         if (!isValid) {

@@ -268,3 +268,14 @@ html {
 body {
   transition: background 0.3s ease, color 0.3s ease;
 }
+/* Optional: aggressive transition from other branch, commented out for performance */
+/*
+html, html *,
+html *::before,
+html *::after {
+  transition: background-color 0.3s ease,
+              color 0.3s ease,
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
+}
+*/

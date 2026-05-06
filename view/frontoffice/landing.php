@@ -45,7 +45,7 @@
         <i data-lucide="moon" class="icon-moon"></i>
       </button>
       <a href="login.php" class="btn btn-ghost nav-btn-login">Se connecter</a>
-      <a href="login.php?panel=signup" class="btn btn-primary glow-btn">S'inscrire</a>
+      <a href="signup_choice.php" class="btn btn-primary glow-btn">S'inscrire</a>
     </div>
     <button class="hamburger-landing" id="hamburger-landing" aria-label="Menu">
       <span></span><span></span><span></span>
@@ -60,7 +60,7 @@
       <a href="#resources" class="nav-anchor">Ressources</a>
       <div class="mobile-menu-actions mt-4">
         <a href="login.php" class="btn btn-ghost w-100 mb-2">Se connecter</a>
-        <a href="login.php?panel=signup" class="btn btn-primary w-100">S'inscrire</a>
+        <a href="signup_choice.php" class="btn btn-primary w-100">S'inscrire</a>
       </div>
   </div>
 
@@ -89,7 +89,7 @@
             Aptus connecte instantanément les meilleurs talents et les entreprises visionnaires grâce à un matching prédictif, un générateur de CV intelligent et un parcours d'apprentissage gamifié.
           </p>
           <div class="hero__ctas mt-5">
-            <a href="login.php?panel=signup" class="btn btn-primary btn-lg glow-btn splash-hover magnetic-btn">
+            <a href="signup_choice.php" class="btn btn-primary btn-lg glow-btn splash-hover magnetic-btn">
               <i data-lucide="rocket"></i> S'inscrire
             </a>
             <a href="#showcase-jobs" class="btn btn-ghost btn-lg nav-anchor">
@@ -99,10 +99,10 @@
 
           <!-- Dynamic Stats -->
           <div class="hero__stats hero-stats-glass mt-5 text-high-contrast mb-4">
-            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="0">0</div><div class="hero__stat-label">Offres</div></div>
-            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="0">0</div><div class="hero__stat-label">Entreprises</div></div>
-            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="0">0</div><div class="hero__stat-label">CVs créés</div></div>
-            <div class="hero__stat"><div class="hero__stat-value accent-font" id="stat-rate">—</div><div class="hero__stat-label">Satisfaction</div></div>
+            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="12450">0</div><div class="hero__stat-label">Offres</div></div>
+            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="845">0</div><div class="hero__stat-label">Entreprises</div></div>
+            <div class="hero__stat"><div class="hero__stat-value counter accent-font" data-target="34102">0</div><div class="hero__stat-label">CVs créés</div></div>
+            <div class="hero__stat"><div class="hero__stat-value accent-font" id="stat-rate">94%</div><div class="hero__stat-label">Satisfaction</div></div>
           </div>
         </div>
 
@@ -149,7 +149,7 @@
           <li><div class="feature-icon bg-teal-light"><i data-lucide="scan-line" class="text-teal"></i></div> <div><strong class="text-high-contrast">Analyse sémantique</strong><br><span class="text-sm text-muted">Compréhension profonde des compétences</span></div></li>
           <li><div class="feature-icon bg-teal-light"><i data-lucide="percent" class="text-teal"></i></div> <div><strong class="text-high-contrast">Score de compatibilité</strong><br><span class="text-sm text-muted">Match affiché instantanément</span></div></li>
         </ul>
-        <a href="login.php?panel=signup" class="btn btn-outline-teal mt-4 rounded-pill">Explorer les offres</a>
+        <a href="signup_choice.php" class="btn btn-outline-teal mt-4 rounded-pill">Explorer les offres</a>
       </div>
       <div class="showcase-visual reveal-right">
         <div class="mockup-card glass-panel tilt-card text-high-contrast" data-tilt data-tilt-perspective="1000" data-tilt-max="10" data-tilt-speed="400">
@@ -193,7 +193,7 @@
           <li><div class="feature-icon bg-purple-light"><i data-lucide="wand-2" class="text-purple"></i></div> <div><strong class="text-high-contrast">Rédaction Assistée</strong><br><span class="text-sm text-muted">Phrases d'accroche générées par l'IA</span></div></li>
           <li><div class="feature-icon bg-purple-light"><i data-lucide="layout-template" class="text-purple"></i></div> <div><strong class="text-high-contrast">Templates Premium</strong><br><span class="text-sm text-muted">Designs modernes et percutants</span></div></li>
         </ul>
-        <a href="login.php?panel=signup" class="btn btn-outline-purple mt-4 rounded-pill">Créer mon CV</a>
+        <a href="signup_choice.php" class="btn btn-outline-purple mt-4 rounded-pill">Créer mon CV</a>
       </div>
       <div class="showcase-visual reveal-left relative">
         <div class="mockup-cv-wrapper floating-slow" data-tilt data-tilt-perspective="1000" data-tilt-max="10">
@@ -232,14 +232,14 @@
         <h2 class="section-title accent-font">Évoluez, Gagnez de l'XP et <span class="text-blue text-gradient-blue">dominez</span>.</h2>
         <p class="section-desc text-muted">La formation continue réinventée. Suivez nos cours certifiants, montez en niveau, affrontez la communauté et dévoilez votre expertise aux recruteurs.</p>
         <div class="gamification-features mt-4 grid-2 offset-hover">
-           <a href="login.php?panel=signup" class="text-decoration-none">
+           <a href="signup_choice.php" class="text-decoration-none">
            <div class="gf-item glass-panel p-3 rounded-xl border border-blue-subtle hover-extend-glow hover-lift text-high-contrast">
              <div class="gf-icon mb-2"><i data-lucide="graduation-cap" class="text-blue" style="width:32px;height:32px;"></i></div>
              <div class="h5 mb-1 accent-font">Catalogue de Cours</div>
              <div class="text-sm text-muted">Découvrez nos formations.</div>
            </div>
            </a>
-           <a href="login.php?panel=signup" class="text-decoration-none">
+           <a href="signup_choice.php" class="text-decoration-none">
            <div class="gf-item glass-panel p-3 rounded-xl border border-blue-subtle hover-extend-glow hover-lift text-high-contrast" id="showcase-leaderboard">
              <div class="gf-icon mb-2"><i data-lucide="trophy" class="text-blue" style="width:32px;height:32px;"></i></div>
              <div class="h5 mb-1 accent-font">Leaderboard</div>
@@ -322,16 +322,15 @@
     </div>
   </section>
 
+  <!-- Embedded Doc Details -->
   <section class="section-doc-details py-6" id="doc-details" style="position:relative; z-index:10;">
     <div class="container">
-      <!-- 1. Header -->
       <div class="text-center mb-10 reveal-up">
         <div class="section-tag accent-purple mx-auto mb-3">Guide & Découverte</div>
-        <h2 class="section-title accent-font">Un univers de <span class="text-purple text-gradient-purple">Possibilités</span></h2>
+        <h2 class="section-title accent-font">Un univers de <span class="text-purple text-gradient-purple">Possibilities</span></h2>
         <p class="section-desc mx-auto text-muted max-w-lg">Plongez dans les détails techniques et fonctionnels qui font d'Aptus l'outil de recrutement le plus avancé du marché.</p>
       </div>
 
-      <!-- 2. Video Section (Centralized) -->
       <div class="video-central-wrapper d-flex justify-content-center mb-10 pb-5 reveal-up">
           <div class="glass-panel p-2 rounded-2xl shadow-xl hover-extend-glow transition-all" style="width: 100%; max-width: 900px; border: 1px solid var(--glass-border); overflow: hidden;">
               <div class="video-inner rounded-xl bg-dark position-relative overflow-hidden" style="padding-top: 56.25%;">
@@ -346,7 +345,6 @@
           </div>
       </div>
 
-      <!-- 3. Key Features Row -->
       <div class="features-flex-container mb-10 pb-5 reveal-up">
           <div class="text-center mb-10">
             <h3 class="accent-font text-high-contrast mb-3">Fonctionnalités Clés</h3>
@@ -377,7 +375,6 @@
           </div>
       </div>
 
-      <!-- 4. Deep Insights Row -->
       <div class="insights-flex-container py-5 reveal-up">
           <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 40px;">
               <div class="insight-card" style="flex: 1; min-width: 340px; max-width: 520px;">
@@ -422,6 +419,7 @@
     </div>
   </section>
 
+  <!-- Embedded Blog Details -->
   <section class="section-blog-details py-6" id="blog-details" style="position:relative; z-index:10;">
     <div class="container">
       <div class="text-center mb-10 reveal-up">
@@ -431,7 +429,6 @@
       </div>
 
       <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 35px; align-items: stretch;" class="reveal-up">
-          <!-- Article 1 -->
           <div class="article-card" style="flex: 1; min-width: 300px; max-width: 380px;">
               <div class="glass-panel p-4 rounded-3xl hover-extend-glow hover-lift transition-all h-100 d-flex flex-column text-high-contrast" data-tilt data-tilt-max="5" style="border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03);">
                   <div class="article-img rounded-2xl mb-4 position-relative overflow-hidden" style="height:220px; background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(192, 38, 211, 0.1));">
@@ -449,7 +446,6 @@
               </div>
           </div>
 
-          <!-- Article 2 -->
           <div class="article-card" style="flex: 1; min-width: 300px; max-width: 380px;">
               <div class="glass-panel p-4 rounded-3xl hover-extend-glow hover-lift transition-all h-100 d-flex flex-column text-high-contrast" data-tilt data-tilt-max="5" style="border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03);">
                   <div class="article-img rounded-2xl mb-4 position-relative overflow-hidden" style="height:220px; background: linear-gradient(135deg, rgba(234, 88, 12, 0.1), rgba(249, 115, 22, 0.1));">
@@ -467,7 +463,6 @@
               </div>
           </div>
 
-          <!-- Article 3 -->
           <div class="article-card" style="flex: 1; min-width: 300px; max-width: 380px;">
               <div class="glass-panel p-4 rounded-3xl hover-extend-glow hover-lift transition-all h-100 d-flex flex-column text-high-contrast" data-tilt data-tilt-max="5" style="border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03);">
                   <div class="article-img rounded-2xl mb-4 position-relative overflow-hidden" style="height:220px; background: linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(20, 184, 166, 0.1));">
@@ -487,7 +482,7 @@
       </div>
       
       <div class="text-center mt-12 reveal-up">
-          <a href="login.php?panel=signup" class="btn btn-primary glow-btn px-8 py-3 rounded-pill h5 mb-0">Découvrir tout le Blog</a>
+          <a href="signup_choice.php" class="btn btn-primary glow-btn px-8 py-3 rounded-pill h5 mb-0">Découvrir tout le Blog</a>
       </div>
     </div>
   </section>
@@ -504,7 +499,6 @@
       </div>
 
       <div class="team-grid grid-4 gap-4">
-        <!-- Team Member 1 -->
         <div class="team-card glass-panel rounded-2xl p-4 text-center hover-extend-glow hover-lift text-high-contrast transition-all">
           <div class="team-avatar-wrapper mx-auto mb-3 position-relative" style="width:100px;height:100px;">
             <div class="avatar-glow position-absolute w-100 h-100 rounded-circle bg-teal-light blur-md" style="top:5px; left:0; z-index:0;"></div>
@@ -518,7 +512,6 @@
           </div>
         </div>
         
-        <!-- Team Member 2 -->
         <div class="team-card glass-panel rounded-2xl p-4 text-center hover-extend-glow hover-lift text-high-contrast transition-all">
           <div class="team-avatar-wrapper mx-auto mb-3 position-relative" style="width:100px;height:100px;">
             <div class="avatar-glow position-absolute w-100 h-100 rounded-circle bg-purple-light blur-md" style="top:5px; left:0; z-index:0;"></div>
@@ -531,7 +524,6 @@
           </div>
         </div>
 
-        <!-- Team Member 3 -->
         <div class="team-card glass-panel rounded-2xl p-4 text-center hover-extend-glow hover-lift text-high-contrast transition-all">
           <div class="team-avatar-wrapper mx-auto mb-3 position-relative" style="width:100px;height:100px;">
             <div class="avatar-glow position-absolute w-100 h-100 rounded-circle bg-blue-light blur-md" style="top:5px; left:0; z-index:0;"></div>
@@ -545,7 +537,6 @@
           </div>
         </div>
 
-        <!-- Team Member 4 -->
         <div class="team-card glass-panel rounded-2xl p-4 text-center hover-extend-glow hover-lift text-high-contrast transition-all">
           <div class="team-avatar-wrapper mx-auto mb-3 position-relative" style="width:100px;height:100px;">
             <div class="avatar-glow position-absolute w-100 h-100 rounded-circle bg-orange-light blur-md" style="top:5px; left:0; z-index:0;"></div>
@@ -573,7 +564,6 @@
   <footer class="front-footer landing-footer py-5 mt-0 section-dark">
     <div class="container">
         <div class="front-footer__grid grid-4 gap-4">
-        
           <div class="front-footer__brand pe-4">
             <a href="#hero" class="topnav__logo nav-anchor d-flex align-items-center gap-2 mb-3 text-decoration-none">
               <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="topnav__logo-icon" style="width:32px;">
@@ -614,7 +604,6 @@
               <a href="#" class="text-muted hover-text-primary text-decoration-none transition-all">Préférences Cookies</a>
             </div>
           </div>
-          
         </div>
         
         <div class="front-footer__bottom border-top border-dark-subtle mt-5 pt-4 d-flex justify-content-between text-muted text-sm flex-wrap gap-3">
@@ -625,7 +614,6 @@
 
   <!-- Scripts -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Vanilla-tilt JS for 3D card effects (TikTok/Reel style) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/nav.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/landing-animations.js"></script>
@@ -633,7 +621,7 @@
   <script>
     lucide.createIcons();
     
-    // Smooth Typewriter Effect for Hero Title
+    // Smooth Typewriter Effect
     var TxtType = function(el, toRotate, period) {
         this.toRotate = toRotate;
         this.el = el;
@@ -657,22 +645,21 @@
         this.el.innerHTML = '<span class="wrap">'+this.txt+'</span>';
 
         var that = this;
-        var delta = 150 - Math.random() * 50; // Smooth typing
+        var delta = 150 - Math.random() * 50;
 
         if (this.isDeleting) { delta /= 2; }
 
         if (!this.isDeleting && this.txt === fullTxt) {
-        delta = this.period; // Pause at end
+        delta = this.period;
         this.isDeleting = true;
         } else if (this.isDeleting && this.txt === '') {
         this.isDeleting = false;
         this.loopNum++;
-        delta = 500; // Pause before typing new word
+        delta = 500;
         }
         setTimeout(function() { that.tick(); }, delta);
     };
 
-    // Initialize Typewriter
     var elements = document.getElementsByClassName('typewrite');
     for (var i=0; i<elements.length; i++) {
         var toRotate = elements[i].getAttribute('data-type');
@@ -681,16 +668,15 @@
           new TxtType(elements[i], JSON.parse(toRotate), period);
         }
     }
-    // Inject CSS for typewriter cursor
     var css = document.createElement("style");
     css.type = "text/css";
     css.innerHTML = ".typewrite > .wrap { border-right: 0.08em solid var(--accent-primary);}";
     document.body.appendChild(css);
 
-    // Counter Animation Logic (Smoothed)
+    // Counter Animation
     document.addEventListener('DOMContentLoaded', () => {
         const counters = document.querySelectorAll('.counter');
-        const countDuration = 2000; // 2 seconds to reach the number
+        const countDuration = 2000;
         
         const counterObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
@@ -701,11 +687,9 @@
                     const step = (timestamp) => {
                         if (!startTimestamp) startTimestamp = timestamp;
                         const progress = Math.min((timestamp - startTimestamp) / countDuration, 1);
-                        const easeOutQuart = 1 - Math.pow(1 - progress, 4); // Easing function
+                        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
                         const currentCount = Math.floor(easeOutQuart * target);
-                        
                         counter.innerText = currentCount.toLocaleString('fr-FR') + (target >= 1000 ? '+' : '');
-                        
                         if (progress < 1) {
                             window.requestAnimationFrame(step);
                         }
@@ -723,4 +707,3 @@
   </script>
 </body>
 </html>
-.

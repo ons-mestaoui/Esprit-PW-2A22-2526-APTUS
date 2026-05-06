@@ -62,6 +62,11 @@ $currentTheme = $userPrefs['theme'] ?? 'light';
     <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/<?php echo $pageCSS; ?>">
   <?php endif; ?>
 
+  <!-- AI Agent Widget -->
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/ai_agent.css">
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent_ext.js"></script>
+
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
 
@@ -126,6 +131,7 @@ $currentTheme = $userPrefs['theme'] ?? 'light';
   </div>
 
   <nav class="landing-nav glass-nav" id="landing-nav">
+    <?php $currentRole = $_SESSION['role'] ?? 'Candidat'; ?>
     <a href="<?php 
       if ($currentRole === 'Entreprise') echo 'hr_posts.php';
       elseif ($currentRole === 'Tuteur') echo 'dashboard_tuteur.php';
@@ -206,7 +212,7 @@ $currentTheme = $userPrefs['theme'] ?? 'light';
         <div class="dropdown-trigger topnav__profile">
           <div class="topnav__profile-info">
             <span class="topnav__profile-name"><?php echo isset($userName) ? $userName : 'Utilisateur'; ?></span>
-            <span class="topnav__profile-role"><?php echo isset($userRole) ? $userRole : 'Candidat'; ?></span>
+            <span class="topnav__profile-role"><?php echo isset($currentRole) ? $currentRole : 'Candidat'; ?></span>
           </div>
           <div class="avatar" style="width:36px;height:36px;font-size:13px;overflow:hidden;background:var(--bg-glass);display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--border-color);">
             <?php if ($userPhoto): ?>
@@ -219,7 +225,7 @@ $currentTheme = $userPrefs['theme'] ?? 'light';
           </div>
         </div>
         <div class="dropdown-menu">
-          <?php if ($currentRole === 'Candidat'): ?>
+          <?php if ($currentRole !== 'Entreprise'): ?>
           <a href="profil_candidat.php" class="dropdown-item" id="dropdown-profile">
             <i data-lucide="user" style="width:16px;height:16px;"></i>
             Mon Profil
@@ -318,7 +324,7 @@ $currentTheme = $userPrefs['theme'] ?? 'light';
     </div>
     <div class="front-footer__bottom">
       <span>&copy; <?php echo date('Y'); ?> Aptus. Tous droits réservés.</span>
-      <span>Fait avec ❤️ en Tunisie</span>
+      <span>Fait avec ✨ en Tunisie</span>
     </div>
   </footer>
 

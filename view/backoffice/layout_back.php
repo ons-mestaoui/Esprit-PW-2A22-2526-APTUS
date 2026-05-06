@@ -55,6 +55,7 @@ if ($userId) {
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css?v=<?php echo time(); ?>">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_back.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/ai_agent.css">
   <?php if (isset($pageCSS)): ?>
     <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/<?php echo $pageCSS; ?>">
   <?php endif; ?>
@@ -91,6 +92,10 @@ if ($userId) {
       }
     });
   </script>
+  
+  <!-- AI Agent Widget Scripts -->
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent_ext.js"></script>
 </head>
 <body>
 
@@ -159,7 +164,11 @@ if ($userId) {
         <i data-lucide="menu"></i>
       </button>
 
-      <!-- Search (Removed) -->
+      <!-- Search -->
+      <div class="back-topbar__search">
+        <i data-lucide="search" style="width:18px;height:18px;"></i>
+        <input type="text" class="input" id="admin-search" placeholder="Rechercher des candidats, entreprises, formations...">
+      </div>
 
       <!-- Actions -->
       <div class="back-topbar__actions">
@@ -235,6 +244,7 @@ if ($userId) {
     <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
   <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
+  
   <!-- ═══════════════════════════════════════════
        ACCESSIBILITY GESTURE CONTROL (MediaPipe)
        ═══════════════════════════════════════════ -->

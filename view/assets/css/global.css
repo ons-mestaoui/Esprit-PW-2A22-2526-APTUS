@@ -191,6 +191,7 @@ p {
   background: var(--gradient-primary);
   color: #FFFFFF;
   border: none;
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.3);
 }
 .btn-primary:hover {
   box-shadow: 0 4px 16px rgba(108, 92, 231, 0.45);
@@ -352,20 +353,20 @@ p {
   color: var(--accent-primary);
 }
 .badge-success {
-  background: var(--bg-success);
-  color: var(--text-success);
+  background: var(--accent-secondary-light);
+  color: var(--accent-secondary);
 }
 .badge-danger {
-  background: var(--bg-danger);
-  color: var(--text-danger);
+  background: var(--accent-tertiary-light);
+  color: var(--accent-tertiary);
 }
 .badge-warning {
-  background: var(--bg-warning);
-  color: var(--text-warning);
+  background: var(--accent-warning-light);
+  color: var(--accent-warning);
 }
 .badge-info {
-  background: var(--bg-info);
-  color: var(--text-info);
+  background: var(--accent-info-light);
+  color: var(--accent-info);
 }
 .badge-neutral {
   background: var(--bg-secondary);

@@ -108,6 +108,12 @@ if (!isset($content)) {
 </div>
 <?php endif; ?>
 
+<?php if(isset($errorMsg)): ?>
+<div class="alert alert-error" style="margin-bottom:var(--space-4); padding:var(--space-3); background:#fee2e2; color:#991b1b; border-radius:var(--radius-md); border:1px solid #f87171;">
+  <i data-lucide="alert-circle" style="width:18px;height:18px;vertical-align:-4px;"></i> <?= $errorMsg ?>
+</div>
+<?php endif; ?>
+
 <!-- Settings Navigation Tabs -->
 <div class="settings-nav" id="settings-nav">
   <button class="settings-nav__item active" data-tab="appearance">
@@ -143,24 +149,24 @@ if (!isset($content)) {
         <div class="form-group">
           <label class="form-label">Couleur principale</label>
           <div style="display:flex;align-items:center;gap:var(--space-3);">
-            <input type="color" name="primary_color" id="inp-primary-color" value="<?= htmlspecialchars($settings['primary_color']) ?>" style="width:48px;height:40px;border:2px solid var(--border-color);border-radius:var(--radius-sm);cursor:pointer;padding:2px;background:var(--bg-input);">
-            <input type="text" class="input" id="inp-primary-hex" value="<?= htmlspecialchars($settings['primary_color']) ?>" style="flex:1;font-family:monospace;" maxlength="7">
+            <input type="color" name="primary_color" id="inp-primary-color" value="<?= htmlspecialchars($settings['primary_color'] ?? '#6366F1') ?>" style="width:48px;height:40px;border:2px solid var(--border-color);border-radius:var(--radius-sm);cursor:pointer;padding:2px;background:var(--bg-input);">
+            <input type="text" class="input" id="inp-primary-hex" value="<?= htmlspecialchars($settings['primary_color'] ?? '#6366F1') ?>" style="flex:1;font-family:monospace;" maxlength="7">
           </div>
           <div style="display:flex;gap:var(--space-2);margin-top:var(--space-2);" id="primary-presets">
             <?php foreach(['#6B34A3','#6366F1','#3B82F6','#0EA5E9','#10B981','#F59E0B','#EF4444','#EC4899'] as $c): ?>
-            <button type="button" class="color-preset" data-color="<?= $c ?>" data-target="primary" style="width:28px;height:28px;border-radius:50%;border:2px solid <?= $settings['primary_color']===$c ? 'var(--text-primary)' : 'transparent' ?>;background:<?= $c ?>;cursor:pointer;transition:all 0.2s;" title="<?= $c ?>"></button>
+            <button type="button" class="color-preset" data-color="<?= $c ?>" data-target="primary" style="width:28px;height:28px;border-radius:50%;border:2px solid <?= ($settings['primary_color'] ?? '#6366F1')===$c ? 'var(--text-primary)' : 'transparent' ?>;background:<?= $c ?>;cursor:pointer;transition:all 0.2s;" title="<?= $c ?>"></button>
             <?php endforeach; ?>
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Couleur d'accent</label>
           <div style="display:flex;align-items:center;gap:var(--space-3);">
-            <input type="color" name="accent_color" id="inp-accent-color" value="<?= htmlspecialchars($settings['accent_color']) ?>" style="width:48px;height:40px;border:2px solid var(--border-color);border-radius:var(--radius-sm);cursor:pointer;padding:2px;background:var(--bg-input);">
-            <input type="text" class="input" id="inp-accent-hex" value="<?= htmlspecialchars($settings['accent_color']) ?>" style="flex:1;font-family:monospace;" maxlength="7">
+            <input type="color" name="accent_color" id="inp-accent-color" value="<?= htmlspecialchars($settings['accent_color'] ?? '#00A3DA') ?>" style="width:48px;height:40px;border:2px solid var(--border-color);border-radius:var(--radius-sm);cursor:pointer;padding:2px;background:var(--bg-input);">
+            <input type="text" class="input" id="inp-accent-hex" value="<?= htmlspecialchars($settings['accent_color'] ?? '#00A3DA') ?>" style="flex:1;font-family:monospace;" maxlength="7">
           </div>
           <div style="display:flex;gap:var(--space-2);margin-top:var(--space-2);" id="accent-presets">
             <?php foreach(['#00A3DA','#6366F1','#8B5CF6','#EC4899','#14B8A6','#F97316','#84CC16','#06B6D4'] as $c): ?>
-            <button type="button" class="color-preset" data-color="<?= $c ?>" data-target="accent" style="width:28px;height:28px;border-radius:50%;border:2px solid <?= $settings['accent_color']===$c ? 'var(--text-primary)' : 'transparent' ?>;background:<?= $c ?>;cursor:pointer;transition:all 0.2s;" title="<?= $c ?>"></button>
+            <button type="button" class="color-preset" data-color="<?= $c ?>" data-target="accent" style="width:28px;height:28px;border-radius:50%;border:2px solid <?= ($settings['accent_color'] ?? '#00A3DA')===$c ? 'var(--text-primary)' : 'transparent' ?>;background:<?= $c ?>;cursor:pointer;transition:all 0.2s;" title="<?= $c ?>"></button>
             <?php endforeach; ?>
           </div>
         </div>
@@ -186,13 +192,13 @@ if (!isset($content)) {
           <label class="form-label">Police</label>
           <select class="select" name="font_family" id="inp-font-family">
             <?php foreach(['Inter','Roboto','Outfit','Poppins','DM Sans','Plus Jakarta Sans'] as $f): ?>
-            <option value="<?= $f ?>" <?= $settings['font_family']===$f ? 'selected' : '' ?> style="font-family:'<?= $f ?>',sans-serif;"><?= $f ?></option>
+            <option value="<?= $f ?>" <?= ($settings['font_family'] ?? 'Inter')===$f ? 'selected' : '' ?> style="font-family:'<?= $f ?>',sans-serif;"><?= $f ?></option>
             <?php endforeach; ?>
           </select>
         </div>
         <div class="form-group">
           <label class="form-label">Aperçu</label>
-          <div id="font-preview" style="padding:var(--space-3);background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border-color);font-family:'<?= $settings['font_family'] ?>',sans-serif;">
+          <div id="font-preview" style="padding:var(--space-3);background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border-color);font-family:'<?= $settings['font_family'] ?? 'Inter' ?>',sans-serif;">
             <div style="font-weight:700;font-size:var(--fs-md);margin-bottom:4px;">Aptus Platform</div>
             <div style="font-size:var(--fs-sm);color:var(--text-secondary);">La plateforme intelligente de recrutement 1234567890</div>
           </div>
@@ -217,13 +223,13 @@ if (!isset($content)) {
               'full' => ['label' => 'Complet', 'preview' => '28px'],
             ];
             foreach ($radiusOptions as $val => $opt): ?>
-            <button type="button" class="radius-option <?= $settings['border_radius']===$val ? 'active' : '' ?>" data-value="<?= $val ?>" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:var(--space-2) var(--space-3);border:2px solid <?= $settings['border_radius']===$val ? 'var(--accent-primary)' : 'var(--border-color)' ?>;border-radius:var(--radius-md);background:var(--bg-input);cursor:pointer;transition:all 0.2s;min-width:60px;">
+            <button type="button" class="radius-option <?= ($settings['border_radius'] ?? 'medium')===$val ? 'active' : '' ?>" data-value="<?= $val ?>" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:var(--space-2) var(--space-3);border:2px solid <?= ($settings['border_radius'] ?? 'medium')===$val ? 'var(--accent-primary)' : 'var(--border-color)' ?>;border-radius:var(--radius-md);background:var(--bg-input);cursor:pointer;transition:all 0.2s;min-width:60px;">
               <div style="width:32px;height:22px;border:2px solid var(--text-secondary);border-radius:<?= $opt['preview'] ?>;"></div>
               <span style="font-size:11px;color:var(--text-secondary);"><?= $opt['label'] ?></span>
             </button>
             <?php endforeach; ?>
           </div>
-          <input type="hidden" name="border_radius" id="inp-border-radius" value="<?= htmlspecialchars($settings['border_radius']) ?>">
+          <input type="hidden" name="border_radius" id="inp-border-radius" value="<?= htmlspecialchars($settings['border_radius'] ?? 'medium') ?>">
         </div>
         <div class="form-group">
           <label class="form-label">Thème par défaut</label>
@@ -235,13 +241,13 @@ if (!isset($content)) {
               'system' => ['label' => 'Système', 'icon' => 'monitor'],
             ];
             foreach ($themeOptions as $val => $opt): ?>
-            <button type="button" class="theme-option <?= $settings['default_theme']===$val ? 'active' : '' ?>" data-value="<?= $val ?>" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:var(--space-3);border:2px solid <?= $settings['default_theme']===$val ? 'var(--accent-primary)' : 'var(--border-color)' ?>;border-radius:var(--radius-md);background:var(--bg-input);cursor:pointer;transition:all 0.2s;">
+            <button type="button" class="theme-option <?= ($settings['default_theme'] ?? 'light')===$val ? 'active' : '' ?>" data-value="<?= $val ?>" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:var(--space-3);border:2px solid <?= ($settings['default_theme'] ?? 'light')===$val ? 'var(--accent-primary)' : 'var(--border-color)' ?>;border-radius:var(--radius-md);background:var(--bg-input);cursor:pointer;transition:all 0.2s;">
               <i data-lucide="<?= $opt['icon'] ?>" style="width:20px;height:20px;"></i>
               <span style="font-size:12px;"><?= $opt['label'] ?></span>
             </button>
             <?php endforeach; ?>
           </div>
-          <input type="hidden" name="default_theme" id="inp-default-theme" value="<?= htmlspecialchars($settings['default_theme']) ?>">
+          <input type="hidden" name="default_theme" id="inp-default-theme" value="<?= htmlspecialchars($settings['default_theme'] ?? 'light') ?>">
         </div>
       </div>
     </div>
@@ -290,29 +296,29 @@ if (!isset($content)) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
         <div class="form-group">
           <label class="form-label">Nom du site</label>
-          <input type="text" name="site_name" class="input" value="<?= htmlspecialchars($settings['site_name']) ?>">
+          <input type="text" name="site_name" class="input" value="<?= htmlspecialchars($settings['site_name'] ?? 'Aptus') ?>">
         </div>
         <div class="form-group">
           <label class="form-label">URL du site</label>
-          <input type="url" name="site_url" class="input" value="<?= htmlspecialchars($settings['site_url']) ?>">
+          <input type="url" name="site_url" class="input" value="<?= htmlspecialchars($settings['site_url'] ?? 'https://aptus.tn') ?>">
         </div>
         <div class="form-group" style="grid-column:1/-1;">
           <label class="form-label">Description</label>
-          <textarea class="textarea" name="site_desc" rows="2"><?= htmlspecialchars($settings['site_desc']) ?></textarea>
+          <textarea class="textarea" name="site_desc" rows="2"><?= htmlspecialchars($settings['site_desc'] ?? 'Plateforme intelligente de recrutement et d\'apprentissage.') ?></textarea>
         </div>
         <div class="form-group">
           <label class="form-label">Langue par défaut</label>
           <select class="select" name="language">
-            <option <?= $settings['language'] == 'Français' ? 'selected' : '' ?>>Français</option>
-            <option <?= $settings['language'] == 'English' ? 'selected' : '' ?>>English</option>
-            <option <?= $settings['language'] == 'العربية' ? 'selected' : '' ?>>العربية</option>
+            <option <?= ($settings['language'] ?? 'Français') == 'Français' ? 'selected' : '' ?>>Français</option>
+            <option <?= ($settings['language'] ?? '') == 'English' ? 'selected' : '' ?>>English</option>
+            <option <?= ($settings['language'] ?? '') == 'العربية' ? 'selected' : '' ?>>العربية</option>
           </select>
         </div>
         <div class="form-group">
           <label class="form-label">Fuseau horaire</label>
           <select class="select" name="timezone">
-            <option <?= $settings['timezone'] == 'Africa/Tunis (GMT+1)' ? 'selected' : '' ?>>Africa/Tunis (GMT+1)</option>
-            <option <?= $settings['timezone'] == 'Europe/Paris (GMT+1)' ? 'selected' : '' ?>>Europe/Paris (GMT+1)</option>
+            <option <?= ($settings['timezone'] ?? 'Africa/Tunis (GMT+1)') == 'Africa/Tunis (GMT+1)' ? 'selected' : '' ?>>Africa/Tunis (GMT+1)</option>
+            <option <?= ($settings['timezone'] ?? '') == 'Europe/Paris (GMT+1)' ? 'selected' : '' ?>>Europe/Paris (GMT+1)</option>
           </select>
         </div>
       </div>
@@ -347,10 +353,19 @@ if (!isset($content)) {
             <div class="toggle-row__label"><?= $data['label'] ?></div>
             <div class="toggle-row__hint"><?= $data['hint'] ?></div>
         </div>
-        <div class="toggle-sw <?= $settings[$key] ? 'active' : '' ?>" onclick="this.classList.toggle('active'); document.getElementById('input_<?= $key ?>').value = this.classList.contains('active') ? 'true' : 'false';"></div>
-        <input type="hidden" name="<?= $key ?>" id="input_<?= $key ?>" value="<?= $settings[$key] ? 'true' : 'false' ?>">
+        <div class="toggle-sw <?= ($settings[$key] ?? true) ? 'active' : '' ?>" onclick="this.classList.toggle('active'); document.getElementById('input_<?= $key ?>').value = this.classList.contains('active') ? 'true' : 'false';"></div>
+        <input type="hidden" name="<?= $key ?>" id="input_<?= $key ?>" value="<?= ($settings[$key] ?? true) ? 'true' : 'false' ?>">
       </div>
       <?php endforeach; ?>
+
+      <!-- AI Accessibility Agent Toggle -->
+      <div class="toggle-row">
+        <div class="toggle-row__info">
+          <div class="toggle-row__label">Assistant d'accessibilité IA</div>
+          <div class="toggle-row__hint">Afficher le widget de l'assistant IA sur tout le site</div>
+        </div>
+        <div id="ai-agent-toggle-sw" class="toggle-sw"></div>
+      </div>
     </div>
     <div style="display:flex;justify-content:flex-end;">
       <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> Enregistrer</button>
@@ -368,19 +383,19 @@ if (!isset($content)) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
         <div class="form-group">
           <label class="form-label">Serveur SMTP</label>
-          <input type="text" name="smtp_server" class="input" value="<?= htmlspecialchars($settings['smtp_server']) ?>">
+          <input type="text" name="smtp_server" class="input" value="<?= htmlspecialchars($settings['smtp_server'] ?? 'smtp.aptus.tn') ?>">
         </div>
         <div class="form-group">
           <label class="form-label">Port</label>
-          <input type="number" name="smtp_port" class="input" value="<?= htmlspecialchars($settings['smtp_port']) ?>">
+          <input type="number" name="smtp_port" class="input" value="<?= htmlspecialchars($settings['smtp_port'] ?? '587') ?>">
         </div>
         <div class="form-group">
           <label class="form-label">Email d'expédition</label>
-          <input type="email" name="smtp_email" class="input" value="<?= htmlspecialchars($settings['smtp_email']) ?>">
+          <input type="email" name="smtp_email" class="input" value="<?= htmlspecialchars($settings['smtp_email'] ?? 'noreply@aptus.tn') ?>">
         </div>
         <div class="form-group">
           <label class="form-label">Nom d'expédition</label>
-          <input type="text" name="smtp_name" class="input" value="<?= htmlspecialchars($settings['smtp_name']) ?>">
+          <input type="text" name="smtp_name" class="input" value="<?= htmlspecialchars($settings['smtp_name'] ?? 'Aptus Platform') ?>">
         </div>
       </div>
     </div>
@@ -401,8 +416,8 @@ if (!isset($content)) {
             <div class="toggle-row__label"><?= $data['label'] ?></div>
             <div class="toggle-row__hint"><?= $data['hint'] ?></div>
         </div>
-        <div class="toggle-sw <?= $settings[$key] ? 'active' : '' ?>" onclick="this.classList.toggle('active'); document.getElementById('input_<?= $key ?>').value = this.classList.contains('active') ? 'true' : 'false';"></div>
-        <input type="hidden" name="<?= $key ?>" id="input_<?= $key ?>" value="<?= $settings[$key] ? 'true' : 'false' ?>">
+        <div class="toggle-sw <?= ($settings[$key] ?? true) ? 'active' : '' ?>" onclick="this.classList.toggle('active'); document.getElementById('input_<?= $key ?>').value = this.classList.contains('active') ? 'true' : 'false';"></div>
+        <input type="hidden" name="<?= $key ?>" id="input_<?= $key ?>" value="<?= ($settings[$key] ?? true) ? 'true' : 'false' ?>">
       </div>
       <?php endforeach; ?>
     </div>
@@ -492,22 +507,22 @@ if (!isset($content)) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
         <div class="form-group">
           <label class="form-label">Longueur min. mot de passe</label>
-          <input type="number" name="min_pass_length" class="input" value="<?= htmlspecialchars($settings['min_pass_length']) ?>">
+          <input type="number" name="min_pass_length" class="input" value="<?= htmlspecialchars($settings['min_pass_length'] ?? '8') ?>">
         </div>
         <div class="form-group">
           <label class="form-label">Expiration session (minutes)</label>
-          <input type="number" name="session_expiry" class="input" value="<?= htmlspecialchars($settings['session_expiry']) ?>">
+          <input type="number" name="session_expiry" class="input" value="<?= htmlspecialchars($settings['session_expiry'] ?? '120') ?>">
         </div>
       </div>
       <div class="toggle-row" style="margin-top:var(--space-4);">
         <div class="toggle-row__info"><div class="toggle-row__label">Forcer la 2FA pour les admins</div><div class="toggle-row__hint">Exiger l'authentification à deux facteurs pour toute l'équipe</div></div>
-        <div class="toggle-sw <?= $settings['force_2fa'] ? 'active' : '' ?>" onclick="this.classList.toggle('active'); document.getElementById('input_force_2fa').value = this.classList.contains('active') ? 'true' : 'false';"></div>
-        <input type="hidden" name="force_2fa" id="input_force_2fa" value="<?= $settings['force_2fa'] ? 'true' : 'false' ?>">
+        <div class="toggle-sw <?= ($settings['force_2fa'] ?? false) ? 'active' : '' ?>" onclick="this.classList.toggle('active'); document.getElementById('input_force_2fa').value = this.classList.contains('active') ? 'true' : 'false';"></div>
+        <input type="hidden" name="force_2fa" id="input_force_2fa" value="<?= ($settings['force_2fa'] ?? false) ? 'true' : 'false' ?>">
       </div>
       <div class="toggle-row">
         <div class="toggle-row__info"><div class="toggle-row__label">Bloquer après 5 tentatives</div><div class="toggle-row__hint">Verrouiller le compte après 5 tentatives échouées</div></div>
-        <div class="toggle-sw <?= $settings['block_after_5'] ? 'active' : '' ?>" onclick="this.classList.toggle('active'); document.getElementById('input_block_after_5').value = this.classList.contains('active') ? 'true' : 'false';"></div>
-        <input type="hidden" name="block_after_5" id="input_block_after_5" value="<?= $settings['block_after_5'] ? 'true' : 'false' ?>">
+        <div class="toggle-sw <?= ($settings['block_after_5'] ?? true) ? 'active' : '' ?>" onclick="this.classList.toggle('active'); document.getElementById('input_block_after_5').value = this.classList.contains('active') ? 'true' : 'false';"></div>
+        <input type="hidden" name="block_after_5" id="input_block_after_5" value="<?= ($settings['block_after_5'] ?? true) ? 'true' : 'false' ?>">
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:var(--space-4);">
         <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> Enregistrer Sécurité</button>
@@ -583,12 +598,12 @@ if (!isset($content)) {
       <div class="settings-card__desc">Contrôle de l'accessibilité du site</div>
       <div class="toggle-row">
         <div class="toggle-row__info"><div class="toggle-row__label">Activer le mode maintenance</div><div class="toggle-row__hint">Les visiteurs verront un message de maintenance</div></div>
-        <div class="toggle-sw <?= $settings['maintenance_mode'] ? 'active' : '' ?>" onclick="this.classList.toggle('active'); document.getElementById('input_maintenance_mode').value = this.classList.contains('active') ? 'true' : 'false';"></div>
-        <input type="hidden" name="maintenance_mode" id="input_maintenance_mode" value="<?= $settings['maintenance_mode'] ? 'true' : 'false' ?>">
+        <div class="toggle-sw <?= ($settings['maintenance_mode'] ?? false) ? 'active' : '' ?>" onclick="this.classList.toggle('active'); document.getElementById('input_maintenance_mode').value = this.classList.contains('active') ? 'true' : 'false';"></div>
+        <input type="hidden" name="maintenance_mode" id="input_maintenance_mode" value="<?= ($settings['maintenance_mode'] ?? false) ? 'true' : 'false' ?>">
       </div>
       <div class="form-group" style="margin-top:var(--space-4);">
         <label class="form-label">Message de maintenance</label>
-        <textarea class="textarea" name="maintenance_msg" rows="3"><?= htmlspecialchars($settings['maintenance_msg']) ?></textarea>
+        <textarea class="textarea" name="maintenance_msg" rows="3"><?= htmlspecialchars($settings['maintenance_msg'] ?? 'Le site est en cours de maintenance.') ?></textarea>
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:var(--space-4);">
         <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> Enregistrer Maintenance</button>
@@ -755,6 +770,19 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   // Initial preview
   updatePreview();
+
+  // AI Agent Toggle Logic
+  const aiSw = document.getElementById('ai-agent-toggle-sw');
+  if (aiSw) {
+    const isVisible = localStorage.getItem('aiAgentVisible') === 'true';
+    if (isVisible) aiSw.classList.add('active');
+    
+    aiSw.addEventListener('click', function() {
+      const active = aiSw.classList.toggle('active');
+      localStorage.setItem('aiAgentVisible', active);
+      window.dispatchEvent(new CustomEvent('toggleAIAgent', { detail: { show: active } }));
+    });
+  }
 });
 </script>
 

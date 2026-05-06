@@ -109,7 +109,7 @@ $pageTitle = "Guide Aptus - Explorez la magie";
               
               <div class="text-center mt-6 py-4 reveal-up delay-300">
                   <h3 class="accent-font text-high-contrast mb-4">La curiosité est un vilain défaut... sauf ici.</h3>
-                  <a href="login.php?panel=signup" class="btn btn-lg btn-primary glow-btn splash-hover px-5">
+                  <a href="signup_choice.php" class="btn btn-lg btn-primary glow-btn splash-hover px-5">
                       Franchir le pas <i data-lucide="arrow-right" class="ms-2"></i>
                   </a>
               </div>

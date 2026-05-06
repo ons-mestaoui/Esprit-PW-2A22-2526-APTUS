@@ -222,9 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $pageTitle = "Paramètres"; 
 $pageCSS = "cv.css"; 
 $userRole = $_SESSION['role'] ?? 'Candidat'; 
-?>
 
-<?php
 if (!isset($content)) {
     $content = __FILE__;
     include 'layout_front.php';
@@ -511,6 +509,16 @@ if (!isset($content)) {
     <div class="settings-card">
       <div class="settings-card__title"><i data-lucide="eye" style="width:20px;height:20px;color:var(--accent-primary);"></i> Visibilité du profil</div>
       <div class="settings-card__desc">Contrôlez qui peut voir vos informations</div>
+      
+      <!-- AI Agent toggle from incoming branch -->
+      <div class="setting-row">
+        <div class="setting-row__info">
+          <div class="setting-row__label">Assistant d'accessibilité IA</div>
+          <div class="setting-row__hint">Activer l'assistant vocal intelligent (Agent Aptus)</div>
+        </div>
+        <div class="toggle-switch" id="front-ai-agent-toggle"></div>
+      </div>
+
       <div class="setting-row">
         <div class="setting-row__info"><div class="setting-row__label">Profil public</div><div class="setting-row__hint">Votre profil est visible par les recruteurs</div></div>
         <label class="toggle-switch <?= !empty($prefs['privacy_public']) ? 'active' : '' ?>">
@@ -872,6 +880,19 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   // Initial preview
   updatePreview();
+
+  // AI Agent Toggle Logic (from incoming branch)
+  const aiSw = document.getElementById('front-ai-agent-toggle');
+  if (aiSw) {
+    const isVisible = localStorage.getItem('aiAgentVisible') === 'true';
+    if (isVisible) aiSw.classList.add('active');
+    
+    aiSw.addEventListener('click', function() {
+      const active = aiSw.classList.toggle('active');
+      localStorage.setItem('aiAgentVisible', active);
+      window.dispatchEvent(new CustomEvent('toggleAIAgent', { detail: { show: active } }));
+    });
+  }
 });
 </script>
 
