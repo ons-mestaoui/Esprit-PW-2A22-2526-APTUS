@@ -190,6 +190,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 chart.resize();
             });
 
+            // Listen for dynamic theme changes
+            window.addEventListener('themeChanged', (e) => {
+                const isDarkTheme = e.detail.theme === 'dark';
+                const newBaseFill = isDarkTheme ? '#1e293b' : '#e8edf5';
+                const newBaseBorder = isDarkTheme ? '#334155' : '#b8c4d4';
+                const newTextColor = isDarkTheme ? '#f8fafc' : '#334155';
+
+                chart.setOption({
+                    title: { textStyle: { color: newTextColor } },
+                    visualMap: { textStyle: { color: newTextColor } },
+                    geo: { itemStyle: { normal: { areaColor: newBaseFill, borderColor: newBaseBorder } } }
+                });
+            });
+
         } catch (e) {
             console.error("Advanced Heatmap Error:", e);
             mapContainer.innerHTML = '<p>Erreur lors du chargement de la carte interactive.</p>';

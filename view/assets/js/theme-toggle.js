@@ -19,6 +19,7 @@
     html.setAttribute('data-theme', theme);
     localStorage.setItem(STORAGE_KEY, theme);
     updateToggleIcons(theme);
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: theme } }));
   }
 
   function saveThemeToDatabase(theme) {
