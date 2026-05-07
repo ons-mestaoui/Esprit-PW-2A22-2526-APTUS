@@ -462,18 +462,18 @@ if (!isset($content)) {
         background: #1e293b;
     }
 
-    .spin {
+    .aptus-loader {
         width: 60px; height: 60px;
-        border: 4px solid var(--accent-primary);
-        border-top-color: transparent;
+        border: 5px solid rgba(107, 52, 163, 0.1);
+        border-top: 5px solid var(--accent-primary);
         border-radius: 50%;
         margin: 0 auto 1.5rem;
-        animation: spin 0.8s linear infinite;
+        animation: aptus-spin 1s linear infinite;
     }
 
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+    @keyframes aptus-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
 
     .tailor-progress-bar {
@@ -537,11 +537,55 @@ if (!isset($content)) {
         background: #10b981;
         color: #fff;
     }
+    .btn-audit-rescan {
+        background: var(--bg-secondary);
+        color: var(--accent-primary);
+        border: 1px solid var(--accent-primary);
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .btn-audit-rescan:hover {
+        background: rgba(107, 52, 163, 0.08);
+        color: var(--accent-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(107, 52, 163, 0.1);
+    }
+
+    .btn-audit-back {
+        background: rgba(16, 185, 129, 0.08);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+
+    .btn-audit-back:hover {
+        background: rgba(16, 185, 129, 0.15);
+        color: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(16, 185, 129, 0.1);
+    }
 </style>
 
 <div id="ai-loading-overlay" class="aptus-modal-overlay">
     <div class="aptus-modal-content">
-        <div class="spin"></div>
+        <div class="aptus-loader"></div>
         <h2 style="font-size: 1.6rem; font-weight: 850; color: var(--text-primary); margin-bottom: 8px;">Analyse IA Stratégique</h2>
         <p style="color: var(--text-secondary); font-size: 0.9rem;">Veuillez patienter, nos agents IA travaillent sur votre dossier...</p>
         
@@ -637,13 +681,13 @@ if (!isset($content)) {
                 <?php echo htmlspecialchars($analysis['score_explanation'] ?? "Analyse globale incisive sur la compétitivité du profil."); ?>
             </p>
             
-            <div style="display: flex; gap: 15px; margin-top: 1.5rem;">
-                <div style="background: var(--stat-teal-bg); color: var(--stat-teal); padding: 10px 20px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-                    <i data-lucide="check-circle" style="width:16px;"></i> Prêt pour le Marché
-                </div>
-                <button id="rescan-btn" style="background: var(--bg-secondary); color: var(--accent-primary); border: 1px solid var(--accent-primary); padding: 10px 20px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+            <div style="display: flex; gap: 15px; margin-top: 1.5rem; justify-content: flex-end;">
+                <button id="rescan-btn" class="btn-audit-rescan">
                     <i data-lucide="refresh-cw" style="width:16px;"></i> Mettre à jour l'audit
                 </button>
+                <a href="cv_my.php?cv_id=<?php echo $cvId; ?>&mode=audit" class="btn-audit-back">
+                    <i data-lucide="arrow-left" style="width:16px;"></i> Retour
+                </a>
             </div>
         </div>
     </div>

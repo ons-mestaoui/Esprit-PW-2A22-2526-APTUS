@@ -107,39 +107,69 @@ class RapportIAController {
     public function matchJobs(array $keywords): array {
         $db = config::getConnexion();
         try {
-            // Recherche par mots-clés (titre, domaine ou compétences)
+            // Nettoyer et garder uniquement les mots-clés de taille >= 3
+            $validKeywords = array_filter($keywords, function($kw) {
+                return strlen(trim($kw)) >= 3;
+            });
+            $validKeywordsCount = count($validKeywords);
+            
+            if ($validKeywordsCount === 0) return []; // Pas de mots-clés -> pas de match ciblé
+
+            // Recherche large (toutes les offres qui matchent au moins un mot-clé)
             $where = [];
             $params = [];
-            foreach ($keywords as $idx => $kw) {
-                if (strlen($kw) < 3) continue;
+            $idx = 0;
+            foreach ($validKeywords as $kw) {
                 $where[] = "(o.titre LIKE :kw$idx OR o.domaine LIKE :kw$idx OR o.competences_requises LIKE :kw$idx)";
-                $params["kw$idx"] = '%' . $kw . '%';
+                $params["kw$idx"] = '%' . trim($kw) . '%';
+                $idx++;
             }
-
-            if (empty($where)) return []; // Pas de mots-clés -> pas de match ciblé
 
             $whereStr = "WHERE " . implode(" OR ", $where);
             $sql = "SELECT o.*, e.raisonSociale as company, p.ville 
                     FROM offreemploi o 
                     JOIN entreprise e ON o.id_entreprise = e.id_entreprise 
                     LEFT JOIN profil p ON e.id_entreprise = p.id_utilisateur 
-                    $whereStr 
-                    ORDER BY RAND() LIMIT 3";
+                    $whereStr";
             
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
             $results = $stmt->fetchAll();
 
             if ($results) {
-                return array_map(function($o) {
-                    return [
-                        'title' => $o['titre'],
-                        'domain' => $o['domaine'] ?: 'IT / Tech',
-                        'match_score' => rand(75, 95), // Score simulé basé sur la présence en DB
-                        'location' => ($o['ville'] ?: 'Tunis') . ' (Aptus)',
-                        'salary' => $o['salaire'] ? ($o['salaire'] . '€ / an') : 'Non précisé'
-                    ];
-                }, $results);
+                $matchedJobs = [];
+                
+                foreach ($results as $o) {
+                    $matchCount = 0;
+                    $textToSearch = mb_strtolower($o['titre'] . ' ' . $o['domaine'] . ' ' . $o['competences_requises'], 'UTF-8');
+                    
+                    foreach ($validKeywords as $kw) {
+                        if (mb_strpos($textToSearch, mb_strtolower(trim($kw), 'UTF-8')) !== false) {
+                            $matchCount++;
+                        }
+                    }
+
+                    $score = round(($matchCount / $validKeywordsCount) * 100);
+
+                    // Ne garder que si le score est >= 60%
+                    if ($score >= 60) {
+                        $matchedJobs[] = [
+                            'title' => $o['titre'],
+                            'domain' => $o['domaine'] ?: 'IT / Tech',
+                            'match_score' => $score,
+                            'location' => ($o['ville'] ?: 'Tunis') . ' (Aptus)',
+                            'salary' => $o['salaire'] ? ($o['salaire'] . '€ / an') : 'Non précisé'
+                        ];
+                    }
+                }
+
+                // Trier par score décroissant
+                usort($matchedJobs, function($a, $b) {
+                    return $b['match_score'] <=> $a['match_score'];
+                });
+
+                // Garder les 9 meilleurs
+                return array_slice($matchedJobs, 0, 9);
             }
         } catch (Exception $e) {
             error_log("MatchJobs Error: " . $e->getMessage());

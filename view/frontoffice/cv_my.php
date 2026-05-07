@@ -552,6 +552,19 @@ if (!isset($content)) {
     background: var(--gradient-primary);
     transition: width 0.5s ease;
 }
+    .aptus-loader {
+        width: 60px; height: 60px;
+        border: 5px solid rgba(107, 52, 163, 0.1);
+        border-top: 5px solid var(--accent-primary);
+        border-radius: 50%;
+        margin: 0 auto 1.5rem;
+        animation: aptus-spin 1s linear infinite;
+    }
+
+    @keyframes aptus-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
 </style>
 
 <div class="dashboard-wrap">
@@ -805,7 +818,7 @@ if (!isset($content)) {
         <!-- PROGRESS VIEW -->
         <div id="tailor-modal-processing" style="display: none;">
             <div style="text-align: center; margin-bottom: 2rem;">
-                <div class="spin" style="width: 60px; height: 60px; border: 4px solid var(--accent-primary); border-top-color: transparent; border-radius: 50%; margin: 0 auto 1.5rem;"></div>
+                <div class="aptus-loader"></div>
                 <h2 style="font-size: 1.6rem; font-weight: 850; color: #1e293b;">Analyse IA Stratégique</h2>
                 <p style="color: #64748b; font-size: 0.9rem;">Veuillez patienter, nos agents IA travaillent sur votre dossier...</p>
             </div>
@@ -849,14 +862,17 @@ document.addEventListener('DOMContentLoaded', () => {
         link.classList.add('active');
     }
 
-    // Auto-open tailor modal if mode=tailor is in URL
+    // Auto-open modals based on URL params
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('mode') === 'tailor') {
-        const firstCv = document.querySelector('.cv-miniature-card');
-        if (firstCv) {
-            const cvId = firstCv.id.replace('cv-card-', '');
-            openTailorModal(cvId);
-        }
+    const mode = urlParams.get('mode');
+    const cvId = urlParams.get('cv_id');
+
+    if (mode === 'audit' && cvId) {
+        const auditBtn = document.querySelector(`#cv-card-${cvId} .btn-action-small.ai`);
+        if (auditBtn) auditBtn.click();
+    } else if (mode === 'tailor') {
+        const targetId = cvId || (document.querySelector('.cv-miniature-card')?.id.replace('cv-card-', ''));
+        if (targetId) openTailorModal(targetId);
     }
 });
 

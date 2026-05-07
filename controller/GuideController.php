@@ -240,6 +240,7 @@ class GuideController {
         - Direct, tactique et professionnel. 
         - Évite les phrases génériques. 
         - Utilise un ton 'Insider' : donne des conseils concrets que seul un recruteur senior connaîtrait.
+        - INTERVIEW QUIZ : Génère obligatoirement EXACTEMENT 3 questions variées (1 Technique, 1 Comportementale, 1 Situationnelle).
 
         1. STRATÉGIE SALARIALE (PRECISION CRITIQUE) :
         - ESTIMATION : Effectue une estimation précise basée sur le marché actuel en France pour ce poste et ce type d'entreprise.
@@ -258,11 +259,24 @@ class GuideController {
           ],
           \"company_insights\": { \"culture\": \"Analyse profonde de la culture (Startup vs Corporate)\", \"strategic_tips\": \"Comment se comporter pour matcher parfaitement.\" },
           \"interview_quiz\": [
+             /* INSTRUCTION CRITIQUE : GÉNÈRE STRICTEMENT 3 QUESTIONS DIFFÉRENTES (TECHNIQUE, COMPORTEMENTALE, SITUATIONNELLE) */
              {
-               \"question\": \"Question piège ou technique liée au poste\",
-               \"options\": [\"Option A\", \"Option B\", \"Option C\"],
+               \"question\": \"Question 1 (Technique)\",
+               \"options\": [\"Choix A\", \"Choix B\", \"Choix C\"],
                \"correct_index\": 0,
-               \"explanation\": \"Pourquoi c'est la bonne réponse tactique.\"
+               \"explanation\": \"Explication détaillée...\"
+             },
+             {
+               \"question\": \"Question 2 (Comportementale)\",
+               \"options\": [\"Choix A\", \"Choix B\", \"Choix C\"],
+               \"correct_index\": 1,
+               \"explanation\": \"Explication détaillée...\"
+             },
+             {
+               \"question\": \"Question 3 (Situationnelle)\",
+               \"options\": [\"Choix A\", \"Choix B\", \"Choix C\"],
+               \"correct_index\": 2,
+               \"explanation\": \"Explication détaillée...\"
              }
           ],
           \"salary_strategy\": {
