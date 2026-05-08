@@ -662,7 +662,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const lon = data[0].lon;
                     const markerHtml = `<div class="custom-marker"><i class="fas fa-briefcase"></i></div>`;
                     const customIcon = L.divIcon({ html: markerHtml, className: 'dummy', iconSize: [40, 40], iconAnchor: [20, 40] });
-                    const marker = L.marker([lat, lon], { icon: customIcon }).addTo(map);
+                    const marker = L.marker([lat, lon], { 
+                        icon: customIcon,
+                        jobTitle: offre.titre // Ajout crucial pour la recherche
+                    }).addTo(map);
 
                     marker.on('click', () => openDrawer(offre, lat, lon));
                     marker.bindTooltip(`<div class="hover-card"><span class="hover-card-title">${offre.titre}</span><span class="hover-card-company">${offre.nom_entreprise || 'Aptus'}</span></div>`, { className: 'leaflet-tooltip-aptus', direction: 'top', offset: [0, -35], opacity: 1 });
