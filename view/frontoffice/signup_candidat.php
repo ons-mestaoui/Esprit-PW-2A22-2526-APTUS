@@ -92,6 +92,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $mail->Password   = SMTP_PASS;
                         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                         $mail->Port       = SMTP_PORT;
+                        
+                        // Fix for local SSL issues (common on XAMPP)
+                        $mail->SMTPOptions = array(
+                            'ssl' => array(
+                                'verify_peer' => false,
+                                'verify_peer_name' => false,
+                                'allow_self_signed' => true
+                            )
+                        );
 
                         $mail->setFrom(SMTP_FROM, SMTP_FROM_NAME);
                         $mail->addAddress($email, $nom . ' ' . $prenom);
@@ -108,7 +117,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           <br><p>L'équipe Aptus</p>
                         </body></html>";
                         $mail->send();
-                    } catch (Exception $e) {}
+                    } catch (Exception $e) {
+                        $error = "L'inscription a réussi, mais l'email n'a pas pu être envoyé. Erreur : " . $mail->ErrorInfo;
+                    }
 
                     // Redirect to login with verification prompt
                     header("Location: login.php?registered=1");
@@ -163,17 +174,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="auth-form__row">
           <div class="form-group">
-            <label class="form-label" for="candidat-nom">Nom</label>
+            <label class="form-label" for="candidat-nom">Nom <span style="color:red;">*</span></label>
             <input type="text" class="input" id="candidat-nom" name="nom" placeholder="Votre nom" data-required="true">
           </div>
           <div class="form-group">
-            <label class="form-label" for="candidat-prenom">Prénom</label>
+            <label class="form-label" for="candidat-prenom">Prénom <span style="color:red;">*</span></label>
             <input type="text" class="input" id="candidat-prenom" name="prenom" placeholder="Votre prénom" data-required="true">
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="candidat-email">Adresse Email</label>
+          <label class="form-label" for="candidat-email">Adresse Email <span style="color:red;">*</span></label>
           <div class="input-icon-wrapper">
             <i data-lucide="mail" style="width:18px;height:18px;"></i>
             <input type="text" class="input" id="candidat-email" name="email" placeholder="votre@email.com" data-required="true" data-type="email">
@@ -182,14 +193,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="auth-form__row">
           <div class="form-group">
-            <label class="form-label" for="candidat-password">Mot de passe</label>
+            <label class="form-label" for="candidat-password">Mot de passe <span style="color:red;">*</span></label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
               <input type="password" class="input" id="candidat-password" name="password" placeholder="Min. 8 caractères" data-required="true" data-minlength="8">
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="candidat-password2">Confirmer</label>
+            <label class="form-label" for="candidat-password2">Confirmer <span style="color:red;">*</span></label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
               <input type="password" class="input" id="candidat-password2" name="password_confirm" placeholder="Confirmez" data-required="true" data-minlength="8" data-match="candidat-password">

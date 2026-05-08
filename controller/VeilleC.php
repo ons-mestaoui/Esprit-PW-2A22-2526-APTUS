@@ -347,6 +347,12 @@ class VeilleC
                 }
             }
             
+            $total_tags = 0;
+            foreach($secteur_data as $sec => $data) {
+                $total_tags += $data['count'];
+            }
+            $stats['total_secteurs_tags'] = $total_tags;
+
             $final_secteurs = [];
             foreach($secteur_data as $sec => $data) {
                 $final_secteurs[$sec] = [
@@ -372,6 +378,7 @@ class VeilleC
             
         } catch (Exception $e) {
             $stats['top_secteurs'] = [];
+            $stats['total_secteurs_tags'] = 0;
         }
 
         // 4. Sujets tendance (Top tags by vues)

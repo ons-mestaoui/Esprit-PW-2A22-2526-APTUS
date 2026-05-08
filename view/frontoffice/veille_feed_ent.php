@@ -249,7 +249,8 @@ foreach ($dbReports as $r) {
         $colors = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)'];
         $i = 0;
         if (!empty($sidebarStats['top_secteurs'])):
-        foreach ($sidebarStats['top_secteurs'] as $sec => $count): 
+        foreach ($sidebarStats['top_secteurs'] as $sec => $data): 
+            $count = $data['count'];
             $pct = $sidebarStats['total_secteurs_tags'] > 0 ? round(($count / $sidebarStats['total_secteurs_tags']) * 100) : 0;
             $color = $colors[$i % count($colors)];
         ?>

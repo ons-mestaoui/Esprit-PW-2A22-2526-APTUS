@@ -105,6 +105,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $mail->Password   = SMTP_PASS;
                         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                         $mail->Port       = SMTP_PORT;
+                        
+                        // Fix for local SSL issues
+                        $mail->SMTPOptions = array(
+                            'ssl' => array(
+                                'verify_peer' => false,
+                                'verify_peer_name' => false,
+                                'allow_self_signed' => true
+                            )
+                        );
 
                         $mail->setFrom(SMTP_FROM, SMTP_FROM_NAME);
                         $mail->addAddress($email, $raison_sociale);
@@ -121,7 +130,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           <br><p>L'équipe Aptus</p>
                         </body></html>";
                         $mail->send();
-                    } catch (Exception $e) {}
+                    } catch (Exception $e) {
+                        $error = "L'inscription a réussi, mais l'email n'a pas pu être envoyé. Erreur : " . $mail->ErrorInfo;
+                    }
 
                     header("Location: login.php?registered=1");
                     exit();
@@ -168,14 +179,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="auth-form__row">
           <div class="form-group">
-            <label class="form-label" for="ent-nom">Raison sociale</label>
+            <label class="form-label" for="ent-nom">Raison sociale <span style="color:red;">*</span></label>
             <div class="input-icon-wrapper">
               <i data-lucide="building-2" style="width:18px;height:18px;"></i>
               <input type="text" class="input" id="ent-nom" name="raison_sociale" placeholder="Ex: TechSphere" data-required="true">
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="ent-siret">N° SIRET</label>
+            <label class="form-label" for="ent-siret">N° SIRET <span style="color:red;">*</span></label>
             <div class="input-icon-wrapper">
               <i data-lucide="hash" style="width:18px;height:18px;"></i>
               <input type="text" class="input" id="ent-siret" name="siret" placeholder="123 456 789 00012" data-required="true" data-type="tel">
@@ -245,7 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="auth-form__row">
           <div class="form-group">
-            <label class="form-label" for="ent-email">Email Professionnel</label>
+            <label class="form-label" for="ent-email">Email Professionnel <span style="color:red;">*</span></label>
             <div class="input-icon-wrapper">
               <i data-lucide="mail" style="width:18px;height:18px;"></i>
             <input type="text" class="input" id="ent-email" name="email" placeholder="contact@entreprise.com" data-required="true" data-type="email">
@@ -279,14 +290,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="auth-form__row">
           <div class="form-group">
-            <label class="form-label" for="ent-password">Mot de passe</label>
+            <label class="form-label" for="ent-password">Mot de passe <span style="color:red;">*</span></label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
               <input type="password" class="input" id="ent-password" name="password" placeholder="Min. 8 caractères" data-required="true" data-minlength="8">
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="ent-password2">Confirmer</label>
+            <label class="form-label" for="ent-password2">Confirmer <span style="color:red;">*</span></label>
             <div class="input-icon-wrapper">
               <i data-lucide="lock" style="width:18px;height:18px;"></i>
               <input type="password" class="input" id="ent-password2" name="password_confirm" placeholder="Confirmez" data-required="true" data-minlength="8" data-match="ent-password">

@@ -55,10 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'two_factor_enabled' => false
         ]);
         $success = "L'authentification à deux facteurs a été désactivée.";
-    } elseif (empty($nom) || empty($email)) {
-        $error = "Le nom entier et l'email sont obligatoires.";
     } else {
         try {
+            $prenom = $_POST['prenom'] ?? '';
+            
             // --- Traitement de la photo (Base64) ---
             $photo_base64 = $profil ? ($profil['photo'] ?? null) : null; 
             if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
@@ -67,7 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $photo_base64 = 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
             }
 
-            $utilisateur_model = new Utilisateur($id, $nom, $user['prenom'], $email, $user['motDePasse'], $user['role'], $telephone, $user['photo']??null);
+            // En passant une chaîne vide pour le mot de passe, UtilisateurC comprendra qu'il ne doit pas le modifier
+            $utilisateur_model = new Utilisateur($id, $nom, $prenom, $email, '', $user['role'], $telephone, $user['photo']??null);
             $utilisateurC->updateUtilisateur($utilisateur_model, $id);
 
             $p = new Profil(null, $id, $photo_base64, $profil['bio']??null, $adresse, $ville, $pays, $date_naissance, $profil['linkedin']??null, $profil['siteWeb']??null);
@@ -174,8 +175,12 @@ if (!isset($content)) {
           </h3>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
             <div class="form-group">
-              <label class="form-label">Nom complet</label>
+              <label class="form-label">Nom</label>
               <input type="text" name="nom" class="input" value="<?php echo htmlspecialchars($user['nom'] ?? ''); ?>" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Prénom</label>
+              <input type="text" name="prenom" class="input" value="<?php echo htmlspecialchars($user['prenom'] ?? ''); ?>" required>
             </div>
             <div class="form-group">
               <label class="form-label">Email</label>
@@ -213,84 +218,8 @@ if (!isset($content)) {
           </div>
         </div>
 
-        <!-- Security -->
-        <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:var(--space-6);margin-bottom:var(--space-6);">
-          <h3 style="font-size:var(--fs-lg);font-weight:600;margin-bottom:var(--space-5);display:flex;align-items:center;gap:var(--space-2);">
-            <i data-lucide="lock" style="width:20px;height:20px;color:var(--accent-secondary);"></i>
-            Sécurité du compte
-          </h3>
-          
-          <div style="display:flex; align-items:center; justify-content:space-between; padding:var(--space-4); background:var(--bg-secondary); border-radius:var(--radius-md); border:1px solid var(--border-color);">
-            <div style="display:flex; align-items:center; gap:var(--space-4);">
-              <div style="width:40px; height:40px; background:rgba(99,102,241,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center;">
-                <i data-lucide="smartphone" style="width:20px; height:20px; color:var(--accent-primary);"></i>
-              </div>
-              <div>
-                <div style="font-weight:600; font-size:14px;">Authentification à deux facteurs</div>
-                <div style="font-size:12px; color:var(--text-secondary);"><?= !empty($prefs['two_factor_enabled']) ? 'Activée - Votre compte est sécurisé' : 'Désactivée - Ajoutez une couche de sécurité' ?></div>
-              </div>
-            </div>
-            
-            <?php if (!empty($prefs['two_factor_enabled'])): ?>
-              <form method="POST" action="" style="margin:0;">
-                <input type="hidden" name="action" value="disable_2fa">
-                <button type="submit" class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);">Désactiver</button>
-              </form>
-            <?php else: 
-              include_once __DIR__ . '/../../controller/TwoFactorC.php';
-              $newSecret = TwoFactorC::generateSecret();
-              $otpAuthUrl = TwoFactorC::getOtpAuthUrl($user['email'], $newSecret);
-            ?>
-              <button type="button" class="btn btn-sm btn-primary" onclick="document.getElementById('modal-2fa-setup').style.display='flex';">Configurer</button>
-              
-              <!-- 2FA Setup Modal -->
-              <div id="modal-2fa-setup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(6px);">
-                <div style="background:var(--bg-card); border-radius:var(--radius-xl); padding:var(--space-8); text-align:center; max-width:440px; width:95%; position:relative; box-shadow:0 25px 60px rgba(0,0,0,0.3);">
-                  <button type="button" onclick="document.getElementById('modal-2fa-setup').style.display='none';" style="position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; color:var(--text-secondary); padding:4px;">
-                    <i data-lucide="x" style="width:22px;height:22px;"></i>
-                  </button>
-                  
-                  <h3 style="font-size:20px; font-weight:700; margin-bottom:var(--space-2);">Configurer la 2FA</h3>
-                  <p style="font-size:14px; color:var(--text-secondary); margin-bottom:var(--space-6);">Scannez ce code avec votre application de sécurité.</p>
-                  
-                  <div style="background:#fff; padding:var(--space-4); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; margin:0 auto var(--space-5) auto; border:1px solid var(--border-color); width:fit-content;">
-                    <div id="qrcode"></div>
-                  </div>
-                  
-                  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-                  <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                      const otpUrl = "<?= addslashes($otpAuthUrl) ?>";
-                      new QRCode(document.getElementById("qrcode"), {
-                        text: otpUrl,
-                        width: 180,
-                        height: 180,
-                        colorDark : "#1e293b",
-                        colorLight : "#ffffff",
-                        correctLevel : QRCode.CorrectLevel.H
-                      });
-                    });
-                  </script>
-
-                  <form method="POST" action="">
-                    <input type="hidden" name="action" value="setup_2fa">
-                    <input type="hidden" name="two_factor_secret" value="<?= $newSecret ?>">
-                    <div class="form-group" style="text-align:left;">
-                      <label class="form-label" style="text-align:center; display:block;">Code de vérification</label>
-                      <input type="text" name="two_factor_code" class="input" placeholder="000000" maxlength="6" pattern="\d{6}" required style="text-align:center; font-size:24px; letter-spacing:8px; height:56px;">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-lg w-full" style="margin-top:var(--space-4);">
-                      Activer maintenant
-                    </button>
-                  </form>
-                </div>
-              </div>
-            <?php endif; ?>
-          </div>
-        </div>
-
         <!-- Save -->
-        <div style="display:flex;justify-content:flex-end;gap:var(--space-3);">
+        <div style="display:flex;justify-content:flex-end;gap:var(--space-3);margin-top:var(--space-2);">
           <button type="submit" class="btn btn-primary">
             <i data-lucide="save" style="width:18px;height:18px;"></i>
             Enregistrer les modifications

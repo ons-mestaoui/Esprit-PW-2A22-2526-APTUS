@@ -57,39 +57,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($passwordOk) {
-                // Check if 2FA is enabled
-                $utilisateurC = new UtilisateurC();
-                $prefs = $utilisateurC->getPreferences($user['id_utilisateur']);
-                
-                if (!empty($prefs['two_factor_enabled'])) {
-                    // Redirect to 2FA verification page
-                    $_SESSION['temp_2fa_user'] = [
-                        'id' => $user['id_utilisateur'],
-                        'nom' => $user['nom'],
-                        'prenom' => $user['prenom'] ?? '',
-                        'role' => $user['role']
+                // Check if account is verified
+                if (isset($user['est_verifie']) && $user['est_verifie'] == 0 && strtolower($user['role'] ?? '') !== 'admin') {
+                    $error = "Votre compte n'est pas encore activé. Veuillez cliquer sur le lien envoyé dans votre boîte mail.";
+                } else {
+                    // Check if 2FA is enabled
+                    $utilisateurC = new UtilisateurC();
+                    $prefs = $utilisateurC->getPreferences($user['id_utilisateur']);
+                    
+                    if (!empty($prefs['two_factor_enabled'])) {
+                        // Redirect to 2FA verification page
+                        $_SESSION['temp_2fa_user'] = [
+                            'id' => $user['id_utilisateur'],
+                            'nom' => $user['nom'],
+                            'prenom' => $user['prenom'] ?? '',
+                            'role' => $user['role']
+                        ];
+                        header("Location: two_factor.php");
+                        exit();
+                    }
+
+                    // Normal Login (no 2FA)
+                    $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
+                    $_SESSION['nom'] = $user['nom'];
+                    $_SESSION['prenom'] = $user['prenom'] ?? '';
+                    $_SESSION['role'] = $user['role'];
+
+                    // Redirection simple basée sur le rôle
+                    $roleRoutes = [
+                        'admin' => '../backoffice/dashboard.php',
+                        'candidat' => 'jobs_feed.php',
+                        'entreprise' => 'hr_posts.php',
+                        'tuteur' => 'dashboard_tuteur.php'
                     ];
-                    header("Location: two_factor.php");
+                    $roleKey = strtolower($user['role']);
+                    
+                    header("Location: " . ($roleRoutes[$roleKey] ?? 'landing.php'));
                     exit();
                 }
-
-                // Normal Login (no 2FA)
-                $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
-                $_SESSION['nom'] = $user['nom'];
-                $_SESSION['prenom'] = $user['prenom'] ?? '';
-                $_SESSION['role'] = $user['role'];
-
-                // Redirection simple basée sur le rôle
-                $roleRoutes = [
-                    'admin' => '../backoffice/dashboard.php',
-                    'candidat' => 'jobs_feed.php',
-                    'entreprise' => 'hr_posts.php',
-                    'tuteur' => 'dashboard_tuteur.php'
-                ];
-                $roleKey = strtolower($user['role']);
-                
-                header("Location: " . ($roleRoutes[$roleKey] ?? 'landing.php'));
-                exit();
             } else {
                 $error = "Email ou mot de passe incorrect.";
             }
@@ -208,6 +213,17 @@ if (isset($_GET['error'])) {
       height: 100%;
       width: 50%;
       transition: transform 0.6s ease-in-out;
+    }
+    .overlay-panel h1 {
+      color: #FFFFFF !important;
+      margin-bottom: var(--space-4);
+    }
+    .overlay-panel p {
+      color: rgba(255, 255, 255, 0.9) !important;
+      font-weight: 400;
+      line-height: 1.6;
+      margin-top: 15px;
+      margin-bottom: 25px;
     }
     .overlay-left { transform: translateX(-20%); }
     .auth-container.right-panel-active .overlay-left { transform: translateX(0); }
@@ -530,7 +546,7 @@ if (isset($_GET['error'])) {
       <div class="form-container sign-up-container">
         <div class="auth-split-form">
           <h1>Rejoignez Aptus</h1>
-          <p style="margin-bottom: var(--space-6); color: var(--text-secondary);">Choisissez votre profil pour commencer</p>
+          <p style="margin-bottom: var(--space-8); color: var(--text-primary); opacity: 0.8; font-weight: 500;">Sélectionnez votre profil pour commencer votre aventure avec Aptus</p>
           
           <div class="role-grid-mini">
             <a href="signup_candidat.php" class="role-card-mini">
@@ -653,7 +669,7 @@ if (isset($_GET['error'])) {
             <button class="btn btn-outline-white btn-lg" id="signIn">Se connecter</button>
           </div>
           <div class="overlay-panel overlay-right">
-            <h1>Bonjour l'ami !</h1>
+            <h1>Bienvenue sur Aptus</h1>
             <p>Inscrivez-vous et commencez votre aventure avec Aptus</p>
             <button class="btn btn-outline-white btn-lg" id="signUp">S'inscrire</button>
           </div>
