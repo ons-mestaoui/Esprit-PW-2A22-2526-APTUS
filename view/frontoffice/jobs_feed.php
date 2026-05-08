@@ -635,6 +635,66 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }, 3000);
+});document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'applied' || urlParams.get('applied') === '1') {
+        // Création d'une modale de succès Premium
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10000; animation: fadeIn 0.4s ease;
+        `;
+        overlay.innerHTML = `
+            <div style="background: var(--bg-card); padding: 3rem; border-radius: 30px; text-align: center; max-width: 450px; width: 90%; box-shadow: 0 25px 60px rgba(0,0,0,0.3); border: 1px solid var(--border-color); animation: scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                <div style="width: 80px; height: 80px; background: #10b981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2.5rem; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);">
+                    <i data-lucide="check"></i>
+                </div>
+                <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 1rem;">Candidature Envoyée !</h2>
+                <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 2rem;">Félicitations ! Votre dossier a bien été transmis à l'entreprise. Vous recevrez une notification dès qu'une décision sera prise.</p>
+                <button onclick="this.closest('.success-overlay').remove()" style="background: var(--gradient-primary); color: white; border: none; padding: 1rem 2rem; border-radius: 15px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem; transition: all 0.3s; box-shadow: 0 8px 20px rgba(168, 100, 228, 0.3);">
+                    Découvrir d'autres offres
+                </button>
+            </div>
+            <style>
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes scaleUp { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+            </style>
+        `;
+        overlay.classList.add('success-overlay');
+        document.body.appendChild(overlay);
+        if (window.lucide) lucide.createIcons();
+    }
+    if (urlParams.get('error') === 'already_applied') {
+        // Création d'une modale d'alerte Premium
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10000; animation: fadeIn 0.4s ease;
+        `;
+        overlay.innerHTML = `
+            <div style="background: var(--bg-card); padding: 3rem; border-radius: 30px; text-align: center; max-width: 450px; width: 90%; box-shadow: 0 25px 60px rgba(0,0,0,0.3); border: 1px solid var(--border-color); animation: scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                <div style="width: 80px; height: 80px; background: #f59e0b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2.5rem; box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);">
+                    <i data-lucide="info"></i>
+                </div>
+                <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 1rem;">Oups !</h2>
+                <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 2rem;">Il semble que vous ayez déjà déposé votre candidature pour ce poste. Inutile de postuler plusieurs fois, votre dossier est bien en cours d'examen !</p>
+                <button onclick="this.closest('.alert-overlay').remove()" style="background: #1e293b; color: white; border: none; padding: 1rem 2rem; border-radius: 15px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem; transition: all 0.3s;">
+                    Compris
+                </button>
+            </div>
+            <style>
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes scaleUp { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+            </style>
+        `;
+        overlay.classList.add('alert-overlay');
+        document.body.appendChild(overlay);
+        if (window.lucide) lucide.createIcons();
+    }
 });
 </script>
 

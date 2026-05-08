@@ -32,7 +32,7 @@ class scoreAIC {
                 "messages" => [
                     ["role" => "system", "content" => "Tu es un Expert Recruteur Senior d'Aptus. Ton rôle est d'analyser une candidature et de lui attribuer un score de pertinence entre 1 et 100.
                         
-                        CRITÈRES D'ÉVALUATION :
+                        CRITÈRES D'ÉVALUATION : 
                         1. CORRESPONDANCE CV/OFFRE : Analyse si le profil (expériences, compétences) correspond aux exigences de l'offre.
                         2. RÉPONSE À LA QUESTION : Évalue si la réponse du candidat à la question de l'entreprise est pertinente, claire et démontre une réelle compétence ou motivation.
                         
@@ -40,7 +40,7 @@ class scoreAIC {
                         - TOLÉRANCE : Ne sois PAS sensible à la casse (Majuscules/Minuscules).
                         - LANGUE : Réponds en FRANÇAIS.
                         - ORTHOGRAPHE : Ignore les fautes d'orthographe si le sens reste clair. Focalise-toi sur le FOND et non la forme.
-                        - RIGUEUR : Un candidat parfait = 90-100. Un profil intéressant mais avec des manques = 60-80. Un profil hors-sujet = < 50.
+                        - RIGUEUR : Un candidat parfait = 80-100. Un profil intéressant mais avec des manques = 60-78. Un profil hors-sujet = < 20.
                         
                         RÉPONSE : Réponds UNIQUEMENT par le nombre entier du score. Aucun texte, aucune explication."],
                     ["role" => "user", "content" => $prompt]

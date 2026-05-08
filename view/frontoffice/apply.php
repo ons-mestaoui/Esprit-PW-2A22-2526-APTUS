@@ -61,11 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])
     if (empty($cand_errors)) {
         $id_candidat = 1; 
         if ($candidatureC->hasAlreadyApplied($id_candidat, $id_offre)) {
-            $cand_errors['global'] = "Vous avez déjà postulé à cette offre.";
+            // Redirection vers jobs_feed avec erreur "déjà postulé" pour déclencher la modale premium
+            header('Location: jobs_feed.php?error=already_applied');
+            exit();
         } else {
             $nouvelleCandidature = new candidature($id_candidat, $id_offre, $nom, $prenom, $email, $date_candidature, $reponses, $cv_cand_base64, null, 'En attente');
             $candidatureC->addCandidature($nouvelleCandidature);
-            $success = true;
+            // Redirection vers jobs_feed avec succès
+            header('Location: jobs_feed.php?applied=1');
+            exit();
         }
     }
 }

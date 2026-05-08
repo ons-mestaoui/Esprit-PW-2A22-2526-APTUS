@@ -168,7 +168,7 @@ if (!isset($content)) {
          onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(168, 100, 228, 0.4)';" 
          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(168, 100, 228, 0.3)';">
         <i data-lucide="plus" style="width:20px;height:20px;"></i> 
-        <span>Poster une offre</span>
+        <span>Publier une offre</span>
       </a>
     
 
@@ -351,7 +351,7 @@ if (!isset($content)) {
         
         <?php if ($count == 0): ?>
             <div class="empty-state text-center" style="padding: 3rem; background: var(--surface-1); border-radius: 12px; grid-column: 1 / -1;">
-                <p>Aucune offre trouvée. Commencez par en poster une !</p>
+                <p>Aucune offre trouvée. Commencez par en publier une !</p>
             </div>
         <?php endif; ?>
       </div>
