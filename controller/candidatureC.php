@@ -80,12 +80,14 @@ class candidatureC {
         
         $params = [];
         if (!empty($criteres['status'])) {
-            if ($criteres['status'] === 'shortliste' || $criteres['status'] === 'Accepté') {
-                $sql .= " AND c.statut = 'Accepté'";
-            } elseif ($criteres['status'] === 'refuse' || $criteres['status'] === 'Refusé') {
-                $sql .= " AND c.statut = 'Refusé'";
-            } elseif ($criteres['status'] === 'en_attente') {
-                $sql .= " AND (c.statut = 'En attente' OR c.statut = 'en_attente')";
+            $status = strtolower($criteres['status']);
+            if ($status === 'shortliste' || $status === 'accepté' || $status === 'accepte') {
+                $sql .= " AND LOWER(c.statut) IN ('accepté', 'accepte', 'shortliste')";
+            } elseif ($status === 'refuse' || $status === 'refusé') {
+                $sql .= " AND LOWER(c.statut) IN ('refusé', 'refuse')";
+            } elseif ($status === 'en_attente' || $status === 'en attente') {
+                // On inclut les statuts vides ou null dans "En attente" car c'est le statut par défaut
+                $sql .= " AND (LOWER(c.statut) = 'en attente' OR LOWER(c.statut) = 'en_attente' OR c.statut IS NULL OR c.statut = '')";
             }
         }
 
