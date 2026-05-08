@@ -307,16 +307,19 @@
 
   <script>
   document.addEventListener('DOMContentLoaded', function() {
-      // Afficher les notifications non lues sous forme de toasts
+      // Afficher les notifications non lues sous forme de toasts (une seule fois par session)
       <?php if (isset($unreadCount) && $unreadCount > 0): ?>
           <?php 
             $newNotifs = array_filter($notifications, function($n) { return !$n['is_read']; });
             $newNotifs = array_slice($newNotifs, 0, 3); // Max 3 toasts
             foreach($newNotifs as $notif): 
           ?>
-              setTimeout(() => {
-                  showToast("<?php echo addslashes(htmlspecialchars($notif['message'])); ?>");
-              }, 500);
+              if (!sessionStorage.getItem('notif_seen_<?php echo $notif['id_notif']; ?>')) {
+                  setTimeout(() => {
+                      showToast("<?php echo addslashes(htmlspecialchars($notif['message'])); ?>");
+                      sessionStorage.setItem('notif_seen_<?php echo $notif['id_notif']; ?>', 'true');
+                  }, 500);
+              }
           <?php endforeach; ?>
       <?php endif; ?>
   });
