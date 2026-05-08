@@ -1,0 +1,13 @@
+.pulse-item:last-child::after {
+    display: none;
+}
+
+@keyframes scroll-pulse {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+
+.pulse-error {
+    color: #ef4444;
+    font-style: italic;
+}

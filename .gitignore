@@ -3,3 +3,12 @@ api_keys.php
 ai_debug.log
 *.log
 vendor/
+.env.php
+view/assets/video/IMG_E8245_1.mp4
+
+# Tunnel generated files
+*tunnel_log.txt
+*tunnel_url.txt
+
+# Cache files
+view/backoffice/cache_*.json
