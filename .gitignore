@@ -1,0 +1,5 @@
+.env
+api_keys.php
+ai_debug.log
+*.log
+vendor/
