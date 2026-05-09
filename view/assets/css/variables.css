@@ -111,6 +111,19 @@
   --accent-info:       #3B82F6;
   --accent-info-light: #DBEAFE;
 
+<<<<<<< HEAD
+=======
+  /* ── Semantic Colors ── */
+  --bg-danger:    #FEE2E2;
+  --text-danger:  #EF4444;
+  --bg-success:   #D1FAE5;
+  --text-success: #10B981;
+  --bg-warning:   #FEF3C7;
+  --text-warning: #F59E0B;
+  --bg-info:      #DBEAFE;
+  --text-info:    #3B82F6;
+
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   /* ── Gradients ──────────────────────────────── */
   --gradient-primary:  linear-gradient(135deg, #00A3DA 0%, #6B34A3 50%, #8D2587 100%);
   --gradient-accent:   linear-gradient(135deg, #6B34A3 0%, #00A3DA 100%);
@@ -160,6 +173,7 @@
    ══════════════════════════════════════════════════ */
 [data-theme="dark"] {
   /* ── Backgrounds ────────────────────────────── */
+<<<<<<< HEAD
   --bg-body:       #0B0D14;
   --bg-primary:    #111827;
   --bg-secondary:  #1A1D2E;
@@ -178,12 +192,34 @@
   --text-primary:   #F3F4F6;
   --text-secondary: #9CA3AF;
   --text-tertiary:  #6B7280;
+=======
+  --bg-body:       #0F172A;
+  --bg-body-gradient: radial-gradient(circle at top left, #0F172A 0%, #1E1B4B 50%, #0F172A 100%) fixed;
+  --bg-primary:    #0F172A;
+  --bg-secondary:  #1E293B;
+  --bg-tertiary:   #334155;
+  --bg-card:       #1E2235;
+  --bg-card-hover: #252A3E;
+  --bg-sidebar:    #0F172A;
+  --bg-topbar:     rgba(15, 23, 42, 0.9);
+  --bg-input:      #1E293B;
+  --bg-input-focus:#334155;
+  --bg-overlay:    rgba(0, 0, 0, 0.7);
+  --bg-code:       #1E293B;
+  --bg-tooltip:    #374151;
+
+  /* ── Text ───────────────────────────────────── */
+  --text-primary:   #F8FAF0;
+  --text-secondary: #94A3B8;
+  --text-tertiary:  #64748B;
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   --text-inverse:   #1F2937;
   --text-link:      #A275D3;
   --text-link-hover:#BFA0E3;
 
   /* ── Accent Colors ──────────────────────────── */
   --accent-primary:    #A275D3;
+<<<<<<< HEAD
   --accent-primary-light: #2A1742;
   --accent-primary-dark:  #6B34A3;
   --accent-secondary:  #29BFFF;
@@ -195,6 +231,29 @@
   --accent-warning-light:   #3D3013;
   --accent-info:       #60A5FA;
   --accent-info-light: #1E2D4A;
+=======
+  --accent-primary-light: rgba(162, 117, 211, 0.15);
+  --accent-primary-dark:  #6B34A3;
+  --accent-secondary:  #29BFFF;
+  --accent-secondary-light: rgba(41, 191, 255, 0.15);
+  --accent-secondary-dark:  #00A3DA;
+  --accent-tertiary:   #A947A3;
+  --accent-tertiary-light:  rgba(169, 71, 163, 0.15);
+  --accent-warning:    #FCD34D;
+  --accent-warning-light:   rgba(252, 211, 77, 0.15);
+  --accent-info:       #60A5FA;
+  --accent-info-light: rgba(96, 165, 250, 0.15);
+
+  /* ── Semantic Colors ── */
+  --bg-danger:    rgba(248, 113, 113, 0.18);
+  --text-danger:  #F87171;
+  --bg-success:   rgba(52, 211, 153, 0.18);
+  --text-success: #34D399;
+  --bg-warning:   rgba(251, 191, 36, 0.18);
+  --text-warning: #FBBF24;
+  --bg-info:      rgba(96, 165, 250, 0.18);
+  --text-info:    #60A5FA;
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 
   /* ── Gradients ──────────────────────────────── */
   --gradient-primary:  linear-gradient(135deg, #29BFFF 0%, #A275D3 50%, #A947A3 100%);
@@ -221,6 +280,7 @@
   --shadow-sidebar: 2px 0 12px rgba(0, 0, 0, 0.3);
 
   /* ── Stat Card Accent Colors ────────────────── */
+<<<<<<< HEAD
   --stat-purple-bg: #2A1742;
   --stat-purple:    #A275D3;
   --stat-teal-bg:   #00364A;
@@ -228,6 +288,15 @@
   --stat-blue-bg:   #3A1238;
   --stat-blue:      #A947A3;
   --stat-orange-bg: #3D3013;
+=======
+  --stat-purple-bg: rgba(162, 117, 211, 0.15);
+  --stat-purple:    #A275D3;
+  --stat-teal-bg:   rgba(41, 191, 255, 0.15);
+  --stat-teal:      #29BFFF;
+  --stat-blue-bg:   rgba(169, 71, 163, 0.15);
+  --stat-blue:      #A947A3;
+  --stat-orange-bg: rgba(252, 211, 77, 0.15);
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   --stat-orange:    #FCD34D;
 
   /* ── Chart Colors ───────────────────────────── */
@@ -241,6 +310,17 @@
 }
 
 /* ── Theme Transition ─────────────────────────── */
+<<<<<<< HEAD
+=======
+html {
+  transition: background-color 0.3s ease;
+}
+body {
+  transition: background 0.3s ease, color 0.3s ease;
+}
+/* Optional: aggressive transition from other branch, commented out for performance */
+/*
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 html, html *,
 html *::before,
 html *::after {
@@ -249,3 +329,7 @@ html *::after {
               border-color 0.3s ease,
               box-shadow 0.3s ease;
 }
+<<<<<<< HEAD
+=======
+*/
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9

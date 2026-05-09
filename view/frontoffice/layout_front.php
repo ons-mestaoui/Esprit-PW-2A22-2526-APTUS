@@ -1,5 +1,46 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Security: Prevent browser caching of protected pages
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+include_once __DIR__ . '/../../controller/ProfilC.php';
+
+$userId = $_SESSION['id_utilisateur'] ?? null;
+$userRole = isset($_SESSION['role']) ? strtolower($_SESSION['role']) : null;
+
+// Access Control: Only Candidats, Entreprises, and Tuteurs can access frontoffice protected pages
+if (!$userId || ($userRole !== 'candidat' && $userRole !== 'entreprise' && $userRole !== 'tuteur')) {
+    header("Location: login.php");
+    exit();
+}
+
+$userName = $_SESSION['nom'] ?? 'Utilisateur';
+$currentRole = $_SESSION['role'] ?? 'Candidat';
+
+$userPhoto = null;
+$userPrefs = null;
+if ($userId) {
+    $profilC = new ProfilC();
+    $userProfil = $profilC->getProfilByIdUtilisateur($userId);
+    if ($userProfil && !empty($userProfil['photo'])) {
+        $userPhoto = $userProfil['photo'];
+    }
+    
+    include_once __DIR__ . '/../../controller/UtilisateurC.php';
+    $utC = new UtilisateurC();
+    $userPrefs = $utC->getPreferences($userId);
+}
+
+// Initialize theme from preferences early
+$currentTheme = $userPrefs['theme'] ?? 'light';
+?>
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr" data-theme="<?php echo $currentTheme; ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +54,7 @@
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css?v=<?php echo time(); ?>">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_front.css">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/landing_dynamic.css">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/auth.css">
@@ -21,14 +62,67 @@
     <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/<?php echo $pageCSS; ?>">
   <?php endif; ?>
 
+  <!-- AI Agent Widget -->
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/ai_agent.css">
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent_ext.js"></script>
+
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+
+  <?php
+  // Load admin appearance overrides (colors, font, radius)
+  require_once __DIR__ . '/../../controller/SettingsAdminC.php';
+  $platformSettingsC = new SettingsAdminC();
+  echo $platformSettingsC->getAppearanceCSS();
+  
+  // Load user personal preferences overrides (accent color, font size)
+  if ($userPrefs) {
+      $userCSS = '';
+      if (!empty($userPrefs['accent_color'])) {
+          $hex = $userPrefs['accent_color'];
+          $userCSS .= "  --accent-primary: {$hex} !important;\n";
+          $userCSS .= "  --accent-primary-dark: {$hex} !important;\n";
+          $userCSS .= "  --accent-primary-light: {$hex}1a !important;\n";
+      }
+      if (!empty($userCSS)) {
+          echo "<style id=\"user-appearance-overrides\">\n:root {\n{$userCSS}}\n</style>\n";
+      }
+      
+      if (!empty($userPrefs['font_size'])) {
+          echo "<style>html { font-size: " . intval($userPrefs['font_size']) . "px !important; }</style>\n";
+      }
+
+      if (!empty($userPrefs['font_family'])) {
+          $ff = $userPrefs['font_family'];
+          echo "<style>body, h1, h2, h3, h4, h5, h6, .btn, .input { font-family: '{$ff}', sans-serif !important; }</style>\n";
+          echo "<link href=\"https://fonts.googleapis.com/css2?family=" . str_replace(' ', '+', $ff) . ":wght@300;400;500;600;700;800&display=swap\" rel=\"stylesheet\">\n";
+      }
+
+      if (!empty($userPrefs['border_radius'])) {
+          $radiusMap = [
+              'none' => '0px',
+              'small' => '4px',
+              'medium' => '12px',
+              'large' => '20px',
+              'full' => '9999px'
+          ];
+          $rv = $radiusMap[$userPrefs['border_radius']] ?? '12px';
+          echo "<style>:root { --radius-lg: {$rv} !important; --radius-md: " . (intval($rv)*0.75) . "px !important; --radius-sm: " . (intval($rv)*0.5) . "px !important; }</style>\n";
+      }
+  }
+  ?>
+
+  <script>
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        window.location.reload();
+      }
+    });
+  </script>
 </head>
 <body>
 
-  <!-- Cursor aura removed for internal pages -->
-
-  <!-- Hero Background Animated (Global) - Smoothed for internal pages -->
   <div class="hero-bg-animated" style="opacity: 0.4;">
       <div class="blob blob-1" style="filter: blur(120px);"></div>
       <div class="blob blob-2" style="filter: blur(150px);"></div>
@@ -36,32 +130,34 @@
       <div class="grid-overlay" style="opacity: 0.05;"></div>
   </div>
 
-  <!-- ═══════════════════════════════════════════
-       TOP NAVIGATION BAR
-       ═══════════════════════════════════════════ -->
   <nav class="landing-nav glass-nav" id="landing-nav">
-    <?php $currentRole = isset($userRole) ? $userRole : 'Candidat'; ?>
-    <!-- Logo -->
-    <a href="<?php echo ($currentRole === 'Entreprise') ? 'hr_posts.php' : 'jobs_feed.php'; ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
+    <?php 
+      $currentRole = $_SESSION['role'] ?? 'Candidat';
+    ?>
+    <a href="<?php 
+      if ($currentRole === 'Entreprise') echo 'hr_posts.php';
+      elseif ($currentRole === 'Tuteur') echo 'dashboard_tuteur.php';
+      else echo 'jobs_feed.php'; 
+    ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
       <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="landing-nav__logo-icon" style="background:none;">
       <span class="gradient-text accent-font h4 m-0">Aptus</span>
     </a>
 
-    <!-- Hamburger (Mobile) -->
     <button class="hamburger-landing" id="hamburger-landing" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
 
-    <!-- Navigation Links -->
     <div class="landing-nav__links" id="nav-links">
       <?php if ($currentRole === 'Entreprise'): ?>
         <a href="hr_posts.php" class="nav-anchor" id="nav-hr-posts"><i data-lucide="briefcase"></i><span>Mes Postes</span></a>
         <a href="hr_candidatures.php" class="nav-anchor" id="nav-hr-candidatures"><i data-lucide="users"></i><span>Candidatures</span></a>
         <a href="profil_entreprise.php" class="nav-anchor" id="nav-hr-profile"><i data-lucide="building"></i><span>Profil Entreprise</span></a>
         <a href="veille_feed_ent.php" class="nav-anchor" id="nav-hr-veille"><i data-lucide="line-chart"></i><span>Veille Marché</span></a>
+      <?php elseif ($currentRole === 'Tuteur'): ?>
+        <a href="dashboard_tuteur.php" class="nav-anchor" id="nav-tuteur-dashboard"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+        <a href="espace_tuteur.php" class="nav-anchor" id="nav-tuteur-espace"><i data-lucide="graduation-cap"></i><span>Mon Espace</span></a>
       <?php else: ?>
         <a href="jobs_feed.php" class="nav-anchor" id="nav-jobs"><i data-lucide="briefcase"></i><span>Offres d'emploi</span></a>
-        <a href="my_applications.php" class="nav-anchor" id="nav-my-applications"><i data-lucide="clipboard-list"></i><span>Mes Candidatures</span></a>
         <a href="cv_templates.php" class="nav-anchor" id="nav-cv"><i data-lucide="file-badge"></i><span>Générer CV</span></a>
         <a href="formations_catalog.php" class="nav-anchor" id="nav-formations"><i data-lucide="graduation-cap"></i><span>Formations</span></a>
         <a href="veille_feed.php" class="nav-anchor" id="nav-veille"><i data-lucide="line-chart"></i><span>Veille Marché</span></a>
@@ -69,9 +165,7 @@
       <?php endif; ?>
     </div>
 
-    <!-- Right Actions -->
     <div class="landing-nav__actions" style="display: flex; align-items: center; gap: 1rem;">
-      <!-- Theme Toggle -->
       <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme">
         <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
         <i data-lucide="moon" class="icon-moon"></i>
@@ -84,7 +178,7 @@
             require_once __DIR__ . '/../../controller/candidatureC.php';
         }
         $notifController = new candidatureC();
-        $id_candidat_notif = 1; // Même ID par défaut que lors de la soumission
+        $id_candidat_notif = $userId ?: 1; 
         $notifications = $notifController->getNotificationsByCandidat($id_candidat_notif);
         $unreadCount = 0;
         foreach ($notifications as $n) { if (!$n['is_read']) $unreadCount++; }
@@ -140,6 +234,7 @@
             .delete-notif:hover { color: #ef4444 !important; }
             .notif-list::-webkit-scrollbar { width: 6px; }
             .notif-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+            #notif-menu.active { display: block !important; }
           </style>
         </div>
       </div>
@@ -149,7 +244,7 @@
           menu.classList.toggle('active');
           // Marquer comme lues via AJAX
           var badge = document.getElementById('notif-badge');
-          if (badge) {
+          if (badge && menu.classList.contains('active')) {
               fetch('?mark_read=1').then(function(){
                   badge.style.display = 'none';
               });
@@ -188,10 +283,16 @@
         <div class="dropdown-trigger topnav__profile">
           <div class="topnav__profile-info">
             <span class="topnav__profile-name"><?php echo isset($userName) ? $userName : 'Utilisateur'; ?></span>
-            <span class="topnav__profile-role"><?php echo isset($userRole) ? $userRole : 'Candidat'; ?></span>
+            <span class="topnav__profile-role"><?php echo isset($currentRole) ? $currentRole : 'Candidat'; ?></span>
           </div>
-          <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;">
-            <?php echo isset($userName) ? strtoupper(substr($userName, 0, 2)) : 'US'; ?>
+          <div class="avatar" style="width:36px;height:36px;font-size:13px;overflow:hidden;background:var(--bg-glass);display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--border-color);">
+            <?php if ($userPhoto): ?>
+              <img src="<?php echo $userPhoto; ?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
+            <?php else: ?>
+              <span class="avatar-initials">
+                <?php echo isset($userName) ? strtoupper(substr($userName, 0, 2)) : 'US'; ?>
+              </span>
+            <?php endif; ?>
           </div>
         </div>
         <div class="dropdown-menu">
@@ -201,12 +302,21 @@
             Mon Profil
           </a>
           <?php endif; ?>
-          <a href="settings.php<?php echo ($currentRole === 'Entreprise') ? '?role=entreprise' : ''; ?>" class="dropdown-item" id="dropdown-settings">
+          <a href="settings.php<?php 
+            if ($currentRole === 'Entreprise') echo '?role=entreprise';
+            elseif ($currentRole === 'Tuteur') echo '?role=tuteur';
+          ?>" class="dropdown-item" id="dropdown-settings">
             <i data-lucide="settings" style="width:16px;height:16px;"></i>
             Paramètres
           </a>
+          <?php if ($currentRole === 'Tuteur'): ?>
+          <a href="profil_tuteur.php" class="dropdown-item" id="dropdown-profile-tuteur">
+            <i data-lucide="user" style="width:16px;height:16px;"></i>
+            Mon Profil
+          </a>
+          <?php endif; ?>
           <div class="dropdown-divider"></div>
-          <a href="login.php" class="dropdown-item" id="dropdown-logout" style="color:var(--accent-tertiary);">
+          <a href="logout.php" class="dropdown-item" id="dropdown-logout" style="color:var(--accent-tertiary);">
             <i data-lucide="log-out" style="width:16px;height:16px;"></i>
             Déconnexion
           </a>
@@ -215,7 +325,6 @@
     </div>
   </nav>
 
-  <!-- Mobile Navigation Menu -->
   <div class="mobile-menu-landing" id="mobile-menu-landing">
     <?php if ($currentRole === 'Entreprise'): ?>
       <a href="hr_posts.php" class="nav-anchor"><i data-lucide="briefcase"></i> Mes Postes</a>
@@ -223,6 +332,10 @@
       <a href="profil_entreprise.php" class="nav-anchor"><i data-lucide="building"></i> Profil Entreprise</a>
       <a href="veille_feed_ent.php" class="nav-anchor"><i data-lucide="line-chart"></i> Veille Marché</a>
       <a href="settings.php?role=entreprise" class="nav-anchor"><i data-lucide="settings"></i> Paramètres</a>
+    <?php elseif ($currentRole === 'Tuteur'): ?>
+      <a href="dashboard_tuteur.php" class="nav-anchor"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a href="espace_tuteur.php" class="nav-anchor"><i data-lucide="graduation-cap"></i> Mon Espace</a>
+      <a href="settings.php?role=tuteur" class="nav-anchor"><i data-lucide="settings"></i> Paramètres</a>
     <?php else: ?>
       <a href="jobs_feed.php" class="nav-anchor"><i data-lucide="briefcase"></i> Offres d'emploi</a>
       <a href="cv_templates.php" class="nav-anchor"><i data-lucide="file-badge"></i> Générer CV</a>
@@ -234,9 +347,6 @@
     <?php endif; ?>
   </div>
 
-  <!-- ═══════════════════════════════════════════
-       MAIN CONTENT
-       ═══════════════════════════════════════════ -->
   <main class="front-main">
     <div class="front-content">
       <?php
@@ -247,9 +357,6 @@
     </div>
   </main>
 
-  <!-- ═══════════════════════════════════════════
-       FOOTER
-       ═══════════════════════════════════════════ -->
   <footer class="front-footer">
     <div class="front-footer__grid">
       <div class="front-footer__brand">
@@ -262,10 +369,10 @@
       <div>
         <h4 class="front-footer__heading">Plateforme</h4>
         <div class="front-footer__links">
-          <a>Browse Jobs</a>
-          <a>Formations</a>
-          <a>CV Builder</a>
-          <a>Leaderboard</a>
+          <a href="jobs_feed.php">Browse Jobs</a>
+          <a href="formations_catalog.php">Formations</a>
+          <a href="cv_landing.php">CV Builder</a>
+          <a href="veille_feed.php">Leaderboard</a>
         </div>
       </div>
       <div>
@@ -288,7 +395,7 @@
     </div>
     <div class="front-footer__bottom">
       <span>&copy; <?php echo date('Y'); ?> Aptus. Tous droits réservés.</span>
-      <span>Fait avec ❤️ en Tunisie</span>
+      <span>Fait avec ✨ en Tunisie</span>
     </div>
   </footer>
 
@@ -296,12 +403,24 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/nav.js"></script>
-  <script src="/aptus_first_official_version/view/assets/js/forms.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/forms.js?v=2"></script>
   <script src="/aptus_first_official_version/view/assets/js/landing-animations.js"></script>
   <?php if (isset($pageJS)): ?>
     <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
+  <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
+  
+  <div class="a11y-cursor" id="a11y-cursor"></div>
+  <div class="a11y-video-container" id="a11y-video-container">
+    <video id="a11y-webcam" autoplay playsinline></video>
+    <canvas id="a11y-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+  </div>
+  <button class="a11y-toggle" id="a11y-toggle" aria-label="Activer la navigation gestuelle" title="Navigation Hand Tracking">
+    <i data-lucide="hand"></i>
+  </button>
+  <script type="module" src="/aptus_first_official_version/view/assets/js/a11y-hand-control.js"></script>
   <script>lucide.createIcons();</script>
+
   <!-- Notification Toasts Container -->
   <div id="toast-container" style="position: fixed; top: 85px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;"></div>
 

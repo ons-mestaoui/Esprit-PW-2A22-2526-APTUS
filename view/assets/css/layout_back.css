@@ -56,6 +56,18 @@
   opacity: 0;
   width: 0;
 }
+<<<<<<< HEAD
+=======
+.sidebar.collapsed .sidebar__header {
+  padding: var(--space-4) 0;
+  justify-content: center;
+}
+.sidebar.collapsed .sidebar__logo-icon {
+  width: 48px;
+  height: 48px;
+  margin-left: 0;
+}
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 
 /* ── Sidebar Navigation ──────────────────────── */
 .sidebar__nav {
@@ -82,8 +94,13 @@
   cursor: pointer;
 }
 .sidebar-link i {
+<<<<<<< HEAD
   width: 20px;
   height: 20px;
+=======
+  width: 24px;
+  height: 24px;
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   flex-shrink: 0;
 }
 .sidebar-link span {
@@ -94,6 +111,18 @@
   opacity: 0;
   width: 0;
 }
+<<<<<<< HEAD
+=======
+.sidebar.collapsed .sidebar-link {
+  justify-content: center;
+  padding: var(--space-3) 0;
+}
+.sidebar.collapsed .sidebar-link i {
+  width: 28px;
+  height: 28px;
+  margin-left: 0;
+}
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 
 .sidebar-link:hover {
   color: var(--accent-primary);
@@ -102,7 +131,12 @@
 .sidebar-link.active {
   color: var(--accent-primary);
   background: var(--accent-primary-light);
+<<<<<<< HEAD
   font-weight: var(--fw-semibold);
+=======
+  font-weight: var(--fw-bold);
+  box-shadow: inset 2px 0 0 0 var(--accent-primary);
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 }
 .sidebar-link.active::before {
   content: '';
@@ -169,6 +203,18 @@
   opacity: 0;
   width: 0;
 }
+<<<<<<< HEAD
+=======
+.sidebar.collapsed .sidebar__logout {
+  justify-content: center;
+  padding: var(--space-3) 0;
+}
+.sidebar.collapsed .sidebar__logout i {
+  width: 28px;
+  height: 28px;
+  margin-left: 0;
+}
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 
 /* ── Top Header Bar ──────────────────────────── */
 .back-topbar {
@@ -181,6 +227,10 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
+<<<<<<< HEAD
+=======
+  box-shadow: var(--shadow-sm);
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   display: flex;
   align-items: center;
   padding: 0 var(--space-6);

@@ -1,5 +1,50 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
+=======
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Security: Prevent browser caching of protected pages
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+include_once __DIR__ . '/../../controller/ProfilC.php';
+
+// Access Control: Only Admins can access backoffice
+if (!isset($_SESSION['role']) || strtolower($_SESSION['role']) !== 'admin') {
+    header("Location: ../frontoffice/login.php");
+    exit();
+}
+
+$adminName = $_SESSION['nom'] ?? 'Administrateur';
+$userId = $_SESSION['id_utilisateur'] ?? null;
+
+$userPhoto = null;
+if ($userId) {
+    $profilC = new ProfilC();
+    $userProfil = $profilC->getProfilByIdUtilisateur($userId);
+    if ($userProfil && !empty($userProfil['photo'])) {
+        $userPhoto = $userProfil['photo'];
+    }
+}
+?>
+<?php
+// Load user personal preferences (theme)
+$userTheme = 'light';
+if ($userId) {
+    include_once __DIR__ . '/../../controller/UtilisateurC.php';
+    $utC = new UtilisateurC();
+    $userPrefs = $utC->getPreferences($userId);
+    $userTheme = $userPrefs['theme'] ?? 'light';
+}
+?>
+<!DOCTYPE html>
+<html lang="fr" data-theme="<?php echo $userTheme; ?>">
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,14 +58,57 @@
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
+<<<<<<< HEAD
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_back.css">
+=======
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css?v=<?php echo time(); ?>">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_back.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/ai_agent.css">
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   <?php if (isset($pageCSS)): ?>
     <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/<?php echo $pageCSS; ?>">
   <?php endif; ?>
 
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+<<<<<<< HEAD
+=======
+
+  <?php
+  // Load admin appearance overrides (colors, font, radius)
+  if (!isset($settingsC)) {
+      require_once __DIR__ . '/../../controller/SettingsAdminC.php';
+      $settingsC = new SettingsAdminC();
+  }
+  echo $settingsC->getAppearanceCSS();
+  
+  // Ensure localStorage is in sync with database theme
+  if (isset($userPrefs['theme'])) {
+      echo "<script>
+        if (localStorage.getItem('aptus-theme') !== '" . ($userPrefs['theme']) . "') {
+            localStorage.setItem('aptus-theme', '" . ($userPrefs['theme']) . "');
+        }
+      </script>\n";
+  }
+  ?>
+
+  <script>
+    /**
+     * Security: Force reload if page is loaded from cache (Back/Forward button fix)
+     * This ensures the admin session check is executed on every navigation.
+     */
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        window.location.reload();
+      }
+    });
+  </script>
+  
+  <!-- AI Agent Widget Scripts -->
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent_ext.js"></script>
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 </head>
 <body>
 
@@ -65,12 +153,23 @@
           <i data-lucide="briefcase"></i>
           <span>Offres Disponibles</span>
         </a>
+<<<<<<< HEAD
 
+=======
+        <a href="posts_stats.php" class="sidebar-link<?php echo ($currentPage==='posts_stats.php')?' active':''; ?>" id="sidebar-posts">
+          <i data-lucide="bar-chart-3"></i>
+          <span>Posts &amp; Stats</span>
+        </a>
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
       </nav>
 
       <!-- Footer / Logout -->
       <div class="sidebar__footer">
+<<<<<<< HEAD
         <a href="../frontoffice/login.php" class="sidebar__logout" id="sidebar-logout">
+=======
+        <a href="../frontoffice/logout.php" class="sidebar__logout" id="sidebar-logout">
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
           <i data-lucide="log-out"></i>
           <span>Déconnexion</span>
         </a>
@@ -96,7 +195,11 @@
       <div class="back-topbar__actions">
         <!-- Theme Toggle -->
         <button class="theme-toggle" id="admin-theme-toggle" aria-label="Toggle theme">
+<<<<<<< HEAD
           <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
+=======
+          <i data-lucide="sun" class="icon-sun"></i>
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
           <i data-lucide="moon" class="icon-moon"></i>
         </button>
 
@@ -113,8 +216,19 @@
               <span class="back-topbar__admin-name"><?php echo isset($adminName) ? $adminName : 'Administrateur'; ?></span>
               <span class="back-topbar__admin-role">Super Admin</span>
             </div>
+<<<<<<< HEAD
             <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;">
               <?php echo isset($adminName) ? strtoupper(substr($adminName, 0, 2)) : 'AD'; ?>
+=======
+            <div class="avatar" style="width:36px;height:36px;font-size:13px;overflow:hidden;background:var(--bg-glass);display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--border-color);">
+              <?php if ($userPhoto): ?>
+                <img src="<?php echo $userPhoto; ?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
+              <?php else: ?>
+                <span class="avatar-initials">
+                  <?php echo isset($adminName) ? strtoupper(substr($adminName, 0, 2)) : 'AD'; ?>
+                </span>
+              <?php endif; ?>
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
             </div>
           </div>
           <div class="dropdown-menu">
@@ -127,7 +241,11 @@
               Paramètres
             </a>
             <div class="dropdown-divider"></div>
+<<<<<<< HEAD
             <a href="../frontoffice/login.php" class="dropdown-item" style="color:var(--accent-tertiary);">
+=======
+            <a href="../frontoffice/logout.php" class="dropdown-item" style="color:var(--accent-tertiary);">
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
               <i data-lucide="log-out" style="width:16px;height:16px;"></i>
               Déconnexion
             </a>
@@ -159,6 +277,32 @@
   <?php if (isset($pageJS)): ?>
     <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
+<<<<<<< HEAD
   <script>lucide.createIcons();</script>
+=======
+  <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
+  
+  <!-- ═══════════════════════════════════════════
+       ACCESSIBILITY GESTURE CONTROL (MediaPipe)
+       ═══════════════════════════════════════════ -->
+  
+  <!-- Virtual Cursor -->
+  <div class="a11y-cursor" id="a11y-cursor"></div>
+  
+  <!-- Video Preview Container (PIP) -->
+  <div class="a11y-video-container" id="a11y-video-container">
+    <video id="a11y-webcam" autoplay playsinline></video>
+    <canvas id="a11y-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+  </div>
+  
+  <!-- Toggle Button (Floating) -->
+  <button class="a11y-toggle" id="a11y-toggle" aria-label="Activer la navigation gestuelle" title="Navigation Hand Tracking">
+    <i data-lucide="hand"></i>
+  </button>
+
+  <script type="module" src="/aptus_first_official_version/view/assets/js/a11y-hand-control.js"></script>
+  <script>lucide.createIcons();</script>
+
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 </body>
 </html>

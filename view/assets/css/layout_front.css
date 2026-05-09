@@ -96,6 +96,7 @@
   flex-shrink: 0;
 }
 
+<<<<<<< HEAD
 .theme-toggle {
   width: 36px;
   height: 36px;
@@ -113,6 +114,8 @@
   background: var(--bg-secondary);
   color: var(--accent-primary);
 }
+=======
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 
 .topnav__profile {
   display: flex;

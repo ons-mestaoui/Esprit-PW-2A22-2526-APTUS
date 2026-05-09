@@ -127,6 +127,13 @@ body.landing-page-body {
   gap: 2rem;
 }
 .landing-nav__links .nav-anchor {
+<<<<<<< HEAD
+=======
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   color: var(--landing-text);
   text-decoration: none;
   font-weight: 500;
@@ -364,16 +371,28 @@ body.landing-page-body {
   background: linear-gradient(180deg, transparent 0%, rgba(79, 70, 229, 0.1) 50%, transparent 100%);
 }
 
+<<<<<<< HEAD
 .section-showcase {
   padding: 8rem 5%;
   position: relative;
   z-index: 1;
+=======
+.section-showcase, .section-resources, .section-team, .section-doc-details, .section-blog-details {
+  padding: 8rem 5%;
+  position: relative;
+  z-index: 5;
+  background: var(--landing-bg);
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 }
 .section-resources,
 .section-team,
 .front-footer {
   position: relative;
+<<<<<<< HEAD
   z-index: 1;
+=======
+  z-index: 10;
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 }
 .showcase-container {
   max-width: 1200px; margin: 0 auto;
@@ -438,7 +457,11 @@ body.landing-page-body {
 }
 
 /* Gamification */
+<<<<<<< HEAD
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+=======
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 .hover-lift { transition: transform 0.3s; }
 .hover-lift:hover { transform: translateY(-5px); }
 
@@ -454,7 +477,11 @@ body.landing-page-body {
 .bg-blue-light { background: rgba(37, 99, 235, 0.1); } .text-blue { color: #2563eb; }
 
 /* RESOURCES */
+<<<<<<< HEAD
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); }
+=======
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 .hover-zoom { transition: all 0.3s; border: 1px solid transparent; }
 .hover-zoom:hover { transform: scale(1.03); border-color: var(--glass-border); }
 .hover-arrow { text-decoration: none; }
@@ -631,7 +658,11 @@ body.landing-page-body {
 
 .sleek-card {
   background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border);
+<<<<<<< HEAD
   border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+=======
+  border-radius: 166px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+>>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 10; font-family: 'Outfit', sans-serif;
   color: var(--landing-text);
   min-width: max-content;
