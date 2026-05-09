@@ -391,9 +391,14 @@ class GuideController {
             'INSERT INTO guide_recrutement (id_cv, id_candidat, titre_poste, contenu_json, date_creation) 
             VALUES (:id_cv, :id_can, :titre, :json, NOW())'
         );
+
+        // Gestion propre de la clé étrangère (on envoie NULL si l'ID est invalide ou absent)
+        $id_can = $guide->getIdCandidat();
+        $id_can_final = ($id_can && $id_can > 0) ? (int)$id_can : null;
+
         $query->execute([
             'id_cv' => $guide->getIdCv(),
-            'id_can' => $guide->getIdCandidat(),
+            'id_can' => $id_can_final,
             'titre' => $guide->getTitrePoste(),
             'json' => $guide->getContenuJson()
         ]);

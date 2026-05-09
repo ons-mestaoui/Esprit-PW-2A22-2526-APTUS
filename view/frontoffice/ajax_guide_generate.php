@@ -38,11 +38,17 @@ try {
     $stmt->execute([json_encode($guide), $cvId]);
 
     // 4. Save to the NEW Guide Table (MVC Architecture)
-    // $gc est déjà instancié plus haut
+    // Détection automatique de l'utilisateur pour la future intégration session
+    $session_user_id = $_SESSION['user_id'] ?? $_SESSION['id_candidat'] ?? null;
+    $cv_user_id = $cv['id_candidat'] ?? null;
+    
+    // Priorité à la session, puis au CV, sinon NULL pour la clé étrangère
+    $final_user_id = $session_user_id ?: ($cv_user_id ?: null);
+
     $newGuide = new GuideRecrutement(
         null,
         (int)$cvId,
-        (int)($cv['id_candidat'] ?? 0),
+        $final_user_id ? (int)$final_user_id : null,
         $cv['titrePoste'] ?? '',
         json_encode($guide)
     );
