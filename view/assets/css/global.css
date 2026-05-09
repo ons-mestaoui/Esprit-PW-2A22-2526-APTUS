@@ -23,12 +23,8 @@ body {
   font-weight: var(--fw-regular);
   line-height: var(--lh-normal);
   color: var(--text-primary);
-<<<<<<< HEAD
-  background-color: var(--bg-body);
-=======
   background: var(--bg-body);
   background-attachment: fixed;
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   min-height: 100vh;
 }
 
@@ -270,12 +266,8 @@ p {
   transition: var(--transition-base);
 }
 .card:hover {
-<<<<<<< HEAD
-  box-shadow: var(--shadow-card-hover);
-=======
   box-shadow: var(--shadow-lg);
   border-color: var(--accent-primary-light);
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 }
 
 .card-flat {
@@ -399,8 +391,6 @@ p {
 .form-error {
   font-size: var(--fs-xs);
   color: var(--accent-tertiary);
-<<<<<<< HEAD
-=======
   font-weight: var(--fw-medium);
   min-height: 1.25rem;
 }
@@ -416,7 +406,6 @@ p {
   20%, 80% { transform: translate3d(2px, 0, 0); }
   30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
   40%, 60% { transform: translate3d(4px, 0, 0); }
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 }
 
 .input, .select, .textarea {
@@ -455,13 +444,8 @@ p {
 .input-icon-wrapper .input {
   padding-left: 2.5rem;
 }
-<<<<<<< HEAD
-.input-icon-wrapper i,
-.input-icon-wrapper svg {
-=======
 .input-icon-wrapper > i:first-child,
 .input-icon-wrapper > svg:first-child {
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   position: absolute;
   left: 0.875rem;
   top: 50%;
@@ -472,8 +456,6 @@ p {
   height: 18px;
 }
 
-<<<<<<< HEAD
-=======
 /* ── Password Toggle Button ──────────────────── */
 .password-toggle-btn {
   position: absolute !important;
@@ -509,8 +491,6 @@ p {
   left: auto;
   top: auto;
 }
-
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 /* ── Avatars ──────────────────────────────────── */
 .avatar {
   width: 40px;
@@ -540,17 +520,6 @@ p {
   border-collapse: collapse;
 }
 .data-table thead th {
-<<<<<<< HEAD
-  padding: var(--space-3) var(--space-4);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
-  color: var(--text-secondary);
-  text-align: left;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-=======
   padding: var(--space-4) var(--space-4);
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
@@ -560,7 +529,6 @@ p {
   letter-spacing: 0.08em;
   border-bottom: 2px solid var(--border-color);
   background: var(--bg-tertiary);
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 }
 .data-table tbody td {
   padding: var(--space-3) var(--space-4);
@@ -948,6 +916,19 @@ p {
 .animate-float       { animation: float 3s ease-in-out infinite; }
 .animate-pulse       { animation: pulse 2s ease-in-out infinite; }
 
+/* ── Scroll Reveal Animations ── */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* Stagger children animations */
 .stagger > *:nth-child(1) { animation-delay: 0.05s; }
 .stagger > *:nth-child(2) { animation-delay: 0.10s; }
@@ -978,8 +959,6 @@ p {
 @media (max-width: 480px) {
   h1 { font-size: var(--fs-xl); }
 }
-<<<<<<< HEAD
-=======
 
 /* ============================================================
    Aptus — Accessibility Gesture Control (MediaPipe)
@@ -1052,75 +1031,68 @@ p {
   transform: scaleX(-1);
 }
 
-/* ── Flat 2D Theme Toggle ── */
+/* ── Premium Icon Theme Toggle ── */
 .theme-toggle {
-  position: relative;
-  width: 50px;
-  height: 26px;
-  border-radius: 26px;
-  background: var(--bg-tertiary);
-  border: 2px solid var(--border-color);
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 0;
-  transition: background 0.3s ease;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
   overflow: hidden;
-  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-secondary);
 }
 
-html[data-theme="dark"] .theme-toggle {
-  background: var(--accent-primary-dark);
-  border-color: var(--accent-primary);
+.theme-toggle:hover {
+  background: var(--bg-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  color: var(--accent-primary);
 }
 
-.theme-toggle::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #f1c40f; /* Flat Yellow */
-  transition: transform 0.3s ease, background 0.3s ease;
-  z-index: 3;
+.theme-toggle:active {
+  transform: translateY(0) scale(0.95);
 }
 
-html[data-theme="dark"] .theme-toggle::after {
-  transform: translateX(24px);
-  background: #ecf0f1; /* Flat White */
-}
-
-/* Icons are hidden/shown simply */
 .theme-toggle i, .theme-toggle svg {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  z-index: 2;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
+  width: 20px;
+  height: 20px;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Icon switching logic based on HTML data-theme */
 .theme-toggle .icon-sun {
-  right: 6px;
-  color: var(--text-tertiary);
-  opacity: 1;
+  display: none !important;
 }
 
 .theme-toggle .icon-moon {
-  left: 6px;
-  color: var(--text-tertiary);
-  opacity: 0;
+  display: block !important;
+}
+
+html[data-theme="dark"] .theme-toggle {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 html[data-theme="dark"] .theme-toggle .icon-sun {
-  opacity: 0;
+  display: block !important;
+  color: #fbbf24;
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
 }
 
 html[data-theme="dark"] .theme-toggle .icon-moon {
-  opacity: 1;
-  color: #fff;
+  display: none !important;
+}
+
+/* Animation for the switch */
+html[data-theme="dark"] .theme-toggle i {
+  transform: rotate(360deg);
 }
 
 /* ── Glass Card (Premium) ── */
@@ -1136,4 +1108,3 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9

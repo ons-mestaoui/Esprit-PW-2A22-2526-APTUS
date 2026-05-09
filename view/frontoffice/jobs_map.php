@@ -57,11 +57,11 @@ if (!isset($content)) {
         top: 20px;
         left: 20px;
         z-index: 1000;
-        background: rgba(255, 255, 255, 0.92);
+        background: var(--bg-card);
         backdrop-filter: blur(10px);
         padding: 1.25rem;
         border-radius: 20px;
-        border: 1px solid rgba(255,255,255,1);
+        border: 1px solid var(--border-color);
         box-shadow: 0 10px 25px rgba(0,0,0,0.08);
         max-width: 280px;
     }
@@ -71,7 +71,7 @@ if (!isset($content)) {
         left: 50%;
         transform: translateX(-50%);
         z-index: 1000;
-        background: white;
+        background: var(--bg-card);
         padding: 0.75rem 1.25rem;
         border-radius: 16px;
         box-shadow: 0 12px 30px rgba(0,0,0,0.12);
@@ -136,7 +136,7 @@ if (!isset($content)) {
         padding: 0.85rem 1rem 0.85rem 3.25rem !important;
         border-radius: 14px;
         border: 1px solid var(--border-color);
-        background: #fff;
+        background: var(--bg-secondary); 
         color: var(--text-primary);
         font-size: 0.9rem;
         transition: all 0.2s;
@@ -163,13 +163,16 @@ if (!isset($content)) {
         top: 20px;
         right: 20px;
         z-index: 1000;
-        background: white;
+        background: var(--bg-card);
         padding: 1rem;
         border-radius: 16px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.12);
         width: 240px;
         display: none;
         border-right: 4px solid var(--accent-primary);
+        border-top: 1px solid var(--border-color);
+        border-left: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
         animation: slideInRight 0.5s ease;
     }
     .btn-center-me {
@@ -218,13 +221,14 @@ if (!isset($content)) {
     
     /* Style Hover Cards Tooltip */
     .leaflet-tooltip-aptus {
-        background: rgba(255, 255, 255, 0.95) !important;
+        background: var(--bg-card) !important;
         backdrop-filter: blur(8px);
-        border: none !important;
+        border: 1px solid var(--border-color) !important;
         border-radius: 12px !important;
         box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
         padding: 10px 15px !important;
         font-family: 'Outfit', sans-serif !important;
+        color: var(--text-primary) !important;
     }
     .leaflet-tooltip-aptus::before {
         display: none !important;
@@ -250,16 +254,17 @@ if (!isset($content)) {
         left: 0;
         width: 380px;
         height: 100%;
-        background: white;
+        background: var(--bg-card);
         z-index: 2000;
-        box-shadow: 20px 0 50px rgba(0,0,0,0.1);
         transform: translateX(-100%);
         transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 15px 0 40px rgba(0,0,0,0.15);
         padding: 30px;
         display: flex;
         flex-direction: column;
         gap: 20px;
         overflow-y: auto;
+        border-right: 1px solid var(--border-color);
     }
     .side-drawer.open {
         transform: translateX(0);
@@ -432,7 +437,7 @@ if (!isset($content)) {
                 <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
                 <span style="font-weight: 700; margin-left: 0.5rem;">Retour aux offres</span>
             </a>
-            <div id="job-count-badge" style="background: white; padding: 0.5rem 1.25rem; border-radius: 20px; font-size: 0.85rem; font-weight: 800; color: var(--accent-primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
+            <div id="job-count-badge" style="background: var(--bg-card); padding: 0.5rem 1.25rem; border-radius: 20px; font-size: 0.85rem; font-weight: 800; color: var(--accent-primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
                 <i class="fas fa-layer-group" style="margin-right: 8px; opacity: 0.7;"></i>
                 <span id="current-count">0</span> offres trouvées
             </div>
@@ -442,11 +447,11 @@ if (!isset($content)) {
         <div style="display: flex; gap: 15px; width: 100%; align-items: stretch;">
             <div class="search-box" style="margin-top: 0; flex: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.05); position: relative;">
                 <i class="fas fa-search"></i>
-                <input type="text" id="job-search" placeholder="Rechercher par titre..." onkeyup="filterAll()" style="height: 55px; font-size: 1.1rem; border-radius: 18px; border: 2px solid transparent; transition: all 0.3s; background: white; width: 100%;">
+                <input type="text" id="job-search" placeholder="Rechercher par titre..." onkeyup="filterAll()" style="height: 55px; font-size: 1.1rem; border-radius: 18px; border: 2px solid var(--border-color); transition: all 0.3s; background: var(--bg-card); color: var(--text-primary); width: 100%;">
             </div>
             
             <!-- Slider de Rayon -->
-            <div style="background: white; border-radius: 18px; padding: 0 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); min-width: 250px;">
+            <div style="background: var(--bg-card); border-radius: 18px; padding: 0 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); min-width: 250px; border: 1px solid var(--border-color);">
                 <i class="fas fa-map-marked-alt" style="color: var(--accent-primary);"></i>
                 <div style="flex: 1; display: flex; flex-direction: column;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -542,7 +547,7 @@ if (!isset($content)) {
         
         <!-- Bouton Centrer sur moi -->
         <button class="btn-center-me" onclick="centerOnMe()" title="Ma position actuelle">
-            <i class="fas fa-crosshairs" style="font-size: 1.25rem;"></i>
+            <i data-lucide="locate-fixed" style="width: 24px; height: 24px;"></i>
         </button>
     </div>
 </div>
@@ -662,7 +667,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const lon = data[0].lon;
                     const markerHtml = `<div class="custom-marker"><i class="fas fa-briefcase"></i></div>`;
                     const customIcon = L.divIcon({ html: markerHtml, className: 'dummy', iconSize: [40, 40], iconAnchor: [20, 40] });
-                    const marker = L.marker([lat, lon], { icon: customIcon }).addTo(map);
+                    const marker = L.marker([lat, lon], { 
+                        icon: customIcon,
+                        jobTitle: offre.titre // Ajout crucial pour la recherche
+                    }).addTo(map);
 
                     marker.on('click', () => openDrawer(offre, lat, lon));
                     marker.bindTooltip(`<div class="hover-card"><span class="hover-card-title">${offre.titre}</span><span class="hover-card-company">${offre.nom_entreprise || 'Aptus'}</span></div>`, { className: 'leaflet-tooltip-aptus', direction: 'top', offset: [0, -35], opacity: 1 });

@@ -40,21 +40,12 @@
       <a href="#resources" class="nav-anchor">Ressources</a>
     </div>
     <div class="landing-nav__actions">
-<<<<<<< HEAD
-      <button class="theme-toggle" aria-label="Toggle theme">
-        <i data-lucide="sun" class="icon-sun" style="display:none;width:20px;height:20px;color:var(--text-primary);"></i>
-        <i data-lucide="moon" class="icon-moon" style="width:20px;height:20px;color:var(--text-primary);"></i>
-      </button>
-      <a href="login.php" class="btn btn-ghost nav-btn-login">Se connecter</a>
-      <a href="signup_choice.php" class="btn btn-primary glow-btn">S'inscrire</a>
-=======
       <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme">
         <i data-lucide="sun" class="icon-sun"></i>
         <i data-lucide="moon" class="icon-moon"></i>
       </button>
       <a href="login.php" class="btn btn-ghost nav-btn-login">Se connecter</a>
       <a href="login.php?panel=signup" class="btn btn-primary glow-btn">S'inscrire</a>
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
     </div>
     <button class="hamburger-landing" id="hamburger-landing" aria-label="Menu">
       <span></span><span></span><span></span>
@@ -69,11 +60,7 @@
       <a href="#resources" class="nav-anchor">Ressources</a>
       <div class="mobile-menu-actions mt-4">
         <a href="login.php" class="btn btn-ghost w-100 mb-2">Se connecter</a>
-<<<<<<< HEAD
-        <a href="signup_choice.php" class="btn btn-primary w-100">S'inscrire</a>
-=======
         <a href="login.php?panel=signup" class="btn btn-primary w-100">S'inscrire</a>
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
       </div>
   </div>
 
@@ -102,11 +89,7 @@
             Aptus connecte instantanément les meilleurs talents et les entreprises visionnaires grâce à un matching prédictif, un générateur de CV intelligent et un parcours d'apprentissage gamifié.
           </p>
           <div class="hero__ctas mt-5">
-<<<<<<< HEAD
-            <a href="signup_choice.php" class="btn btn-primary btn-lg glow-btn splash-hover magnetic-btn">
-=======
             <a href="login.php?panel=signup" class="btn btn-primary btn-lg glow-btn splash-hover magnetic-btn">
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
               <i data-lucide="rocket"></i> S'inscrire
             </a>
             <a href="#showcase-jobs" class="btn btn-ghost btn-lg nav-anchor">
@@ -166,11 +149,7 @@
           <li><div class="feature-icon bg-teal-light"><i data-lucide="scan-line" class="text-teal"></i></div> <div><strong class="text-high-contrast">Analyse sémantique</strong><br><span class="text-sm text-muted">Compréhension profonde des compétences</span></div></li>
           <li><div class="feature-icon bg-teal-light"><i data-lucide="percent" class="text-teal"></i></div> <div><strong class="text-high-contrast">Score de compatibilité</strong><br><span class="text-sm text-muted">Match affiché instantanément</span></div></li>
         </ul>
-<<<<<<< HEAD
-        <a href="signup_choice.php" class="btn btn-outline-teal mt-4 rounded-pill">Explorer les offres</a>
-=======
         <a href="login.php?panel=signup" class="btn btn-outline-teal mt-4 rounded-pill">Explorer les offres</a>
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
       </div>
       <div class="showcase-visual reveal-right">
         <div class="mockup-card glass-panel tilt-card text-high-contrast" data-tilt data-tilt-perspective="1000" data-tilt-max="10" data-tilt-speed="400">
@@ -214,11 +193,7 @@
           <li><div class="feature-icon bg-purple-light"><i data-lucide="wand-2" class="text-purple"></i></div> <div><strong class="text-high-contrast">Rédaction Assistée</strong><br><span class="text-sm text-muted">Phrases d'accroche générées par l'IA</span></div></li>
           <li><div class="feature-icon bg-purple-light"><i data-lucide="layout-template" class="text-purple"></i></div> <div><strong class="text-high-contrast">Templates Premium</strong><br><span class="text-sm text-muted">Designs modernes et percutants</span></div></li>
         </ul>
-<<<<<<< HEAD
-        <a href="signup_choice.php" class="btn btn-outline-purple mt-4 rounded-pill">Créer mon CV</a>
-=======
         <a href="login.php?panel=signup" class="btn btn-outline-purple mt-4 rounded-pill">Créer mon CV</a>
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
       </div>
       <div class="showcase-visual reveal-left relative">
         <div class="mockup-cv-wrapper floating-slow" data-tilt data-tilt-perspective="1000" data-tilt-max="10">
@@ -257,22 +232,14 @@
         <h2 class="section-title accent-font">Évoluez, Gagnez de l'XP et <span class="text-blue text-gradient-blue">dominez</span>.</h2>
         <p class="section-desc text-muted">La formation continue réinventée. Suivez nos cours certifiants, montez en niveau, affrontez la communauté et dévoilez votre expertise aux recruteurs.</p>
         <div class="gamification-features mt-4 grid-2 offset-hover">
-<<<<<<< HEAD
-           <a href="signup_choice.php" class="text-decoration-none">
-=======
            <a href="login.php?panel=signup" class="text-decoration-none">
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
            <div class="gf-item glass-panel p-3 rounded-xl border border-blue-subtle hover-extend-glow hover-lift text-high-contrast">
              <div class="gf-icon mb-2"><i data-lucide="graduation-cap" class="text-blue" style="width:32px;height:32px;"></i></div>
              <div class="h5 mb-1 accent-font">Catalogue de Cours</div>
              <div class="text-sm text-muted">Découvrez nos formations.</div>
            </div>
            </a>
-<<<<<<< HEAD
-           <a href="signup_choice.php" class="text-decoration-none">
-=======
            <a href="login.php?panel=signup" class="text-decoration-none">
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
            <div class="gf-item glass-panel p-3 rounded-xl border border-blue-subtle hover-extend-glow hover-lift text-high-contrast" id="showcase-leaderboard">
              <div class="gf-icon mb-2"><i data-lucide="trophy" class="text-blue" style="width:32px;height:32px;"></i></div>
              <div class="h5 mb-1 accent-font">Leaderboard</div>
@@ -334,22 +301,14 @@
             <div class="resource-icon bg-blue-light rounded-circle d-inline-flex p-3 mb-4"><i data-lucide="book-open" class="text-blue" style="width:28px;height:28px;"></i></div>
             <h3 class="accent-font mb-2">Documentation</h3>
             <p class="text-muted text-sm mb-4">Découvrez toutes les astuces et méthodes pour maîtriser la plateforme.</p>
-<<<<<<< HEAD
-            <a href="documentation.php" class="resource-link text-blue fw-bold d-inline-flex align-items-center gap-1 hover-arrow">Lire la Doc <i data-lucide="arrow-right" style="width:16px;"></i></a>
-=======
             <a href="#doc-details" class="resource-link text-blue fw-bold d-inline-flex align-items-center gap-1 hover-arrow nav-anchor">Lire la Doc <i data-lucide="arrow-right" style="width:16px;"></i></a>
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
           </div>
 
           <div class="resource-card glass-panel p-4 rounded-2xl hover-extend-glow hover-zoom text-high-contrast" data-tilt data-tilt-max="5" data-tilt-glare="true" data-tilt-max-glare="0.2">
             <div class="resource-icon bg-purple-light rounded-circle d-inline-flex p-3 mb-4"><i data-lucide="edit-3" class="text-purple" style="width:28px;height:28px;"></i></div>
             <h3 class="accent-font mb-2">Le Blog Insider</h3>
             <p class="text-muted text-sm mb-4">Tendances du recrutement IA et articles de veille exclusifs de notre communauté.</p>
-<<<<<<< HEAD
-            <a href="blog.php" class="resource-link text-purple fw-bold d-inline-flex align-items-center gap-1 hover-arrow">Découvrir le blog <i data-lucide="arrow-right" style="width:16px;"></i></a>
-=======
             <a href="#blog-details" class="resource-link text-purple fw-bold d-inline-flex align-items-center gap-1 hover-arrow nav-anchor">Découvrir le blog <i data-lucide="arrow-right" style="width:16px;"></i></a>
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
           </div>
 
           <div class="resource-card glass-panel p-4 rounded-2xl hover-extend-glow hover-zoom text-high-contrast" data-tilt data-tilt-max="5" data-tilt-glare="true" data-tilt-max-glare="0.2">
@@ -363,8 +322,6 @@
     </div>
   </section>
 
-<<<<<<< HEAD
-=======
   <!-- Embedded Doc Details -->
   <section class="section-doc-details py-6" id="doc-details" style="position:relative; z-index:10;">
     <div class="container">
@@ -529,8 +486,6 @@
       </div>
     </div>
   </section>
-
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   <!-- ==========================================
        TEAM ARCHIPEL SECTION
        ========================================== -->
@@ -543,10 +498,7 @@
       </div>
 
       <div class="team-grid grid-4 gap-4">
-<<<<<<< HEAD
         <!-- Team Member 1 -->
-=======
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
         <div class="team-card glass-panel rounded-2xl p-4 text-center hover-extend-glow hover-lift text-high-contrast transition-all">
           <div class="team-avatar-wrapper mx-auto mb-3 position-relative" style="width:100px;height:100px;">
             <div class="avatar-glow position-absolute w-100 h-100 rounded-circle bg-teal-light blur-md" style="top:5px; left:0; z-index:0;"></div>
@@ -560,10 +512,7 @@
           </div>
         </div>
         
-<<<<<<< HEAD
         <!-- Team Member 2 -->
-=======
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
         <div class="team-card glass-panel rounded-2xl p-4 text-center hover-extend-glow hover-lift text-high-contrast transition-all">
           <div class="team-avatar-wrapper mx-auto mb-3 position-relative" style="width:100px;height:100px;">
             <div class="avatar-glow position-absolute w-100 h-100 rounded-circle bg-purple-light blur-md" style="top:5px; left:0; z-index:0;"></div>
@@ -576,10 +525,7 @@
           </div>
         </div>
 
-<<<<<<< HEAD
         <!-- Team Member 3 -->
-=======
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
         <div class="team-card glass-panel rounded-2xl p-4 text-center hover-extend-glow hover-lift text-high-contrast transition-all">
           <div class="team-avatar-wrapper mx-auto mb-3 position-relative" style="width:100px;height:100px;">
             <div class="avatar-glow position-absolute w-100 h-100 rounded-circle bg-blue-light blur-md" style="top:5px; left:0; z-index:0;"></div>
@@ -593,10 +539,7 @@
           </div>
         </div>
 
-<<<<<<< HEAD
         <!-- Team Member 4 -->
-=======
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
         <div class="team-card glass-panel rounded-2xl p-4 text-center hover-extend-glow hover-lift text-high-contrast transition-all">
           <div class="team-avatar-wrapper mx-auto mb-3 position-relative" style="width:100px;height:100px;">
             <div class="avatar-glow position-absolute w-100 h-100 rounded-circle bg-orange-light blur-md" style="top:5px; left:0; z-index:0;"></div>
@@ -624,10 +567,7 @@
   <footer class="front-footer landing-footer py-5 mt-0 section-dark">
     <div class="container">
         <div class="front-footer__grid grid-4 gap-4">
-<<<<<<< HEAD
-        
-=======
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
+
           <div class="front-footer__brand pe-4">
             <a href="#hero" class="topnav__logo nav-anchor d-flex align-items-center gap-2 mb-3 text-decoration-none">
               <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="topnav__logo-icon" style="width:32px;">
@@ -654,15 +594,9 @@
           <div>
             <h4 class="front-footer__heading accent-font mb-4">Ressources</h4>
             <div class="front-footer__links d-flex flex-column gap-3">
-<<<<<<< HEAD
-              <a href="#resources" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Documentation API</a>
-              <a href="#resources" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Blog & Actualités</a>
-              <a href="#resources" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Centre de Support</a>
-=======
               <a href="#doc-details" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Documentation API</a>
               <a href="#blog-details" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Blog & Actualités</a>
               <a href="#team-archipel" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Centre de Support</a>
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
             </div>
           </div>
           
@@ -674,10 +608,7 @@
               <a href="#" class="text-muted hover-text-primary text-decoration-none transition-all">Préférences Cookies</a>
             </div>
           </div>
-<<<<<<< HEAD
-          
-=======
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
+
         </div>
         
         <div class="front-footer__bottom border-top border-dark-subtle mt-5 pt-4 d-flex justify-content-between text-muted text-sm flex-wrap gap-3">
@@ -688,10 +619,7 @@
 
   <!-- Scripts -->
   <script src="https://unpkg.com/lucide@latest"></script>
-<<<<<<< HEAD
   <!-- Vanilla-tilt JS for 3D card effects (TikTok/Reel style) -->
-=======
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/nav.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/landing-animations.js"></script>
@@ -699,11 +627,7 @@
   <script>
     lucide.createIcons();
     
-<<<<<<< HEAD
     // Smooth Typewriter Effect for Hero Title
-=======
-    // Smooth Typewriter Effect
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
     var TxtType = function(el, toRotate, period) {
         this.toRotate = toRotate;
         this.el = el;
@@ -727,37 +651,22 @@
         this.el.innerHTML = '<span class="wrap">'+this.txt+'</span>';
 
         var that = this;
-<<<<<<< HEAD
         var delta = 150 - Math.random() * 50; // Smooth typing
-=======
-        var delta = 150 - Math.random() * 50;
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 
         if (this.isDeleting) { delta /= 2; }
 
         if (!this.isDeleting && this.txt === fullTxt) {
-<<<<<<< HEAD
         delta = this.period; // Pause at end
-=======
-        delta = this.period;
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
         this.isDeleting = true;
         } else if (this.isDeleting && this.txt === '') {
         this.isDeleting = false;
         this.loopNum++;
-<<<<<<< HEAD
         delta = 500; // Pause before typing new word
-=======
-        delta = 500;
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
         }
         setTimeout(function() { that.tick(); }, delta);
     };
 
-<<<<<<< HEAD
     // Initialize Typewriter
-=======
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
     var elements = document.getElementsByClassName('typewrite');
     for (var i=0; i<elements.length; i++) {
         var toRotate = elements[i].getAttribute('data-type');
@@ -766,26 +675,16 @@
           new TxtType(elements[i], JSON.parse(toRotate), period);
         }
     }
-<<<<<<< HEAD
     // Inject CSS for typewriter cursor
-=======
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
     var css = document.createElement("style");
     css.type = "text/css";
     css.innerHTML = ".typewrite > .wrap { border-right: 0.08em solid var(--accent-primary);}";
     document.body.appendChild(css);
 
-<<<<<<< HEAD
     // Counter Animation Logic (Smoothed)
     document.addEventListener('DOMContentLoaded', () => {
         const counters = document.querySelectorAll('.counter');
         const countDuration = 2000; // 2 seconds to reach the number
-=======
-    // Counter Animation
-    document.addEventListener('DOMContentLoaded', () => {
-        const counters = document.querySelectorAll('.counter');
-        const countDuration = 2000;
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
         
         const counterObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
@@ -796,17 +695,10 @@
                     const step = (timestamp) => {
                         if (!startTimestamp) startTimestamp = timestamp;
                         const progress = Math.min((timestamp - startTimestamp) / countDuration, 1);
-<<<<<<< HEAD
                         const easeOutQuart = 1 - Math.pow(1 - progress, 4); // Easing function
                         const currentCount = Math.floor(easeOutQuart * target);
                         
                         counter.innerText = currentCount.toLocaleString('fr-FR') + (target >= 1000 ? '+' : '');
-                        
-=======
-                        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-                        const currentCount = Math.floor(easeOutQuart * target);
-                        counter.innerText = currentCount.toLocaleString('fr-FR') + (target >= 1000 ? '+' : '');
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
                         if (progress < 1) {
                             window.requestAnimationFrame(step);
                         }

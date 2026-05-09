@@ -1,6 +1,12 @@
 <?php 
 require_once '../../controller/offreC.php';
+require_once '../../controller/candidatureC.php';
 $offreC = new offreC();
+$candidatureC = new candidatureC();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($_GET['id'])) {
     header('Location: jobs_feed.php');
@@ -161,20 +167,34 @@ if (!isset($content)) {
                 </div>
 
                 <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
-                    <form action="apply.php" method="GET" style="margin-bottom: 1.5rem;">
-                        <input type="hidden" name="id" value="<?php echo $id_offre; ?>">
-                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.25rem; border-radius: 18px; font-weight: 800; font-size: 1.1rem; border: none; color: white;">
-                            <i data-lucide="send" style="width: 22px; height: 22px;"></i>
-                            Postuler maintenant
-                        </button>
-                    </form>
+                    <?php 
+                    $id_user = $_SESSION['id_utilisateur'] ?? 0;
+                    $hasApplied = ($id_user > 0) ? $candidatureC->hasAlreadyApplied($id_user, $id_offre) : false;
+                    
+                    if ($hasApplied): ?>
+                        <div style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 1.25rem; border-radius: 18px; text-align: center; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.2);">
+                            <i data-lucide="check-circle" style="width: 22px; height: 22px;"></i>
+                            Candidature envoyée
+                        </div>
+                    <?php else: ?>
+                        <form action="apply.php" method="GET" style="margin-bottom: 1.5rem;">
+                            <input type="hidden" name="id" value="<?php echo $id_offre; ?>">
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.25rem; border-radius: 18px; font-weight: 800; font-size: 1.1rem; border: none; color: white;">
+                                <i data-lucide="send" style="width: 22px; height: 22px;"></i>
+                                Postuler maintenant
+                            </button>
+                        </form>
+                    <?php endif; ?>
 
                     <div style="display: flex; gap: 1rem;">
                         <button id="btn-share-<?php echo $id_offre; ?>" onclick="copyShareLink(<?php echo $id_offre; ?>)" class="btn-ghost" style="flex: 1; padding: 0.85rem; border-radius: 14px; border: 2px solid var(--border-color); background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 700; font-size: 0.85rem;" onmouseover="this.style.borderColor='var(--accent-primary)'; this.style.color='var(--accent-primary)';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.color='var(--text-secondary)';">
                             <i data-lucide="share-2" style="width: 18px; height: 18px;"></i> <span id="share-text-<?php echo $id_offre; ?>">Partager</span>
                         </button>
                         
-                        <?php $is_fav = $offreC->isFavori(1, $id_offre); ?>
+                        <?php 
+                        $id_curr = $_SESSION['id_utilisateur'] ?? 0;
+                        $is_fav = $offreC->isFavori($id_curr, $id_offre); 
+                        ?>
                         <button id="btn-fav-<?php echo $id_offre; ?>" onclick="toggleFavori(<?php echo $id_offre; ?>)" class="btn-ghost" style="flex: 1; padding: 0.85rem; border-radius: 14px; border: 2px solid <?php echo $is_fav ? 'var(--accent-primary)' : 'var(--border-color)'; ?>; background: <?php echo $is_fav ? 'rgba(168, 100, 228, 0.05)' : 'var(--bg-secondary)'; ?>; color: <?php echo $is_fav ? 'var(--accent-primary)' : 'var(--text-secondary)'; ?>; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 700; font-size: 0.85rem;">
                             <i data-lucide="bookmark" style="width: 18px; height: 18px; fill: <?php echo $is_fav ? 'currentColor' : 'none'; ?>;"></i> 
                             <span id="fav-text-<?php echo $id_offre; ?>"><?php echo $is_fav ? 'Sauvé' : 'Sauver'; ?></span>

@@ -40,7 +40,7 @@ class scoreAIC {
                         - TOLÉRANCE : Ne sois PAS sensible à la casse (Majuscules/Minuscules).
                         - LANGUE : Réponds en FRANÇAIS.
                         - ORTHOGRAPHE : Ignore les fautes d'orthographe si le sens reste clair. Focalise-toi sur le FOND et non la forme.
-                        - RIGUEUR : Un candidat parfait = 90-100. Un profil intéressant mais avec des manques = 60-80. Un profil hors-sujet = < 50.
+                        - RIGUEUR : Un candidat parfait = 80-100. Un profil intéressant mais avec des manques = 40-78. Un profil hors-sujet = < 20. 
                         
                         RÉPONSE : Réponds UNIQUEMENT par le nombre entier du score. Aucun texte, aucune explication."],
                     ["role" => "user", "content" => $prompt]

@@ -19,22 +19,6 @@
     html.setAttribute('data-theme', theme);
     localStorage.setItem(STORAGE_KEY, theme);
     updateToggleIcons(theme);
-<<<<<<< HEAD
-  }
-
-  function updateToggleIcons(theme) {
-    document.querySelectorAll('.theme-toggle').forEach(function(btn) {
-      var sunIcon = btn.querySelector('.icon-sun');
-      var moonIcon = btn.querySelector('.icon-moon');
-      if (sunIcon && moonIcon) {
-        if (theme === 'dark') {
-          sunIcon.style.display = 'block';
-          moonIcon.style.display = 'none';
-        } else {
-          sunIcon.style.display = 'none';
-          moonIcon.style.display = 'block';
-        }
-=======
     window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: theme } }));
   }
 
@@ -58,20 +42,15 @@
         btn.classList.add('is-dark');
       } else {
         btn.classList.remove('is-dark');
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
       }
     });
   }
 
   function toggleTheme() {
     var current = html.getAttribute('data-theme') || 'light';
-<<<<<<< HEAD
-    setTheme(current === 'dark' ? 'light' : 'dark');
-=======
     var newTheme = current === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     saveThemeToDatabase(newTheme);
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   }
 
   // Initialize on load

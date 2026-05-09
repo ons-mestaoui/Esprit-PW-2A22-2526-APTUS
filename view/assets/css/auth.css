@@ -23,10 +23,7 @@
   border-bottom: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 .landing-nav__logo {
   display: flex;
   align-items: center;
@@ -266,11 +263,7 @@
   transform: scaleX(1);
 }
 .feature-card:hover {
-<<<<<<< HEAD
-  transform: translateY(-4px);
-=======
   transform: translateY(-5px);
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   box-shadow: var(--shadow-lg);
 }
 .feature-card__icon {
@@ -327,6 +320,7 @@
 .auth-page {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: var(--space-8) var(--space-6);
@@ -346,33 +340,11 @@
 
 /* Back to site link */
 .back-to-site {
-<<<<<<< HEAD
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-  padding: 0.5rem 1.1rem;
-  background: rgba(30, 30, 46, 0.85);
-  backdrop-filter: blur(10px);
-  color: rgba(255, 255, 255, 0.9);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-medium);
-  text-decoration: none;
-  border-radius: var(--radius-full);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: var(--transition-base);
-}
-.back-to-site:hover {
-  background: rgba(30, 30, 46, 0.95);
-  color: #ffffff;
-  transform: translateX(-3px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-=======
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  margin: var(--space-6) auto 0; /* Center horizontally and add space above */
+  margin: var(--space-6) auto 0;
   padding: 0.6rem 1.25rem;
   background: var(--bg-secondary);
   color: var(--accent-primary);
@@ -383,6 +355,8 @@
   border: 1px solid var(--border-color);
   transition: var(--transition-bounce);
   width: fit-content;
+  position: relative;
+  z-index: 10;
 }
 .back-to-site:hover {
   background: var(--accent-primary);
@@ -390,8 +364,8 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
   border-color: var(--accent-primary);
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 }
+
 .auth-card {
   position: relative;
   background: var(--bg-card);
@@ -669,9 +643,6 @@
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
 }
 
-<<<<<<< HEAD
-=======
-
 /* ── Sliding Auth Panel (Instagram Style) ───────────────── */
 .auth-container {
   background-color: var(--bg-card);
@@ -872,7 +843,6 @@
   margin: 0;
 }
 
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 /* ── Responsive ───────────────────────────────── */
 @media (max-width: 768px) {
   .hero__stats {
@@ -894,8 +864,6 @@
   .auth-card {
     padding: var(--space-6);
   }
-<<<<<<< HEAD
-=======
 
   .auth-container {
     min-height: auto;
@@ -924,5 +892,4 @@
   .auth-container.right-panel-active .sign-in-container {
     display: none;
   }
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 }

@@ -59,13 +59,24 @@ class candidatureC {
     }
 
     // Afficher (récupérer) toutes les candidatures (avec titre de l'offre grâce à la clé étrangère)
-    public function afficherCandidatures() {
+    public function afficherCandidatures($id_entreprise = null) {
         $sql = "SELECT c.*, o.titre as titre_offre, o.question as question_offre 
                 FROM candidatures c 
                 LEFT JOIN offreemploi o ON c.id_offre = o.id_offre";
+        $params = [];
+        if ($id_entreprise !== null) {
+            $sql .= " WHERE o.id_entreprise = :id_ent";
+            $params['id_ent'] = $id_entreprise;
+        }
+
         $db = config::getConnexion();
         try {
-            $liste = $db->query($sql);
+            if (empty($params)) {
+                $liste = $db->query($sql);
+            } else {
+                $liste = $db->prepare($sql);
+                $liste->execute($params);
+            }
             return $liste;
         } catch (Exception $e) {
             die('Error:' . $e->getMessage());
@@ -80,12 +91,14 @@ class candidatureC {
         
         $params = [];
         if (!empty($criteres['status'])) {
-            if ($criteres['status'] === 'shortliste' || $criteres['status'] === 'Accepté') {
-                $sql .= " AND c.statut = 'Accepté'";
-            } elseif ($criteres['status'] === 'refuse' || $criteres['status'] === 'Refusé') {
-                $sql .= " AND c.statut = 'Refusé'";
-            } elseif ($criteres['status'] === 'en_attente') {
-                $sql .= " AND (c.statut = 'En attente' OR c.statut = 'en_attente')";
+            $status = strtolower($criteres['status']);
+            if ($status === 'shortliste' || $status === 'accepté' || $status === 'accepte') {
+                $sql .= " AND LOWER(c.statut) IN ('accepté', 'accepte', 'shortliste')";
+            } elseif ($status === 'refuse' || $status === 'refusé') {
+                $sql .= " AND LOWER(c.statut) IN ('refusé', 'refuse')";
+            } elseif ($status === 'en_attente' || $status === 'en attente') {
+                // On inclut les statuts vides ou null dans "En attente" car c'est le statut par défaut
+                $sql .= " AND (LOWER(c.statut) = 'en attente' OR LOWER(c.statut) = 'en_attente' OR c.statut IS NULL OR c.statut = '')";
             }
         }
 
@@ -97,6 +110,11 @@ class candidatureC {
         if (!empty($criteres['q'])) {
             $sql .= " AND (c.nom LIKE :q OR c.prenom LIKE :q)";
             $params['q'] = '%' . $criteres['q'] . '%';
+        }
+
+        if (!empty($criteres['id_entreprise'])) {
+            $sql .= " AND o.id_entreprise = :id_ent";
+            $params['id_ent'] = $criteres['id_entreprise'];
         }
 
         $sql .= " ORDER BY c.date_candidature DESC";
@@ -113,8 +131,8 @@ class candidatureC {
 
 
 
-    // Mettre à jour le statut d'une candidature + créer une notification
-    public function updateStatut($id_candidature, $nouveau_statut) {
+    // Mettre à jour le statut d'une candidature + créer une notification + (Optionnel) Date Entretien
+    public function updateStatut($id_candidature, $nouveau_statut, $date_entretien = null) {
         $db = config::getConnexion();
         try {
             // 1. Récupérer les infos de la candidature + l'entreprise (via table utilisateur)
@@ -128,28 +146,33 @@ class candidatureC {
             $cand = $req->fetch();
             if (!$cand) return false;
 
-            // SECURITÉ : Si le statut est déjà celui-là, on arrête tout (évite les doublons au refresh)
-            if ($cand['statut'] === $nouveau_statut) {
+            // SECURITÉ : Si le statut est déjà celui-là, on arrête tout 
+            if ($cand['statut'] === $nouveau_statut && $nouveau_statut !== 'Accepté') {
                 return true;
             }
 
-            // 2. Mettre à jour le statut
-            $sql2 = "UPDATE candidatures SET statut = :statut WHERE id_candidature = :id";
+            // 2. Mettre à jour le statut et la date d'entretien
+            $sql2 = "UPDATE candidatures SET statut = :statut, date_entretien = :date_e WHERE id_candidature = :id";
             $req2 = $db->prepare($sql2);
-            $req2->execute(['statut' => $nouveau_statut, 'id' => $id_candidature]);
+            $req2->execute([
+                'statut' => $nouveau_statut, 
+                'date_e' => $date_entretien,
+                'id' => $id_candidature
+            ]);
 
             // 3. Créer la notification
             $nom = $cand['prenom'] . ' ' . $cand['nom'];
             $poste = $cand['titre_offre'] ?? 'un poste';
             if ($nouveau_statut === 'Accepté') {
-                $message = "Bonjour $nom, félicitations ! Votre candidature pour le poste \"$poste\" a été retenue.";
+                $msgDate = $date_entretien ? " prévue le " . date('d/m/Y à H:i', strtotime($date_entretien)) : "";
+                $message = "Bonjour $nom, félicitations ! Votre candidature pour le poste \"$poste\" a été retenue. Une entrevue est$msgDate.";
             } else {
                 $message = "Bonjour $nom, nous vous informons que votre candidature pour le poste \"$poste\" n'a malheureusement pas été retenue.";
             }
 
             $this->addNotification($cand['id_candidat'], $id_candidature, $message);
 
-            // 4. SI CHANGEMENT DE STATUT : Envoyer le mail via Brevo (Dynamique)
+            // 4. SI CHANGEMENT DE STATUT : Envoyer le mail via Brevo 
             $mailC = new mailC();
             $nomComplet = $cand['prenom'] . ' ' . $cand['nom'];
             $nomEnt = $cand['nom_entreprise'] ?? 'Aptus Recruitment';
@@ -158,7 +181,7 @@ class candidatureC {
             if ($nouveau_statut === 'Refusé') {
                 $mailC->envoyerMailRefus($cand['email'], $nomComplet, $nomEnt, $emailEnt);
             } elseif ($nouveau_statut === 'Accepté') {
-                $mailC->envoyerMailAcceptation($cand['email'], $nomComplet, $nomEnt, $emailEnt);
+                $mailC->envoyerMailAcceptation($cand['email'], $nomComplet, $nomEnt, $emailEnt, $date_entretien);
             }
 
             return true;
@@ -209,12 +232,15 @@ class candidatureC {
     }
 
     // Supprimer une notification
-    public function deleteNotification($id_notif) {
-        $sql = "DELETE FROM notifications WHERE id_notif = :id";
+    public function deleteNotification($id_notif, $id_candidat) {
+        $sql = "DELETE FROM notifications WHERE id_notif = :id AND id_candidat = :id_c";
         $db = config::getConnexion();
         try {
             $req = $db->prepare($sql);
-            $req->execute(['id' => $id_notif]);
+            $req->execute([
+                'id' => $id_notif,
+                'id_c' => $id_candidat
+            ]);
         } catch (Exception $e) {
             die('Error:' . $e->getMessage());
         }

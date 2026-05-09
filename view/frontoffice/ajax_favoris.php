@@ -1,9 +1,18 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once '../../controller/offreC.php';
 $offreC = new offreC();
 
-// On simule un ID candidat (à remplacer par la session plus tard)
-$id_candidat = 1;
+// Sécurité : Uniquement pour les candidats
+if (!isset($_SESSION['id_utilisateur']) || strtolower($_SESSION['role'] ?? '') !== 'candidat') {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+    exit();
+}
+
+$id_candidat = $_SESSION['id_utilisateur'];
 
 if (isset($_POST['action']) && $_POST['action'] === 'toggle') {
     $id_offre = intval($_POST['id_offre']);

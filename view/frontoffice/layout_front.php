@@ -38,6 +38,25 @@ if ($userId) {
 
 // Initialize theme from preferences early
 $currentTheme = $userPrefs['theme'] ?? 'light';
+
+// Handle notification AJAX requests logique ons
+if (isset($_GET['mark_read'])) {
+    if (!class_exists('candidatureC')) {
+        require_once __DIR__ . '/../../controller/candidatureC.php';
+    }
+    $notifC = new candidatureC();
+    $notifC->markNotificationsRead($userId ?: 1);
+    exit();
+}
+
+if (isset($_GET['delete_notif'])) {
+    if (!class_exists('candidatureC')) {
+        require_once __DIR__ . '/../../controller/candidatureC.php';
+    }
+    $notifC = new candidatureC();
+    $notifC->deleteNotification($_GET['delete_notif']);
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="<?php echo $currentTheme; ?>">
@@ -158,6 +177,7 @@ $currentTheme = $userPrefs['theme'] ?? 'light';
         <a href="espace_tuteur.php" class="nav-anchor" id="nav-tuteur-espace"><i data-lucide="graduation-cap"></i><span>Mon Espace</span></a>
       <?php else: ?>
         <a href="jobs_feed.php" class="nav-anchor" id="nav-jobs"><i data-lucide="briefcase"></i><span>Offres d'emploi</span></a>
+        <a href="my_applications.php" class="nav-anchor" id="nav-my-applications"><i data-lucide="clipboard-list"></i><span>Mes Candidatures</span></a>
         <a href="cv_templates.php" class="nav-anchor" id="nav-cv"><i data-lucide="file-badge"></i><span>Générer CV</span></a>
         <a href="formations_catalog.php" class="nav-anchor" id="nav-formations"><i data-lucide="graduation-cap"></i><span>Formations</span></a>
         <a href="veille_feed.php" class="nav-anchor" id="nav-veille"><i data-lucide="line-chart"></i><span>Veille Marché</span></a>
@@ -178,8 +198,8 @@ $currentTheme = $userPrefs['theme'] ?? 'light';
             require_once __DIR__ . '/../../controller/candidatureC.php';
         }
         $notifController = new candidatureC();
-        $id_candidat_notif = $userId ?: 1; 
-        $notifications = $notifController->getNotificationsByCandidat($id_candidat_notif);
+        $id_candidat_notif = $_SESSION['id_utilisateur'] ?? 0;
+        $notifications = ($id_candidat_notif > 0) ? $notifController->getNotificationsByCandidat($id_candidat_notif) : [];
         $unreadCount = 0;
         foreach ($notifications as $n) { if (!$n['is_read']) $unreadCount++; }
       ?>
@@ -234,7 +254,6 @@ $currentTheme = $userPrefs['theme'] ?? 'light';
             .delete-notif:hover { color: #ef4444 !important; }
             .notif-list::-webkit-scrollbar { width: 6px; }
             .notif-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
-            #notif-menu.active { display: block !important; }
           </style>
         </div>
       </div>
@@ -244,7 +263,7 @@ $currentTheme = $userPrefs['theme'] ?? 'light';
           menu.classList.toggle('active');
           // Marquer comme lues via AJAX
           var badge = document.getElementById('notif-badge');
-          if (badge && menu.classList.contains('active')) {
+          if (badge) {
               fetch('?mark_read=1').then(function(){
                   badge.style.display = 'none';
               });
@@ -426,16 +445,19 @@ $currentTheme = $userPrefs['theme'] ?? 'light';
 
   <script>
   document.addEventListener('DOMContentLoaded', function() {
-      // Afficher les notifications non lues sous forme de toasts
+      // Afficher les notifications non lues sous forme de toasts (une seule fois par session)
       <?php if (isset($unreadCount) && $unreadCount > 0): ?>
           <?php 
             $newNotifs = array_filter($notifications, function($n) { return !$n['is_read']; });
             $newNotifs = array_slice($newNotifs, 0, 3); // Max 3 toasts
             foreach($newNotifs as $notif): 
           ?>
-              setTimeout(() => {
-                  showToast("<?php echo addslashes(htmlspecialchars($notif['message'])); ?>");
-              }, 500);
+              if (!sessionStorage.getItem('notif_seen_<?php echo $notif['id_notif']; ?>')) {
+                  setTimeout(() => {
+                      showToast("<?php echo addslashes(htmlspecialchars($notif['message'])); ?>");
+                      sessionStorage.setItem('notif_seen_<?php echo $notif['id_notif']; ?>', 'true');
+                  }, 500);
+              }
           <?php endforeach; ?>
       <?php endif; ?>
   });

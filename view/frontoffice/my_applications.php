@@ -1,12 +1,15 @@
 <?php 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once '../../controller/candidatureC.php';
 require_once '../../controller/offreC.php';
 
 $candidatureC = new candidatureC();
 $offreC = new offreC();
 
-// Pour le moment on utilise l'ID candidat 1 (à remplacer par $_SESSION['user_id'] plus tard)
-$id_candidat = 1;
+// Utilisation de l'ID candidat provenant de la session
+$id_candidat = $_SESSION['id_utilisateur'] ?? 1;
 $candidatures = $candidatureC->getCandidaturesByCandidat($id_candidat);
 
 $pageTitle = "Mes Candidatures"; 

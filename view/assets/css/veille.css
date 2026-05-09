@@ -23,8 +23,6 @@
   padding: var(--space-6);
   transition: var(--transition-base);
   position: relative;
-<<<<<<< HEAD
-=======
   overflow: hidden;
 }
 .report-card__image {
@@ -41,7 +39,6 @@
 }
 .report-card__header-content {
   flex: 1;
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 }
 .report-card:hover {
   box-shadow: var(--shadow-lg);
@@ -90,13 +87,10 @@
   align-items: center;
   gap: var(--space-1);
 }
-<<<<<<< HEAD
-=======
 .report-card__meta-item--views {
   color: var(--accent-primary);
   font-weight: var(--fw-medium);
 }
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 .report-card__footer {
   display: flex;
   align-items: center;
@@ -281,8 +275,6 @@
   gap: var(--space-3);
 }
 
-<<<<<<< HEAD
-=======
 /* ── Premium AI Helpers ────────────────────────── */
 .btn-ai-sparkle {
   background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
@@ -424,8 +416,6 @@
     color: #ef4444;
     font-style: italic;
 }
-
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 /* ── Responsive ───────────────────────────────── */
 @media (max-width: 1024px) {
   .veille-layout, .publisher-layout {

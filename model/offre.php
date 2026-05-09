@@ -1,5 +1,6 @@
 <?php
 class offre{
+    private $id_entreprise;
     private $id_offre;
     private $titre;
     private $description;
@@ -14,10 +15,8 @@ class offre{
     private $type;
     private $lieu;
 
-    
-
-    public function __construct( string $titre, string $description, string $domaine, string $competences_requises, string $experience_requise, float $salaire, string $question, string $date_publication, string $date_expir, ?string $img_post = null, string $type = 'Sur site', ?string $lieu = null) {
-
+    public function __construct(int $id_entreprise, string $titre, string $description, string $domaine, string $competences_requises, string $experience_requise, float $salaire, string $question, string $date_publication, string $date_expir, ?string $img_post = null, string $type = 'Sur site', ?string $lieu = null) {
+        $this->id_entreprise = $id_entreprise;
         $this->titre = $titre;
         $this->description = $description;
         $this->domaine = $domaine;
@@ -30,6 +29,10 @@ class offre{
         $this->img_post = $img_post;
         $this->type = $type;
         $this->lieu = $lieu;
+    }
+
+    public function getIdEntreprise() {
+        return $this->id_entreprise;
     }
 
     public function getTitre() {

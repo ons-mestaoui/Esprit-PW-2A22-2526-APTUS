@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-<!DOCTYPE html>
-<html lang="fr" data-theme="light">
-=======
 <?php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -44,7 +40,6 @@ if ($userId) {
 ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="<?php echo $userTheme; ?>">
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,22 +53,15 @@ if ($userId) {
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
-<<<<<<< HEAD
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_back.css">
-=======
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css?v=<?php echo time(); ?>">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_back.css">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/ai_agent.css">
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
   <?php if (isset($pageCSS)): ?>
     <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/<?php echo $pageCSS; ?>">
   <?php endif; ?>
 
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
-<<<<<<< HEAD
-=======
 
   <?php
   // Load admin appearance overrides (colors, font, radius)
@@ -108,7 +96,6 @@ if ($userId) {
   <!-- AI Agent Widget Scripts -->
   <script src="/aptus_first_official_version/view/assets/js/ai_agent.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/ai_agent_ext.js"></script>
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 </head>
 <body>
 
@@ -153,23 +140,11 @@ if ($userId) {
           <i data-lucide="briefcase"></i>
           <span>Offres Disponibles</span>
         </a>
-<<<<<<< HEAD
-
-=======
-        <a href="posts_stats.php" class="sidebar-link<?php echo ($currentPage==='posts_stats.php')?' active':''; ?>" id="sidebar-posts">
-          <i data-lucide="bar-chart-3"></i>
-          <span>Posts &amp; Stats</span>
-        </a>
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
       </nav>
 
       <!-- Footer / Logout -->
       <div class="sidebar__footer">
-<<<<<<< HEAD
-        <a href="../frontoffice/login.php" class="sidebar__logout" id="sidebar-logout">
-=======
         <a href="../frontoffice/logout.php" class="sidebar__logout" id="sidebar-logout">
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
           <i data-lucide="log-out"></i>
           <span>Déconnexion</span>
         </a>
@@ -195,11 +170,7 @@ if ($userId) {
       <div class="back-topbar__actions">
         <!-- Theme Toggle -->
         <button class="theme-toggle" id="admin-theme-toggle" aria-label="Toggle theme">
-<<<<<<< HEAD
-          <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
-=======
           <i data-lucide="sun" class="icon-sun"></i>
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
           <i data-lucide="moon" class="icon-moon"></i>
         </button>
 
@@ -216,10 +187,6 @@ if ($userId) {
               <span class="back-topbar__admin-name"><?php echo isset($adminName) ? $adminName : 'Administrateur'; ?></span>
               <span class="back-topbar__admin-role">Super Admin</span>
             </div>
-<<<<<<< HEAD
-            <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;">
-              <?php echo isset($adminName) ? strtoupper(substr($adminName, 0, 2)) : 'AD'; ?>
-=======
             <div class="avatar" style="width:36px;height:36px;font-size:13px;overflow:hidden;background:var(--bg-glass);display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--border-color);">
               <?php if ($userPhoto): ?>
                 <img src="<?php echo $userPhoto; ?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
@@ -228,7 +195,7 @@ if ($userId) {
                   <?php echo isset($adminName) ? strtoupper(substr($adminName, 0, 2)) : 'AD'; ?>
                 </span>
               <?php endif; ?>
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
+            </div>
             </div>
           </div>
           <div class="dropdown-menu">
@@ -241,11 +208,7 @@ if ($userId) {
               Paramètres
             </a>
             <div class="dropdown-divider"></div>
-<<<<<<< HEAD
-            <a href="../frontoffice/login.php" class="dropdown-item" style="color:var(--accent-tertiary);">
-=======
             <a href="../frontoffice/logout.php" class="dropdown-item" style="color:var(--accent-tertiary);">
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
               <i data-lucide="log-out" style="width:16px;height:16px;"></i>
               Déconnexion
             </a>
@@ -277,9 +240,6 @@ if ($userId) {
   <?php if (isset($pageJS)): ?>
     <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
-<<<<<<< HEAD
-  <script>lucide.createIcons();</script>
-=======
   <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
   
   <!-- ═══════════════════════════════════════════
@@ -302,7 +262,5 @@ if ($userId) {
 
   <script type="module" src="/aptus_first_official_version/view/assets/js/a11y-hand-control.js"></script>
   <script>lucide.createIcons();</script>
-
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
 </body>
 </html>

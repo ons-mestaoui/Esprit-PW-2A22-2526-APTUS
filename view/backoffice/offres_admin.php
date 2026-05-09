@@ -176,7 +176,7 @@ if (!isset($content)) {
 
   <!-- ═══ Engagement Stats (from posts_stats) ═══ -->
   <div class="grid grid-4 gap-6 mb-8 stagger">
-    <div class="stat-card animate-on-scroll">
+    <div class="stat-card">
       <div>
         <div class="stat-card__label">Offres publiées</div>
         <div class="stat-card__value"><?php echo $count; ?></div>
@@ -184,7 +184,7 @@ if (!isset($content)) {
       </div>
       <div class="stat-card__icon purple"><i data-lucide="file-text" style="width:22px;height:22px;"></i></div>
     </div>
-    <div class="stat-card animate-on-scroll">
+    <div class="stat-card">
       <div>
         <div class="stat-card__label">Engagement moyen</div>
         <div class="stat-card__value">78%</div>
@@ -192,7 +192,7 @@ if (!isset($content)) {
       </div>
       <div class="stat-card__icon teal"><i data-lucide="heart" style="width:22px;height:22px;"></i></div>
     </div>
-    <div class="stat-card animate-on-scroll">
+    <div class="stat-card">
       <div>
         <div class="stat-card__label">Vues totales</div>
         <div class="stat-card__value">89.4k</div>
@@ -200,7 +200,7 @@ if (!isset($content)) {
       </div>
       <div class="stat-card__icon blue"><i data-lucide="eye" style="width:22px;height:22px;"></i></div>
     </div>
-    <div class="stat-card animate-on-scroll">
+    <div class="stat-card">
       <div>
         <div class="stat-card__label">Candidatures reçues</div>
         <div class="stat-card__value">
@@ -277,7 +277,7 @@ if (!isset($content)) {
             $statut = $o['statut'] ?? 'Actif';
             $badgeClass = ($statut === 'Expiré') ? 'badge-danger' : 'badge-success';
         ?>
-        <tr class="animate-on-scroll">
+        <tr>
             <td style="font-weight:600; color:var(--text-tertiary);">#<?php echo $id; ?></td>
             <td>
                 <div style="display:flex; align-items:center; gap:0.75rem;">
@@ -648,7 +648,7 @@ function updateAdminTable(offres) {
         const experience = escapeHtml(o.experience_requise || '');
         const domaine = escapeHtml(o.domaine || '');
         
-        html += `<tr class="animate-on-scroll">
+        html += `<tr>
             <td style="font-weight:600; color:var(--text-tertiary);">#${o.id_offre}</td>
             <td>
                 <div style="display:flex; align-items:center; gap:0.75rem;">

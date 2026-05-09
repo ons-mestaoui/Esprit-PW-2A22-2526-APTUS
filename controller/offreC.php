@@ -4,8 +4,9 @@ class offreC{
     public function ajouterOffre($offre){
         $db = config::getConnexion();
         try{
-            $query = $db->prepare("INSERT INTO offreemploi (id_entreprise, titre, description, domaine, competences_requises, experience_requise, salaire, question, date_publication, date_expir, statut, img_post, type, lieu) VALUES (1, :titre, :description, :domaine, :competences_requises, :experience_requise, :salaire, :question, :date_publication, :date_expir, 'Actif', :img_post, :type, :lieu)");
+            $query = $db->prepare("INSERT INTO offreemploi (id_entreprise, titre, description, domaine, competences_requises, experience_requise, salaire, question, date_publication, date_expir, statut, img_post, type, lieu) VALUES (:id_entreprise, :titre, :description, :domaine, :competences_requises, :experience_requise, :salaire, :question, :date_publication, :date_expir, 'Actif', :img_post, :type, :lieu)");
             $query->execute([
+                'id_entreprise' => $offre->getIdEntreprise(),
                 'titre' => $offre->getTitre(),
                 'description' => $offre->getDescription(),
                 'domaine' => $offre->getDomaine(),
@@ -27,7 +28,7 @@ class offreC{
 
 
 
-    public function afficherOffres($onlyActive = false){
+    public function afficherOffres($onlyActive = false, $criteres = []){
         $db = config::getConnexion();
         try{
             // Auto-update du statut basé sur la date d'expiration pour simuler un CRON
@@ -37,13 +38,26 @@ class offreC{
             $sql = "SELECT o.*, u.nom as nom_entreprise,
                     (SELECT COUNT(*) FROM candidatures c WHERE c.id_offre = o.id_offre) as nb_candidats
                     FROM offreemploi o 
-                    LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur";
+                    LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur
+                    WHERE 1=1";
+            
+            $params = [];
             if ($onlyActive) {
-                $sql .= " WHERE o.statut = 'Actif'";
+                $sql .= " AND o.statut = 'Actif'";
             }
+            if (!empty($criteres['id_entreprise'])) {
+                $sql .= " AND o.id_entreprise = :id_ent";
+                $params['id_ent'] = $criteres['id_entreprise'];
+            }
+            
             $sql .= " ORDER BY o.date_publication DESC, o.id_offre DESC";
             
-            $liste = $db->query($sql);
+            if (empty($params)) {
+                $liste = $db->query($sql);
+            } else {
+                $liste = $db->prepare($sql);
+                $liste->execute($params);
+            }
             return $liste;
         }catch (Exception $e){
             die('Erreur: '.$e->getMessage());
@@ -69,6 +83,10 @@ class offreC{
             if (!empty($criteres['statut']) && $criteres['statut'] !== 'Tous statuts') {
                 $sql .= " AND o.statut = :statut";
                 $params['statut'] = $criteres['statut'];
+            }
+            if (!empty($criteres['id_entreprise'])) {
+                $sql .= " AND o.id_entreprise = :id_ent";
+                $params['id_ent'] = $criteres['id_entreprise'];
             }
 
             // Gestion du tri (sort_date prioritaire sur sort_salaire)
@@ -164,7 +182,7 @@ class offreC{
     }
 
     // ═══ RECHERCHE DYNAMIQUE AJAX (RETOURNE UN ARRAY POUR JSON) ═══
-    public function rechercherOffresAjax(string $keyword, bool $onlyActive = false, string $filterStatus = '', string $filterType = '', ?int $salaryMin = null, ?int $salaryMax = null, string $sortDate = ''): array {
+    public function rechercherOffresAjax(string $keyword, bool $onlyActive = false, string $filterStatus = '', string $filterType = '', ?int $salaryMin = null, ?int $salaryMax = null, string $sortDate = '', array $criteres = []): array {
         $db = config::getConnexion();
         try {
             $sql = "SELECT o.*, u.nom as nom_entreprise,
@@ -173,6 +191,11 @@ class offreC{
                     LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur
                     WHERE o.titre LIKE :kw";
             $params = ['kw' => '%' . $keyword . '%'];
+
+            if (!empty($criteres['id_entreprise'])) {
+                $sql .= " AND o.id_entreprise = :id_ent";
+                $params['id_ent'] = $criteres['id_entreprise'];
+            }
             
             if ($onlyActive) {
                 $sql .= " AND o.statut = 'Actif'";
@@ -222,6 +245,12 @@ class offreC{
             }
             $sortDate = $_POST['sort_date'] ?? '';
             
+            // LOGIQUE DE FILTRAGE PAR ENTREPRISE SI CONNECTÉ
+            $criteres = [];
+            if (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'entreprise') {
+                $criteres['id_entreprise'] = $_SESSION['id_utilisateur'];
+            }
+
             if ($query === '') {
                 // Si vide, retourner toutes les offres
                 $db = config::getConnexion();
@@ -236,6 +265,10 @@ class offreC{
                 } elseif (!empty($filterStatus) && $filterStatus !== 'Tous statuts') {
                     $sql .= " AND o.statut = :statut";
                     $params['statut'] = $filterStatus;
+                }
+                if (!empty($criteres['id_entreprise'])) {
+                    $sql .= " AND o.id_entreprise = :id_ent";
+                    $params['id_ent'] = $criteres['id_entreprise'];
                 }
                 if (!empty($filterType) && $filterType !== 'all') {
                     $sql .= " AND o.type = :type";
@@ -255,7 +288,7 @@ class offreC{
                 $req->execute($params);
                 $results = $req->fetchAll(PDO::FETCH_ASSOC);
             } else {
-                $results = $this->rechercherOffresAjax($query, $onlyActive, $filterStatus, $filterType, $salaryMin, $salaryMax, $sortDate);
+                $results = $this->rechercherOffresAjax($query, $onlyActive, $filterStatus, $filterType, $salaryMin, $salaryMax, $sortDate, $criteres);
             }
             
             echo json_encode(['success' => true, 'results' => $results]);

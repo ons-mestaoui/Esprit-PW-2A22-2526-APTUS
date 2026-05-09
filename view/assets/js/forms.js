@@ -78,19 +78,11 @@
           targetEl.style.display = 'block';
           targetEl.classList.add('animate-fade-in-up');
           var input = targetEl.querySelector('input, textarea, select');
-<<<<<<< HEAD
-          if (input) input.setAttribute('required', '');
-        } else {
-          targetEl.style.display = 'none';
-          var input = targetEl.querySelector('input, textarea, select');
-          if (input) input.removeAttribute('required');
-=======
           if (input) input.setAttribute('data-required', 'true');
         } else {
           targetEl.style.display = 'none';
           var input = targetEl.querySelector('input, textarea, select');
           if (input) input.removeAttribute('data-required');
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
         }
       });
     });
@@ -128,13 +120,9 @@
       var hiddenInput = container.querySelector('.tag-input__hidden');
       var tags = [];
 
-<<<<<<< HEAD
-=======
       if (hiddenInput && hiddenInput.value) {
           tags = hiddenInput.value.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
       }
-
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
       if (!input) return;
 
       input.addEventListener('keydown', function(e) {
@@ -171,9 +159,6 @@
           });
         });
       }
-<<<<<<< HEAD
-=======
-
       // Initial render
       if (tags.length > 0) {
         renderTags();
@@ -192,19 +177,11 @@
           });
         });
       }
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
     });
 
     /* ══════════════════════════════════════════════
        FORM VALIDATION
        ══════════════════════════════════════════════ */
-<<<<<<< HEAD
-    document.querySelectorAll('form[data-validate]').forEach(function(form) {
-      form.addEventListener('submit', function(e) {
-        var isValid = true;
-        
-        // Clear previous errors
-=======
     /* ══════════════════════════════════════════════
        MOTEUR DE VALIDATION PERSONNALISÉ
        Cette section remplace les contrôles natifs HTML5 par une logique
@@ -231,7 +208,6 @@
         var isValid = true;
         
         // Réinitialisation des messages d'erreur et des styles visuels
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
         form.querySelectorAll('.form-error').forEach(function(err) {
           err.textContent = '';
         });
@@ -239,52 +215,6 @@
           inp.classList.remove('input-error');
         });
 
-<<<<<<< HEAD
-        // Validate required fields
-        form.querySelectorAll('[required]').forEach(function(field) {
-          if (!field.value.trim()) {
-            isValid = false;
-            field.classList.add('input-error');
-            var errorEl = field.closest('.form-group')
-              ? field.closest('.form-group').querySelector('.form-error')
-              : null;
-            if (errorEl) errorEl.textContent = 'Ce champ est requis';
-          }
-        });
-
-        // Validate email fields
-        form.querySelectorAll('input[type="email"]').forEach(function(field) {
-          if (field.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value)) {
-            isValid = false;
-            field.classList.add('input-error');
-            var errorEl = field.closest('.form-group')
-              ? field.closest('.form-group').querySelector('.form-error')
-              : null;
-            if (errorEl) errorEl.textContent = 'Email invalide';
-          }
-        });
-
-        // Validate password match
-        var pw = form.querySelector('[data-match]');
-        if (pw) {
-          var matchTarget = form.querySelector('#' + pw.dataset.match);
-          if (matchTarget && pw.value !== matchTarget.value) {
-            isValid = false;
-            pw.classList.add('input-error');
-            var errorEl = pw.closest('.form-group')
-              ? pw.closest('.form-group').querySelector('.form-error')
-              : null;
-            if (errorEl) errorEl.textContent = 'Les mots de passe ne correspondent pas';
-          }
-        }
-
-        if (!isValid) {
-          e.preventDefault();
-          // Scroll to first error
-          var firstError = form.querySelector('.input-error');
-          if (firstError) {
-            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-=======
         // 1. Validation des champs obligatoires via l'attribut personnalisé 'data-required'
         form.querySelectorAll('[data-required]').forEach(function(field) {
           if (!field.value.trim()) {
@@ -364,7 +294,6 @@
           if (firstError) {
             var rect = firstError.getBoundingClientRect();
             window.scrollTo({ top: window.pageYOffset + rect.top - 150, behavior: 'smooth' });
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
             firstError.focus();
           }
         }
@@ -375,18 +304,11 @@
         field.addEventListener('blur', function() {
           if (this.classList.contains('input-error') && this.value.trim()) {
             this.classList.remove('input-error');
-<<<<<<< HEAD
-            var errorEl = this.closest('.form-group')
-              ? this.closest('.form-group').querySelector('.form-error')
-              : null;
-            if (errorEl) errorEl.textContent = '';
-=======
             var group = this.closest('.form-group');
             if (group) {
               var errorEl = group.querySelector('.form-error');
               if (errorEl) errorEl.textContent = '';
             }
->>>>>>> 61eaa182d9a574cda2caffe718b2520b39b81cd9
           }
         });
       });

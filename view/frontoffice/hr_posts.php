@@ -1,4 +1,7 @@
 <?php 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 $pageTitle = "Mes Postes"; 
 $pageCSS = "feeds.css"; 
 $userRole = "Entreprise"; 
@@ -10,6 +13,7 @@ require_once '../../model/offre.php';
 $offreC = new offreC();
 $action = $_GET['action'] ?? 'list';
 
+$id_entreprise = $_SESSION['id_utilisateur'] ?? 1; // Fallback to 1 for dev if session missing
 $errors = [];
 $form_data = [];
 
@@ -105,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // SI AUCUNE ERREUR: ON SAUVEGARDE EN BDD
     if (empty($errors)) {
         $offre = new offre(
+            (int)$id_entreprise,
             $titre, 
             $description, 
             $domaine, 
@@ -159,7 +164,11 @@ if (!isset($content)) {
   <p class="page-header__subtitle">Gérez vos offres d'emploi publiées</p>
 </div>
 
-<div class="hr-layout" style="<?php echo ($action === 'list') ? 'grid-template-columns: 300px 1fr;' : 'grid-template-columns: 1fr;'; ?>">
+<?php if ($action === 'list'): ?>
+<div class="hr-layout" style="grid-template-columns: 300px 1fr;">
+<?php else: ?>
+<div class="form-layout-simple" style="width: 100%; padding-bottom: 10rem;">
+<?php endif; ?>
   <?php if ($action === 'list'): ?>
   <!-- ═══ SIDEBAR (Gauche) ═══ -->
   <aside class="hr-sidebar">
@@ -168,7 +177,7 @@ if (!isset($content)) {
          onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(168, 100, 228, 0.4)';" 
          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(168, 100, 228, 0.3)';">
         <i data-lucide="plus" style="width:20px;height:20px;"></i> 
-        <span>Poster une offre</span>
+        <span>Publier une offre</span>
       </a>
     
 
@@ -251,9 +260,9 @@ if (!isset($content)) {
       <?php 
         $filter_status = $_GET['filter_status'] ?? '';
         if (!empty($filter_status) && $filter_status !== 'Tous statuts') {
-            $listeOffres = $offreC->filtrerOffres(['statut' => $filter_status]);
+            $listeOffres = $offreC->filtrerOffres(['statut' => $filter_status, 'id_entreprise' => $id_entreprise]);
         } else {
-            $listeOffres = $offreC->afficherOffres();
+            $listeOffres = $offreC->afficherOffres(false, ['id_entreprise' => $id_entreprise]);
         }
         $count = $listeOffres->rowCount();
       ?>
@@ -297,7 +306,7 @@ if (!isset($content)) {
 
       <div class="hr-posts-grid stagger" id="posts-container">
         <?php foreach ($listeOffres as $offreItem): ?>
-        <div class="hr-post-card animate-on-scroll" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+        <div class="hr-post-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
           <?php if (!empty($offreItem['img_post'])): ?>
             <div style="height: 140px; background-image: url('<?php echo htmlspecialchars($offreItem['img_post']); ?>'); background-size: cover; background-position: center; position: relative;">
           <?php else: ?>
@@ -351,7 +360,7 @@ if (!isset($content)) {
         
         <?php if ($count == 0): ?>
             <div class="empty-state text-center" style="padding: 3rem; background: var(--surface-1); border-radius: 12px; grid-column: 1 / -1;">
-                <p>Aucune offre trouvée. Commencez par en poster une !</p>
+                <p>Aucune offre trouvée. Commencez par en publier une !</p>
             </div>
         <?php endif; ?>
       </div>
@@ -371,7 +380,7 @@ if (!isset($content)) {
             return $default;
         }
       ?>
-      <div class="form-container" style="background: var(--bg-card); padding: 2.5rem 3rem; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.04); max-width: 1100px; margin: 1.5rem auto;">
+      <div class="form-container" style="background: var(--bg-card); padding: 3rem 4rem 6rem; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.04); max-width: 1100px; margin: 2rem auto; position: relative; z-index: 5;">
         <div style="text-align: center; margin-bottom: 3rem;">
             <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #4fb5ff 0%, #a864e4 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: 0 10px 20px rgba(168, 100, 228, 0.2);">
                 <i data-lucide="<?php echo $action === 'edit' ? 'pencil' : 'plus'; ?>" style="width:32px;height:32px;color:white;"></i>
@@ -526,8 +535,6 @@ if (!isset($content)) {
     <?php endif; ?>
   </div>
 
-
-</div>
 
 <!-- ═══ Scripts & Styles pour le Toggle de Vue ═══ -->
 <style>
@@ -905,7 +912,7 @@ function updateHrPostsGrid(offres) {
                <i data-lucide="image" style="width: 32px; height: 32px; color: var(--text-secondary); opacity: 0.5;"></i>`;
         }
         
-        html += `<div class="hr-post-card animate-on-scroll" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+        html += `<div class="hr-post-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
             ${imgSection}
                <div style="position: absolute; top: 12px; right: 12px;">
                     <span class="badge ${badgeType}" style="box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${statut}</span>
