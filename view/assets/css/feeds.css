@@ -118,7 +118,7 @@
 /* ── Job Cards Grid ───────────────────────────── */
 .job-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-5);
 }
 
@@ -136,7 +136,7 @@
 .job-card:hover {
   box-shadow: var(--shadow-lg);
   border-color: var(--accent-primary);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
 .job-card__header {
@@ -148,8 +148,8 @@
 }
 
 .job-card__company-logo {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   background: var(--gradient-card);
   border: 1px solid var(--border-color);
@@ -167,7 +167,7 @@
 }
 
 .job-card__title {
-  font-size: var(--fs-base);
+  font-size: 0.95rem;
   font-weight: var(--fw-semibold);
   line-height: var(--lh-tight);
   margin-bottom: var(--space-1);
@@ -175,7 +175,7 @@
 }
 
 .job-card__company {
-  font-size: var(--fs-sm);
+  font-size: 0.8rem;
   color: var(--accent-primary);
   font-weight: var(--fw-medium);
 }
@@ -185,7 +185,7 @@
 }
 
 .job-card__description {
-  font-size: var(--fs-sm);
+  font-size: 0.825rem;
   color: var(--text-secondary);
   line-height: var(--lh-relaxed);
   margin-bottom: var(--space-4);

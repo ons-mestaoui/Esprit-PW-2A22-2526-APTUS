@@ -1,45 +1,5 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Security: Prevent browser caching of protected pages
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Cache-Control: post-check=0, pre-check=0", false);
-header("Pragma: no-cache");
-header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
-
-include_once __DIR__ . '/../../controller/ProfilC.php';
-
-// Access Control: Only Admins can access backoffice
-if (!isset($_SESSION['role']) || strtolower($_SESSION['role']) !== 'admin') {
-    header("Location: ../frontoffice/login.php");
-    exit();
-}
-
-$adminName = $_SESSION['nom'] ?? 'Administrateur';
-$userId = $_SESSION['id_utilisateur'] ?? null;
-
-$userPhoto = null;
-if ($userId) {
-    $profilC = new ProfilC();
-    $userProfil = $profilC->getProfilByIdUtilisateur($userId);
-    if ($userProfil && !empty($userProfil['photo'])) {
-        $userPhoto = $userProfil['photo'];
-    }
-}
-
-// Load user personal preferences (theme)
-$userTheme = 'light';
-if ($userId) {
-    include_once __DIR__ . '/../../controller/UtilisateurC.php';
-    $utC = new UtilisateurC();
-    $userPrefs = $utC->getPreferences($userId);
-    $userTheme = $userPrefs['theme'] ?? 'light';
-}
-?>
 <!DOCTYPE html>
-<html lang="fr" data-theme="<?php echo $userTheme; ?>">
+<html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,56 +13,30 @@ if ($userId) {
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css?v=<?php echo time(); ?>">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css">
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_back.css">
-  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/ai_agent.css">
   <?php if (isset($pageCSS)): ?>
     <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/<?php echo $pageCSS; ?>">
   <?php endif; ?>
 
   <!-- Theme Toggle (load early to avoid flash) -->
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
-
-  <?php
-  // Load admin appearance overrides
-  if (!isset($settingsC)) {
-      require_once __DIR__ . '/../../controller/SettingsAdminC.php';
-      $settingsC = new SettingsAdminC();
-  }
-  echo $settingsC->getAppearanceCSS();
-  
-  // Sync localStorage
-  if (isset($userPrefs['theme'])) {
-      echo "<script>
-        if (localStorage.getItem('aptus-theme') !== '" . ($userPrefs['theme']) . "') {
-            localStorage.setItem('aptus-theme', '" . ($userPrefs['theme']) . "');
-        }
-      </script>\n";
-  }
-  ?>
-
-  <script>
-    window.addEventListener('pageshow', function(event) {
-      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-        window.location.reload();
-      }
-    });
-  </script>
-  
-  <!-- AI Agent Widget Scripts -->
-  <script src="/aptus_first_official_version/view/assets/js/ai_agent.js"></script>
-  <script src="/aptus_first_official_version/view/assets/js/ai_agent_ext.js"></script>
 </head>
 <body>
 
   <div class="backoffice">
 
+    <!-- ═══════════════════════════════════════════
+         LEFT SIDEBAR
+         ═══════════════════════════════════════════ -->
     <aside class="sidebar" id="sidebar">
+      <!-- Logo -->
       <div class="sidebar__header">
         <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="sidebar__logo-icon" style="background:none;padding:2px;">
         <span class="sidebar__logo-text">Aptus</span>
       </div>
 
+      <!-- Navigation -->
       <?php $currentPage = basename($_SERVER['PHP_SELF']); ?>
       <nav class="sidebar__nav">
         <div class="sidebar__section-label">Principal</div>
@@ -131,88 +65,100 @@ if ($userId) {
           <i data-lucide="briefcase"></i>
           <span>Offres Disponibles</span>
         </a>
-        <a href="posts_stats.php" class="sidebar-link<?php echo ($currentPage==='posts_stats.php')?' active':''; ?>" id="sidebar-posts">
-          <i data-lucide="bar-chart-3"></i>
-          <span>Posts & Stats</span>
-        </a>
+
       </nav>
 
+      <!-- Footer / Logout -->
       <div class="sidebar__footer">
-        <a href="../frontoffice/logout.php" class="sidebar__logout" id="sidebar-logout">
+        <a href="../frontoffice/login.php" class="sidebar__logout" id="sidebar-logout">
           <i data-lucide="log-out"></i>
           <span>Déconnexion</span>
         </a>
       </div>
     </aside>
 
+    <!-- ═══════════════════════════════════════════
+         TOP HEADER BAR
+         ═══════════════════════════════════════════ -->
     <header class="back-topbar" id="back-topbar">
+      <!-- Sidebar Toggle -->
       <button class="back-topbar__toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
         <i data-lucide="menu"></i>
       </button>
 
+      <!-- Search -->
       <div class="back-topbar__search">
         <i data-lucide="search" style="width:18px;height:18px;"></i>
-        <input type="text" class="input" id="admin-search" placeholder="Rechercher...">
+        <input type="text" class="input" id="admin-search" placeholder="Rechercher des candidats, entreprises, formations...">
       </div>
 
+      <!-- Actions -->
       <div class="back-topbar__actions">
+        <!-- Theme Toggle -->
         <button class="theme-toggle" id="admin-theme-toggle" aria-label="Toggle theme">
-          <i data-lucide="sun" class="icon-sun"></i>
+          <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
           <i data-lucide="moon" class="icon-moon"></i>
         </button>
 
+        <!-- Notifications -->
         <button class="btn-icon" style="position:relative;" aria-label="Notifications">
           <i data-lucide="bell" style="width:20px;height:20px;color:var(--text-secondary);"></i>
           <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--accent-tertiary);border-radius:50%;border:2px solid var(--bg-topbar);"></span>
         </button>
 
+        <!-- Admin Profile Dropdown -->
         <div class="dropdown" id="admin-dropdown">
           <div class="dropdown-trigger back-topbar__admin">
             <div class="back-topbar__admin-info">
-              <span class="back-topbar__admin-name"><?php echo htmlspecialchars($adminName); ?></span>
+              <span class="back-topbar__admin-name"><?php echo isset($adminName) ? $adminName : 'Administrateur'; ?></span>
               <span class="back-topbar__admin-role">Super Admin</span>
             </div>
-            <div class="avatar" style="width:36px;height:36px;overflow:hidden;background:var(--bg-glass);display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--border-color);">
-              <?php if ($userPhoto): ?>
-                <img src="<?php echo $userPhoto; ?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
-              <?php else: ?>
-                <span class="avatar-initials"><?php echo strtoupper(substr($adminName, 0, 2)); ?></span>
-              <?php endif; ?>
+            <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;">
+              <?php echo isset($adminName) ? strtoupper(substr($adminName, 0, 2)) : 'AD'; ?>
             </div>
           </div>
           <div class="dropdown-menu">
-            <a href="profil_admin.php" class="dropdown-item"><i data-lucide="user"></i> Mon Profil</a>
-            <a href="settings_admin.php" class="dropdown-item"><i data-lucide="settings"></i> Paramètres</a>
+            <a href="profil_admin.php" class="dropdown-item">
+              <i data-lucide="user" style="width:16px;height:16px;"></i>
+              Mon Profil
+            </a>
+            <a href="settings_admin.php" class="dropdown-item">
+              <i data-lucide="settings" style="width:16px;height:16px;"></i>
+              Paramètres
+            </a>
             <div class="dropdown-divider"></div>
-            <a href="../frontoffice/logout.php" class="dropdown-item" style="color:var(--accent-tertiary);"><i data-lucide="log-out"></i> Déconnexion</a>
+            <a href="../frontoffice/login.php" class="dropdown-item" style="color:var(--accent-tertiary);">
+              <i data-lucide="log-out" style="width:16px;height:16px;"></i>
+              Déconnexion
+            </a>
           </div>
         </div>
       </div>
     </header>
 
+    <!-- ═══════════════════════════════════════════
+         MAIN CONTENT
+         ═══════════════════════════════════════════ -->
     <main class="back-main" id="main-content">
       <div class="back-content">
-        <?php if (isset($content)) include $content; ?>
+        <?php
+          if (isset($content)) {
+            include $content;
+          }
+        ?>
       </div>
     </main>
 
-  </div>
+  </div><!-- /.backoffice -->
 
-  <div class="a11y-cursor" id="a11y-cursor"></div>
-  <div class="a11y-video-container" id="a11y-video-container">
-    <video id="a11y-webcam" autoplay playsinline></video>
-    <canvas id="a11y-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
-  </div>
-  <button class="a11y-toggle" id="a11y-toggle" aria-label="Activer la navigation gestuelle" title="Hand Tracking">
-    <i data-lucide="hand"></i>
-  </button>
-
+  <!-- Scripts -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="/aptus_first_official_version/view/assets/js/nav.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/forms.js"></script>
   <script src="/aptus_first_official_version/view/assets/js/charts.js"></script>
-  <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
-  <script type="module" src="/aptus_first_official_version/view/assets/js/a11y-hand-control.js"></script>
+  <?php if (isset($pageJS)): ?>
+    <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
+  <?php endif; ?>
   <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -78,12 +78,36 @@
           targetEl.style.display = 'block';
           targetEl.classList.add('animate-fade-in-up');
           var input = targetEl.querySelector('input, textarea, select');
-          if (input) input.setAttribute('data-required', 'true');
+          if (input) input.setAttribute('required', '');
         } else {
           targetEl.style.display = 'none';
           var input = targetEl.querySelector('input, textarea, select');
-          if (input) input.removeAttribute('data-required');
+          if (input) input.removeAttribute('required');
         }
+      });
+    });
+
+    // Handle radio group toggles
+    document.querySelectorAll('.radio-toggle').forEach(function(group) {
+      var radios = group.querySelectorAll('input[type="radio"]');
+      radios.forEach(function(radio) {
+        radio.addEventListener('change', function() {
+          var targetId = this.getAttribute('data-toggle-target');
+          var showValue = this.getAttribute('data-toggle-value');
+          
+          // Hide all conditional sections first
+          group.querySelectorAll('[data-conditional]').forEach(function(section) {
+            section.style.display = 'none';
+          });
+
+          if (targetId && this.value === showValue) {
+            var target = document.getElementById(targetId);
+            if (target) {
+              target.style.display = 'block';
+              target.classList.add('animate-fade-in-up');
+            }
+          }
+        });
       });
     });
 
@@ -95,10 +119,6 @@
       var tagsContainer = container.querySelector('.tag-input__tags');
       var hiddenInput = container.querySelector('.tag-input__hidden');
       var tags = [];
-
-      if (hiddenInput && hiddenInput.value) {
-          tags = hiddenInput.value.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
-      }
 
       if (!input) return;
 
@@ -136,73 +156,83 @@
           });
         });
       }
-
-      if (tags.length > 0) renderTags();
     });
 
     /* ══════════════════════════════════════════════
-       MOTEUR DE VALIDATION PERSONNALISÉ
+       FORM VALIDATION
        ══════════════════════════════════════════════ */
     document.querySelectorAll('form[data-validate]').forEach(function(form) {
-      
-      function getOrCreateErrorEl(field) {
-        var group = field.closest('.form-group');
-        if (!group) return null;
-        var errorEl = group.querySelector('.form-error');
-        if (!errorEl) {
-          errorEl = document.createElement('div');
-          errorEl.className = 'form-error animate-fade-in-up';
-          group.appendChild(errorEl);
-        }
-        return errorEl;
-      }
-
       form.addEventListener('submit', function(e) {
         var isValid = true;
-        form.querySelectorAll('.form-error').forEach(function(err) { err.textContent = ''; });
-        form.querySelectorAll('.input-error').forEach(function(inp) { inp.classList.remove('input-error'); });
+        
+        // Clear previous errors
+        form.querySelectorAll('.form-error').forEach(function(err) {
+          err.textContent = '';
+        });
+        form.querySelectorAll('.input-error').forEach(function(inp) {
+          inp.classList.remove('input-error');
+        });
 
-        form.querySelectorAll('[data-required]').forEach(function(field) {
+        // Validate required fields
+        form.querySelectorAll('[required]').forEach(function(field) {
           if (!field.value.trim()) {
             isValid = false;
             field.classList.add('input-error');
-            var errorEl = getOrCreateErrorEl(field);
-            if (errorEl) errorEl.textContent = 'Ce champ est obligatoire';
+            var errorEl = field.closest('.form-group')
+              ? field.closest('.form-group').querySelector('.form-error')
+              : null;
+            if (errorEl) errorEl.textContent = 'Ce champ est requis';
           }
         });
 
-        form.querySelectorAll('[data-type]').forEach(function(field) {
-          var type = field.getAttribute('data-type');
-          var val = field.value.trim();
-          if (!val) return; 
-          if (type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+        // Validate email fields
+        form.querySelectorAll('input[type="email"]').forEach(function(field) {
+          if (field.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value)) {
             isValid = false;
             field.classList.add('input-error');
-            var errorEl = getOrCreateErrorEl(field);
-            if (errorEl) errorEl.textContent = 'Format d\'email invalide';
+            var errorEl = field.closest('.form-group')
+              ? field.closest('.form-group').querySelector('.form-error')
+              : null;
+            if (errorEl) errorEl.textContent = 'Email invalide';
           }
         });
 
-        var pwMatches = form.querySelectorAll('[data-match]');
-        pwMatches.forEach(function(pw) {
-           var matchTarget = form.querySelector('#' + pw.dataset.match);
-           if (matchTarget && pw.value !== matchTarget.value) {
-             isValid = false;
-             pw.classList.add('input-error');
-             var errorEl = getOrCreateErrorEl(pw);
-             if (errorEl) errorEl.textContent = 'Les mots de passe ne correspondent pas';
-           }
-         });
+        // Validate password match
+        var pw = form.querySelector('[data-match]');
+        if (pw) {
+          var matchTarget = form.querySelector('#' + pw.dataset.match);
+          if (matchTarget && pw.value !== matchTarget.value) {
+            isValid = false;
+            pw.classList.add('input-error');
+            var errorEl = pw.closest('.form-group')
+              ? pw.closest('.form-group').querySelector('.form-error')
+              : null;
+            if (errorEl) errorEl.textContent = 'Les mots de passe ne correspondent pas';
+          }
+        }
 
         if (!isValid) {
           e.preventDefault();
+          // Scroll to first error
           var firstError = form.querySelector('.input-error');
           if (firstError) {
-            var rect = firstError.getBoundingClientRect();
-            window.scrollTo({ top: window.pageYOffset + rect.top - 150, behavior: 'smooth' });
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
             firstError.focus();
           }
         }
+      });
+
+      // Live validation on input
+      form.querySelectorAll('.input, .select, .textarea').forEach(function(field) {
+        field.addEventListener('blur', function() {
+          if (this.classList.contains('input-error') && this.value.trim()) {
+            this.classList.remove('input-error');
+            var errorEl = this.closest('.form-group')
+              ? this.closest('.form-group').querySelector('.form-error')
+              : null;
+            if (errorEl) errorEl.textContent = '';
+          }
+        });
       });
     });
 
@@ -219,10 +249,44 @@
 
     document.querySelectorAll('.modal-close, .modal-overlay').forEach(function(el) {
       el.addEventListener('click', function(e) {
-        if (e.target === this || this.classList.contains('modal-close')) {
-          var modal = this.closest('.modal-overlay');
-          if (modal) modal.classList.remove('active');
+        if (e.target === this) {
+          this.closest('.modal-overlay').classList.remove('active');
         }
+      });
+    });
+
+    // Close modal on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(function(m) {
+          m.classList.remove('active');
+        });
+      }
+    });
+
+    /* ══════════════════════════════════════════════
+       TAB SWITCHING
+       ══════════════════════════════════════════════ */
+    document.querySelectorAll('.tabs').forEach(function(tabContainer) {
+      tabContainer.querySelectorAll('.tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          // Remove active from siblings
+          tabContainer.querySelectorAll('.tab').forEach(function(t) {
+            t.classList.remove('active');
+          });
+          this.classList.add('active');
+
+          // Show corresponding panel
+          var panelId = this.getAttribute('data-tab');
+          if (panelId) {
+            var parent = tabContainer.closest('.tab-container') || document;
+            parent.querySelectorAll('.tab-panel').forEach(function(panel) {
+              panel.classList.remove('active');
+            });
+            var target = parent.querySelector('#' + panelId);
+            if (target) target.classList.add('active');
+          }
+        });
       });
     });
 
