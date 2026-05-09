@@ -1,4 +1,87 @@
 <!DOCTYPE html>
+<?php
+/**
+ * Retourne le HTML de la barre de navigation
+ */
+function getNavElements() {
+    global $userRole, $userName;
+    $currentRole = isset($userRole) ? $userRole : 'Candidat';
+    $displayName = isset($userName) ? $userName : 'Utilisateur';
+    $initials = isset($userName) ? strtoupper(substr($userName, 0, 2)) : 'US';
+    
+    ob_start();
+    ?>
+    <nav class="landing-nav glass-nav" id="landing-nav">
+      <!-- Logo -->
+      <a href="<?php echo ($currentRole === 'Entreprise') ? 'hr_posts.php' : 'jobs_feed.php'; ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
+        <img src="../assets/img/logo.png" alt="Aptus" class="landing-nav__logo-icon" style="background:none;">
+        <span class="gradient-text accent-font h4 m-0">Aptus</span>
+      </a>
+
+      <!-- Hamburger (Mobile) -->
+      <button class="hamburger-landing" id="hamburger-landing" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+
+      <!-- Navigation Links -->
+      <div class="landing-nav__links" id="nav-links">
+        <?php if ($currentRole === 'Entreprise'): ?>
+          <a href="hr_posts.php" class="nav-anchor" id="nav-hr-posts"><i data-lucide="briefcase"></i><span>Mes Postes</span></a>
+          <a href="hr_candidatures.php" class="nav-anchor" id="nav-hr-candidatures"><i data-lucide="users"></i><span>Candidatures</span></a>
+          <a href="profil_entreprise.php" class="nav-anchor" id="nav-hr-profile"><i data-lucide="building"></i><span>Profil Entreprise</span></a>
+          <a href="veille_feed_ent.php" class="nav-anchor" id="nav-hr-veille"><i data-lucide="line-chart"></i><span>Veille Marché</span></a>
+        <?php else: ?>
+          <a href="jobs_feed.php" class="nav-anchor" id="nav-jobs"><i data-lucide="briefcase"></i><span>Offres d'emploi</span></a>
+          <a href="cv_templates.php" class="nav-anchor" id="nav-cv"><i data-lucide="file-badge"></i><span>Générer CV</span></a>
+          <a href="formations_catalog.php" class="nav-anchor" id="nav-formations"><i data-lucide="graduation-cap"></i><span>Formations</span></a>
+          <a href="veille_feed.php" class="nav-anchor" id="nav-veille"><i data-lucide="line-chart"></i><span>Veille Marché</span></a>
+          <a href="cv_my.php" class="nav-anchor" id="nav-cv-my"><i data-lucide="file-text"></i><span>Mes CVs</span></a>
+        <?php endif; ?>
+      </div>
+
+      <!-- Right Actions -->
+      <div class="landing-nav__actions" style="display: flex; align-items: center; gap: 1rem;">
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme">
+          <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
+          <i data-lucide="moon" class="icon-moon"></i>
+        </button>
+
+        <!-- Profile Dropdown -->
+        <div class="dropdown" id="profile-dropdown">
+          <div class="dropdown-trigger topnav__profile">
+            <div class="topnav__profile-info">
+              <span class="topnav__profile-name"><?php echo $displayName; ?></span>
+              <span class="topnav__profile-role"><?php echo $currentRole; ?></span>
+            </div>
+            <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;">
+              <?php echo $initials; ?>
+            </div>
+          </div>
+          <div class="dropdown-menu">
+            <?php if ($currentRole !== 'Entreprise'): ?>
+            <a href="profil_candidat.php" class="dropdown-item" id="dropdown-profile">
+              <i data-lucide="user" style="width:16px;height:16px;"></i>
+              Mon Profil
+            </a>
+            <?php endif; ?>
+            <a href="settings.php<?php echo ($currentRole === 'Entreprise') ? '?role=entreprise' : ''; ?>" class="dropdown-item" id="dropdown-settings">
+              <i data-lucide="settings" style="width:16px;height:16px;"></i>
+              Paramètres
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="login.php" class="dropdown-item" id="dropdown-logout" style="color:var(--accent-tertiary);">
+              <i data-lucide="log-out" style="width:16px;height:16px;"></i>
+              Déconnexion
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <?php
+    return ob_get_clean();
+}
+?>
 <html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -39,74 +122,8 @@
   <!-- ═══════════════════════════════════════════
        TOP NAVIGATION BAR
        ═══════════════════════════════════════════ -->
-  <nav class="landing-nav glass-nav" id="landing-nav">
-    <?php $currentRole = isset($userRole) ? $userRole : 'Candidat'; ?>
-    <!-- Logo -->
-    <a href="<?php echo ($currentRole === 'Entreprise') ? 'hr_posts.php' : 'jobs_feed.php'; ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
-      <img src="../assets/img/logo.png" alt="Aptus" class="landing-nav__logo-icon" style="background:none;">
-      <span class="gradient-text accent-font h4 m-0">Aptus</span>
-    </a>
-
-    <!-- Hamburger (Mobile) -->
-    <button class="hamburger-landing" id="hamburger-landing" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
-
-    <!-- Navigation Links -->
-    <div class="landing-nav__links" id="nav-links">
-      <?php if ($currentRole === 'Entreprise'): ?>
-        <a href="hr_posts.php" class="nav-anchor" id="nav-hr-posts"><i data-lucide="briefcase"></i><span>Mes Postes</span></a>
-        <a href="hr_candidatures.php" class="nav-anchor" id="nav-hr-candidatures"><i data-lucide="users"></i><span>Candidatures</span></a>
-        <a href="profil_entreprise.php" class="nav-anchor" id="nav-hr-profile"><i data-lucide="building"></i><span>Profil Entreprise</span></a>
-        <a href="veille_feed_ent.php" class="nav-anchor" id="nav-hr-veille"><i data-lucide="line-chart"></i><span>Veille Marché</span></a>
-      <?php else: ?>
-        <a href="jobs_feed.php" class="nav-anchor" id="nav-jobs"><i data-lucide="briefcase"></i><span>Offres d'emploi</span></a>
-        <a href="cv_templates.php" class="nav-anchor" id="nav-cv"><i data-lucide="file-badge"></i><span>Générer CV</span></a>
-        <a href="formations_catalog.php" class="nav-anchor" id="nav-formations"><i data-lucide="graduation-cap"></i><span>Formations</span></a>
-        <a href="veille_feed.php" class="nav-anchor" id="nav-veille"><i data-lucide="line-chart"></i><span>Veille Marché</span></a>
-        <a href="cv_my.php" class="nav-anchor" id="nav-cv-my"><i data-lucide="file-text"></i><span>Mes CVs</span></a>
-      <?php endif; ?>
-    </div>
-
-    <!-- Right Actions -->
-    <div class="landing-nav__actions" style="display: flex; align-items: center; gap: 1rem;">
-      <!-- Theme Toggle -->
-      <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme">
-        <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
-        <i data-lucide="moon" class="icon-moon"></i>
-      </button>
-
-      <!-- Profile Dropdown -->
-      <div class="dropdown" id="profile-dropdown">
-        <div class="dropdown-trigger topnav__profile">
-          <div class="topnav__profile-info">
-            <span class="topnav__profile-name"><?php echo isset($userName) ? $userName : 'Utilisateur'; ?></span>
-            <span class="topnav__profile-role"><?php echo isset($userRole) ? $userRole : 'Candidat'; ?></span>
-          </div>
-          <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;">
-            <?php echo isset($userName) ? strtoupper(substr($userName, 0, 2)) : 'US'; ?>
-          </div>
-        </div>
-        <div class="dropdown-menu">
-          <?php if ($currentRole !== 'Entreprise'): ?>
-          <a href="profil_candidat.php" class="dropdown-item" id="dropdown-profile">
-            <i data-lucide="user" style="width:16px;height:16px;"></i>
-            Mon Profil
-          </a>
-          <?php endif; ?>
-          <a href="settings.php<?php echo ($currentRole === 'Entreprise') ? '?role=entreprise' : ''; ?>" class="dropdown-item" id="dropdown-settings">
-            <i data-lucide="settings" style="width:16px;height:16px;"></i>
-            Paramètres
-          </a>
-          <div class="dropdown-divider"></div>
-          <a href="login.php" class="dropdown-item" id="dropdown-logout" style="color:var(--accent-tertiary);">
-            <i data-lucide="log-out" style="width:16px;height:16px;"></i>
-            Déconnexion
-          </a>
-        </div>
-      </div>
-    </div>
-  </nav>
+  <!-- NAVIGATION -->
+  <?php echo getNavElements(); ?>
 
   <!-- Mobile Navigation Menu -->
   <div class="mobile-menu-landing" id="mobile-menu-landing">
