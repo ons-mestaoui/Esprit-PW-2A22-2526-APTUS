@@ -115,6 +115,7 @@ class GuideController {
             'Authorization: Bearer ' . $this->firecrawlApiKey
         ]);
         curl_setopt($ch, CURLOPT_TIMEOUT, 40);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Fix pour Error 0 sur Localhost/XAMPP
 
         error_log("Firecrawl: Scrapping " . $url);
         $response = curl_exec($ch);
@@ -125,7 +126,11 @@ class GuideController {
         if ($httpCode !== 200) {
             error_log("Firecrawl Error: $httpCode - $curlError - $response");
             $data = json_decode($response, true);
-            $msg = $data['error'] ?? "Erreur Firecrawl $httpCode";
+            $msg = $data['error'] ?? "Erreur Firecrawl $httpCode ($curlError)";
+            
+            if ($httpCode === 0) {
+                $msg = "Erreur de connexion serveur (SSL/Réseau). Veuillez vérifier votre connexion ou votre clé API Firecrawl.";
+            }
             throw new Exception($msg);
         }
 
@@ -257,7 +262,15 @@ class GuideController {
                \"strategic_advice\": \"Conseil technique sur comment prouver la maîtrise de cette compétence en entretien.\"
              }
           ],
-          \"company_insights\": { \"culture\": \"Analyse profonde de la culture (Startup vs Corporate)\", \"strategic_tips\": \"Comment se comporter pour matcher parfaitement.\" },
+          \"company_insights\": { 
+             \"culture\": \"Analyse profonde de la culture (Startup vs Corporate)\", 
+             \"strategic_tips\": \"Comment se comporter pour matcher parfaitement.\",
+             \"flash_info\": {
+                \"mission\": \"Mission principale de l'entreprise\",
+                \"key_values\": [\"Valeur 1\", \"Valeur 2\"],
+                \"killer_facts\": [\"Donnée marquante 1 (ex: Présence dans 20 pays)\", \"Donnée marquante 2\"]
+             }
+          },
           \"interview_quiz\": [
              /* INSTRUCTION CRITIQUE : GÉNÈRE STRICTEMENT 3 QUESTIONS DIFFÉRENTES (TECHNIQUE, COMPORTEMENTALE, SITUATIONNELLE) */
              {

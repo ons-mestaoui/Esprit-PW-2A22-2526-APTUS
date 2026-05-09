@@ -151,14 +151,14 @@ class RapportIAController {
 
                     $score = round(($matchCount / $validKeywordsCount) * 100);
 
-                    // Ne garder que si le score est >= 60%
-                    if ($score >= 60) {
+                    if ($score >= 40) {
                         $matchedJobs[] = [
                             'title' => $o['titre'],
                             'domain' => $o['domaine'] ?: 'IT / Tech',
                             'match_score' => $score,
                             'location' => ($o['ville'] ?: 'Tunis') . ' (Aptus)',
-                            'salary' => $o['salaire'] ? ($o['salaire'] . '€ / an') : 'Non précisé'
+                            'salary' => $o['salaire'] ? ($o['salaire'] . '€ / an') : 'Non précisé',
+                            'created_at' => $o['date_publication'] ?? ''
                         ];
                     }
                 }

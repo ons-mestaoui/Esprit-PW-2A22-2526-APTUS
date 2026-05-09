@@ -375,9 +375,23 @@ if (!isset($content)) {
         transform: none;
     }
 
-    .match-high { background: #dcfce7; color: #166534; }
-    .match-medium { background: #fef3c7; color: #92400e; }
-    .match-low { background: #fee2e2; color: #991b1b; }
+    .match-high { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .match-medium { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .match-low { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .match-very-low { background: #7f1d1d; color: #ffffff; border: 1px solid #991b1b; }
+
+    .encouragement-banner {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 3rem;
+        background: linear-gradient(135deg, rgba(249, 250, 251, 0.4) 0%, rgba(243, 244, 246, 0.6) 100%);
+        border: 1px dashed var(--border-color);
+        border-radius: 30px;
+        margin-bottom: 2rem;
+    }
 
     .match-title {
         font-weight: 700;
@@ -797,28 +811,43 @@ if (!isset($content)) {
         <i data-lucide="briefcase" style="color:var(--accent-primary);"></i> Opportunités de Carrière
     </h2>
     <div class="matching-grid">
+        <?php 
+        $topScore = !empty($jobMatches) ? $jobMatches[0]['match_score'] : 0;
+        if (!empty($jobMatches) && $topScore <= 60): ?>
+            <div class="encouragement-banner">
+                <div style="background: var(--bg-card); width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);">
+                    <i data-lucide="sparkles" style="color: #f59e0b; width: 30px; height: 30px;"></i>
+                </div>
+                <h3 style="font-weight: 850; font-size: 1.3rem; margin-bottom: 10px; color: var(--text-primary);">Votre profil a un fort potentiel !</h3>
+                <p style="color: var(--text-secondary); max-width: 600px; line-height: 1.6; font-size: 0.95rem;">
+                    Bien que ces offres correspondent partiellement à votre profil, une légère optimisation de vos compétences techniques pourrait vous propulser dans le <strong>Top 1% des candidats</strong>. 
+                    Utilisez nos conseils d'audit pour atteindre un score de +85%.
+                </p>
+            </div>
+        <?php endif; ?>
+
         <?php if (empty($jobMatches)): ?>
             <div class="match-card" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 4rem 3rem; background: rgba(249, 250, 251, 0.4); border: 1px dashed var(--border-color); border-radius: 30px;">
                 <div style="background: var(--bg-card); width: 80px; height: 80px; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; box-shadow: var(--shadow-md);">
                     <i data-lucide="target" style="color: var(--accent-primary); width: 40px; height: 40px;"></i>
                 </div>
-                <h3 style="font-weight: 850; font-size: 1.5rem; margin-bottom: 12px; color: var(--text-primary); letter-spacing: -0.5px;">Découvrez votre prochain défi stratégique</h3>
-                <p style="color: var(--text-secondary); max-width: 550px; line-height: 1.7; font-size: 1rem;">
-                    Nos algorithmes analysent actuellement des milliers d'opportunités. Pour le moment, aucune offre ne correspond à 100% à votre expertise unique. 
-                    <strong>C'est le moment idéal pour peaufiner votre profil</strong> grâce à nos conseils personnalisés afin de débloquer les meilleures opportunités du marché.
+                <h3 style="font-weight: 850; font-size: 1.5rem; margin-bottom: 12px; color: var(--text-primary);">Potentiel Stratégique à Optimiser</h3>
+                <p style="color: var(--text-secondary); max-width: 650px; line-height: 1.7; font-size: 1.05rem;">
+                    Votre expertise unique mérite une mise en lumière sur-mesure. Pour vous connecter aux opportunités les plus prestigieuses de notre réseau, une précision technique accrue est nécessaire.
+                    <br><br>
+                    En appliquant nos <strong>conseils d'audit stratégique</strong>, vous transformerez votre profil en un véritable aimant à opportunités haut de gamme. Relevez le défi et atteignez votre score de matching idéal !
                 </p>
-                <div style="margin-top: 2rem; display: flex; gap: 10px;">
-                    <span style="font-size: 0.8rem; font-weight: 800; color: var(--accent-primary); background: var(--accent-primary-light); padding: 10px 25px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        🎯 Profil en cours d'optimisation
-                    </span>
-                </div>
             </div>
         <?php else: ?>
             <?php foreach ($jobMatches as $job): 
-                $lvl = $job['match_score'] >= 80 ? 'match-high' : ($job['match_score'] >= 50 ? 'match-medium' : 'match-low');
+                $score = $job['match_score'];
+                if ($score >= 80) $lvl = 'match-high';
+                elseif ($score >= 50) $lvl = 'match-medium';
+                elseif ($score >= 20) $lvl = 'match-low';
+                else $lvl = 'match-very-low';
             ?>
             <div class="match-card">
-                <span class="match-badge <?php echo $lvl; ?>"><?php echo $job['match_score']; ?>% Match</span>
+                <span class="match-badge <?php echo $lvl; ?>"><?php echo $score; ?>% Match</span>
                 <h3 class="match-title"><?php echo htmlspecialchars($job['title']); ?></h3>
                 <p class="match-subtitle"><?php echo htmlspecialchars($job['domain']); ?> • <?php echo htmlspecialchars($job['location']); ?></p>
                 <div class="match-footer">

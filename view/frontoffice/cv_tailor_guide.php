@@ -393,16 +393,43 @@ if (!isset($content)) {
         </div>
         
         <!-- Company Insights -->
-        <div class="premium-card reveal-right delay-200" style="background: var(--gradient-primary) !important; color: #ffffff !important; border: none;">
-            <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; color: #ffffff !important;">
-                <i data-lucide="building-2"></i> Culture d'Entreprise
-            </h3>
-            <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin-bottom: 2rem; color: #e7e5e5 !important;">
-                <?php echo htmlspecialchars($guide['company_insights']['culture']); ?>
-            </p>
-            <div style="background: rgba(255,255,255,0.15); padding: 1.5rem; border-radius: 18px; border: 1px solid rgba(255,255,255,0.2); color: #ffffff !important;">
-                <div style="font-size: 0.8rem; font-weight: 800; margin-bottom: 8px; opacity: 0.9;">CONSEIL STRATÉGIQUE</div>
-                <div style="font-weight: 500; color: #ffffff !important;"><?php echo htmlspecialchars($guide['company_insights']['strategic_tips']); ?></div>
+        <!-- Company Briefing (Flash Info) -->
+        <div class="premium-card reveal-right delay-200" style="background: var(--gradient-primary) !important; color: #ffffff !important; border: none; display: flex; flex-direction: column; gap: 1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <h3 style="display: flex; align-items: center; gap: 10px; margin: 0; color: #ffffff !important;">
+                    <i data-lucide="building-2"></i> Fiche Entreprise Express
+                </h3>
+                <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 50px; font-size: 0.65rem; font-weight: 900; text-transform: uppercase;">Briefing Mission</span>
+            </div>
+
+            <!-- Mission -->
+            <div style="background: rgba(255,255,255,0.1); padding: 1.2rem; border-radius: 18px; border: 1px solid rgba(255,255,255,0.15);">
+                <div style="font-size: 0.75rem; font-weight: 850; margin-bottom: 8px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Mission & Vision</div>
+                <div style="font-size: 0.95rem; line-height: 1.5; font-weight: 500;"><?php echo htmlspecialchars($guide['company_insights']['flash_info']['mission'] ?? $guide['company_insights']['culture']); ?></div>
+            </div>
+
+            <!-- Killer Facts (Flash) -->
+            <?php if(!empty($guide['company_insights']['flash_info']['killer_facts'])): ?>
+            <div>
+                <div style="font-size: 0.75rem; font-weight: 850; margin-bottom: 12px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Flash Info (À placer en entretien)</div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <?php foreach ($guide['company_insights']['flash_info']['killer_facts'] as $fact): ?>
+                    <div style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.15); padding: 10px 15px; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
+                        <i data-lucide="zap" style="width: 14px; color: #fbbf24;"></i>
+                        <span><?php echo htmlspecialchars($fact); ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Strategic Advice Overlay -->
+            <div style="background: #ffffff; padding: 1.5rem; border-radius: 20px; color: var(--text-primary) !important; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-top: auto;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom: 10px;">
+                    <i data-lucide="compass" style="color: var(--accent-primary); width: 18px;"></i>
+                    <div style="font-size: 0.8rem; font-weight: 900; color: var(--accent-primary); text-transform: uppercase;">Posture Recommandée</div>
+                </div>
+                <div style="font-weight: 600; font-size: 0.9rem; line-height: 1.5; color: var(--text-secondary);"><?php echo htmlspecialchars($guide['company_insights']['strategic_tips']); ?></div>
             </div>
         </div>
     </div>

@@ -92,12 +92,6 @@ try {
     if ($is_tailored && isset($_SESSION['tailor_job_url'])) {
         $target_url = $_SESSION['tailor_job_url'];
         $report = isset($_SESSION['tailor_guide']) ? json_encode($_SESSION['tailor_guide']) : '';
-        
-        // Cleanup session to prevent polluting future standard CVs
-        unset($_SESSION['tailor_job_url']);
-        unset($_SESSION['tailor_job_data']);
-        unset($_SESSION['tailor_cv_data']);
-        unset($_SESSION['tailor_guide']);
     }
 
     // Instanciation stricte du Modèle MVC (Vérifier l'ordre dans model/CV.php)
