@@ -60,7 +60,7 @@ Question de l'étudiant : $student_query
 
 Réponds de façon claire, encourageante et pédagogique. Si la question sort du cadre du cours, oriente gentiment l'étudiant vers son tuteur humain. Maximum 3 paragraphes courts.";
 
-        $reply = $this->callGroq($prompt);
+        $reply = $this->callAI($prompt);
 
         // Préfixe visuel pour indiquer que c'est l'IA
         $prefixed = "🤖 L'assistant IA du tuteur :\n\n" . $reply;
@@ -81,47 +81,19 @@ Réponds de façon claire, encourageante et pédagogique. Si la question sort du
     }
 
     /**
-     * Appel direct à l'API Groq (centralisé, pas de duplication).
+     * Appel à l'IA via le contrôleur centralisé (Failover & Rotation inclus).
      */
-    private function callGroq(string $prompt): string {
-        if (!defined('GROQ_API_KEY')) {
-            $keys_path = __DIR__ . '/../api_keys.php';
-            if (file_exists($keys_path)) require_once $keys_path;
-        }
-
-        if (!defined('GROQ_API_KEY')) {
-            return "Clé API manquante. Veuillez configurer GROQ_API_KEY.";
-        }
-
+    private function callAI(string $prompt): string {
+        $aiC = new AIController();
         $data = [
             "model"    => "llama-3.3-70b-versatile",
             "messages" => [["role" => "user", "content" => $prompt]],
             "temperature" => 0.6,
             "max_tokens"  => 500
         ];
-
-        $ch = curl_init("https://api.groq.com/openai/v1/chat/completions");
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => json_encode($data),
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . GROQ_API_KEY
-            ],
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_TIMEOUT        => 20
-        ]);
-
-        $response = curl_exec($ch);
-        $errno    = curl_errno($ch);
-        curl_close($ch);
-
-        if ($errno) return "Erreur de connexion à l'IA. Réessayez.";
-
-        $result = json_decode($response, true);
-        return $result['choices'][0]['message']['content']
-            ?? "Désolé, je n'ai pas pu générer une réponse.";
+        
+        $res = $aiC->generateGenericResponse($data);
+        return $res['success'] ? $res['content'] : "Désolé, l'assistant IA est temporairement indisponible.";
     }
 
     /**

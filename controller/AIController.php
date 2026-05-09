@@ -85,24 +85,35 @@ class AIController
      */
     private function callAI($data, $timeout = 30)
     {
+        $errors = [];
         // 1. Tenter avec GROQ (Rotation des clés)
-        foreach ($this->groqKeys as $key) {
+        foreach ($this->groqKeys as $idx => $key) {
             $res = $this->requestGroq($data, $key, $timeout);
             if ($res['success'])
                 return $res;
+            $errors[] = "Groq Key #$idx failed.";
         }
 
         // 2. Tenter avec GEMINI (Fallback ultime)
         if (!empty($this->geminiKey)) {
-            return $this->requestGemini($data, $this->geminiKey, $timeout);
+            $res = $this->requestGemini($data, $this->geminiKey, $timeout);
+            if ($res['success']) return $res;
+            $errors[] = $res['message'] ?? 'Gemini failed without error message.';
         }
 
-        return ['success' => false, 'message' => 'Toutes les APIs (Groq & Gemini) ont échoué.'];
+        return ['success' => false, 'message' => 'Échec critique des APIs : ' . implode(" | ", $errors)];
     }
 
     /**
      * 🛠️ PARSER MARKDOWN MINIMALISTE (Pour les fiches AI)
      */
+    /**
+     * Point d'entrée public pour générer une réponse IA avec Failover.
+     */
+    public function generateGenericResponse($data) {
+        return $this->callAI($data);
+    }
+
     public function markdownToHtml($markdown)
     {
         // Nettoyage initial
@@ -155,7 +166,8 @@ class AIController
             $prompt .= $m['content'] . "\n";
         }
 
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $key;
+        // Utilisation de l'API v1 stable avec gemini-1.5-flash
+        $url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" . $key;
         $body = ["contents" => [["parts" => [["text" => $prompt]]]]];
 
         $ch = curl_init($url);
@@ -176,7 +188,14 @@ class AIController
             $text = preg_replace('/^```json\s*|```$/', '', trim($text));
             return ['success' => true, 'content' => $text];
         }
-        return ['success' => false, 'message' => 'Gemini Error: ' . $httpCode];
+        
+        $errorMsg = "Gemini Error: " . $httpCode;
+        if ($response) {
+            $respObj = json_decode($response, true);
+            if (isset($respObj['error']['message'])) $errorMsg .= " (" . $respObj['error']['message'] . ")";
+        }
+        
+        return ['success' => false, 'message' => $errorMsg];
     }
 
     // --- MÉTHODES MÉTIER ---
@@ -195,18 +214,62 @@ class AIController
         return json_encode(['success' => true, 'data' => json_decode($res['content'], true)]);
     }
 
+    /**
+     * 📊 RÉCUPÉRATION DES STATS ÉMOTIONNELLES (Pour le Dashboard Tuteur)
+     */
+    public function getEmotionStats($id_formation)
+    {
+        try {
+            $db = config::getConnexion();
+            $stmt = $db->prepare("SELECT emotion_detectee, COUNT(*) as count FROM rapport_emotions WHERE id_formation = :id GROUP BY emotion_detectee");
+            $stmt->execute(['id' => $id_formation]);
+            return ['success' => true, 'stats' => $stmt->fetchAll()];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
     public function analyzeStudentEmotions($stats)
     {
+        if (empty($stats)) {
+            return json_encode([
+                'success' => true,
+                'data' => [
+                    'analyse_globale' => "En attente de données émotionnelles de la classe...",
+                    'conseils' => [
+                        "Vérifiez que les caméras des étudiants sont activées.",
+                        "Assurez-vous que l'analyse IA est bien lancée côté client.",
+                        "Patientez quelques instants le temps de récolter suffisamment de données."
+                    ]
+                ]
+            ]);
+        }
+
         $data = [
             "model" => "llama-3.3-70b-versatile",
-            "messages" => [["role" => "system", "content" => "Strict JSON Output"], ["role" => "user", "content" => "Analyse emotions JSON: " . json_encode($stats) . ". Structure: {analyseGlobale, conseils:[3 conseils actionnables]}."]],
+            "messages" => [
+                ["role" => "system", "content" => "Strict JSON Output. Format: {\"analyseGlobale\": \"...\", \"conseils\": [\"conseil 1\", \"conseil 2\", \"conseil 3\"]}"], 
+                ["role" => "user", "content" => "Analyse emotions JSON: " . json_encode($stats)]
+            ],
             "temperature" => 0.6,
             "response_format" => ["type" => "json_object"]
         ];
         $res = $this->callAI($data);
         if (!$res['success'])
             return json_encode(['success' => false, 'message' => $res['message']]);
-        return json_encode(['success' => true, 'data' => json_decode($res['content'], true)]);
+            
+        $aiData = json_decode($res['content'], true);
+        
+        // Sécuriser le format des conseils (transformer objets en strings si l'IA s'est trompée)
+        if (isset($aiData['conseils']) && is_array($aiData['conseils'])) {
+            foreach ($aiData['conseils'] as &$conseil) {
+                if (is_array($conseil) || is_object($conseil)) {
+                    $conseil = implode(" ", (array)$conseil);
+                }
+            }
+        }
+        
+        return json_encode(['success' => true, 'data' => $aiData]);
     }
 
     public function selfHealingSyllabus($titre)

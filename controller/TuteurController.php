@@ -61,7 +61,7 @@ class TuteurController
                 COUNT(DISTINCT f.id_formation)        AS nb_formations,
                 COUNT(DISTINCT i.id_inscri)           AS nb_etudiants
             FROM utilisateur u
-            LEFT JOIN Formation f  ON f.id_tuteur = u.id
+            LEFT JOIN formation f  ON f.id_tuteur = u.id
             LEFT JOIN inscription i ON i.id_formation = f.id_formation
             WHERE LOWER(u.role) LIKE '%tuteur%'
             GROUP BY u.id
@@ -72,18 +72,7 @@ class TuteurController
             $stmt = $db->query($sql);
             return $stmt->fetchAll();
         } catch (\Exception $e) {
-            // Fallback : table User (casse alternative)
-            try {
-                $sqlFb = str_replace(
-                    ['FROM utilisateur', 'LEFT JOIN inscription'],
-                    ['FROM User', 'LEFT JOIN Inscription'],
-                    $sql
-                );
-                $stmt = $db->query($sqlFb);
-                return $stmt->fetchAll();
-            } catch (\Exception $e2) {
-                return [];
-            }
+            return [];
         }
     }
 
@@ -156,13 +145,7 @@ class TuteurController
             $check->execute(['email' => $email]);
             $existing = $check->fetch();
         } catch (\Exception $e) {
-            try {
-                $check = $db->prepare("SELECT id, role FROM User WHERE email = :email LIMIT 1");
-                $check->execute(['email' => $email]);
-                $existing = $check->fetch();
-            } catch (\Exception $e2) {
-                $existing = null;
-            }
+            $existing = null;
         }
 
         if ($existing) {
@@ -232,7 +215,7 @@ class TuteurController
         // Vérifier s'il a des formations actives
         try {
             $check = $db->prepare("
-                SELECT COUNT(*) FROM Formation
+                SELECT COUNT(*) FROM formation
                 WHERE id_tuteur = :id AND (statut IS NULL OR statut != 'annulée')
             ");
             $check->execute(['id' => $id]);
@@ -314,15 +297,7 @@ class TuteurController
             $stmt->execute($params);
             $rows = $stmt->fetchAll();
         } catch (\Exception $e) {
-            // Fallback : table User
-            try {
-                $sqlFb = str_replace('LEFT JOIN utilisateur', 'LEFT JOIN User', $sql);
-                $stmt = $db->prepare($sqlFb);
-                $stmt->execute($params);
-                $rows = $stmt->fetchAll();
-            } catch (\Exception $e2) {
-                return [];
-            }
+            return [];
         }
 
         // Conversion en format FullCalendar

@@ -18,7 +18,7 @@ try {
     }
 
     // 1. On récupère toutes les inscriptions terminées
-    $sql = "SELECT i.id_user, f.niveau, f.id_formation
+    $sql = "SELECT i.id_utilisateur AS id_utilisateur, f.niveau, f.id_formation
             FROM inscription i
             JOIN formation f ON i.id_formation = f.id_formation
             WHERE i.statut = 'Terminée' OR i.progression = 100";
@@ -28,7 +28,7 @@ try {
 
     $count = 0;
     foreach ($inscriptions as $ins) {
-        $id_user = $ins['id_user'];
+        $id_user = $ins['id_utilisateur'];
         $niveau = $ins['niveau'];
         $id_f = $ins['id_formation'];
 

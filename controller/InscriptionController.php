@@ -14,22 +14,11 @@ class InscriptionController
         $stmt = $db->prepare("
             SELECT i.progression, i.statut, f.titre, f.id_tuteur
             FROM inscription i
-            JOIN Formation f ON i.id_formation = f.id_formation
-            WHERE i.id_user = :uid AND i.id_formation = :fid
+            JOIN formation f ON i.id_formation = f.id_formation
+            WHERE i.id_utilisateur = :uid AND i.id_formation = :fid
         ");
         $stmt->execute(['uid' => $id_user, 'fid' => $id_formation]);
         $res = $stmt->fetch();
-        
-        if (!$res) {
-            $stmt = $db->prepare("
-                SELECT i.progression, i.statut, f.titre, f.id_tuteur
-                FROM Inscription i
-                JOIN Formation f ON i.id_formation = f.id_formation
-                WHERE i.id_user = :uid AND i.id_formation = :fid
-            ");
-            $stmt->execute(['uid' => $id_user, 'fid' => $id_formation]);
-            $res = $stmt->fetch();
-        }
 
         if (!$res) return false;
 
@@ -81,17 +70,11 @@ class InscriptionController
     {
         $db = config::getConnexion();
         try {
-            $stmt = $db->prepare("SELECT COUNT(*) FROM inscription WHERE id_formation = ? AND id_user = ?");
+            $stmt = $db->prepare("SELECT COUNT(*) FROM inscription WHERE id_formation = ? AND id_utilisateur = ?");
             $stmt->execute([$id_formation, $id_user]);
             return $stmt->fetchColumn() > 0;
         } catch (Exception $e) {
-            try {
-                $stmt = $db->prepare("SELECT COUNT(*) FROM Inscription WHERE id_formation = ? AND id_user = ?");
-                $stmt->execute([$id_formation, $id_user]);
-                return $stmt->fetchColumn() > 0;
-            } catch (Exception $e2) {
-                return false;
-            }
+            return false;
         }
     }
 
@@ -125,7 +108,7 @@ class InscriptionController
         // On récupère la liste des chapitres vus stockée en JSON dans 'commentaires' (ou une colonne libre)
         // Alternative : on utilise une table dédiée si elle existe, sinon on reste sur une approche agile
         try {
-            $stmt = $db->prepare("SELECT chapitres_vus FROM inscription WHERE id_user = ? AND id_formation = ?");
+            $stmt = $db->prepare("SELECT chapitres_vus FROM inscription WHERE id_utilisateur = ? AND id_formation = ?");
             $stmt->execute([$id_user, $id_formation]);
             $json = $stmt->fetchColumn();
             
@@ -147,7 +130,7 @@ class InscriptionController
         $db = config::getConnexion();
         try {
             // 1. Récupérer les chapitres déjà vus
-            $stmt = $db->prepare("SELECT chapitres_vus FROM inscription WHERE id_user = ? AND id_formation = ?");
+            $stmt = $db->prepare("SELECT chapitres_vus FROM inscription WHERE id_utilisateur = ? AND id_formation = ?");
             $stmt->execute([$id_user, $id_formation]);
             $json = $stmt->fetchColumn();
             
@@ -159,7 +142,7 @@ class InscriptionController
                 $vus[] = $id_chapter;
                 $new_json = json_encode($vus);
                 
-                $stmtU = $db->prepare("UPDATE inscription SET chapitres_vus = ? WHERE id_user = ? AND id_formation = ?");
+                $stmtU = $db->prepare("UPDATE inscription SET chapitres_vus = ? WHERE id_utilisateur = ? AND id_formation = ?");
                 $stmtU->execute([$new_json, $id_user, $id_formation]);
             }
             
@@ -174,12 +157,12 @@ class InscriptionController
     private function updateProgressionValue($id_user, $id_formation, $percentage)
     {
         $db = config::getConnexion();
-        $sql = "UPDATE inscription SET progression = ? WHERE id_user = ? AND id_formation = ?";
+        $sql = "UPDATE inscription SET progression = ? WHERE id_utilisateur = ? AND id_formation = ?";
         $db->prepare($sql)->execute([$percentage, $id_user, $id_formation]);
         
         // Si 100%, on passe le statut à Terminée
         if ($percentage >= 100) {
-            $db->prepare("UPDATE inscription SET statut = 'Terminée' WHERE id_user = ? AND id_formation = ? AND statut != 'Terminée'")
+            $db->prepare("UPDATE inscription SET statut = 'Terminée' WHERE id_utilisateur = ? AND id_formation = ? AND statut != 'Terminée'")
                ->execute([$id_user, $id_formation]);
         }
     }
@@ -190,19 +173,12 @@ class InscriptionController
     {
         $db = config::getConnexion();
         try {
-            $stmt = $db->prepare("SELECT progression FROM inscription WHERE id_formation = :f AND id_user = :u LIMIT 1");
+            $stmt = $db->prepare("SELECT progression FROM inscription WHERE id_formation = :f AND id_utilisateur = :u LIMIT 1");
             $stmt->execute(['f' => $id_formation, 'u' => $id_user]);
             $res = $stmt->fetchColumn();
             return $res ? (int)$res : 0;
         } catch (Exception $e) {
-            try {
-                $stmt = $db->prepare("SELECT progression FROM Inscription WHERE id_formation = :f AND id_user = :u LIMIT 1");
-                $stmt->execute(['f' => $id_formation, 'u' => $id_user]);
-                $res = $stmt->fetchColumn();
-                return $res ? (int)$res : 0;
-            } catch (Exception $e2) {
-                return 0;
-            }
+            return 0;
         }
     }
 
@@ -216,29 +192,15 @@ class InscriptionController
                 SELECT f.*, i.statut, i.progression, 
                        COALESCE(u.nom, 'Aptus') as tuteur_nom
                 FROM inscription i
-                JOIN Formation f ON i.id_formation = f.id_formation
+                JOIN formation f ON i.id_formation = f.id_formation
                 LEFT JOIN utilisateur u ON f.id_tuteur = u.id
-                WHERE i.id_user = ?
+                WHERE i.id_utilisateur = ?
                 ORDER BY i.date_inscription DESC
             ");
             $stmt->execute([$id_user]);
             return $stmt->fetchAll();
         } catch (Exception $e) {
-            try {
-                $stmt = $db->prepare("
-                    SELECT f.*, i.statut, i.progression, 
-                           COALESCE(u.nom, 'Aptus') as tuteur_nom
-                    FROM Inscription i
-                    JOIN Formation f ON i.id_formation = f.id_formation
-                    LEFT JOIN User u ON f.id_tuteur = u.id
-                    WHERE i.id_user = ?
-                    ORDER BY i.date_inscription DESC
-                ");
-                $stmt->execute([$id_user]);
-                return $stmt->fetchAll();
-            } catch (Exception $e2) {
-                return [];
-            }
+            return [];
         }
     }
 
@@ -313,7 +275,7 @@ class InscriptionController
         $db = config::getConnexion();
 
         // 1. Contrainte de date (PHP)
-        $stmt = $db->prepare("SELECT date_formation FROM Formation WHERE id_formation = ?");
+        $stmt = $db->prepare("SELECT date_formation FROM formation WHERE id_formation = ?");
         $stmt->execute([$id_formation]);
         $date_f = $stmt->fetchColumn();
 
@@ -323,7 +285,7 @@ class InscriptionController
 
         // 2. Mise à jour du statut
         try {
-            $update = $db->prepare("UPDATE inscription SET statut = 'Terminée', progression = 100 WHERE id_formation = ? AND id_user = ?");
+            $update = $db->prepare("UPDATE inscription SET statut = 'Terminée', progression = 100 WHERE id_formation = ? AND id_utilisateur = ?");
             $update->execute([$id_formation, $id_user]);
             
             // --- NOUVEAU : SYSTÈME DE GAMIFICATION ---
@@ -348,7 +310,7 @@ class InscriptionController
     {
         $db = config::getConnexion();
         try {
-            $stmt = $db->prepare("SELECT chapitres_vus FROM inscription WHERE id_user = ? AND id_formation = ?");
+            $stmt = $db->prepare("SELECT chapitres_vus FROM inscription WHERE id_utilisateur = ? AND id_formation = ?");
             $stmt->execute([$id_user, $id_formation]);
             $json = $stmt->fetchColumn();
             $vus = $json ? json_decode($json, true) : [];
@@ -379,29 +341,8 @@ class InscriptionController
     {
         $db = config::getConnexion();
         try {
-            // Check if already inscribed
-            try {
-                $stmt = $db->prepare("SELECT COUNT(*) FROM inscription WHERE id_formation = ? AND id_user = ?");
-                $stmt->execute([$id_formation, $id_user]);
-                if ($stmt->fetchColumn() > 0) {
-                    throw new Exception("Vous êtes déjà inscrit à cette formation.");
-                }
-            } catch (Exception $e) {
-                // Table might be capitalized
-                $stmt = $db->prepare("SELECT COUNT(*) FROM Inscription WHERE id_formation = ? AND id_user = ?");
-                $stmt->execute([$id_formation, $id_user]);
-                if ($stmt->fetchColumn() > 0) {
-                    throw new Exception("Vous êtes déjà inscrit à cette formation.");
-                }
-            }
-
-            try {
-                $stmt = $db->prepare("INSERT INTO inscription (id_user, id_formation, date_inscription, statut, progression) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$id_user, $id_formation, date('Y-m-d'), 'En attente', 0]);
-            } catch (Exception $e) {
-                $stmt = $db->prepare("INSERT INTO Inscription (id_user, id_formation, date_inscription, statut, progression) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$id_user, $id_formation, date('Y-m-d'), 'En attente', 0]);
-            }
+            $stmt = $db->prepare("INSERT INTO inscription (id_utilisateur, id_formation, date_inscription, statut, progression) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$id_user, $id_formation, date('Y-m-d'), 'En attente', 0]);
         } catch (Exception $e) {
             throw $e;
         }
@@ -419,7 +360,7 @@ class InscriptionController
                 $db = config::getConnexion();
 
                 // Contrainte 1 : Bloquer si la formation a déjà commencé (date passée)
-                $stmtF = $db->prepare("SELECT date_formation FROM Formation WHERE id_formation = ?");
+                $stmtF = $db->prepare("SELECT date_formation FROM formation WHERE id_formation = ?");
                 $stmtF->execute([$id_formation]);
                 $date_f = $stmtF->fetchColumn();
 
@@ -428,14 +369,8 @@ class InscriptionController
                 }
 
                 // Contrainte 2 : Bloquer si le statut de l'inscription est 'Terminée'
-                $stmtI = null;
-                try {
-                    $stmtI = $db->prepare("SELECT statut FROM inscription WHERE id_formation = ? AND id_user = ?");
-                    $stmtI->execute([$id_formation, $id_user]);
-                } catch (Exception $e) {
-                    $stmtI = $db->prepare("SELECT statut FROM Inscription WHERE id_formation = ? AND id_user = ?");
-                    $stmtI->execute([$id_formation, $id_user]);
-                }
+                $stmtI = $db->prepare("SELECT statut FROM inscription WHERE id_formation = ? AND id_utilisateur = ?");
+                $stmtI->execute([$id_formation, $id_user]);
 
                 $statut_actuel = $stmtI->fetchColumn();
                 // On ne bloque la désinscription que si la formation a COMMENCÉ ET qu'elle est en cours/terminée
@@ -444,16 +379,8 @@ class InscriptionController
                 }
 
                 // Suppression de l'inscription
-                try {
-                    $delete = $db->prepare("DELETE FROM inscription WHERE id_formation = ? AND id_user = ?");
-                    $delete->execute([$id_formation, $id_user]);
-                    if ($delete->rowCount() == 0) {
-                        $delete = $db->prepare("DELETE FROM Inscription WHERE id_formation = ? AND id_user = ?");
-                        $delete->execute([$id_formation, $id_user]);
-                    }
-                } catch (Exception $e) {
-                    throw new Exception("Erreur système lors de la désinscription.");
-                }
+                $delete = $db->prepare("DELETE FROM inscription WHERE id_formation = ? AND id_utilisateur = ?");
+                $delete->execute([$id_formation, $id_user]);
 
                 $_SESSION['flash_success'] = "Vous vous êtes désinscrit de la formation avec succès.";
             } catch (Exception $e) {
@@ -477,13 +404,8 @@ class InscriptionController
 
             try {
                 $db = config::getConnexion();
-                try {
-                    $update = $db->prepare("UPDATE inscription SET statut = 'annulée' WHERE id_inscri = ?");
-                    $update->execute([(int)$_GET['id_inscription']]);
-                } catch(Exception $e) {
-                    $update = $db->prepare("UPDATE Inscription SET statut = 'annulée' WHERE id_inscri = ?");
-                    $update->execute([(int)$_GET['id_inscription']]);
-                }
+                $update = $db->prepare("UPDATE inscription SET statut = 'annulée' WHERE id_inscri = ?");
+                $update->execute([(int)$_GET['id_inscription']]);
                 $_SESSION['flash_success'] = "L'inscription a été annulée.";
             } catch (Exception $e) {
                 $_SESSION['flash_error'] = "Erreur lors de l'annulation de l'inscription.";
@@ -514,13 +436,8 @@ class InscriptionController
 
             try {
                 $db = config::getConnexion();
-                try {
-                    $update = $db->prepare("UPDATE inscription SET statut = ? WHERE id_inscri = ?");
-                    $update->execute([$_POST['statut'], (int)$_POST['id_inscription']]);
-                } catch(Exception $e) {
-                    $update = $db->prepare("UPDATE Inscription SET statut = ? WHERE id_inscri = ?");
-                    $update->execute([$_POST['statut'], (int)$_POST['id_inscription']]);
-                }
+                $update = $db->prepare("UPDATE inscription SET statut = ? WHERE id_inscri = ?");
+                $update->execute([$_POST['statut'], (int)$_POST['id_inscription']]);
                 $_SESSION['flash_success'] = "Le statut de l'inscription a été mis à jour.";
             } catch (Exception $e) {
                 $_SESSION['flash_error'] = $e->getMessage();
@@ -539,7 +456,7 @@ class InscriptionController
         switch ($action) {
             case 'inscrire':
                 $id_f = (int)($data['id_formation'] ?? 0);
-                $id_u = (int)($data['id_user'] ?? SessionManager::getUserId());
+                $id_u = (int)($data['id_utilisateur'] ?? SessionManager::getUserId());
                 if (!$id_f || !$id_u) return ['success' => false, 'message' => 'Données manquantes.'];
                 try {
                     $this->inscrire($id_f, $id_u);
@@ -550,19 +467,19 @@ class InscriptionController
 
             case 'desinscrire':
                 $id_f = (int)($data['id_formation'] ?? 0);
-                $id_u = (int)($data['id_user'] ?? $_SESSION['user_id'] ?? 0);
+                $id_u = (int)($data['id_utilisateur'] ?? $_SESSION['user_id'] ?? 0);
                 if (!$id_f || !$id_u) return ['success' => false, 'message' => 'Données manquantes.'];
                 try {
                     // Logique de désinscription sécurisée
                     $db = config::getConnexion();
-                    $stmtF = $db->prepare("SELECT date_formation FROM Formation WHERE id_formation = ?");
+                    $stmtF = $db->prepare("SELECT date_formation FROM formation WHERE id_formation = ?");
                     $stmtF->execute([$id_f]);
                     $date_f = $stmtF->fetchColumn();
                     if ($date_f && strtotime($date_f) <= strtotime(date('Y-m-d'))) {
                         return ['success' => false, 'message' => "La formation a déjà commencé ou est passée."];
                     }
                     
-                    $stmtI = $db->prepare("DELETE FROM inscription WHERE id_formation = ? AND id_user = ?");
+                    $stmtI = $db->prepare("DELETE FROM inscription WHERE id_formation = ? AND id_utilisateur = ?");
                     $stmtI->execute([$id_f, $id_u]);
                     return ['success' => true, 'message' => 'Désinscription effectuée avec succès.'];
                 } catch (Exception $e) {

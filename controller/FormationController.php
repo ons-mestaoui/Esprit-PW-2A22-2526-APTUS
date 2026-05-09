@@ -15,7 +15,9 @@ class FormationController
         foreach ($tables_utilisateurs as $table) {
             try {
                 $stmt = $db->query("
-                    SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                    SELECT f.id_formation, f.titre, f.domaine, f.niveau, f.description, 
+                           f.id_tuteur, f.is_online, f.prerequis_id, f.date_formation, f.statut, f.image_base64,
+                           COALESCE(u.nom, 'Aptus') as tuteur_nom 
                     FROM Formation f 
                     LEFT JOIN $table u ON f.id_tuteur = u.id
                     WHERE f.statut = 'active'
@@ -45,7 +47,9 @@ class FormationController
         foreach ($tables_utilisateurs as $table) {
             try {
                 $stmt = $db->query("
-                    SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                    SELECT f.id_formation, f.titre, f.domaine, f.niveau, f.description, 
+                           f.id_tuteur, f.is_online, f.prerequis_id, f.date_formation, f.statut, f.image_base64,
+                           COALESCE(u.nom, 'Aptus') as tuteur_nom 
                     FROM Formation f 
                     LEFT JOIN $table u ON f.id_tuteur = u.id
                     WHERE f.statut = 'active'
@@ -84,11 +88,15 @@ class FormationController
         $f['lieu_color'] = $f['is_online'] ? '#3b82f6' : '#10b981';
 
         // Formatage de la date
-        $f['date_format'] = date('d M. Y', strtotime($f['date_formation']));
+        $f['date_format'] = !empty($f['date_formation']) ? date('d M. Y', strtotime($f['date_formation'])) : 'Date non spécifiée';
+        $f['duree'] = $f['duree'] ?? 'Non spécifiée';
+        $f['is_online'] = (isset($f['is_online']) && $f['is_online'] == 1);
+        
+        $f['date_fin_format'] = !empty($f['date_fin']) ? date('d M. Y', strtotime($f['date_fin'])) : 'Date non spécifiée';
 
         // Calcul du statut temporel
         $dateRef = strtotime(date('Y-m-d'));
-        $dateFm = strtotime(date('Y-m-d', strtotime($f['date_formation'])));
+        $dateFm = !empty($f['date_formation']) ? strtotime(date('Y-m-d', strtotime($f['date_formation']))) : $dateRef;
         $dateDiff = ($dateFm - $dateRef) / 86400;
 
         $f['statut_temporel'] = "";
@@ -208,6 +216,7 @@ class FormationController
      */
     public function getSkillTreePageData($id_user, $target_id = null)
     {
+        $db = config::getConnexion();
         $viewMode = 'all';
         $skillChain = [];
         $allTrees = [];
@@ -220,23 +229,51 @@ class FormationController
             $viewMode = 'all';
         }
 
-        // Données pour la Neural Map
-        $toutesLesFormations = $this->listerToutesFormations();
+        // --- OPTIMIZATION: Bulk fetch to avoid N+1 queries and preserve formatting ---
+        $toutesLesFormations = $this->listerToutesFormations(); // Already formatted by formatFormationForView
+        
+        $inscriptions = [];
+        if ($id_user) {
+            $tablesI = ['inscription', 'Inscription'];
+            foreach ($tablesI as $table) {
+                try {
+                    $stmt = $db->prepare("SELECT id_formation, progression, statut FROM $table WHERE id_utilisateur = ?");
+                    $stmt->execute([$id_user]);
+                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        $inscriptions[(int)$row['id_formation']] = [
+                            'progression' => ($row['statut'] === 'Terminée') ? 100 : (int)$row['progression'],
+                            'statut' => $row['statut']
+                        ];
+                    }
+                    break; 
+                } catch (Exception $e) {}
+            }
+        }
+
+        $formationsById = [];
+        foreach ($toutesLesFormations as $f) {
+            $id = (int)$f['id_formation'];
+            $f['id_formation'] = $id; 
+            $f['prerequis_id'] = (!empty($f['prerequis_id'])) ? (int)$f['prerequis_id'] : null;
+            $f['ma_progression'] = $inscriptions[$id]['progression'] ?? 0;
+            $f['mon_statut'] = $inscriptions[$id]['statut'] ?? '';
+            $formationsById[$id] = $f;
+        }
+
         $formationsData = [];
         $globalDone = 0;
-
-        foreach ($toutesLesFormations as $f) {
-            $data = $this->getFormationWithPrerequisite((int) $f['id_formation'], $id_user);
+        foreach ($formationsById as $id => $f) {
             $isUnlocked = true;
-            if (!empty($data['prerequis_id'])) {
-                $prereq = $this->getFormationWithPrerequisite((int) $data['prerequis_id'], $id_user);
-                $isUnlocked = ($prereq && $prereq['ma_progression'] >= 100);
+            if ($f['prerequis_id']) {
+                $preId = $f['prerequis_id'];
+                $isUnlocked = (isset($formationsById[$preId]) && $formationsById[$preId]['ma_progression'] >= 100);
             }
-            $data['is_unlocked'] = $isUnlocked;
-            $data['description'] = strip_tags($data['description']); // Clean for JS
-            $formationsData[] = $data;
-            if ($data['ma_progression'] >= 100)
+            $f['is_unlocked'] = $isUnlocked;
+            $f['description'] = strip_tags($f['description'] ?? '');
+            $formationsData[] = $f;
+            if ($f['ma_progression'] >= 100) {
                 $globalDone++;
+            }
         }
 
         $globalTotal = count($formationsData);
@@ -514,25 +551,25 @@ class FormationController
     public function getFormationById($id)
     {
         $db = config::getConnexion();
-        $tables = ['utilisateur', 'User'];
-        foreach ($tables as $table) {
+        try {
+            $query = $db->prepare("
+                SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                FROM formation f 
+                LEFT JOIN utilisateur u ON f.id_tuteur = u.id 
+                WHERE f.id_formation = :id
+            ");
+            $query->execute(['id' => $id]);
+            return $query->fetch();
+        } catch (Exception $e) {
+            // Fallback pour compatibilité ascendante si utilisateur n'existe pas
             try {
-                $query = $db->prepare("
-                    SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
-                    FROM Formation f 
-                    LEFT JOIN $table u ON f.id_tuteur = u.id 
-                    WHERE f.id_formation = :id
-                ");
+                $query = $db->prepare("SELECT * FROM formation WHERE id_formation = :id");
                 $query->execute(['id' => $id]);
-                $res = $query->fetch();
-                if ($res)
-                    return $res;
-            } catch (Exception $e) {
-                if ($table === end($tables))
-                    throw $e;
+                return $query->fetch();
+            } catch (Exception $e2) {
+                throw $e;
             }
         }
-        return null;
     }
 
     public function updateLienRoom($id, $lien)
@@ -603,7 +640,7 @@ class FormationController
         foreach ($tablesU as $tU) {
             foreach ($tablesI as $tI) {
                 try {
-                    $sql = "SELECT f.*, COALESCE(u.nom, 'Aptus') AS tuteur_nom, COALESCE(i.progression, 0) AS ma_progression, COALESCE(i.statut, '') AS mon_statut FROM Formation f LEFT JOIN $tU u ON f.id_tuteur = u.id LEFT JOIN $tI i ON i.id_formation = f.id_formation AND i.id_user = :id_user WHERE f.id_formation = :id";
+                    $sql = "SELECT f.*, COALESCE(u.nom, 'Aptus') AS tuteur_nom, COALESCE(i.progression, 0) AS ma_progression, COALESCE(i.statut, '') AS mon_statut FROM Formation f LEFT JOIN $tU u ON f.id_tuteur = u.id LEFT JOIN $tI i ON i.id_formation = f.id_formation AND i.id_utilisateur = :id_user WHERE f.id_formation = :id";
                     $stmt = $db->prepare($sql);
                     $stmt->execute(['id' => $id_formation, 'id_user' => $id_user ?? 0]);
                     $res = $stmt->fetch();
@@ -621,25 +658,36 @@ class FormationController
         return null;
     }
 
-    public function getSkillTree(int $id_formation_finale, ?int $id_user = null, int $depth = 0): array
+    public function getSkillTree(int $id_formation_finale, ?int $id_user = null): array
     {
-        if ($depth >= 10)
-            return [];
-        $formation = $this->getFormationWithPrerequisite($id_formation_finale, $id_user);
-        if (!$formation)
-            return [];
+        $db = config::getConnexion();
         $chain = [];
-        if (!empty($formation['prerequis_id'])) {
-            $prerequisChain = $this->getSkillTree((int) $formation['prerequis_id'], $id_user, $depth + 1);
-            $chain = array_merge($chain, $prerequisChain);
+        $currentId = $id_formation_finale;
+        $visited = [];
+        
+        // Fetch linear chain from DB (iterative instead of recursive for speed)
+        while ($currentId && !isset($visited[$currentId])) {
+            $visited[$currentId] = true;
+            $f = $this->getFormationWithPrerequisite($currentId, $id_user);
+            if (!$f) break;
+            
+            // Important: Use formatting to keep colors and icons
+            $f = $this->formatFormationForView($f);
+            
+            array_unshift($chain, $f);
+            $currentId = !empty($f['prerequis_id']) ? (int)$f['prerequis_id'] : null;
         }
-        if (!empty($formation['prerequis_id'])) {
-            $prereq = $this->getFormationWithPrerequisite((int) $formation['prerequis_id'], $id_user);
-            $formation['is_unlocked'] = ($prereq && $prereq['ma_progression'] >= 100);
-        } else {
-            $formation['is_unlocked'] = true;
+        
+        // Calculate unlocked status based on progression of previous element
+        foreach ($chain as $i => &$f) {
+            if ($i === 0) {
+                $f['is_unlocked'] = true;
+            } else {
+                $prev = $chain[$i-1];
+                $f['is_unlocked'] = ($prev['ma_progression'] >= 100);
+            }
         }
-        $chain[] = $formation;
+        
         return $chain;
     }
 
@@ -647,17 +695,48 @@ class FormationController
     {
         $db = config::getConnexion();
         try {
-            $sql = "SELECT id_formation FROM Formation WHERE prerequis_id IS NULL OR prerequis_id = 0 ORDER BY domaine, titre";
-            $stmt = $db->query($sql);
-            $roots = $stmt->fetchAll();
+            // Get all formations with formatting (colors, icons, etc)
+            $all = $this->listerToutesFormations();
+            
+            // Get user progress in one query
+            $inscriptions = [];
+            if ($id_user) {
+                $tablesI = ['inscription', 'Inscription'];
+                foreach ($tablesI as $table) {
+                    try {
+                        $stmt = $db->prepare("SELECT id_formation, progression, statut FROM $table WHERE id_utilisateur = ?");
+                        $stmt->execute([$id_user]);
+                        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                            $inscriptions[(int)$row['id_formation']] = ($row['statut'] === 'Terminée') ? 100 : (int)$row['progression'];
+                        }
+                        break;
+                    } catch (Exception $e) {}
+                }
+            }
+
+            $formationsById = [];
+            foreach ($all as $f) {
+                $id = (int)$f['id_formation'];
+                $f['id_formation'] = $id;
+                $f['prerequis_id'] = (!empty($f['prerequis_id'])) ? (int)$f['prerequis_id'] : null;
+                $f['ma_progression'] = $inscriptions[$id] ?? 0;
+                $formationsById[$id] = $f;
+            }
+
+            // Group into trees: Root + immediate children
             $trees = [];
-            foreach ($roots as $root) {
-                $children = $this->getChildrenOf((int) $root['id_formation'], $id_user);
-                if (!empty($children)) {
-                    $rootFormation = $this->getFormationWithPrerequisite((int) $root['id_formation'], $id_user);
-                    if ($rootFormation) {
-                        $rootFormation['is_unlocked'] = true;
-                        $trees[] = ['root' => $rootFormation, 'children' => $children];
+            foreach ($formationsById as $id => $f) {
+                if (empty($f['prerequis_id'])) {
+                    $children = [];
+                    foreach ($formationsById as $cid => $cf) {
+                        if ((int)$cf['prerequis_id'] === $id) {
+                            $cf['is_unlocked'] = ($f['ma_progression'] >= 100);
+                            $children[] = $cf;
+                        }
+                    }
+                    if (!empty($children)) {
+                        $f['is_unlocked'] = true;
+                        $trees[] = ['root' => $f, 'children' => $children];
                     }
                 }
             }
@@ -724,27 +803,7 @@ class FormationController
         ];
     }
 
-    private function getChildrenOf(int $parent_id, ?int $id_user = null): array
-    {
-        $db = config::getConnexion();
-        try {
-            $stmt = $db->prepare("SELECT id_formation FROM Formation WHERE prerequis_id = :pid");
-            $stmt->execute(['pid' => $parent_id]);
-            $childIds = $stmt->fetchAll();
-            $parentFormation = $this->getFormationWithPrerequisite($parent_id, $id_user);
-            $children = [];
-            foreach ($childIds as $row) {
-                $child = $this->getFormationWithPrerequisite((int) $row['id_formation'], $id_user);
-                if ($child) {
-                    $child['is_unlocked'] = ($parentFormation && $parentFormation['ma_progression'] >= 100);
-                    $children[] = $child;
-                }
-            }
-            return $children;
-        } catch (Exception $e) {
-            return [];
-        }
-    }
+
 
     public function annuler(int $id)
     {

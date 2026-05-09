@@ -28,20 +28,20 @@ class PeerLearningController
         //    - Secondairement, trie par charge de travail ASC (moins de sessions ouvertes)
         //    - Évite ceux déjà en session pending
         $sql = "
-            SELECT i.id_user,
-                   COALESCE(c.nom, CONCAT('Étudiant #', i.id_user)) AS mentor_nom,
+            SELECT i.id_utilisateur AS id_utilisateur,
+                   COALESCE(c.nom, CONCAT('Étudiant #', i.id_utilisateur)) AS mentor_nom,
                    COALESCE(c.email, '') AS mentor_email,
                    (SELECT AVG(pr.rating)
                     FROM peer_reviews pr
                     JOIN peer_sessions ps ON pr.session_id = ps.id
-                    WHERE ps.mentor_id = i.id_user) AS avg_rating,
-                   (SELECT COUNT(*) FROM peer_sessions WHERE mentor_id = i.id_user AND status = 'pending') AS active_sessions
+                    WHERE ps.mentor_id = i.id_utilisateur) AS avg_rating,
+                   (SELECT COUNT(*) FROM peer_sessions WHERE mentor_id = i.id_utilisateur AND status = 'pending') AS active_sessions
             FROM inscription i
-            LEFT JOIN candidat c ON i.id_user = c.id
+            LEFT JOIN candidat c ON i.id_utilisateur = c.id
             WHERE i.id_formation = :id_formation
-              AND i.id_user != :id_demandeur
+              AND i.id_utilisateur != :id_demandeur
               AND i.progression >= 100
-              AND i.id_user NOT IN (
+              AND i.id_utilisateur NOT IN (
                     SELECT mentor_id FROM peer_sessions
                     WHERE status = 'pending'
                     AND TIMESTAMPDIFF(MINUTE, created_at, NOW()) < :timeout
@@ -64,13 +64,13 @@ class PeerLearningController
             // Fallback avec table utilisateur si candidat n'est pas disponible
             if (!$mentor) {
                 $sqlFb = "
-                    SELECT i.id_user,
-                           COALESCE(u.nom, CONCAT('Étudiant #', i.id_user)) AS mentor_nom,
+                    SELECT i.id_utilisateur AS id_utilisateur,
+                           COALESCE(u.nom, CONCAT('Étudiant #', i.id_utilisateur)) AS mentor_nom,
                            '' AS mentor_email, NULL AS avg_rating, 0 AS active_sessions
                     FROM inscription i
-                    LEFT JOIN utilisateur u ON i.id_user = u.id
+                    LEFT JOIN utilisateur u ON i.id_utilisateur = u.id
                     WHERE i.id_formation = :id_formation
-                      AND i.id_user != :id_demandeur
+                      AND i.id_utilisateur != :id_demandeur
                       AND i.progression >= 100
                     ORDER BY RAND() LIMIT 1";
                 $stmtFb = $db->prepare($sqlFb);

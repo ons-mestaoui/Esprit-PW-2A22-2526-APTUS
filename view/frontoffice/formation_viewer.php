@@ -462,9 +462,9 @@ if (!isset($content)) {
         if (pct >= 100 && badge) badge.style.display = 'inline-flex';
     }
 
-    function sendProgressAjax(pct, mode) {
+    function sendProgressAjax(pct, mode, dwellSeconds = 0) {
         if (!USER_ID) return;
-        if (pct <= currentProg) return; // pas de régression
+        if (pct <= currentProg && pct < 100) return; // pas de régression sauf si on force le 100%
 
         const fd = new FormData();
         fd.append('action', 'update_dwell_progression');
@@ -472,6 +472,8 @@ if (!isset($content)) {
         fd.append('id_user', USER_ID);
         fd.append('new_prog', pct);
         fd.append('mode', mode); // 'chapter' ou 'dwell'
+        fd.append('dwell_seconds', dwellSeconds);
+        fd.append('word_count', WORD_COUNT);
 
         fetch('ajax_handler.php', { method: 'POST', body: fd })
             .then(r => r.json())
@@ -520,10 +522,33 @@ if (!isset($content)) {
             });
     }
 
-    // ─── MODE B : DWELL TIME (Désactivé si on attend des chapitres) ──
+    // ─── MODE B : DWELL TIME (Progression par temps de lecture) ─────
     if (!HAS_CHAPTERS) {
-        // On ne fait rien : le tuteur doit d'abord ajouter du contenu pour activer la progression
+        let startTime = Date.now();
+        let interval = setInterval(() => {
+            if (currentProg >= 100) {
+                clearInterval(interval);
+                return;
+            }
+            
+            let elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+            
+            // Calculer la progression théorique basée sur la lecture moyenne
+            // min_required = max(180, word_count / 4.17)
+            let minRequired = Math.max(180, (WORD_COUNT > 0) ? (WORD_COUNT / 4.17) : 180);
+            let theoreticalProg = Math.floor(Math.min((elapsedSec / minRequired) * 100, 100));
+
+            if (theoreticalProg > currentProg) {
+                // On n'envoie pas à chaque seconde pour économiser le serveur
+                if (elapsedSec % 15 === 0 || theoreticalProg >= 100) {
+                    sendProgressAjax(theoreticalProg, 'dwell', elapsedSec);
+                }
+            }
+        }, 1000);
     }
+
+    // Initialisation forcée de la barre au chargement
+    updateBar(currentProg);
 
     // ─── SELF-HEALING SYLLABUS ─────────────────────────────────
     (function () {

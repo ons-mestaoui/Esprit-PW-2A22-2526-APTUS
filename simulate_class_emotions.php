@@ -12,7 +12,16 @@ $id_formation = $_GET['id_formation'] ?? 1;
 try {
     $db = config::getConnexion();
     
-    // 1. On nettoie les anciennes fausses données pour cette formation (pour avoir un test propre)
+    // 1. On s'assure que la formation existe dans la table 'formation' pour que les JOINs fonctionnent
+    $stmtF = $db->prepare("SELECT id_formation FROM formation WHERE id_formation = :id");
+    $stmtF->execute(['id' => $id_formation]);
+    if (!$stmtF->fetch()) {
+        // Créer une formation factice pour les tests
+        $db->prepare("INSERT INTO formation (id_formation, titre, id_tuteur) VALUES (:id, 'Formation Test (Simulée)', 1)")
+           ->execute(['id' => $id_formation]);
+    }
+
+    // 2. On nettoie les anciennes fausses données pour cette formation (pour avoir un test propre)
     $stmt = $db->prepare("DELETE FROM rapport_emotions WHERE id_formation = :id_formation");
     $stmt->execute(['id_formation' => $id_formation]);
 
@@ -39,7 +48,7 @@ try {
             // On pioche un ID réel au hasard dans la liste
             $id_candidat_fictif = $real_ids[array_rand($real_ids)];
             
-            $insert = $db->prepare("INSERT INTO rapport_emotions (id_candidat, id_formation, emotion_detectee) VALUES (:id_candidat, :id_formation, :emotion)");
+            $insert = $db->prepare("INSERT INTO rapport_emotions (id_candidat, id_formation, emotion_detectee, date_mesure) VALUES (:id_candidat, :id_formation, :emotion, NOW())");
             $insert->execute([
                 'id_candidat' => $id_candidat_fictif,
                 'id_formation' => $id_formation,

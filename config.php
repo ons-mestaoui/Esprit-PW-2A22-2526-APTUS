@@ -22,7 +22,7 @@ class config
 
     if (!isset(self::$pdo)) {
       try {
-        $host = $_ENV['DB_HOST'] ?? 'localhost';
+        $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
         $dbname = $_ENV['DB_NAME'] ?? 'aptus';
         $user = $_ENV['DB_USER'] ?? 'root';
         $pass = $_ENV['DB_PASS'] ?? '';

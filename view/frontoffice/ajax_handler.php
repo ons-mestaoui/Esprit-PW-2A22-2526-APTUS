@@ -193,8 +193,7 @@ switch ($action) {
             break;
         }
         // RAG : On injecte tout le catalogue dans le contexte
-        $catalogue_raw = $formC->listerFormations()->fetchAll();
-        $catalogue = $catalogue_raw;
+        $catalogue = $formC->listerFormations();
         echo $aiC->generateCrashCourse($user_prompt, $catalogue);
         break;
 
@@ -239,23 +238,12 @@ switch ($action) {
         break;
 
     case 'append_ai_syllabus':
-
         require_once __DIR__ . '/../../controller/AIController.php';
         $controller = new AIController();
         $id_formation = $_POST['id_formation'] ?? 0;
         $html_content = "<!-- AI_SYLLABUS_START -->" . $_POST['html_content'] . "<!-- AI_SYLLABUS_END -->";
         
         echo $controller->appendSyllabus($id_formation, $html_content);
-        break;
-
-    // --------------------------------------------------------
-    // CONCEPT 1 : PEER LEARNING (Entraide)
-    // --------------------------------------------------------
-    case 'peer_help':
-        require_once __DIR__ . '/../../controller/PeerLearningController.php';
-        $peerC = new PeerLearningController();
-        // La méthode handleAjax() s'occupe de lire les POST, vérifier la limite de 3 fois/jour et renvoyer le JSON
-        $peerC->handleAjax();
         break;
 
     case 'delete_resource':
@@ -297,13 +285,6 @@ switch ($action) {
         echo $controller->saveStudentEmotion($id_candidat, $id_formation, $emotion);
         break;
 
-    case 'analyze_student_emotions':
-        require_once __DIR__ . '/../../controller/AIController.php';
-        $controller = new AIController();
-        $stats_json = $_POST['stats'] ?? '[]';
-        $stats = json_decode($stats_json, true);
-        echo $controller->analyzeStudentEmotions($stats);
-        break;
 
 
     // --------------------------------------------------------
@@ -417,6 +398,17 @@ switch ($action) {
         echo json_encode($result);
         break;
 
+    // --------------------------------------------------------
+    // SKILL TREE DATA (Offloaded for performance)
+    // --------------------------------------------------------
+    case 'get_skill_tree_data':
+        require_once __DIR__ . '/../../controller/FormationController.php';
+        $formC = new FormationController();
+        $id_user = $_GET['user_id'] ?? SessionManager::getUserId();
+        $target_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
+        $data = $formC->getSkillTreePageData($id_user, $target_id);
+        echo json_encode($data);
+        break;
 
     // --------------------------------------------------------
     // Action inconnue → erreur 400
