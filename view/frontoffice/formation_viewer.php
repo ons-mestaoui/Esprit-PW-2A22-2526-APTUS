@@ -522,29 +522,32 @@ if (!isset($content)) {
             });
     }
 
-    // ─── MODE B : DWELL TIME (Progression par temps de lecture) ─────
+    // ─── MODE B : DWELL TIME (indicateur visuel uniquement) ─────
+    // IMPORTANT : Le dwell-time n'écrit PLUS en base de données.
+    // La progression réelle = chapitres ouverts / total chapitres configurés par le tuteur.
+    // Si aucun chapitre n'est configuré, la barre reste à 0 et un message informe l'étudiant.
     if (!HAS_CHAPTERS) {
-        let startTime = Date.now();
-        let interval = setInterval(() => {
-            if (currentProg >= 100) {
-                clearInterval(interval);
-                return;
-            }
-            
-            let elapsedSec = Math.floor((Date.now() - startTime) / 1000);
-            
-            // Calculer la progression théorique basée sur la lecture moyenne
-            // min_required = max(180, word_count / 4.17)
-            let minRequired = Math.max(180, (WORD_COUNT > 0) ? (WORD_COUNT / 4.17) : 180);
-            let theoreticalProg = Math.floor(Math.min((elapsedSec / minRequired) * 100, 100));
-
-            if (theoreticalProg > currentProg) {
-                // On n'envoie pas à chaque seconde pour économiser le serveur
-                if (elapsedSec % 15 === 0 || theoreticalProg >= 100) {
-                    sendProgressAjax(theoreticalProg, 'dwell', elapsedSec);
-                }
-            }
-        }, 1000);
+        if (TOTAL_CHAPTERS === 0) {
+            // Aucun contenu configuré par le tuteur : afficher un message clair
+            if (bar) bar.style.width = '0%';
+            if (pctEl) pctEl.textContent = '—';
+            const barContainer = bar ? bar.closest('[id]') : null;
+            const noContentMsg = document.createElement('p');
+            noContentMsg.style.cssText = 'font-size:0.78rem;color:var(--text-secondary);margin-top:4px;font-style:italic;';
+            noContentMsg.textContent = '⏳ Le tuteur n\'a pas encore ajouté de chapitres à ce cours.';
+            if (pctEl && pctEl.parentNode) pctEl.parentNode.appendChild(noContentMsg);
+        } else {
+            // Fallback visuel (ne devrait pas arriver si TOTAL_CHAPTERS > 0 implique HAS_CHAPTERS)
+            let startTime = Date.now();
+            let interval = setInterval(() => {
+                if (currentProg >= 100) { clearInterval(interval); return; }
+                let elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+                let minRequired = Math.max(180, (WORD_COUNT > 0) ? (WORD_COUNT / 4.17) : 180);
+                let theoreticalProg = Math.floor(Math.min((elapsedSec / minRequired) * 100, 99)); // jamais 100%
+                // Animation locale uniquement, SANS écriture en base de données
+                if (theoreticalProg > currentProg) updateBar(theoreticalProg);
+            }, 1000);
+        }
     }
 
     // Initialisation forcée de la barre au chargement
@@ -668,21 +671,39 @@ if (!isset($content)) {
             return;
         }
 
-        const texteHtml = sourceElement.innerHTML.trim();
+        // Nettoyage rigoureux : on enlève les <br> et espaces qui pourraient être en début de contenu
+        const texteHtml = sourceElement.innerHTML.replace(/^(<br\s*\/?>|&nbsp;|\s)+/gi, '').trim();
 
         // 🕵️ L'ÉTAPE DE DÉBOGAGE CRUCIALE
-        console.log("Voici ce que le script essaie d'imprimer :", texteHtml);
+        console.log("Contenu nettoyé pour PDF :", texteHtml);
 
-        if (texteHtml === "") {
-            alert("Attention : La div existe, mais elle est totalement vide au moment du clic !");
+        if (texteHtml === "" || texteHtml === "<br>") {
+            alert("Attention : La fiche semble vide !");
             return;
         }
 
         // 1. On fabrique une page web complète sous forme de texte (String)
-        const contenuPourPDF = `
-            <div style="background-color: #ffffff; color: #1e293b; font-family: Arial, sans-serif; padding: 40px 60px;">
+        const contenuPourPDF = `<div style="background-color: #ffffff; color: #1e293b; font-family: Arial, sans-serif; padding: 10px 60px 40px;">
+                <style>
+                    @page { margin: 0; }
+                    body { margin: 0; padding: 0; }
+                    #fiche-corps > *:first-child { margin-top: 0 !important; padding-top: 0 !important; }
+                    #fiche-corps h1 { color: #00A3DA; text-align: center; text-transform: uppercase; margin-top: 40px; margin-bottom: 30px; font-size: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; }
+                    #fiche-corps h2, #fiche-corps h3 { 
+                        color: #0f172a; 
+                        border-left: 4px solid #00A3DA; 
+                        padding-left: 15px; 
+                        margin-top: 30px; 
+                        margin-bottom: 15px;
+                        font-size: 18px;
+                    }
+                    #fiche-corps p { margin-bottom: 12px; }
+                    #fiche-corps ul { margin-bottom: 20px; }
+                    #fiche-corps li { margin-bottom: 8px; }
+                    #fiche-corps strong { color: #1e293b; }
+                </style>
                 <!-- Header Premium -->
-                <div style="border-bottom: 2px solid #00A3DA; padding-bottom: 20px; margin-bottom: 30px; overflow: hidden;">
+                <div style="border-bottom: 2px solid #00A3DA; padding-bottom: 20px; margin-bottom: 30px; overflow: hidden; margin-top: 20px;">
                     <div style="float: left; width: 60%;">
                         <h2 style="margin: 0; color: #00A3DA; font-size: 22px; font-weight: bold;">Aptus Intelligence</h2>
                         <p style="margin: 5px 0 0 0; color: #64748b; font-size: 13px;">Votre assistant d'apprentissage nouvelle génération</p>
@@ -702,30 +723,13 @@ if (!isset($content)) {
                 <div style="margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center; color: #94a3b8; font-size: 11px;">
                     © ${new Date().getFullYear()} Aptus Corp. Document pédagogique généré par IA.
                 </div>
-
-                <style>
-                    #fiche-corps h1 { color: #00A3DA; text-align: center; text-transform: uppercase; margin-top: 40px; margin-bottom: 30px; font-size: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; }
-                    #fiche-corps h2, #fiche-corps h3 { 
-                        color: #0f172a; 
-                        border-left: 4px solid #00A3DA; 
-                        padding-left: 15px; 
-                        margin-top: 30px; 
-                        margin-bottom: 15px;
-                        font-size: 18px;
-                    }
-                    #fiche-corps p { margin-bottom: 12px; }
-                    #fiche-corps ul { margin-bottom: 20px; }
-                    #fiche-corps li { margin-bottom: 8px; }
-                    #fiche-corps strong { color: #1e293b; }
-                </style>
-            </div>
-        `;
+            </div>`.trim();
 
         const options = {
-            margin:       10,
+            margin:       0, // On gère les marges en interne via le padding du div
             filename:     'Aptus_Fiche_Revision.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true }, 
+            html2canvas:  { scale: 2, useCORS: true, logging: false, y: 0 }, 
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 

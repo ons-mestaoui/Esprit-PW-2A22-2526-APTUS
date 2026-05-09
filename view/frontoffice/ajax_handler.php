@@ -73,31 +73,30 @@ switch ($action) {
             // 📡 SÉCURITÉ & INTELLIGENCE : Mode Smart Progression
             // On ne fait plus confiance au pourcentage client, on compte les chapitres vus.
             $chapter_id = $_POST['chapter_id'] ?? 0;
-            
-            require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
-            $tuteurC = new TuteurDashboardController();
-            $resources = $tuteurC->getResources($id_formation);
+
+            $resources      = $controller->getResources($id_formation);
             $total_chapters = count($resources);
 
-            require_once __DIR__ . '/../../controller/InscriptionController.php';
-            $inscriC = new InscriptionController();
-            $final = $inscriC->markChapterAsViewed($id_user, $id_formation, $chapter_id, $total_chapters);
+            if ($total_chapters === 0) {
+                // Aucun chapitre configuré : progression impossible
+                echo json_encode(['success' => false, 'progression' => 0, 'mode' => 'chapter', 'reason' => 'no_chapters']);
+                break;
+            }
+
+            // markChapterAsViewed écrit en DB via calculateSmartPercentage → updateProgressionValue
+            $final   = $inscriC->markChapterAsViewed($id_user, $id_formation, $chapter_id, $total_chapters);
+            // updateProgression gère les notifications et la gamification (badges, 🎓)
+            $success = $controller->updateProgression($id_formation, $id_user, $final);
 
         } else {
-            // ── MODE B : Dwell Time avec validation mathématique ────
-            $dwell_seconds = (int)($_POST['dwell_seconds'] ?? 0);
-            $word_count    = (int)($_POST['word_count'] ?? 0);
-            $new_prog      = (int)($_POST['new_prog'] ?? 0);
-
-            // Appel de la logique métier centralisée dans le Controller (MVC Compliance)
-            $final = $inscriC->validateDwellProgression($dwell_seconds, $word_count, $new_prog, $current);
-            
-            require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
-            $controller = new TuteurDashboardController();
-            $controller->updateProgression($id_formation, $id_user, $final);
+            // ── MODE B : Dwell Time ─────────────────────────────────────────────
+            // Le dwell-time est UNIQUEMENT un indicateur visuel de temps de lecture.
+            // Il NE modifie PAS la progression en BD — seuls les chapitres ouverts comptent.
+            // Raison : un cours sans chapitres ne doit jamais être marqué "Terminé".
+            $final   = $current; // Retourner la progression DB inchangée
+            $success = true;
         }
 
-        $success = $controller->updateProgression($id_formation, $id_user, $final);
         echo json_encode([
             'success'     => $success,
             'progression' => $final,
@@ -226,15 +225,6 @@ switch ($action) {
         $aiC = new AIController();
         $id_formation = (int)($_GET['id'] ?? 0);
         echo json_encode($aiC->getCheatSheet($id_formation));
-        break;
-
-    case 'generate_ai_syllabus':
-        require_once __DIR__ . '/../../controller/AIController.php';
-        $controller = new AIController();
-        $titre = $_POST['titre'] ?? '';
-        $domaine = $_POST['domaine'] ?? '';
-        $niveau = $_POST['niveau'] ?? '';
-        echo $controller->generateSyllabus($titre, $domaine, $niveau);
         break;
 
     case 'append_ai_syllabus':

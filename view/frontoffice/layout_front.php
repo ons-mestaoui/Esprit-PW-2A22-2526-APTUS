@@ -51,7 +51,12 @@
        TOP NAVIGATION BAR
        ═══════════════════════════════════════════ -->
   <nav class="landing-nav glass-nav" id="landing-nav">
-    <?php $currentRole = isset($userRole) ? $userRole : 'Candidat'; ?>
+    <?php 
+      require_once __DIR__ . '/../../controller/SessionManager.php';
+      $currentUserId = SessionManager::getUserId(false);
+      $currentRole = $_SESSION['role'] ?? 'Candidat'; 
+      $currentName = $_SESSION['nom'] ?? 'Utilisateur';
+    ?>
     <!-- Logo -->
     <a href="<?php echo ($currentRole === 'Entreprise') ? 'hr_posts.php' : 'jobs_feed.php'; ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
       <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="landing-nav__logo-icon" style="background:none;">
@@ -262,11 +267,11 @@
       <div class="dropdown" id="profile-dropdown">
         <div class="dropdown-trigger topnav__profile">
           <div class="topnav__profile-info">
-            <span class="topnav__profile-name"><?php echo isset($userName) ? $userName : 'Utilisateur'; ?></span>
-            <span class="topnav__profile-role"><?php echo isset($userRole) ? $userRole : 'Candidat'; ?></span>
+            <span class="topnav__profile-name"><?php echo htmlspecialchars($currentName); ?></span>
+            <span class="topnav__profile-role"><?php echo htmlspecialchars($currentRole); ?></span>
           </div>
           <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;">
-            <?php echo isset($userName) ? strtoupper(substr($userName, 0, 2)) : 'US'; ?>
+            <?php echo strtoupper(substr($currentName, 0, 2)); ?>
           </div>
         </div>
         <div class="dropdown-menu">
@@ -599,7 +604,7 @@
             const urgentStyle = isUrgent ? 'border-left: 4px solid var(--accent-tertiary); background: var(--accent-tertiary-light); opacity: 0.95;' : '';
 
             html += `
-            <a href="${href}" class="notif-item unread" onclick="markOneRead(${n.id}, this)" style="${urgentStyle}">
+            <a href="${href}" class="notif-item unread" onclick="markOneRead(${n.id_notifs}, this)" style="${urgentStyle}">
                 <div class="notif-item__icon type-${typeKey}" ${isUrgent ? 'style="background:#ef4444; color:#fff;"' : ''}>
                     <i data-lucide="${icon}" style="width:18px;height:18px;"></i>
                 </div>

@@ -5,7 +5,7 @@ require_once __DIR__ . '/NotificationController.php';
 class PeerLearningController
 {
     private const MAX_REQUESTS_PER_DAY = 3;
-    private const SESSION_TIMEOUT_MIN  = 30;
+    private const SESSION_TIMEOUT_MIN = 30;
 
     // ──────────────────────────────────────────────────────────────
     // Smart Matching
@@ -31,10 +31,10 @@ class PeerLearningController
             SELECT i.id_utilisateur AS id_utilisateur,
                    COALESCE(c.nom, CONCAT('Étudiant #', i.id_utilisateur)) AS mentor_nom,
                    COALESCE(c.email, '') AS mentor_email,
-                   (SELECT AVG(pr.rating)
-                    FROM peer_reviews pr
-                    JOIN peer_sessions ps ON pr.session_id = ps.id
-                    WHERE ps.mentor_id = i.id_utilisateur) AS avg_rating,
+                    (SELECT AVG(pr.rating)
+                     FROM peer_reviews pr
+                     JOIN peer_sessions ps ON pr.id_session = ps.id_session
+                     WHERE ps.mentor_id = i.id_utilisateur) AS avg_rating,
                    (SELECT COUNT(*) FROM peer_sessions WHERE mentor_id = i.id_utilisateur AND status = 'pending') AS active_sessions
             FROM inscription i
             LEFT JOIN candidat c ON i.id_utilisateur = c.id
@@ -57,7 +57,7 @@ class PeerLearningController
             $stmt->execute([
                 'id_formation' => $id_formation,
                 'id_demandeur' => $id_demandeur,
-                'timeout'      => self::SESSION_TIMEOUT_MIN
+                'timeout' => self::SESSION_TIMEOUT_MIN
             ]);
             $mentor = $stmt->fetch();
 
@@ -68,7 +68,7 @@ class PeerLearningController
                            COALESCE(u.nom, CONCAT('Étudiant #', i.id_utilisateur)) AS mentor_nom,
                            '' AS mentor_email, NULL AS avg_rating, 0 AS active_sessions
                     FROM inscription i
-                    LEFT JOIN utilisateur u ON i.id_utilisateur = u.id
+                    LEFT JOIN utilisateur u ON i.id_utilisateur = u.id_utilisateur
                     WHERE i.id_formation = :id_formation
                       AND i.id_utilisateur != :id_demandeur
                       AND i.progression >= 100
@@ -82,37 +82,38 @@ class PeerLearningController
             return null;
         }
 
-        if (!$mentor) return null;
+        if (!$mentor)
+            return null;
 
         $titreFormation = $this->getTitreFormation($id_formation);
-        $jitsiLink      = $this->generateJitsiLink($titreFormation, $id_formation);
+        $jitsiLink = $this->generateJitsiLink($titreFormation, $id_formation);
 
         // 4. Enregistrer la session
-        $stmtS = $db->prepare("INSERT INTO peer_sessions (formation_id, requester_id, mentor_id, meeting_link, status, created_at)
+        $stmtS = $db->prepare("INSERT INTO peer_sessions (id_formation, requester_id, mentor_id, meeting_link, status, created_at)
                                 VALUES (:fid, :rid, :mid, :link, 'pending', NOW())");
         $stmtS->execute([
-            'fid'  => $id_formation,
-            'rid'  => $id_demandeur,
-            'mid'  => $mentor['id_user'],
+            'fid' => $id_formation,
+            'rid' => $id_demandeur,
+            'mid' => $mentor['id_utilisateur'],
             'link' => $jitsiLink
         ]);
         $sessionId = $db->lastInsertId();
-
+ 
         // 5. Notifier le mentor
         NotificationController::creerNotification(
-            $mentor['id_user'],
+            $mentor['id_utilisateur'],
             'peer_request',
             "🎓 Vous avez été sélectionné comme mentor pour « $titreFormation » ! Un étudiant a besoin de vous.",
             $jitsiLink,
             'users'
         );
-
+ 
         // 6. Retourner les infos complètes
         return [
-            'mentor'     => [
-                'id'         => $mentor['id_user'],
-                'nom'        => $mentor['mentor_nom'],
-                'email'      => $mentor['mentor_email'],
+            'mentor' => [
+                'id' => $mentor['id_utilisateur'],
+                'nom' => $mentor['mentor_nom'],
+                'email' => $mentor['mentor_email'],
                 'avg_rating' => $mentor['avg_rating'] ? round($mentor['avg_rating'], 1) : null,
             ],
             'jitsi_link' => $jitsiLink,
@@ -123,18 +124,18 @@ class PeerLearningController
     // ──────────────────────────────────────────────────────────────
     // Review d'une session terminée
     // ──────────────────────────────────────────────────────────────
-    public function submitReview(int $session_id, int $rating, string $comment): bool
+    public function submitReview(int $id_session, int $rating, string $comment): bool
     {
         $rating = max(1, min(5, $rating));
         $db = config::getConnexion();
 
-        $stmt = $db->prepare("INSERT INTO peer_reviews (session_id, rating, comment, created_at)
+        $stmt = $db->prepare("INSERT INTO peer_reviews (id_session, rating, comment, created_at)
                               VALUES (:sid, :rat, :com, NOW())");
-        $ok = $stmt->execute(['sid' => $session_id, 'rat' => $rating, 'com' => $comment]);
+        $ok = $stmt->execute(['sid' => $id_session, 'rat' => $rating, 'com' => $comment]);
 
         if ($ok) {
-            $db->prepare("UPDATE peer_sessions SET status = 'completed' WHERE id = :sid")
-               ->execute(['sid' => $session_id]);
+            $db->prepare("UPDATE peer_sessions SET status = 'completed' WHERE id_session = :sid")
+                ->execute(['sid' => $id_session]);
         }
         return $ok;
     }
@@ -149,7 +150,7 @@ class PeerLearningController
                                WHERE requester_id = :uid
                                AND DATE(created_at) = CURDATE()");
         $stmt->execute(['uid' => $user_id]);
-        return (int)$stmt->fetchColumn() >= self::MAX_REQUESTS_PER_DAY;
+        return (int) $stmt->fetchColumn() >= self::MAX_REQUESTS_PER_DAY;
     }
 
     private function cancelStaleRequests(): void
@@ -158,12 +159,12 @@ class PeerLearningController
         $db->prepare("UPDATE peer_sessions SET status = 'cancelled'
                       WHERE status = 'pending'
                       AND TIMESTAMPDIFF(MINUTE, created_at, NOW()) > :timeout")
-           ->execute(['timeout' => self::SESSION_TIMEOUT_MIN]);
+            ->execute(['timeout' => self::SESSION_TIMEOUT_MIN]);
     }
 
     private function generateJitsiLink(string $titre, int $id_formation): string
     {
-        $slug   = preg_replace('/[^a-zA-Z0-9]+/', '-', strtolower($titre));
+        $slug = preg_replace('/[^a-zA-Z0-9]+/', '-', strtolower($titre));
         $roomId = 'Aptus-Peer-' . trim($slug, '-') . '-' . $id_formation . '-' . uniqid();
         return 'https://meet.jit.si/' . $roomId;
     }
@@ -186,8 +187,8 @@ class PeerLearningController
     public function handleAjax(): void
     {
         header('Content-Type: application/json');
-        $id_formation = (int)($_POST['id_formation'] ?? 0);
-        $id_demandeur = (int)($_POST['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10);
+        $id_formation = (int) ($_POST['id_formation'] ?? 0);
+        $id_demandeur = (int) ($_POST['user_id'] ?? $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? 10);
 
         if ($id_formation <= 0) {
             echo json_encode(['success' => false, 'message' => 'Formation manquante.']);
@@ -207,8 +208,8 @@ class PeerLearningController
         }
 
         echo json_encode([
-            'success'    => true,
-            'mentor'     => $result['mentor'],
+            'success' => true,
+            'mentor' => $result['mentor'],
             'jitsi_link' => $result['jitsi_link'],
             'session_id' => $result['session_id']
         ]);

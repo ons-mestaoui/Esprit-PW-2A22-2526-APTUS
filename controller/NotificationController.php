@@ -18,7 +18,7 @@ class NotificationController {
             $finalType = $prefix . $type;
 
             $sql = "INSERT INTO notifications_formation 
-                    (user_id, type, message, url_action, icon, is_read, created_at)
+                    (id_utilisateur, type, message, url_action, icon, is_read, created_at)
                     VALUES (:uid, :type, :msg, :url, :icon, 0, NOW())";
             $stmt = $db->prepare($sql);
             return $stmt->execute([
@@ -43,10 +43,10 @@ class NotificationController {
 
     public function getRecentUnread($user_id, $limit = 10): array {
         $db = config::getConnexion();
-        $sql = "SELECT id, type, message, url_action, icon, created_at,
+        $sql = "SELECT id_notifs, type, message, url_action, icon, created_at,
                        TIMESTAMPDIFF(MINUTE, created_at, NOW()) AS age_minutes
                 FROM notifications_formation
-                WHERE user_id = :uid AND is_read = 0
+                WHERE id_utilisateur = :uid AND is_read = 0
                 ORDER BY created_at DESC
                 LIMIT :lim";
         $stmt = $db->prepare($sql);
@@ -61,10 +61,10 @@ class NotificationController {
      */
     public function getAll($user_id, $limit = 30): array {
         $db = config::getConnexion();
-        $sql = "SELECT id, type, message, url_action, icon, is_read, created_at,
+        $sql = "SELECT id_notifs, type, message, url_action, icon, is_read, created_at,
                        TIMESTAMPDIFF(MINUTE, created_at, NOW()) AS age_minutes
                 FROM notifications_formation
-                WHERE user_id = :uid
+                WHERE id_utilisateur = :uid
                 ORDER BY created_at DESC
                 LIMIT :lim";
         $stmt = $db->prepare($sql);
@@ -77,28 +77,28 @@ class NotificationController {
     /** Marque toutes les notifs d'un user comme lues. */
     public function markAsRead($user_id): bool {
         $db = config::getConnexion();
-        $stmt = $db->prepare("UPDATE notifications_formation SET is_read = 1 WHERE user_id = :uid AND is_read = 0");
+        $stmt = $db->prepare("UPDATE notifications_formation SET is_read = 1 WHERE id_utilisateur = :uid AND is_read = 0");
         return $stmt->execute(['uid' => (int)$user_id]);
     }
 
     /** Supprime toutes les notifications d'un utilisateur. */
     public function deleteAll($user_id): bool {
         $db = config::getConnexion();
-        $stmt = $db->prepare("DELETE FROM notifications_formation WHERE user_id = :uid");
+        $stmt = $db->prepare("DELETE FROM notifications_formation WHERE id_utilisateur = :uid");
         return $stmt->execute(['uid' => (int)$user_id]);
     }
 
     /** Marque une seule notif comme lue. */
     public function markOneAsRead($notif_id): bool {
         $db = config::getConnexion();
-        $stmt = $db->prepare("UPDATE notifications_formation SET is_read = 1 WHERE id = :id");
+        $stmt = $db->prepare("UPDATE notifications_formation SET is_read = 1 WHERE id_notifs = :id");
         return $stmt->execute(['id' => (int)$notif_id]);
     }
 
     /** Compte les notifs non lues. */
     public function countUnread($user_id): int {
         $db = config::getConnexion();
-        $stmt = $db->prepare("SELECT COUNT(*) FROM notifications_formation WHERE user_id = :uid AND is_read = 0");
+        $stmt = $db->prepare("SELECT COUNT(*) FROM notifications_formation WHERE id_utilisateur = :uid AND is_read = 0");
         $stmt->execute(['uid' => (int)$user_id]);
         return (int)$stmt->fetchColumn();
     }

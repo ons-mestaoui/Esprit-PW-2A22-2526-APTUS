@@ -8,25 +8,25 @@ class ChatController {
     /**
      * Enregistre le message de l'élève, génère une réponse IA et la sauvegarde.
      */
-    public function sendMessage(int $sender_id, int $receiver_id, int $formation_id, string $content): string {
+    public function sendMessage(int $sender_id, int $receiver_id, int $id_formation, string $content): string {
         // Sauvegarder le message de l'étudiant
-        $this->saveMessage($sender_id, $receiver_id, $formation_id, $content, false);
+        $this->saveMessage($sender_id, $receiver_id, $id_formation, $content, false);
 
         // Générer et retourner la réponse IA
-        return $this->generateAIReply($sender_id, $receiver_id, $formation_id, $content);
+        return $this->generateAIReply($sender_id, $receiver_id, $id_formation, $content);
     }
 
     /**
      * Persiste un message en base de données.
      */
-    private function saveMessage(int $sender, int $receiver, int $formation_id, string $content, bool $isAI): void {
+    private function saveMessage(int $sender, int $receiver, int $id_formation, string $content, bool $isAI): void {
         $db = config::getConnexion();
-        $sql = "INSERT INTO messages (sender_id, receiver_id, formation_id, content, is_auto_reply, created_at)
+        $sql = "INSERT INTO messages (sender_id, receiver_id, id_formation, content, is_auto_reply, created_at)
                 VALUES (:sid, :rid, :fid, :content, :auto, NOW())";
         $db->prepare($sql)->execute([
             'sid'     => $sender,
             'rid'     => $receiver,
-            'fid'     => $formation_id,
+            'fid'     => $id_formation,
             'content' => $content,
             'auto'    => (int)$isAI
         ]);
@@ -35,12 +35,12 @@ class ChatController {
     /**
      * Génère une réponse IA pédagogique en utilisant le syllabus comme contexte.
      */
-    private function generateAIReply(int $student_id, int $tutor_id, int $formation_id, string $student_query): string {
+    private function generateAIReply(int $student_id, int $tutor_id, int $id_formation, string $student_query): string {
         $db = config::getConnexion();
 
         // Récupérer le contexte de la formation
         $stmt = $db->prepare("SELECT titre, description FROM formation WHERE id_formation = :id");
-        $stmt->execute(['id' => $formation_id]);
+        $stmt->execute(['id' => $id_formation]);
         $formation = $stmt->fetch();
 
         $titre  = $formation['titre']       ?? 'cette formation';
@@ -66,14 +66,14 @@ Réponds de façon claire, encourageante et pédagogique. Si la question sort du
         $prefixed = "🤖 L'assistant IA du tuteur :\n\n" . $reply;
 
         // Sauvegarder la réponse IA dans les messages
-        $this->saveMessage($tutor_id, $student_id, $formation_id, $prefixed, true);
+        $this->saveMessage($tutor_id, $student_id, $id_formation, $prefixed, true);
 
         // Notifier l'étudiant
         NotificationController::creerNotification(
             $student_id,
             'new_message',
             "L'assistant IA de votre tuteur a répondu à votre question sur « $titre ».",
-            "formation_viewer.php?id=$formation_id",
+            "formation_viewer.php?id=$id_formation",
             'message-circle'
         );
 
@@ -99,21 +99,21 @@ Réponds de façon claire, encourageante et pédagogique. Si la question sort du
     /**
      * Récupère l'historique complet d'une conversation.
      */
-    public function getHistory(int $user1, int $user2, int $formation_id): array {
+    public function getHistory(int $user1, int $user2, int $id_formation): array {
         $db  = config::getConnexion();
         $sql = "SELECT m.*, 
                        TIMESTAMPDIFF(MINUTE, m.created_at, NOW()) AS age_minutes
                 FROM messages m
                 WHERE ((m.sender_id = :u1 AND m.receiver_id = :u2)
                     OR (m.sender_id = :u2b AND m.receiver_id = :u1b))
-                  AND (m.formation_id = :fid OR :fid2 = 0)
+                  AND (m.id_formation = :fid OR :fid2 = 0)
                 ORDER BY m.created_at ASC
                 LIMIT 50";
         $stmt = $db->prepare($sql);
         $stmt->execute([
             'u1' => $user1, 'u2' => $user2,
             'u2b' => $user2, 'u1b' => $user1,
-            'fid' => $formation_id, 'fid2' => $formation_id
+            'fid' => $id_formation, 'fid2' => $id_formation
         ]);
         return $stmt->fetchAll();
     }

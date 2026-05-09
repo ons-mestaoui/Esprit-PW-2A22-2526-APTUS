@@ -19,7 +19,11 @@ require_once __DIR__ . '/../../controller/SessionManager.php';
 SessionManager::start();
 
 // Use centralized SessionManager for tutor identification
-$id_tuteur = SessionManager::getUserId();
+// Allow override via GET param (for admin/back-office deep-linking and testing)
+$session_id   = SessionManager::getUserId();
+$id_tuteur    = isset($_GET['tuteur_id']) && (int)$_GET['tuteur_id'] > 0
+                ? (int)$_GET['tuteur_id']
+                : $session_id;
 
 require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
 $dashC = new TuteurDashboardController();

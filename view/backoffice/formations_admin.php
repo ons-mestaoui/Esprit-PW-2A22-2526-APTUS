@@ -222,7 +222,7 @@ if (!isset($content)) {
                         data-min="1" data-label="Tuteur">
                         <option value="">Sélectionnez un tuteur...</option>
                         <?php foreach ($tuteursList as $t): ?>
-                            <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['nom']); ?></option>
+                            <option value="<?php echo $t['id_utilisateur']; ?>"><?php echo htmlspecialchars($t['nom']); ?></option>
                         <?php endforeach; ?>
                     </select>
                     <!-- Ajustement ici aussi pour ne pas superposer la flèche du select -->
@@ -483,7 +483,7 @@ if (!isset($content)) {
                             style="appearance:auto;">
                             <option value="">Sélectionnez un tuteur...</option>
                             <?php foreach ($tuteurs as $t): ?>
-                                <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['nom']); ?></option>
+                                <option value="<?php echo $t['id_utilisateur']; ?>"><?php echo htmlspecialchars($t['nom']); ?></option>
                             <?php endforeach; ?>
                         </select>
                         <span class="iv-status"
@@ -784,7 +784,22 @@ if (!isset($content)) {
     function closeModal() {
         document.getElementById('modal-creneau').style.display = 'none';
     }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    function closeModals() {
+        const modals = ['add-formation-modal', 'modal-course-factory', 'modal-creneau', 'modal-creneau-action', 'modal-formation-detail'];
+        modals.forEach(id => {
+            const m = document.getElementById(id);
+            if (m) {
+                m.classList.remove('active');
+                m.style.display = 'none';
+            }
+        });
+        // Reset modal error banner if it exists
+        const banner = document.getElementById('modal-error-banner');
+        if (banner) banner.style.display = 'none';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
+
 
     // ── SOUMETTRE UN CRÉNEAU ──────────────────────────────────────
     function submitCreneau() {

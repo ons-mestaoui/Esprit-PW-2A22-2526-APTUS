@@ -2,6 +2,9 @@
 $pageTitle = "Catalogue des Formations - Aptus AI";
 
 if (!isset($content)) {
+    require_once __DIR__ . '/../../controller/SessionManager.php';
+    SessionManager::start();
+    
     require_once __DIR__ . '/../../config.php';
     require_once __DIR__ . '/../../controller/FormationController.php';
     $formationC = new FormationController();

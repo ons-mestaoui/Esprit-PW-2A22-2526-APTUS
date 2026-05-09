@@ -51,7 +51,7 @@ class TuteurController
 
         $sql = "
             SELECT
-                u.id,
+                u.id_utilisateur,
                 u.nom,
                 u.email,
                 u.role,
@@ -61,10 +61,10 @@ class TuteurController
                 COUNT(DISTINCT f.id_formation)        AS nb_formations,
                 COUNT(DISTINCT i.id_inscri)           AS nb_etudiants
             FROM utilisateur u
-            LEFT JOIN formation f  ON f.id_tuteur = u.id
+            LEFT JOIN formation f  ON f.id_tuteur = u.id_utilisateur
             LEFT JOIN inscription i ON i.id_formation = f.id_formation
             WHERE LOWER(u.role) LIKE '%tuteur%'
-            GROUP BY u.id
+            GROUP BY u.id_utilisateur
             ORDER BY u.nom ASC
         ";
 
@@ -140,7 +140,7 @@ class TuteurController
 
         // Vérifier si l'email existe déjà
         try {
-            $checkSql = "SELECT id, role FROM utilisateur WHERE email = :email LIMIT 1";
+            $checkSql = "SELECT id_utilisateur, role FROM utilisateur WHERE email = :email LIMIT 1";
             $check = $db->prepare($checkSql);
             $check->execute(['email' => $email]);
             $existing = $check->fetch();
@@ -154,9 +154,9 @@ class TuteurController
             }
             // Upgrade du rôle → Tuteur
             try {
-                $upd = $db->prepare("UPDATE utilisateur SET role = 'Tuteur' WHERE id = :id");
-                $upd->execute(['id' => $existing['id']]);
-                return ['success' => true, 'message' => 'Utilisateur promu Tuteur avec succès.', 'id' => $existing['id']];
+                $upd = $db->prepare("UPDATE utilisateur SET role = 'Tuteur' WHERE id_utilisateur = :id");
+                $upd->execute(['id' => $existing['id_utilisateur']]);
+                return ['success' => true, 'message' => 'Utilisateur promu Tuteur avec succès.', 'id' => $existing['id_utilisateur']];
             } catch (\Exception $e) {
                 return ['success' => false, 'message' => 'Erreur BDD : ' . $e->getMessage()];
             }
@@ -227,7 +227,7 @@ class TuteurController
         if ($nbFormations > 0) {
             // On rétrograde le rôle plutôt que de supprimer
             try {
-                $stmt = $db->prepare("UPDATE utilisateur SET role = 'Candidat' WHERE id = :id");
+                $stmt = $db->prepare("UPDATE utilisateur SET role = 'Candidat' WHERE id_utilisateur = :id");
                 $stmt->execute(['id' => $id]);
                 return [
                     'success' => true,
@@ -240,7 +240,7 @@ class TuteurController
 
         // Suppression complète si aucune formation
         try {
-            $stmt = $db->prepare("DELETE FROM utilisateur WHERE id = :id AND role = 'Tuteur'");
+            $stmt = $db->prepare("DELETE FROM utilisateur WHERE id_utilisateur = :id AND role = 'Tuteur'");
             $stmt->execute(['id' => $id]);
             if ($stmt->rowCount() === 0) {
                 return ['success' => false, 'message' => 'Tuteur introuvable ou rôle incorrect.'];
@@ -281,7 +281,7 @@ class TuteurController
                 p.recurrent,
                 COALESCE(u.nom, CONCAT('Tuteur #', p.id_tuteur)) AS tuteur_nom
             FROM planning_tuteur p
-            LEFT JOIN utilisateur u ON u.id = p.id_tuteur
+            LEFT JOIN utilisateur u ON u.id_utilisateur = p.id_tuteur
         ";
 
         $params = [];

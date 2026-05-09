@@ -5,13 +5,13 @@ class UserC {
     public function getUserById($id) {
         $db = config::getConnexion();
         try {
-            $query = $db->prepare("SELECT * FROM utilisateur WHERE id = :id");
+            $query = $db->prepare("SELECT * FROM utilisateur WHERE id_utilisateur = :id");
             $query->execute(['id' => $id]);
             $user = $query->fetch();
             
             // Si pas trouvé dans utilisateur, essayer User
             if (!$user) {
-                $query = $db->prepare("SELECT * FROM User WHERE id = :id");
+                $query = $db->prepare("SELECT * FROM User WHERE id_utilisateur = :id");
                 $query->execute(['id' => $id]);
                 $user = $query->fetch();
             }

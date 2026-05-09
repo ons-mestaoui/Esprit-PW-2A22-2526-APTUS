@@ -572,7 +572,7 @@ if (!isset($content)) {
                         ✉️ Contacter
                     </button>
                     <button class="tuteur-btn tuteur-btn--delete"
-                            onclick="supprimerTuteur(<?php echo $t['id']; ?>, '<?php echo addslashes(htmlspecialchars($t['nom'])); ?>')">
+                            onclick="supprimerTuteur(<?php echo $t['id_utilisateur']; ?>, '<?php echo addslashes(htmlspecialchars($t['nom'])); ?>')">
                         🗑 Retirer
                     </button>
                 </div>

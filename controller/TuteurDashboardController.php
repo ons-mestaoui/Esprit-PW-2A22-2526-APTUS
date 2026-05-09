@@ -15,7 +15,7 @@ class TuteurDashboardController
             $query = "
                 SELECT i.id_utilisateur AS id_user, i.progression, i.statut, COALESCE(u.nom, 'Anonyme') as nom_etudiant, u.email
                 FROM inscription i
-                LEFT JOIN utilisateur u ON i.id_utilisateur = u.id
+                LEFT JOIN utilisateur u ON i.id_utilisateur = u.id_utilisateur
                 WHERE i.id_formation = :id_formation
                 ORDER BY u.nom
             ";
@@ -23,30 +23,39 @@ class TuteurDashboardController
             $stmt->execute(['id_formation' => $id_formation]);
             $students = $stmt->fetchAll();
             
-            // --- SYNC SMART PROGRESSION ---
+            // ── RÈGLE DE PROGRESSION HYBRIDE (3 CAS) ─────────────────────────────
             require_once __DIR__ . '/InscriptionController.php';
-            $inscriC = new InscriptionController();
-            $resources = $this->getResources($id_formation);
+            $inscriC        = new InscriptionController();
+            $resources      = $this->getResources($id_formation);
             $total_chapters = count($resources);
-            
-            if ($total_chapters > 0) {
-                foreach ($students as &$s) {
-                    if ($s['statut'] !== 'Terminée' && $s['progression'] < 100) {
-                        // Recalcul forcer pour le tuteur seulement si non fini
-                        $s['progression'] = $inscriC->calculateSmartPercentage($s['id_user'], $id_formation, $total_chapters);
+
+            foreach ($students as &$s) {
+                $dbProg = (int)$s['progression'];
+
+                if ($total_chapters > 0) {
+                    $viewedChapters = $inscriC->getViewedChapters($s['id_user'], $id_formation);
+
+                    if (!empty($viewedChapters)) {
+                        // CAS A : chapitres cliqués → calcul depuis chapitres_vus
+                        $prog = $inscriC->calculateSmartPercentage($s['id_user'], $id_formation, $total_chapters);
+                        $s['progression'] = $prog;
+                        if ($prog >= 100)  { $s['statut'] = 'Terminée'; }
+                        elseif ($prog > 0) { $s['statut'] = 'En cours'; }
+                        else               { $s['statut'] = 'En attente'; }
                     } else {
-                        $s['progression'] = 100;
+                        // CAS B : aucun clic chapitre → garder DB, plafonner à 99%
+                        $prog = min(99, $dbProg);
+                        $s['progression'] = $prog;
+                        if ($prog > 0) { $s['statut'] = 'En cours'; }
+                        else           { $s['statut'] = 'En attente'; }
                     }
-                }
-            } else {
-                // Mode Dwell Time : On garde la progression déjà présente en BDD (calculée via le viewer)
-                // On s'assure juste que si c'est 'Terminée', on affiche 100%
-                foreach ($students as &$s) {
-                    if ($s['statut'] === 'Terminée') {
-                        $s['progression'] = 100;
-                    }
+                } else {
+                    // CAS C : aucun chapitre configuré → 0%
+                    $s['progression'] = 0;
+                    if ($s['statut'] !== 'annulée') { $s['statut'] = 'En attente'; }
                 }
             }
+            unset($s);
             return $students;
         } catch (Exception $e) {
             // Fallback pour compatibilité OS/Table Names
@@ -211,7 +220,7 @@ class TuteurDashboardController
                 SELECT re.*, f.titre as formation_titre, u.nom as etudiant_nom
                 FROM rapport_emotions re
                 JOIN formation f ON re.id_formation = f.id_formation
-                JOIN utilisateur u ON re.id_candidat = u.id
+                JOIN utilisateur u ON re.id_candidat = u.id_utilisateur
                 WHERE f.id_tuteur = :id_tuteur
                 AND re.date_mesure >= (NOW() - INTERVAL 15 MINUTE)
                 ORDER BY re.date_mesure DESC

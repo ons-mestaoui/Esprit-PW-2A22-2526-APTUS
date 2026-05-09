@@ -19,7 +19,7 @@ class FormationController
                            f.id_tuteur, f.is_online, f.prerequis_id, f.date_formation, f.statut, f.image_base64,
                            COALESCE(u.nom, 'Aptus') as tuteur_nom 
                     FROM Formation f 
-                    LEFT JOIN $table u ON f.id_tuteur = u.id
+                    LEFT JOIN $table u ON f.id_tuteur = u.id_utilisateur
                     WHERE f.statut = 'active'
                       AND (
                         (f.date_fin IS NOT NULL AND f.date_fin >= DATE_SUB(NOW(), INTERVAL 48 HOUR))
@@ -51,9 +51,33 @@ class FormationController
                            f.id_tuteur, f.is_online, f.prerequis_id, f.date_formation, f.statut, f.image_base64,
                            COALESCE(u.nom, 'Aptus') as tuteur_nom 
                     FROM Formation f 
-                    LEFT JOIN $table u ON f.id_tuteur = u.id
+                    LEFT JOIN $table u ON f.id_tuteur = u.id_utilisateur
                     WHERE f.statut = 'active'
                     ORDER BY f.date_formation ASC
+                ");
+                $results = $stmt->fetchAll();
+                return array_map([$this, 'formatFormationForView'], $results);
+            } catch (Exception $e) {
+                if ($table === end($tables_utilisateurs))
+                    throw new Exception('Erreur SQL: ' . $e->getMessage());
+            }
+        }
+    }
+
+    // Récupère l'intégralité des formations pour l'admin (SANS AUCUN FILTRE)
+    public function listerFormationsAdmin()
+    {
+        $db = config::getConnexion();
+        $tables_utilisateurs = ['utilisateur', 'User'];
+        foreach ($tables_utilisateurs as $table) {
+            try {
+                $stmt = $db->query("
+                    SELECT f.id_formation, f.titre, f.domaine, f.niveau, f.description, 
+                           f.id_tuteur, f.is_online, f.prerequis_id, f.date_formation, f.statut, f.image_base64,
+                           COALESCE(u.nom, 'Aptus') as tuteur_nom 
+                    FROM Formation f 
+                    LEFT JOIN $table u ON f.id_tuteur = u.id_utilisateur
+                    ORDER BY f.date_formation DESC
                 ");
                 $results = $stmt->fetchAll();
                 return array_map([$this, 'formatFormationForView'], $results);
@@ -131,7 +155,7 @@ class FormationController
      */
     public function getAdminFormationsData()
     {
-        $liste = $this->listerFormations();
+        $liste = $this->listerFormationsAdmin();
         $domaines = array_unique(array_map(function ($f) {
             return $f['domaine'];
         }, $liste));
@@ -163,7 +187,7 @@ class FormationController
         $palette = ['var(--accent-primary)', 'var(--accent-secondary)', 'var(--accent-tertiary)', 'var(--accent-warning)', 'var(--accent-info)', '#8b5cf6', '#14b8a6', '#ef4444'];
         $tuteurColors = [];
         foreach ($tuteursList as $idx => $t) {
-            $tuteurColors[$t['id']] = $palette[$idx % count($palette)];
+            $tuteurColors[$t['id_utilisateur']] = $palette[$idx % count($palette)];
         }
 
         return [
@@ -342,7 +366,7 @@ class FormationController
                        f.domaine, f.niveau, f.id_tuteur,
                        COALESCE(u.nom, 'Aptus') as tuteur_nom 
                 FROM Formation f 
-                LEFT JOIN utilisateur u ON f.id_tuteur = u.id
+                LEFT JOIN utilisateur u ON f.id_tuteur = u.id_utilisateur
             ");
             $formations = $liste->fetchAll();
         } catch (Exception $e) {
@@ -352,7 +376,7 @@ class FormationController
                            f.domaine, f.niveau, f.id_tuteur,
                            COALESCE(u.nom, 'Aptus') as tuteur_nom 
                     FROM Formation f 
-                    LEFT JOIN User u ON f.id_tuteur = u.id
+                    LEFT JOIN User u ON f.id_tuteur = u.id_utilisateur
                 ");
                 $formations = $liste->fetchAll();
             } catch (Exception $e2) {
@@ -444,12 +468,20 @@ class FormationController
     public function addFormation($formation)
     {
         $this->validateFormation($formation, false);
+
+        $db = config::getConnexion();
+        // --- PREVENTION DES DOUBLONS ---
+        $check = $db->prepare("SELECT id_formation FROM Formation WHERE titre = ? AND date_formation = ?");
+        $check->execute([$formation->getTitre(), $formation->getDateFormation()]);
+        if ($check->fetch()) {
+            throw new Exception("Une formation avec ce titre et cette date existe déjà.");
+        }
+
         $lien = $formation->getLienApiRoom();
         if ($formation->getIsOnline() == 1 && empty($lien)) {
             $lien = $this->generateJitsiLink($formation->getTitre());
         }
 
-        $db = config::getConnexion();
         try {
             $query = $db->prepare("
                 INSERT INTO Formation 
@@ -555,7 +587,7 @@ class FormationController
             $query = $db->prepare("
                 SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom 
                 FROM formation f 
-                LEFT JOIN utilisateur u ON f.id_tuteur = u.id 
+                LEFT JOIN utilisateur u ON f.id_tuteur = u.id_utilisateur 
                 WHERE f.id_formation = :id
             ");
             $query->execute(['id' => $id]);
@@ -640,7 +672,7 @@ class FormationController
         foreach ($tablesU as $tU) {
             foreach ($tablesI as $tI) {
                 try {
-                    $sql = "SELECT f.*, COALESCE(u.nom, 'Aptus') AS tuteur_nom, COALESCE(i.progression, 0) AS ma_progression, COALESCE(i.statut, '') AS mon_statut FROM Formation f LEFT JOIN $tU u ON f.id_tuteur = u.id LEFT JOIN $tI i ON i.id_formation = f.id_formation AND i.id_utilisateur = :id_user WHERE f.id_formation = :id";
+                    $sql = "SELECT f.*, COALESCE(u.nom, 'Aptus') AS tuteur_nom, COALESCE(i.progression, 0) AS ma_progression, COALESCE(i.statut, '') AS mon_statut FROM Formation f LEFT JOIN $tU u ON f.id_tuteur = u.id_utilisateur LEFT JOIN $tI i ON i.id_formation = f.id_formation AND i.id_utilisateur = :id_user WHERE f.id_formation = :id";
                     $stmt = $db->prepare($sql);
                     $stmt->execute(['id' => $id_formation, 'id_user' => $id_user ?? 0]);
                     $res = $stmt->fetch();
@@ -840,7 +872,7 @@ class FormationController
     public function rechercherFormations($search = '', $domaine = '', $niveau = '')
     {
         $db = config::getConnexion();
-        $sql = "SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom FROM Formation f LEFT JOIN utilisateur u ON f.id_tuteur = u.id WHERE 1=1";
+        $sql = "SELECT f.*, COALESCE(u.nom, 'Aptus') as tuteur_nom FROM Formation f LEFT JOIN utilisateur u ON f.id_tuteur = u.id_utilisateur WHERE 1=1";
         $params = [];
         if (!empty($search)) {
             $sql .= " AND (f.titre LIKE :search OR f.domaine LIKE :search OR f.description LIKE :search)";
@@ -876,32 +908,56 @@ class FormationController
         if (!$formation)
             return null;
 
-        $resources = $tuteurC->getResources($id_formation);
-        $current_progression = $inscriC->getCurrentProgression($id_formation, $id_user);
+        $resources       = $tuteurC->getResources($id_formation);
+        $total_chapters  = count($resources);
+        $has_chapters    = !empty($resources);
         $viewed_chapters = $inscriC->getViewedChapters($id_user, $id_formation);
+        $db_progression  = $inscriC->getCurrentProgression($id_formation, $id_user);
+
+        // ── RÈGLE DE PROGRESSION HYBRIDE (3 CAS) ─────────────────────────────
+        // Même règle que getMyFormationsPageData — source de cohérence globale
+        if ($total_chapters > 0) {
+            if (!empty($viewed_chapters)) {
+                // CAS A : chapitres cliqués → recalcul depuis chapitres_vus
+                $current_progression = $inscriC->calculateSmartPercentage($id_user, $id_formation, $total_chapters);
+            } else {
+                // CAS B : aucun clic → garder DB, plafonner à 99% (100% interdit sans clics)
+                $current_progression = min(99, (int)$db_progression);
+                // Auto-corriger la DB si dwell-time avait stocké 100%
+                if ((int)$db_progression >= 100) {
+                    $inscriC->updateProgressionValue($id_user, $id_formation, $current_progression);
+                }
+            }
+        } else {
+            // CAS C : aucun chapitre configuré → 0% (contenu pas encore ajouté par le tuteur)
+            $current_progression = 0;
+            // Auto-corriger la DB si une ancienne valeur y était stockée
+            if ((int)$db_progression !== 0) {
+                $inscriC->updateProgressionValue($id_user, $id_formation, 0);
+            }
+        }
 
         // Calculs métier / Presentation logic
         $clean_desc = preg_replace('/<!-- APTUS_RESOURCES: .*? -->/s', '', $formation['description']);
         $word_count = str_word_count(strip_tags($clean_desc));
         $min_read_seconds = max(180, (int) round($word_count / 4.17));
-        $has_chapters = !empty($resources);
 
         // Date formatting centralisée
         $mois = ['January' => 'Janvier', 'February' => 'Février', 'March' => 'Mars', 'April' => 'Avril', 'May' => 'Mai', 'June' => 'Juin', 'July' => 'Juillet', 'August' => 'Août', 'September' => 'Septembre', 'October' => 'Octobre', 'November' => 'Novembre', 'December' => 'Décembre'];
         $current_month_fr = $mois[date('F')] . ' ' . date('Y');
 
         return [
-            'formation' => $this->formatFormationForView($formation),
-            'resources' => $resources,
-            'current_progression' => $current_progression,
-            'viewed_chapters' => $viewed_chapters,
-            'clean_desc' => $clean_desc,
-            'word_count' => $word_count,
-            'min_read_seconds' => $min_read_seconds,
-            'has_chapters' => $has_chapters,
-            'total_chapters' => count($resources),
-            'current_month_fr' => $current_month_fr,
-            'reading_time_est' => max(1, round($word_count / 250))
+            'formation'          => $this->formatFormationForView($formation),
+            'resources'          => $resources,
+            'current_progression'=> $current_progression,
+            'viewed_chapters'    => $viewed_chapters,
+            'clean_desc'         => $clean_desc,
+            'word_count'         => $word_count,
+            'min_read_seconds'   => $min_read_seconds,
+            'has_chapters'       => $has_chapters,
+            'total_chapters'     => $total_chapters,
+            'current_month_fr'   => $current_month_fr,
+            'reading_time_est'   => max(1, round($word_count / 250))
         ];
     }
 

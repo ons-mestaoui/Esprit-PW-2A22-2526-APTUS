@@ -131,7 +131,7 @@ if (!isset($content)) {
                 <select class="select iv-field" name="id_tuteur" id="ef-tuteur" data-min="1" data-label="Tuteur" style="appearance:auto;">
                     <option value="">Sélectionnez un tuteur...</option>
                     <?php foreach ($tuteurs as $t): ?>
-                        <option value="<?php echo $t['id']; ?>" <?php if ($formation['id_tuteur'] == $t['id'])
+                        <option value="<?php echo $t['id_utilisateur']; ?>" <?php if ($formation['id_tuteur'] == $t['id_utilisateur'])
                             echo 'selected'; ?>>
                             <?php echo htmlspecialchars($t['nom']); ?></option>
                     <?php endforeach; ?>

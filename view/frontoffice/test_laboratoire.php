@@ -1,9 +1,8 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/../../controller/SessionManager.php';
+SessionManager::start();
 $pageTitle = "Laboratoire d'Analyse - Edge AI";
-
-// ID candidat récupéré de la session ou de l'URL pour test
-$id_candidat = $_SESSION['id_user'] ?? $_SESSION['user_id'] ?? $_GET['id_candidat'] ?? 5;
+$id_candidat = SessionManager::getUserId(false) ?? $_GET['id_candidat'] ?? 5;
 $id_formation = $_GET['id_formation'] ?? 1;
 
 if (!isset($content)) {
