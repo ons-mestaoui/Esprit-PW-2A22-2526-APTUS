@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Professionnel - Premium Épuré</title>
+    <style>
+        :root {
+            --cv-accent: #6E46AE;
+            --primary: var(--cv-accent);
+            --bg-light: #F3F0FA;
+            --text-dark: #1E293B;
+            --text-gray: #64748B;
+            --font-main: 'Inter', 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #F8FAFC; font-family: var(--font-main), sans-serif; color: var(--text-dark); line-height: 1.6; padding: 40px 20px; }
+        
+        .cv-container { 
+            background: #ffffff; 
+            max-width: 850px; 
+            margin: 0 auto; 
+            padding: 60px; 
+            border-radius: 12px; 
+            position: relative; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.08); 
+            min-height: 1100px;
+        }
+        
+        header { text-align: center; margin-bottom: 50px; border-bottom: 2px solid var(--bg-light); padding-bottom: 30px; }
+        header h1 { color: var(--primary); text-transform: uppercase; font-size: 2.5rem; letter-spacing: 2px; margin-bottom: 5px; font-weight: 900; }
+        .job-title { font-size: 1.3rem; font-weight: 600; color: var(--text-gray); margin-bottom: 12px; letter-spacing: 1px; }
+        .contact-info { font-size: 0.95rem; color: var(--text-gray); }
+        
+        .section-title { 
+            color: var(--primary); font-weight: 800; text-transform: uppercase; 
+            font-size: 1.1rem; border-left: 5px solid var(--primary); 
+            padding-left: 15px; margin-bottom: 20px; margin-top: 35px;
+            letter-spacing: 1px;
+        }
+        
+        .item { margin-bottom: 25px; }
+        .item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+        .item-title { font-weight: 700; color: #0F172A; font-size: 1.1rem; }
+        .item-date { font-weight: 600; font-size: 0.85rem; color: var(--text-gray); background: var(--bg-light); padding: 2px 10px; border-radius: 4px; }
+        .item-company { font-style: normal; color: var(--primary); font-weight: 600; font-size: 1rem; margin-bottom: 8px; }
+        .item-desc { list-style-type: none; padding-left: 0; }
+        .item-desc li { margin-bottom: 5px; position: relative; padding-left: 18px; color: #334155; font-size: 0.95rem; }
+        .item-desc li::before { content: "→"; position: absolute; left: 0; color: var(--primary); font-weight: bold; }
+
+        .skills-container { display: flex; flex-wrap: wrap; gap: 10px; }
+        .skill-pill { 
+            color: var(--primary); font-weight: 700; font-size: 0.85rem; 
+            background: var(--bg-light); padding: 6px 16px; 
+            border-radius: 8px; display: inline-block;
+        }
+
+        .languages-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .lang-row { 
+            padding: 10px; border-radius: 8px; background: #fdfdfd; border: 1px solid #f1f5f9;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .lang-row strong { font-size: 1rem; color: #0F172A; }
+        .lang-level { font-weight: 600; color: var(--primary); font-size: 0.85rem; text-transform: uppercase; }
+
+        .summary-content { font-size: 1rem; color: #334155; line-height: 1.7; text-align: justify; }
+    </style>
+</head>
+<body>
+    <div class="cv-container">
+        <header>
+            <h1 data-cv-zone="nomComplet" id="preview-nomComplet">Marc-André Laurent</h1>
+            <div class="job-title" data-cv-zone="titrePoste" id="preview-titrePoste">Expert en Cybersécurité & Infrastructure Cloud</div>
+            <div class="contact-info" data-cv-zone="contact" id="preview-infoContact">
+                Paris, France • 06 12 34 56 78 • marc.laurent@expert.com
+            </div>
+        </header>
+
+        <div class="section-full">
+            <h2 class="section-title" data-cv-zone="title-2">Résumé Professionnel</h2>
+            <div class="summary-content" data-cv-zone="resume" id="preview-resume">
+                Professionnel chevronné avec plus de 10 ans d'expérience dans la sécurisation des infrastructures critiques et le déploiement de solutions hybrides cloud. Expert reconnu dans l'audit de sécurité et la gestion de crises cybernétiques.
+            </div>
+        </div>
+
+        <h2 class="section-title" data-cv-zone="title-3">Expérience Professionnelle</h2>
+        <div data-cv-zone="experience" id="preview-experience">
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-title">Senior Security Architect</span>
+                    <span class="item-date">2019 — Présent</span>
+                </div>
+                <p class="item-company">CyberGuard Solutions, La Défense</p>
+                <ul class="item-desc">
+                    <li>Conception d'architectures Zero-Trust pour des clients Fortune 500.</li>
+                    <li>Audit et renforcement de la sécurité des réseaux bancaires.</li>
+                    <li>Gestion d'une équipe d'intervention rapide (Incident Response).</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2 class="section-title" data-cv-zone="title-5">Formations</h2>
+        <div data-cv-zone="formation" id="preview-formation">
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-title">Master Ingénierie de la Cybersécurité</span>
+                    <span class="item-date">2010 — 2013</span>
+                </div>
+                <p class="item-company">Télécom Paris</p>
+            </div>
+        </div>
+
+        <div class="section-full">
+            <h2 class="section-title" data-cv-zone="title-4">Expertises Techniques</h2>
+            <div class="skills-container" data-cv-zone="competences" id="preview-competences">
+                <span class="skill-pill">Pentesting (OWASP)</span>
+                <span class="skill-pill">AWS / Azure Security</span>
+                <span class="skill-pill">ISO 27001 & RGPD</span>
+                <span class="skill-pill">Python & Bash Scripting</span>
+            </div>
+        </div>
+
+        <div class="section-full">
+            <h2 class="section-title" data-cv-zone="title-6">Maîtrise Linguistique</h2>
+            <div class="languages-list" data-cv-zone="langues" id="preview-langues">
+                <div class="lang-row"><strong>Français</strong> <span class="lang-level">Maternel</span></div>
+                <div class="lang-row"><strong>Anglais</strong> <span class="lang-level">Professionnel (C1)</span></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

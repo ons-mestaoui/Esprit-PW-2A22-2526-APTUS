@@ -612,7 +612,7 @@ if (!isset($content)) {
             if (!$isFullHtml) {
                 $previewHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"></head><body style="margin:0;padding:0;">' . $previewHtml . '</body></html>';
             }
-            $previewHtml = str_ireplace('</head>', '<style>html,body{overflow:hidden!important;}::-webkit-scrollbar{display:none!important;}</style></head>', $previewHtml);
+            $previewHtml = str_ireplace('</head>', '<style>html,body{overflow:hidden!important;}::-webkit-scrollbar{display:none!important;} :root { --cv-accent: '.$theme.' !important; }</style></head>', $previewHtml);
             
             $cvPayload = [
                 'nomComplet' => $cv['nomComplet'],
@@ -627,26 +627,30 @@ if (!isset($content)) {
             ];
 
             $injector = "<script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const d = ".json_encode($cvPayload).";
+                (function() {
+                    const d = " . json_encode($cvPayload) . ";
                     const setVal = (sel, val, isHtml = false) => { 
-                        document.querySelectorAll(sel).forEach(e => { if (isHtml) e.innerHTML = val; else e.innerText = val; });
+                        if (!val || val === '---') return;
+                        document.querySelectorAll(sel).forEach(e => { 
+                            if (isHtml) e.innerHTML = val; else e.innerText = val; 
+                        });
                     };
-                    setVal('.cv-name, #preview-nomComplet, h1', d.nomComplet);
-                    setVal('.cv-title, #preview-titrePoste, h2', d.titrePoste);
-                    setVal('.summary-text, #preview-resume, .summary, .cv-summary', d.resume, true);
-                    setVal('#preview-experience, .cv-exp, .experience-list, .cv-experience', d.experience, true);
-                    setVal('#preview-competences, .cv-skills, .skills-list, .cv-competences', d.competences, true);
-                    setVal('#preview-langues, .cv-languages, .languages-list, .cv-langues', d.langues, true);
-                    setVal('#preview-formation, .cv-edu, .education-list, .cv-formation', d.formation, true);
-                    if (d.infoContact) setVal('.contact-info, #preview-infoContact, .cv-contact, .contact-details', d.infoContact.split('|').join('<br>'), true);
-                    if (d.urlPhoto) {
-                        const pi = document.querySelectorAll('#preview-photo, .cv-photo img, .profile-img, #profile-pic');
-                        pi.forEach(i => { i.src = d.urlPhoto; i.style.display = 'block'; });
-                        const txt = document.querySelectorAll('#photo-text, .photo-text');
-                        txt.forEach(t => t.style.display = 'none');
+                    setVal('.cv-name, #preview-nomComplet, .preview-nom, h1', d.nomComplet);
+                    setVal('.cv-title, #preview-titrePoste, .preview-titre, .cv-role', d.titrePoste);
+                    setVal('.summary-text, #preview-resume, .cv-summary, [data-cv-zone=\"resume\"]', d.resume, true);
+                    setVal('#preview-experience, .cv-experience, .cv-exp, [data-cv-zone=\"experience\"]', d.experience, true);
+                    setVal('#preview-competences, .cv-competences, .cv-skills, [data-cv-zone=\"competences\"]', d.competences, true);
+                    setVal('#preview-langues, .cv-langues, .cv-languages, [data-cv-zone=\"langues\"]', d.langues, true);
+                    setVal('#preview-formation, .cv-formation, .cv-edu, [data-cv-zone=\"formation\"]', d.formation, true);
+                    
+                    if (d.infoContact) {
+                        setVal('.contact-info, #preview-infoContact, .cv-contact, [data-cv-zone=\"contact\"]', d.infoContact.split('|').join(' • '), true);
                     }
-                });
+
+                    if (d.urlPhoto) {
+                        document.querySelectorAll('#preview-photo, .cv-photo img, .profile-img, #profile-pic, [data-cv-zone=\"photo\"] img').forEach(i => { i.src = d.urlPhoto; i.style.display = 'block'; });
+                    }
+                })();
             </script>";
             $previewHtml = str_ireplace('</body>', $injector . '</body>', $previewHtml);
         ?>

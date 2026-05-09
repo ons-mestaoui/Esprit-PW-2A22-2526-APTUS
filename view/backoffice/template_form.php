@@ -300,40 +300,74 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const originalText = btnGenerate.innerHTML;
-            btnGenerate.innerHTML = '<i class="fa fa-spinner fa-spin" style="margin-right:8px;"></i> Génération en cours...';
+            btnGenerate.innerHTML = '<i class="fa fa-spinner fa-spin" style="margin-right:8px;"></i> Génération...';
             btnGenerate.disabled = true;
 
-            const tempContainer = document.createElement('div');
-            tempContainer.innerHTML = htmlCode;
-            tempContainer.style.position = 'absolute';
-            tempContainer.style.top = '-9999px';
-            tempContainer.style.left = '-9999px';
-            tempContainer.style.width = '794px'; 
-            tempContainer.style.minHeight = '1123px';
-            tempContainer.style.background = '#ffffff';
-            tempContainer.style.padding = '20px';
-            document.body.appendChild(tempContainer);
+            // 1. Create an isolated rendering container at A4 scale
+            const renderWrapper = document.createElement('div');
+            renderWrapper.style.position = 'fixed';
+            renderWrapper.style.top = '0';
+            renderWrapper.style.left = '-10000px';
+            renderWrapper.style.width = '794px'; 
+            renderWrapper.style.padding = '0';
+            renderWrapper.style.margin = '0';
+            renderWrapper.style.background = '#fff';
+            renderWrapper.style.zIndex = '-1000';
+            renderWrapper.style.boxSizing = 'border-box';
+            
+            renderWrapper.innerHTML = `
+                <div id="capture-target" class="cv-render" style="width: 794px; min-height: 1123px; position: relative; overflow: hidden; background: #fff; margin: 0; padding: 10px; box-sizing: border-box;">
+                    ${htmlCode}
+                </div>
+            `;
+            document.body.appendChild(renderWrapper);
+
+            if (window.lucide) {
+                lucide.createIcons({ root: renderWrapper });
+            }
 
             setTimeout(() => {
-                html2canvas(tempContainer, { scale: 1, useCORS: true, logging: false }).then(canvas => {
-                    const base64str = canvas.toDataURL('image/jpeg', 0.85);
+                const target = document.getElementById('capture-target');
+                html2canvas(target, { 
+                    scale: 2, 
+                    useCORS: true, 
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    width: 794,
+                    height: 1123,
+                    windowWidth: 794,
+                    windowHeight: 1123,
+                    scrollX: 0,
+                    scrollY: 0,
+                    x: 0,
+                    y: 0,
+                    onclone: (clonedDoc) => {
+                        const el = clonedDoc.getElementById('capture-target');
+                        if(el) {
+                            el.style.position = 'relative';
+                            el.style.left = '0';
+                            el.style.top = '0';
+                        }
+                    }
+                }).then(canvas => {
+                    const base64str = canvas.toDataURL('image/jpeg', 0.90);
                     urlHidden.value = base64str;
                     
-                    document.body.removeChild(tempContainer);
+                    document.body.removeChild(renderWrapper);
                     btnGenerate.innerHTML = originalText;
                     btnGenerate.disabled = false;
                     
-                    // Open the popup immediately
                     openLightbox(base64str);
                     
                 }).catch(err => {
                     console.error("Erreur capture", err);
                     alert("Échec de la génération.");
-                    document.body.removeChild(tempContainer);
+                    if(document.body.contains(renderWrapper)) document.body.removeChild(renderWrapper);
                     btnGenerate.innerHTML = originalText;
                     btnGenerate.disabled = false;
                 });
-            }, 600);
+            }, 1000); 
+
         });
     }
 

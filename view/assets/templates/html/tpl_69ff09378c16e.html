@@ -1,0 +1,198 @@
+<style>
+/* --- Template "Ambre Premium" --- */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@300;400;600&display=swap');
+
+/* Reset et variables */
+* { box-sizing: border-box; }
+
+.cv-render { 
+    --cv-primary: #78350f; /* Ambre Sombre / Terre de Sienne */
+    --cv-secondary: #fef3c7; /* Ambre très clair pour le contraste */
+    --cv-text: #451a03;
+    --cv-accent: #b45309; /* Ambre moyen pour les titres */
+    
+    font-family: 'Inter', sans-serif;
+    color: #334155; 
+    line-height: 1.6; 
+    font-size: 15px; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 1123px; /* Format A4 */
+    width: 100%;
+    background: #fff;
+}
+
+/* --- EN-TÊTE (Luxueux) --- */
+.cv-header {
+    width: 100%;
+    background: linear-gradient(135deg, #451a03 0%, #78350f 100%); /* Dégradé Ambre Profond */
+    padding: 60px 40px;
+    text-align: center;
+    border-bottom: 5px solid #f59e0b; /* Ligne Or */
+}
+
+.cv-name { 
+    font-family: 'Montserrat', sans-serif;
+    font-size: 38px; 
+    font-weight: 900; 
+    color: #ffffff;
+    margin-bottom: 8px; 
+    text-transform: uppercase; 
+    letter-spacing: 4px;
+    line-height: 1.1;
+}
+
+.cv-title { 
+    font-family: 'Montserrat', sans-serif;
+    color: #fcd34d; /* Or clair */
+    font-size: 18px; 
+    font-weight: 400; 
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+/* --- CORPS DU CV --- */
+.cv-body-wrapper {
+    display: flex;
+    flex-direction: row;
+    flex: 1; 
+}
+
+/* Colonne de gauche */
+.cv-main { 
+    width: 65%; 
+    padding: 50px 40px; 
+    background: #ffffff; 
+}
+
+/* Colonne de droite (Sidebar) */
+.cv-sidebar { 
+    width: 35%; 
+    background: #fffbeb; /* Fond Ambre très pâle */
+    padding: 50px 30px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    border-left: 1px solid #fef3c7;
+}
+
+/* Photo de profil */
+.cv-photo { 
+    width: 160px; 
+    height: 160px; 
+    border-radius: 50%; 
+    object-fit: cover; 
+    margin-bottom: 40px; 
+    border: 6px solid #ffffff; 
+    box-shadow: 0 10px 25px rgba(120, 53, 15, 0.2);
+    background-color: #d1d5db; 
+}
+
+/* Sections */
+.cv-section { margin-bottom: 40px; width: 100%; }
+
+.cv-section-title { 
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800; 
+    font-size: 14px; 
+    color: var(--cv-primary); 
+    border-left: 5px solid #f59e0b; /* Ligne Or intense */
+    padding-left: 15px;
+    margin-bottom: 20px; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+
+.cv-sidebar .cv-section-title {
+    border-left: none;
+    text-align: center;
+    padding-left: 0;
+    border-bottom: 2px solid #fcd34d;
+    padding-bottom: 8px;
+}
+
+/* Contenu */
+.cv-content { 
+    white-space: pre-wrap; 
+    font-size: 14px; 
+    color: #451a03; 
+}
+
+.cv-sidebar .cv-content, .cv-contact {
+    text-align: center;
+    color: #78350f;
+}
+
+.cv-contact { line-height: 2; font-size: 13px; }
+
+/* Mise en avant des compétences */
+.cv-skills-text {
+    color: #92400e;
+    font-weight: 700;
+    line-height: 2.2;
+}
+
+.cv-lang-text {
+    color: #451a03;
+    font-weight: 600;
+}
+</style>
+
+<div class="cv-render">
+    <div class="cv-header">
+        <div class="cv-name" id="preview-nomComplet">Marc Antoine Lefebvre</div>
+        <div class="cv-title" id="preview-titrePoste">Architecte Cloud & Expert IA</div>
+    </div>
+
+    <div class="cv-body-wrapper">
+        <div class="cv-main">
+            <div class="cv-section">
+                <div class="cv-section-title">Résumé Professionnel</div>
+                <div class="cv-content" id="preview-resume">Expert avec plus de 10 ans d'expérience dans la conception d'infrastructures cloud hautement disponibles et l'intégration de modèles d'intelligence artificielle pour l'optimisation des processus industriels.</div>
+            </div>
+            
+            <div class="cv-section">
+                <div class="cv-section-title">Expérience Professionnelle</div>
+                <div class="cv-content" id="preview-experience"><strong>Lead Cloud Architect | Aptus Digital (2018 - Présent)</strong>
+• Pilotage de la migration vers AWS pour 15+ clients grands comptes.
+• Mise en place de pipelines CI/CD sécurisés via Terraform et Jenkins.
+
+<strong>Ingénieur Systèmes | TechSolutions (2014 - 2018)</strong>
+• Gestion de parcs serveurs Linux et optimisation des bases de données SQL.</div>
+            </div>
+            
+            <div class="cv-section">
+                <div class="cv-section-title">Formation</div>
+                <div class="cv-content" id="preview-formation"><strong>Master en Ingénierie Informatique</strong>
+Université de Lyon | Mention Très Bien (2014)</div>
+            </div>
+        </div>
+
+        <div class="cv-sidebar">
+            <img id="preview-photo" class="cv-photo" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200" alt="Photo">
+            
+            <div class="cv-section">
+                <div class="cv-section-title">Contact</div>
+                <div class="cv-contact" id="preview-infoContact">Paris, France
+06 12 34 56 78
+m.lefebvre@email.com</div>
+            </div>
+            
+            <div class="cv-section">
+                <div class="cv-section-title">Compétences</div>
+                <div class="cv-content cv-skills-text" id="preview-competences">Cloud Computing (AWS/Azure)
+Python & TensorFlow
+Kubernetes & Docker
+Cybersécurité ATS</div>
+            </div>
+            
+            <div class="cv-section">
+                <div class="cv-section-title">Langues</div>
+                <div class="cv-content cv-lang-text" id="preview-langues">Français (Maternel)
+Anglais (C1 - Professionnel)
+Allemand (B2)</div>
+            </div>
+        </div>
+    </div>
+</div>

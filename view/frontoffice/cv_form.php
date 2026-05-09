@@ -580,14 +580,14 @@ if (!isset($content)) {
                 <label>Nom Complet *</label>
                 <div class="input-icon-group">
                     <i data-lucide="user"></i>
-                    <input type="text" id="input-name" class="form-control" placeholder="Jean Dupont" required>
+                    <input type="text" id="input-name" class="form-control" placeholder="Jean Dupont" oninput="syncField(this)" required>
                 </div>
             </div>
             <div class="form-group" style="position:relative;">
                 <label>Titre du Poste *</label>
                 <div class="input-icon-group">
                     <i data-lucide="briefcase"></i>
-                    <input type="text" id="input-title" class="form-control" placeholder="ex: Développeur Full-Stack" onfocus="setupSmartAutocomplete(this, TITLES_DB)" required>
+                    <input type="text" id="input-title" class="form-control" placeholder="ex: Développeur Full-Stack" onfocus="setupSmartAutocomplete(this, TITLES_DB)" oninput="syncField(this)" required>
                 </div>
                 <div class="tag-suggestions" id="title-suggestions"></div>
             </div>
@@ -596,7 +596,7 @@ if (!isset($content)) {
                     <label>Email *</label>
                     <div class="input-icon-group">
                         <i data-lucide="mail"></i>
-                        <input type="email" id="input-email" class="form-control" placeholder="nom@exemple.com" required>
+                        <input type="email" id="input-email" class="form-control" placeholder="nom@exemple.com" oninput="syncField(this)" required>
                     </div>
                 </div>
                 <div class="form-group" style="flex:1;">
@@ -1089,153 +1089,168 @@ $receiverScript = '
         };
 
         if (e.data.type === "cv-update") {
-            const d = e.data;
-            const setVal = (sel, val, isHtml = false) => {
-                const el = document.querySelectorAll(sel);
-                let displayVal = val;
-                const isNameOrTitle = d.field === "nomComplet" || d.field === "titrePoste";
-                if (isBionic && !isNameOrTitle && typeof val === "string") {
-                    displayVal = bionify(val);
-                    isHtml = true;
-                }
-                el.forEach(e => {
-                    if (d.field === "competences" && (e.id === "preview-competences" || e.classList.contains("skill-group"))) {
-                        const skills = typeof val === "string" ? val.split("•").map(s=>s.trim()).filter(s=>s) : val;
-                        e.innerHTML = skills.map(s => `<span class="skill-pill">${s}</span>`).join("");
-                        return;
-                    }
-                    if (d.field === "langues" && (e.id === "preview-langues" || e.classList.contains("cv-langues"))) {
-                        if (d.rawData) {
-                            e.innerHTML = d.rawData.map(l => `<div class="lang-row"><strong>${l.lang}</strong><span class="lang-level">${l.level}</span></div>`).join("");
-                            return;
-                        }
-                    }
-                    if (d.field === "experience" && d.rawData) {
-                        if (e.id === "preview-experience" || e.classList.contains("cv-experience")) {
-                            e.innerHTML = d.rawData.map(r => {
-                                if(!r.role && !r.company) return "";
-                                return `<div class="item">
-                                    <div class="item-header">
-                                        <span class="item-title">${r.role}</span>
-                                        <span class="item-date">${r.dates}</span>
-                                    </div>
-                                    <p class="item-company">${r.company}</p>
-                                    <ul class="item-desc">
-                                        ${r.achievements.map(a => a.text ? `<li>${a.text}</li>` : "").join("")}
-                                    </ul>
-                                </div>`;
-                            }).join("");
-                            return;
-                        }
-                    }
-                    if (d.field === "formation" && d.rawData) {
-                        if (e.id === "preview-formation" || e.classList.contains("cv-formation")) {
-                            e.innerHTML = d.rawData.map(r => {
-                                if(!r.degree && !r.school) return "";
-                                return `<div class="item">
-                                    <div class="item-header">
-                                        <span class="item-title">${r.degree} ${r.honors ? "★" : ""}</span>
-                                        <span class="item-date">${r.dates}</span>
-                                    </div>
-                                    <p class="item-company">${r.school}</p>
-                                </div>`;
-                            }).join("");
-                            return;
-                        }
-                    }
-                    if (isHtml) e.innerHTML = displayVal;
-                    else e.innerText = displayVal;
-                });
-            };
+                const d = e.data;
+                const setVal = (sel, val, isHtml = false) => {
+                    const el = document.querySelectorAll(sel);
+                    if (el.length === 0) return false;
+                    
+                    const isDefault = (val === "---" || !val);
 
-            if (d.field === "nomComplet") setVal(".cv-name, #preview-nomComplet, h1", d.value);
-            else if (d.field === "titrePoste") setVal(".cv-title, #preview-titrePoste, h2", d.value);
-            else if (d.field === "resume") setVal(".summary-text, #preview-resume, .summary, .cv-summary", d.value, true);
-            else if (d.field === "experience") setVal("#preview-experience, .cv-exp, .experience-list, .cv-experience", d.value, true);
-            else if (d.field === "competences") setVal("#preview-competences, .cv-skills, .skills-list, .cv-competences", d.value, true);
-            else if (d.field === "langues") setVal("#preview-langues, .cv-languages, .languages-list, .cv-langues", d.value, true);
-            else if (d.field === "formation") setVal("#preview-formation, .cv-edu, .education-list, .cv-formation", d.value, true);
-            else if (d.field === "infoContact") {
-                const clean = d.value.split("|").map(s => s.trim()).join("<br>");
-                setVal(".contact-info, #preview-infoContact, .cv-contact, .contact-details", clean, true);
-            } else if (d.field === "photo") {
-                const pi = document.querySelectorAll("#preview-photo, .cv-photo img, .profile-img, #profile-pic");
-                pi.forEach(i => { i.src = d.value; i.style.display = "block"; });
-                const txt = document.querySelectorAll("#photo-text, .photo-text");
-                txt.forEach(t => t.style.display = "none");
-            }
-        } else if (e.data.type === "cv-labels") {
-            const labels = e.data.value;
-            Object.keys(labels).forEach(key => {
-                const step = parseInt(key.replace("label-step-", ""));
-                const newTitle = labels[key];
-                const keywords = kMap[step] || [];
-                
-                // 1. Try to find elements already marked with this step
-                let targets = document.querySelectorAll(`[data-cv-step="${step}"]`);
-                
-                // 2. If not marked, search by keywords (first translation)
-                if (targets.length === 0 && keywords.length > 0) {
-                    const sections = document.querySelectorAll("h1,h2,h3,h4,h5,p,div,span,.section-title");
-                    sections.forEach(el => {
-                        const txt = el.textContent.trim().toLowerCase();
-                        if (txt && keywords.some(k => txt === k || txt.startsWith(k + " ") || txt.includes(k))) {
-                            if (el.children.length === 0 || (el.children.length === 1 && el.children[0].tagName === "I")) {
-                                el.setAttribute("data-cv-step", step);
+                    el.forEach(e => {
+                        if (isDefault) {
+                            // Only clear if the user has already interacted with this field
+                            if (e.getAttribute("data-touched")) {
+                                if (isHtml) e.innerHTML = ""; else e.innerText = "";
+                            }
+                            return;
+                        }
+                        
+                        // Real data: mark as touched to allow future clearing
+                        e.setAttribute("data-touched", "true");
+
+                        let displayVal = val;
+                        const isNameOrTitle = d.field === "nomComplet" || d.field === "titrePoste";
+                        if (isBionic && !isNameOrTitle && typeof val === "string") {
+                            displayVal = bionify(val);
+                            isHtml = true;
+                        }
+                        
+                        // Specific handlers for lists to ensure clean rendering and removal of placeholders
+                        if (d.field === "competences" && (e.id === "preview-competences" || e.getAttribute("data-cv-zone") === "competences" || e.classList.contains("skill-group"))) {
+                            const skills = typeof val === "string" ? val.split("•").map(s=>s.trim()).filter(s=>s) : val;
+                            if (skills.length > 0) e.innerHTML = skills.map(s => `<span class="skill-pill">${s}</span>`).join("");
+                            else e.innerHTML = "";
+                            return;
+                        }
+                        if (d.field === "langues" && (e.id === "preview-langues" || e.getAttribute("data-cv-zone") === "langues" || e.classList.contains("cv-langues"))) {
+                            if (d.rawData && d.rawData.length > 0) {
+                                e.innerHTML = d.rawData.map(l => `<div class="lang-row"><strong>${l.lang}</strong><span class="lang-level">${l.level}</span></div>`).join("");
+                            } else { e.innerHTML = ""; }
+                            return;
+                        }
+                        if (d.field === "experience" && d.rawData) {
+                            if (e.id === "preview-experience" || e.getAttribute("data-cv-zone") === "experience" || e.classList.contains("cv-experience")) {
+                                if (d.rawData.length > 0) {
+                                    e.innerHTML = d.rawData.map(r => {
+                                        if(!r.role && !r.company) return "";
+                                        return `<div class="item">
+                                            <div class="item-header">
+                                                <span class="item-title">${r.role}</span>
+                                                <span class="item-date">${r.dates}</span>
+                                            </div>
+                                            <p class="item-company">${r.company}</p>
+                                            <ul class="item-desc">
+                                                ${r.achievements.map(a => a.text ? `<li>${a.text}</li>` : "").join("")}
+                                            </ul>
+                                        </div>`;
+                                    }).join("");
+                                } else { e.innerHTML = ""; }
+                                return;
                             }
                         }
-                    });
-                    // Re-query targets after marking
-                    targets = document.querySelectorAll(`[data-cv-step="${step}"]`);
-                }
-                
-                // 3. Update all targets
-                targets.forEach(t => { t.innerText = newTitle; });
-            });
-        } else if (e.data.type === "toggle-bionic") {
-            isBionic = e.data.enabled;
-            window.parent.postMessage({ type: "request-full-sync" }, "*");
-        } else if (e.data.type === "highlight-section") {
-            document.querySelectorAll(".highlight-active").forEach(el => {
-                el.classList.remove("highlight-active");
-                el.style.outline = "none";
-                el.style.background = "none";
-            });
-            const step = e.data.step;
-            let target = null;
-            if (step === 1) target = document.querySelector(".cv-header, .header-info, h1, .sidebar-header");
-            else if (kMap[step]) {
-                const possibleTitles = document.querySelectorAll("h1,h2,h3,h4,h5,p,div,span");
-                for (const t of possibleTitles) { 
-                    const txt = t.textContent.trim().toLowerCase();
-                    if (txt.length < 30 && kMap[step].some(k => txt.includes(k))) { 
-                        let current = t; let best = t;
-                        while(current && current.tagName !== "BODY") {
-                            if (current.classList.contains("cv-section") || current.classList.contains("section")) { best = current; break; }
-                            current = current.parentElement;
+                        if (d.field === "formation" && d.rawData) {
+                            if (e.id === "preview-formation" || e.getAttribute("data-cv-zone") === "formation" || e.classList.contains("cv-formation")) {
+                                if (d.rawData.length > 0) {
+                                    e.innerHTML = d.rawData.map(r => {
+                                        if(!r.degree && !r.school) return "";
+                                        return `<div class="item">
+                                            <div class="item-header">
+                                                <span class="item-title">${r.degree} ${r.honors ? "★" : ""}</span>
+                                                <span class="item-date">${r.dates}</span>
+                                            </div>
+                                            <p class="item-company">${r.school}</p>
+                                        </div>`;
+                                    }).join("");
+                                } else { e.innerHTML = ""; }
+                                return;
+                            }
                         }
-                        target = best; break; 
-                    } 
+                        if (isHtml) e.innerHTML = displayVal;
+                        else e.innerText = displayVal;
+                    });
+                    return true;
+                };
+
+                // Prioritized Mapping: ID > data-cv-zone > Class
+                if (d.field === "nomComplet") setVal("#preview-nomComplet, [data-cv-zone=\"nomComplet\"], .cv-name, .preview-nom", d.value);
+                else if (d.field === "titrePoste") setVal("#preview-titrePoste, [data-cv-zone=\"titrePoste\"], .cv-title, .preview-titre", d.value);
+                else if (d.field === "resume") setVal("#preview-resume, [data-cv-zone=\"resume\"], .summary-text, .cv-summary", d.value, true);
+                else if (d.field === "experience") setVal("#preview-experience, [data-cv-zone=\"experience\"], .cv-experience, .cv-exp", d.value, true);
+                else if (d.field === "competences") setVal("#preview-competences, [data-cv-zone=\"competences\"], .cv-competences, .cv-skills", d.value, true);
+                else if (d.field === "langues") setVal("#preview-langues, [data-cv-zone=\"langues\"], .cv-langues, .cv-languages", d.value, true);
+                else if (d.field === "formation") setVal("#preview-formation, [data-cv-zone=\"formation\"], .cv-formation, .cv-edu", d.value, true);
+                else if (d.field === "infoContact") {
+                    const clean = d.value.split("|").map(s => s.trim()).join("<br>");
+                    setVal("#preview-infoContact, [data-cv-zone=\"contact\"], .contact-info, .cv-contact", clean, true);
+                } else if (d.field === "photo") {
+                    const pi = document.querySelectorAll("#preview-photo, .cv-photo img, .profile-img, #profile-pic, [data-cv-zone=\"photo\"] img");
+                    pi.forEach(i => { i.src = d.value; i.style.display = "block"; });
+                    document.querySelectorAll("#photo-text, .photo-text").forEach(t => t.style.display = "none");
                 }
-            }
-            if (target) { 
-                target.classList.add("highlight-active");
-                target.style.outline = "3px solid #6B34A3";
-                target.style.outlineOffset = "4px";
-                target.scrollIntoView({ behavior:"smooth", block:"center" }); 
-            }
-        } else if (e.data.type === "toggle-dyslexia") {
-            const existing = document.getElementById("dyslexia-style-iframe");
-            if (e.data.enabled) {
-                if (!existing) {
-                    const style = document.createElement("style");
-                    style.id = "dyslexia-style-iframe";
-                    style.innerHTML = "@import url(\'https://cdn.jsdelivr.net/npm/opendyslexic@1.0.3/dist/opendyslexic.css\'); * { font-family: \'OpenDyslexic\', sans-serif !important; }";
-                    document.head.appendChild(style);
+            } else if (e.data.type === "cv-labels") {
+                const labels = e.data.value;
+                // Protection: only apply labels if specifically requested (translation) 
+                // to avoid overwriting template titles with empty or "---" values
+                if (e.data.force || Object.values(labels).some(v => v && v !== "---" && v !== "")) {
+                    Object.keys(labels).forEach(key => {
+                        const step = parseInt(key.replace("label-step-", ""));
+                        const newTitle = labels[key];
+                        const keywords = kMap[step] || [];
+                        let targets = document.querySelectorAll(`[data-cv-step="${step}"], [data-cv-zone="title-${step}"]`);
+                        if (targets.length === 0 && keywords.length > 0) {
+                            document.querySelectorAll("h1,h2,h3,h4,h5,.section-title").forEach(el => {
+                                const txt = el.textContent.trim().toLowerCase();
+                                if (keywords.some(k => txt === k || txt.includes(k))) el.setAttribute("data-cv-step", step);
+                            });
+                            targets = document.querySelectorAll(`[data-cv-step="${step}"]`);
+                        }
+                        targets.forEach(t => { if(newTitle && newTitle !== "---") t.innerText = newTitle; });
+                    });
                 }
-            } else if (existing) existing.remove();
-        }
-    });
+            } else if (e.data.type === "toggle-bionic") {
+                isBionic = e.data.enabled;
+                window.parent.postMessage({ type: "request-full-sync" }, "*");
+            } else if (e.data.type === "highlight-section") {
+                document.querySelectorAll(".highlight-active").forEach(el => {
+                    el.classList.remove("highlight-active");
+                    el.style.outline = "none";
+                    el.style.background = "none";
+                });
+                const step = e.data.step;
+                let target = null;
+                if (step === 1) target = document.querySelector(".cv-header, .header-info, h1, .sidebar-header");
+                else if (kMap[step]) {
+                    const possibleTitles = document.querySelectorAll("h1,h2,h3,h4,h5,p,div,span");
+                    for (const t of possibleTitles) { 
+                        const txt = t.textContent.trim().toLowerCase();
+                        if (txt.length < 30 && kMap[step].some(k => txt.includes(k))) { 
+                            let current = t; let best = t;
+                            while(current && current.tagName !== "BODY") {
+                                if (current.classList.contains("cv-section") || current.classList.contains("section")) { best = current; break; }
+                                current = current.parentElement;
+                            }
+                            target = best; break; 
+                        } 
+                    }
+                }
+                if (target) { 
+                    target.classList.add("highlight-active");
+                    target.style.outline = "3px solid #6B34A3";
+                    target.style.outlineOffset = "4px";
+                    target.scrollIntoView({ behavior:"smooth", block:"center" }); 
+                }
+            } else if (e.data.type === "toggle-dyslexia") {
+                const existing = document.getElementById("dyslexia-style-iframe");
+                if (e.data.enabled) {
+                    if (!existing) {
+                        const style = document.createElement("style");
+                        style.id = "dyslexia-style-iframe";
+                        style.innerHTML = "@import url(\'https://cdn.jsdelivr.net/npm/opendyslexic@1.0.3/dist/opendyslexic.css\'); * { font-family: \'OpenDyslexic\', sans-serif !important; }";
+                        document.head.appendChild(style);
+                    }
+                } else if (existing) existing.remove();
+            }
+        });
 </script>';
 
 if (stripos($templateHtml, '</body>') !== false) {
@@ -2736,6 +2751,7 @@ async function saveCV() {
     const d = { 
         cv_id: CV_ID, 
         template_id: TEMPLATE_ID, 
+        is_tailored: <?php echo $tailorMode; ?>,
         name: document.getElementById('input-name').value.trim(), 
         title: document.getElementById('input-title').value.trim(), 
         email: document.getElementById('input-email').value.trim(), 

@@ -83,15 +83,21 @@ try {
     $languages   = $data['languages']   ?? '';
     $ndoc        = 'CV ' . $name;
 
-    // Handle Tailoring Metadata from Session
-    $is_tailored = 0;
+    // Handle Tailoring Metadata - Priority to explicit flag from JS
+    $is_tailored = isset($data['is_tailored']) ? (int)$data['is_tailored'] : 0;
     $target_url = '';
     $report = '';
-    // If the user is tailoring, the report is in session
-    if (isset($_SESSION['tailor_job_url'])) {
-        $is_tailored = 1;
+
+    // If tailoring is requested, use session metadata
+    if ($is_tailored && isset($_SESSION['tailor_job_url'])) {
         $target_url = $_SESSION['tailor_job_url'];
         $report = isset($_SESSION['tailor_guide']) ? json_encode($_SESSION['tailor_guide']) : '';
+        
+        // Cleanup session to prevent polluting future standard CVs
+        unset($_SESSION['tailor_job_url']);
+        unset($_SESSION['tailor_job_data']);
+        unset($_SESSION['tailor_cv_data']);
+        unset($_SESSION['tailor_guide']);
     }
 
     // Instanciation stricte du Modèle MVC (Vérifier l'ordre dans model/CV.php)
