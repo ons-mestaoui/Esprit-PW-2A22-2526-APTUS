@@ -585,6 +585,81 @@ if (!isset($content)) {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
     }
+
+    /* ── EMPTY STATE PREMIUM ── */
+    .empty-state-premium {
+        position: relative;
+        padding: 8rem 2rem;
+        text-align: center;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 40px;
+        margin: 4rem 0;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .empty-state-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        height: 400px;
+        background: var(--accent-primary);
+        filter: blur(150px);
+        opacity: 0.08;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .empty-state-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .empty-state-icon-wrapper {
+        width: 100px;
+        height: 100px;
+        background: rgba(139, 92, 246, 0.05);
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        border: 1px solid rgba(139, 92, 246, 0.1);
+        transform: rotate(-5deg);
+        transition: transform 0.4s ease;
+    }
+
+    .empty-state-premium:hover .empty-state-icon-wrapper {
+        transform: rotate(0deg) scale(1.1);
+    }
+
+    .empty-state-icon {
+        width: 48px;
+        height: 48px;
+        color: var(--accent-primary);
+        stroke-width: 1.5px;
+    }
+
+    .empty-state-content h2 {
+        font-size: 2.5rem;
+        font-weight: 850;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        letter-spacing: -1.5px;
+    }
+
+    .empty-state-content p {
+        color: var(--text-secondary);
+        max-width: 500px;
+        margin: 0 auto 2.5rem;
+        font-size: 1.15rem;
+        line-height: 1.6;
+        font-weight: 500;
+    }
 </style>
 
 <div class="dashboard-wrap">
@@ -748,12 +823,43 @@ if (!isset($content)) {
         <?php endforeach; ?>
     </div>
     <?php else: ?>
-    <div style="text-align: center; padding: 8rem 0;">
-        <i data-lucide="file-plus" style="width: 64px; height: 64px; opacity: 0.2; margin-bottom: 1rem;"></i>
-        <h2 style="color: #fff;">Aucun CV</h2>
-        <a href="cv_templates.php" style="color: var(--accent-primary); text-decoration: none;">Commencer la création →</a>
+    <div class="empty-state-premium">
+        <div class="empty-state-glow"></div>
+        <div class="empty-state-content">
+            <div class="empty-state-icon-wrapper">
+                <i data-lucide="plus-circle" class="empty-state-icon"></i>
+            </div>
+            <h2>Votre portfolio est vide</h2>
+            <p>Commencez votre ascension professionnelle en créant votre premier CV intelligent avec Aptus.</p>
+            <a href="cv_templates.php" class="btn-aptus-primary" style="padding: 16px 35px; border-radius: 18px; font-size: 1.1rem;">
+                <i data-lucide="rocket"></i> Créer mon premier CV
+            </a>
+        </div>
     </div>
     <?php endif; ?>
+
+    <!-- 3. Modal Confirmation Suppression -->
+    <div class="modal-overlay" id="modal-delete">
+        <div class="modal-content" style="background:white; border-radius:24px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); position:relative; max-width:450px; text-align:center; padding: 40px 32px;">
+            <button class="modal-close" style="position:absolute; top:15px; right:15px; background:none; border:none; cursor:pointer; color:var(--text-tertiary);" onclick="closeModals()"><i data-lucide="x" style="width:24px;height:24px;"></i></button>
+
+            <div style="width:64px; height:64px; background:rgba(239,68,68,0.1); color:#ef4444; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+                <i data-lucide="alert-triangle" style="width:32px;height:32px;"></i>
+            </div>
+
+            <h3 style="margin-bottom:12px; color:var(--text-primary); font-size:1.4rem; font-weight:800;">Confirmation de suppression</h3>
+            <p id="delete-modal-msg" style="color:var(--text-secondary); margin-bottom:24px; line-height:1.6;">Êtes-vous sûr de vouloir continuer ? Cette action est irréversible.</p>
+
+            <form action="cv_delete.php" method="GET" id="form-delete">
+                <input type="hidden" name="id" id="delete-id-field" value="">
+
+                <div style="display:flex; gap:12px; justify-content:center;">
+                    <button type="button" class="btn-aptus-secondary" style="flex:1; padding:12px;" onclick="closeModals()">Annuler</button>
+                    <button type="submit" class="btn-aptus-primary" style="flex:1; background:#ef4444; border-color:#ef4444; color:white; box-shadow:0 10px 20px rgba(239,68,68,0.2);">Oui, Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
 </div>
 
@@ -950,8 +1056,16 @@ function generatePDF(cvId) {
 }
 
 async function deleteCV(cvId) {
-    const ok = await aptusConfirm('Supprimer ?', 'Voulez-vous vraiment supprimer ce CV ?');
-    if(ok) window.location.href = 'cv_delete.php?id=' + cvId;
+    const modal = document.getElementById('modal-delete');
+    const idField = document.getElementById('delete-id-field');
+    if (modal && idField) {
+        idField.value = cvId;
+        modal.classList.add('active');
+    }
+}
+
+function closeModals() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
 }
 
 function showAIAudit(r, cvId) {

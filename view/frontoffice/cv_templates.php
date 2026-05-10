@@ -340,7 +340,7 @@ if (!isset($content)) {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(251, 219, 92, 0.2);
   border-radius: 999px;
-  color: #FBDB5C;
+  color: #fff;
   font-size: 0.75rem;
   font-weight: 800;
   margin-bottom: 1.5rem;
@@ -445,7 +445,7 @@ if (!isset($content)) {
   height: 36px;
   border-radius: 10px;
   background: rgba(255,255,255,0.12);
-  color: #FBDB5C;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;

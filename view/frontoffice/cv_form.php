@@ -98,17 +98,112 @@ if (!isset($content)) {
     .ats-score-badge {
         width: 110px;
         height: 110px;
-        background: #ef4444 !important; /* Force Red as requested */
-        color: white !important;
+        border-radius: 50%;
+        background: var(--bg-card);
+        border: 4px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+    }
+
+    /* Premium Modal Styles */
+    .premium-confirm-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.4s ease;
+    }
+
+    .premium-confirm-modal {
+        background: var(--bg-card);
+        padding: 2.5rem;
+        border-radius: 30px;
+        text-align: center;
+        max-width: 450px;
+        width: 90%;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+        animation: scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .premium-confirm-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--gradient-primary);
+        color: white;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2.2rem;
-        font-weight: 800;
-        box-shadow: 0 12px 25px rgba(239, 68, 68, 0.4);
-        flex-shrink: 0;
+        margin: 0 auto 1.5rem;
+        font-size: 2.5rem;
+        box-shadow: 0 10px 20px rgba(168, 100, 228, 0.3);
     }
+
+    .premium-confirm-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    .premium-confirm-message {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+
+    .premium-confirm-footer {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .premium-confirm-btn {
+        flex: 1;
+        padding: 1rem;
+        border-radius: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s;
+        border: none;
+    }
+
+    .premium-confirm-btn-confirm {
+        background: var(--gradient-primary);
+        color: white;
+        box-shadow: 0 8px 20px rgba(168, 100, 228, 0.3);
+    }
+
+    .premium-confirm-btn-confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(168, 100, 228, 0.4);
+    }
+
+    .premium-confirm-btn-cancel {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .premium-confirm-btn-cancel:hover {
+        background: var(--bg-tertiary);
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleUp { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
     .audit-card-v3 {
         background: #f8fafc;
         border-radius: 16px;
@@ -572,7 +667,10 @@ if (!isset($content)) {
 
         <!-- STEP 1: Personal Info -->
         <div class="step-content active" id="step-1">
-            <div class="step-header"><h2 id="label-step-1">Informations Personnelles</h2></div>
+            <div class="step-header">
+                <h2 id="label-step-1">Informations Personnelles</h2>
+                <span id="label-contact" style="display:none;">Contact</span>
+            </div>
 
             
             <div class="image-upload-wrapper" id="photo-upload-wrapper">
@@ -1200,12 +1298,27 @@ $receiverScript = '
                 // to avoid overwriting template titles with empty or "---" values
                 if (e.data.force || Object.values(labels).some(v => v && v !== "---" && v !== "")) {
                     Object.keys(labels).forEach(key => {
-                        const step = parseInt(key.replace("label-step-", ""));
                         const newTitle = labels[key];
+                        if (key === "label-contact") {
+                            const keywords = ["contact", "coordonnées", "contacts"];
+                            let targets = document.querySelectorAll("[data-cv-zone=\"contact-label\"], .cv-contact-title, .contact-header");
+                            if (targets.length === 0) {
+                                document.querySelectorAll("h1,h2,h3,h4,h5,.section-title, .cv-section-title").forEach(el => {
+                                    const txt = el.textContent.trim().toLowerCase();
+                                    if (keywords.some(k => txt === k || txt.includes(k))) {
+                                        el.setAttribute("data-cv-zone", "contact-label");
+                                        targets = [el];
+                                    }
+                                });
+                            }
+                            targets.forEach(t => { if(newTitle) t.innerText = newTitle; });
+                            return;
+                        }
+                        const step = parseInt(key.replace("label-step-", ""));
                         const keywords = kMap[step] || [];
                         let targets = document.querySelectorAll(`[data-cv-step="${step}"], [data-cv-zone="title-${step}"]`);
                         if (targets.length === 0 && keywords.length > 0) {
-                            document.querySelectorAll("h1,h2,h3,h4,h5,.section-title").forEach(el => {
+                            document.querySelectorAll("h1,h2,h3,h4,h5,.section-title, .cv-section-title").forEach(el => {
                                 const txt = el.textContent.trim().toLowerCase();
                                 if (keywords.some(k => txt === k || txt.includes(k))) el.setAttribute("data-cv-step", step);
                             });
@@ -1884,7 +1997,8 @@ function syncAllData() {
         'label-step-3': document.getElementById('label-step-3').textContent,
         'label-step-4': document.getElementById('label-step-4').textContent,
         'label-step-5': document.getElementById('label-step-5').textContent,
-        'label-step-6': document.getElementById('label-step-6').textContent
+        'label-step-6': document.getElementById('label-step-6').textContent,
+        'label-contact': document.getElementById('label-contact').textContent
     };
     if (ifrm && ifrm.contentWindow) {
         ifrm.contentWindow.postMessage({ type: 'cv-labels', value: labels }, '*');
@@ -1969,6 +2083,57 @@ function populateFormWithJSON(data) {
     updateProgress();
 }
 
+/**
+ * showPremiumConfirm - A modern, stylish alternative to window.confirm()
+ */
+function showPremiumConfirm(options = {}) {
+    const {
+        title = "Confirmation",
+        message = "Êtes-vous sûr de vouloir continuer ?",
+        icon = "help-circle",
+        confirmText = "Confirmer",
+        cancelText = "Annuler"
+    } = options;
+
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'premium-confirm-overlay';
+        
+        overlay.innerHTML = `
+            <div class="premium-confirm-modal">
+                <div class="premium-confirm-icon">
+                    <i data-lucide="${icon}"></i>
+                </div>
+                <h2 class="premium-confirm-title">${title}</h2>
+                <p class="premium-confirm-message">${message}</p>
+                <div class="premium-confirm-footer">
+                    <button class="premium-confirm-btn premium-confirm-btn-cancel">${cancelText}</button>
+                    <button class="premium-confirm-btn premium-confirm-btn-confirm">${confirmText}</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        if (window.lucide) lucide.createIcons();
+
+        const confirmBtn = overlay.querySelector('.premium-confirm-btn-confirm');
+        const cancelBtn = overlay.querySelector('.premium-confirm-btn-cancel');
+
+        const close = (result) => {
+            overlay.style.opacity = '0';
+            overlay.querySelector('.premium-confirm-modal').style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                overlay.remove();
+                resolve(result);
+            }, 300);
+        };
+
+        confirmBtn.onclick = () => close(true);
+        cancelBtn.onclick = () => close(false);
+        overlay.onclick = (e) => { if (e.target === overlay) close(false); };
+    });
+}
+
 /* ── ADVANCED FEATURES : TRANSLATION ── */
 async function runTranslateCV() {
     const lang = document.getElementById('target-lang-select').value;
@@ -1976,12 +2141,21 @@ async function runTranslateCV() {
     const icon = document.getElementById('translate-icon');
     const txt = document.getElementById('translate-btn-text');
 
-    if (!confirm(`Voulez-vous traduire tout votre CV en ${lang} ? Les textes actuels seront remplacés par la version traduite.`)) return;
+    const confirmed = await showPremiumConfirm({
+        title: "Traduire le CV ?",
+        message: `Voulez-vous traduire tout votre CV en ${lang} ? Les textes actuels seront remplacés par la version traduite.`,
+        icon: "globe",
+        confirmText: "Confirmer",
+        cancelText: "Annuler"
+    });
+
+    if (!confirmed) return;
 
     // Build current CV object for translation
     const currentCV = {
         nomComplet: document.getElementById('input-name').value,
         titrePoste: document.getElementById('input-title').value,
+        adresse: document.getElementById('input-location').value,
         resume: document.getElementById('input-summary').innerHTML,
         experience: currentRoles,
         education: currentDegrees,
@@ -1993,7 +2167,8 @@ async function runTranslateCV() {
             'label-step-3': document.getElementById('label-step-3').textContent,
             'label-step-4': document.getElementById('label-step-4').textContent,
             'label-step-5': document.getElementById('label-step-5').textContent,
-            'label-step-6': document.getElementById('label-step-6').textContent
+            'label-step-6': document.getElementById('label-step-6').textContent,
+            'label-contact': document.getElementById('label-contact').textContent
         }
     };
 
