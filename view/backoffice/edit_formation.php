@@ -59,11 +59,11 @@ if (!isset($content)) {
         <div class="form-group">
             <label class="form-label">Titre de la formation <span class="required-star">*</span></label>
             <div class="input-validated-wrap" style="position:relative;">
-                <input type="text" class="input iv-field" name="titre" id="ef-titre" data-min="3" data-label="Titre"
+                <input type="text" class="input iv-field" name="titre" id="ef-titre"
                        value="<?php echo htmlspecialchars($formation['titre']); ?>">
                 <span class="iv-status" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:none;"></span>
             </div>
-            <span class="iv-msg" id="ef-titre-msg" style="display:none;font-size:.78rem;color:var(--accent-tertiary);margin-top:4px;font-weight:600;"></span>
+            <span class="iv-msg" id="ef-titre-msg" style="display:none;font-size:.78rem;color:#ef4444;margin-top:4px;font-weight:600;"></span>
         </div>
 
         <div class="form-group" style="padding-bottom: 25px;">
@@ -78,7 +78,7 @@ if (!isset($content)) {
             <div class="form-group">
                 <label class="form-label">Domaine <span class="required-star">*</span></label>
                 <div class="input-validated-wrap" style="position:relative;">
-                    <input type="text" class="input iv-field" name="domaine" id="ef-domaine" data-min="2" data-label="Domaine"
+                    <input type="text" class="input iv-field" name="domaine" id="ef-domaine"
                         value="<?php echo htmlspecialchars($formation['domaine']); ?>">
                     <span class="iv-status" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:none;"></span>
                 </div>
@@ -103,7 +103,7 @@ if (!isset($content)) {
             <div class="form-group">
                 <label class="form-label">Date de début <span class="required-star">*</span></label>
                 <div class="input-validated-wrap" style="position:relative;">
-                    <input type="date" class="input iv-field" name="date_formation" id="ef-date" data-min="1" data-label="Date de début"
+                    <input type="date" class="input iv-field" name="date_formation" id="ef-date" 
                         value="<?php echo date('Y-m-d', strtotime($formation['date_formation'])); ?>">
                     <span class="iv-status" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:none;"></span>
                 </div>
@@ -120,15 +120,17 @@ if (!isset($content)) {
         </div>
 
         <div class="form-group">
-            <label class="form-label">Durée</label>
-            <input type="text" class="input" name="duree"
-                value="<?php echo htmlspecialchars($formation['duree']); ?>">
+            <label class="form-label">Durée (ex: 10h)</label>
+            <div class="input-validated-wrap" style="position:relative;">
+                <input type="text" class="input" name="duree" id="ef-duree"
+                    value="<?php echo htmlspecialchars($formation['duree']); ?>">
+            </div>
         </div>
 
         <div class="form-group">
             <label class="form-label">Tuteur <span class="required-star">*</span></label>
             <div class="input-validated-wrap" style="position:relative;">
-                <select class="select iv-field" name="id_tuteur" id="ef-tuteur" data-min="1" data-label="Tuteur" style="appearance:auto;">
+                <select class="select iv-field" name="id_tuteur" id="ef-tuteur" style="appearance:auto;">
                     <option value="">Sélectionnez un tuteur...</option>
                     <?php foreach ($tuteurs as $t): ?>
                         <option value="<?php echo $t['id_utilisateur']; ?>" <?php if ($formation['id_tuteur'] == $t['id_utilisateur'])
@@ -136,7 +138,6 @@ if (!isset($content)) {
                             <?php echo htmlspecialchars($t['nom']); ?></option>
                     <?php endforeach; ?>
                 </select>
-                <span class="iv-status" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);display:none;"></span>
             </div>
             <span class="iv-msg" id="ef-tuteur-msg" style="display:none;font-size:.78rem;color:#ef4444;margin-top:4px;font-weight:600;"></span>
         </div>
@@ -167,8 +168,8 @@ if (!isset($content)) {
         </div>
 
         <div class="form-group">
-            <label class="form-label">Format</label>
-            <select class="select" name="is_online" id="lieu-select-edit">
+            <label class="form-label">Format / Lieu <span class="required-star">*</span></label>
+            <select class="select iv-field" name="is_online" id="ef-lieu">
                 <option value="0" <?php if ($formation['is_online'] == 0)
                     echo 'selected'; ?>>📍 Présentiel</option>
                 <option value="1" <?php if ($formation['is_online'] == 1)
@@ -210,62 +211,49 @@ if (!isset($content)) {
 
     // Synchronisation onSubmit
     var formEdit = document.querySelector('form.auth-form');
-    // ── VALIDATION CHAMPS EN TEMPS RÉEL (iv = inline-validation) ──
     function ivValidate(input) {
-        const wrap     = input.closest('.input-validated-wrap');
+        const wrap = input.closest('.input-validated-wrap');
         const statusEl = wrap ? wrap.querySelector('.iv-status') : null;
-        const msgEl    = document.getElementById(input.id + '-msg');
-        const min      = parseInt(input.dataset.min || 0);
-        const label    = input.dataset.label || 'Ce champ';
-        const val      = input.value.trim();
-        let valid;
+        const msgEl = document.getElementById(input.id + '-msg');
+        const val = input.value.trim();
+        let valid = true;
+        let error = "";
 
-        if (input.tagName === 'SELECT') {
-            valid = val !== '';
-        } else if (input.type === 'date') {
-            valid = val !== '' && !isNaN(Date.parse(val));
-            if (valid && input.dataset.minDate) {
-                valid = val >= input.dataset.minDate;
-            }
-        } else {
-            valid = val.length >= min;
+        // 🛡️ LOGIQUE DE VALIDATION CENTRALISÉE (PAS DE HTML)
+        if (input.id === 'ef-titre') {
+            if (val.length === 0) { valid = false; error = "Le titre est obligatoire."; }
+            else if (val.length < 3) { valid = false; error = "Le titre doit faire plus de 3 caractères."; }
+        }
+        else if (input.id === 'ef-domaine') {
+            if (val.length === 0) { valid = false; error = "Le domaine est obligatoire."; }
+        }
+        else if (input.id === 'ef-date') {
+            const now = new Date(); now.setHours(0,0,0,0);
+            const d = new Date(val);
+            if (val === "") { valid = false; error = "La date est obligatoire."; }
+            else if (d < now) { valid = false; error = "La date ne peut pas être dans le passé."; }
+        }
+        else if (input.id === 'ef-tuteur' || input.name === 'niveau' || input.id === 'ef-lieu') {
+            if (val === "") { valid = false; error = "Ce champ est obligatoire."; }
+        }
+        else if (input.id === 'hidden-description-edit') {
+            const text = quillEdit.getText().trim();
+            if (text.length === 0) { valid = false; error = "La description est obligatoire."; }
+            else if (text.length < 10) { valid = false; error = "La description doit faire plus de 10 caractères."; }
         }
 
         input.classList.toggle('is-valid',   valid);
         input.classList.toggle('is-invalid', !valid);
 
         if (statusEl) {
+            statusEl.style.display = (val !== '') ? 'inline-flex' : 'none';
             statusEl.className = 'iv-status ' + (valid ? 'valid' : 'invalid');
-            statusEl.style.display = 'inline-flex';
-            statusEl.innerHTML = valid
-                ? '<i data-lucide="check" style="width:14px;height:14px;color:var(--accent-secondary);"></i>'
-                : '<i data-lucide="alert-circle" style="width:14px;height:14px;color:var(--accent-tertiary);"></i>';
-            if (window.lucide) lucide.createIcons();
+            statusEl.innerHTML = valid ? '✓' : '⚠';
         }
 
         if (msgEl) {
-            if (!valid) {
-                if (input.type === 'date') {
-                    const valDate = new Date(val);
-                    const now = new Date();
-                    now.setHours(0,0,0,0);
-                    if (val === '') {
-                        msgEl.textContent = `${label} est requis.`;
-                    } else if (valDate < now) {
-                        msgEl.textContent = `La date ne peut pas être dans le passé.`;
-                    } else {
-                        msgEl.textContent = `Date invalide.`;
-                    }
-                } else {
-                    msgEl.textContent = (val.length === 0)
-                        ? `${label} est requis.`
-                        : `Trop court (min. ${min} caractères).`;
-                }
-                msgEl.style.display = 'block';
-            } else {
-                msgEl.textContent = '';
-                msgEl.style.display = 'none';
-            }
+            msgEl.textContent = error;
+            msgEl.style.display = error ? 'block' : 'none';
         }
         return valid;
     }

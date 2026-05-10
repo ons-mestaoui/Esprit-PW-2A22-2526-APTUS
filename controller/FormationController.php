@@ -53,6 +53,11 @@ class FormationController
                     FROM Formation f 
                     LEFT JOIN $table u ON f.id_tuteur = u.id_utilisateur
                     WHERE f.statut = 'active'
+                      AND (
+                        (f.date_fin IS NOT NULL AND f.date_fin >= DATE_SUB(NOW(), INTERVAL 48 HOUR))
+                        OR 
+                        (f.date_fin IS NULL AND f.date_formation >= DATE_SUB(NOW(), INTERVAL 48 HOUR))
+                      )
                     ORDER BY f.date_formation ASC
                 ");
                 $results = $stmt->fetchAll();
@@ -115,7 +120,7 @@ class FormationController
         $f['date_format'] = !empty($f['date_formation']) ? date('d M. Y', strtotime($f['date_formation'])) : 'Date non spécifiée';
         $f['duree'] = $f['duree'] ?? 'Non spécifiée';
         $f['is_online'] = (isset($f['is_online']) && $f['is_online'] == 1);
-        
+
         $f['date_fin_format'] = !empty($f['date_fin']) ? date('d M. Y', strtotime($f['date_fin'])) : 'Date non spécifiée';
 
         // Calcul du statut temporel
@@ -255,7 +260,7 @@ class FormationController
 
         // --- OPTIMIZATION: Bulk fetch to avoid N+1 queries and preserve formatting ---
         $toutesLesFormations = $this->listerToutesFormations(); // Already formatted by formatFormationForView
-        
+
         $inscriptions = [];
         if ($id_user) {
             $tablesI = ['inscription', 'Inscription'];
@@ -264,21 +269,22 @@ class FormationController
                     $stmt = $db->prepare("SELECT id_formation, progression, statut FROM $table WHERE id_utilisateur = ?");
                     $stmt->execute([$id_user]);
                     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                        $inscriptions[(int)$row['id_formation']] = [
-                            'progression' => ($row['statut'] === 'Terminée') ? 100 : (int)$row['progression'],
+                        $inscriptions[(int) $row['id_formation']] = [
+                            'progression' => ($row['statut'] === 'Terminée') ? 100 : (int) $row['progression'],
                             'statut' => $row['statut']
                         ];
                     }
-                    break; 
-                } catch (Exception $e) {}
+                    break;
+                } catch (Exception $e) {
+                }
             }
         }
 
         $formationsById = [];
         foreach ($toutesLesFormations as $f) {
-            $id = (int)$f['id_formation'];
-            $f['id_formation'] = $id; 
-            $f['prerequis_id'] = (!empty($f['prerequis_id'])) ? (int)$f['prerequis_id'] : null;
+            $id = (int) $f['id_formation'];
+            $f['id_formation'] = $id;
+            $f['prerequis_id'] = (!empty($f['prerequis_id'])) ? (int) $f['prerequis_id'] : null;
             $f['ma_progression'] = $inscriptions[$id]['progression'] ?? 0;
             $f['mon_statut'] = $inscriptions[$id]['statut'] ?? '';
             $formationsById[$id] = $f;
@@ -696,30 +702,31 @@ class FormationController
         $chain = [];
         $currentId = $id_formation_finale;
         $visited = [];
-        
+
         // Fetch linear chain from DB (iterative instead of recursive for speed)
         while ($currentId && !isset($visited[$currentId])) {
             $visited[$currentId] = true;
             $f = $this->getFormationWithPrerequisite($currentId, $id_user);
-            if (!$f) break;
-            
+            if (!$f)
+                break;
+
             // Important: Use formatting to keep colors and icons
             $f = $this->formatFormationForView($f);
-            
+
             array_unshift($chain, $f);
-            $currentId = !empty($f['prerequis_id']) ? (int)$f['prerequis_id'] : null;
+            $currentId = !empty($f['prerequis_id']) ? (int) $f['prerequis_id'] : null;
         }
-        
+
         // Calculate unlocked status based on progression of previous element
         foreach ($chain as $i => &$f) {
             if ($i === 0) {
                 $f['is_unlocked'] = true;
             } else {
-                $prev = $chain[$i-1];
+                $prev = $chain[$i - 1];
                 $f['is_unlocked'] = ($prev['ma_progression'] >= 100);
             }
         }
-        
+
         return $chain;
     }
 
@@ -729,7 +736,7 @@ class FormationController
         try {
             // Get all formations with formatting (colors, icons, etc)
             $all = $this->listerToutesFormations();
-            
+
             // Get user progress in one query
             $inscriptions = [];
             if ($id_user) {
@@ -739,18 +746,19 @@ class FormationController
                         $stmt = $db->prepare("SELECT id_formation, progression, statut FROM $table WHERE id_utilisateur = ?");
                         $stmt->execute([$id_user]);
                         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                            $inscriptions[(int)$row['id_formation']] = ($row['statut'] === 'Terminée') ? 100 : (int)$row['progression'];
+                            $inscriptions[(int) $row['id_formation']] = ($row['statut'] === 'Terminée') ? 100 : (int) $row['progression'];
                         }
                         break;
-                    } catch (Exception $e) {}
+                    } catch (Exception $e) {
+                    }
                 }
             }
 
             $formationsById = [];
             foreach ($all as $f) {
-                $id = (int)$f['id_formation'];
+                $id = (int) $f['id_formation'];
                 $f['id_formation'] = $id;
-                $f['prerequis_id'] = (!empty($f['prerequis_id'])) ? (int)$f['prerequis_id'] : null;
+                $f['prerequis_id'] = (!empty($f['prerequis_id'])) ? (int) $f['prerequis_id'] : null;
                 $f['ma_progression'] = $inscriptions[$id] ?? 0;
                 $formationsById[$id] = $f;
             }
@@ -761,7 +769,7 @@ class FormationController
                 if (empty($f['prerequis_id'])) {
                     $children = [];
                     foreach ($formationsById as $cid => $cf) {
-                        if ((int)$cf['prerequis_id'] === $id) {
+                        if ((int) $cf['prerequis_id'] === $id) {
                             $cf['is_unlocked'] = ($f['ma_progression'] >= 100);
                             $children[] = $cf;
                         }
@@ -908,11 +916,11 @@ class FormationController
         if (!$formation)
             return null;
 
-        $resources       = $tuteurC->getResources($id_formation);
-        $total_chapters  = count($resources);
-        $has_chapters    = !empty($resources);
+        $resources = $tuteurC->getResources($id_formation);
+        $total_chapters = count($resources);
+        $has_chapters = !empty($resources);
         $viewed_chapters = $inscriC->getViewedChapters($id_user, $id_formation);
-        $db_progression  = $inscriC->getCurrentProgression($id_formation, $id_user);
+        $db_progression = $inscriC->getCurrentProgression($id_formation, $id_user);
 
         // ── RÈGLE DE PROGRESSION HYBRIDE (3 CAS) ─────────────────────────────
         // Même règle que getMyFormationsPageData — source de cohérence globale
@@ -922,9 +930,9 @@ class FormationController
                 $current_progression = $inscriC->calculateSmartPercentage($id_user, $id_formation, $total_chapters);
             } else {
                 // CAS B : aucun clic → garder DB, plafonner à 99% (100% interdit sans clics)
-                $current_progression = min(99, (int)$db_progression);
+                $current_progression = min(99, (int) $db_progression);
                 // Auto-corriger la DB si dwell-time avait stocké 100%
-                if ((int)$db_progression >= 100) {
+                if ((int) $db_progression >= 100) {
                     $inscriC->updateProgressionValue($id_user, $id_formation, $current_progression);
                 }
             }
@@ -932,7 +940,7 @@ class FormationController
             // CAS C : aucun chapitre configuré → 0% (contenu pas encore ajouté par le tuteur)
             $current_progression = 0;
             // Auto-corriger la DB si une ancienne valeur y était stockée
-            if ((int)$db_progression !== 0) {
+            if ((int) $db_progression !== 0) {
                 $inscriC->updateProgressionValue($id_user, $id_formation, 0);
             }
         }
@@ -947,17 +955,17 @@ class FormationController
         $current_month_fr = $mois[date('F')] . ' ' . date('Y');
 
         return [
-            'formation'          => $this->formatFormationForView($formation),
-            'resources'          => $resources,
-            'current_progression'=> $current_progression,
-            'viewed_chapters'    => $viewed_chapters,
-            'clean_desc'         => $clean_desc,
-            'word_count'         => $word_count,
-            'min_read_seconds'   => $min_read_seconds,
-            'has_chapters'       => $has_chapters,
-            'total_chapters'     => $total_chapters,
-            'current_month_fr'   => $current_month_fr,
-            'reading_time_est'   => max(1, round($word_count / 250))
+            'formation' => $this->formatFormationForView($formation),
+            'resources' => $resources,
+            'current_progression' => $current_progression,
+            'viewed_chapters' => $viewed_chapters,
+            'clean_desc' => $clean_desc,
+            'word_count' => $word_count,
+            'min_read_seconds' => $min_read_seconds,
+            'has_chapters' => $has_chapters,
+            'total_chapters' => $total_chapters,
+            'current_month_fr' => $current_month_fr,
+            'reading_time_est' => max(1, round($word_count / 250))
         ];
     }
 

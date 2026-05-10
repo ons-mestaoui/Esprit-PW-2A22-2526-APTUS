@@ -401,6 +401,70 @@ if (!isset($content)) {
         align-items: center;
         justify-content: center;
     }
+
+    /* 📄 Bulle de téléchargement Premium */
+    .download-bubble {
+        margin-top: 10px;
+        padding: 12px 15px;
+        background: white;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .download-bubble:hover {
+        border-color: var(--accent-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    }
+
+    .download-bubble .file-icon {
+        width: 36px;
+        height: 36px;
+        background: #fee2e2;
+        color: #ef4444;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .download-bubble .file-info {
+        flex: 1;
+    }
+
+    .download-bubble .file-name {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #1e293b;
+        display: block;
+    }
+
+    .download-bubble .file-meta {
+        font-size: 0.7rem;
+        color: #64748b;
+    }
+
+    /* ✍️ Typing Indicator */
+    .chat-typing {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        font-style: italic;
+        margin-bottom: 0.5rem;
+        padding-left: 0.5rem;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
 </style>
 
 <button class="chat-fab" onclick="toggleChat()">💬</button>
@@ -576,21 +640,78 @@ if (!isset($content)) {
     }
 
     function sendChatMsg() {
-        const input = document.getElementById('chat-input');
-        const msg = input.value.trim(); if (!msg) return;
-        const div = document.getElementById('chat-messages');
-        const ub = document.createElement('div'); ub.className = 'chat-msg user'; ub.textContent = msg; div.appendChild(ub);
+        var input = document.getElementById('chat-input');
+        var msg = input.value.trim(); if (!msg) return;
+        var div = document.getElementById('chat-messages');
+        var ub = document.createElement('div'); ub.className = 'chat-msg user'; ub.textContent = msg; div.appendChild(ub);
         input.value = '';
-        const ti = document.createElement('div'); ti.className = 'chat-typing'; ti.id = 'typing-indicator'; ti.textContent = '🤖 L\'IA réfléchit...'; div.appendChild(ti);
+
+        var ti = document.createElement('div');
+        ti.className = 'chat-typing';
+        ti.id = 'typing-indicator';
+        ti.innerHTML = '<span>🤖 Aptus IA réfléchit...</span>';
+        div.appendChild(ti);
         div.scrollTop = div.scrollHeight;
-        const fd = new FormData();
-        fd.append('action', 'send_chat_message'); fd.append('formation_id', FORMATION_ID); fd.append('receiver_id', 1); fd.append('content', msg);
-        fetch('ajax_handler.php', { method: 'POST', body: fd }).then(r => r.json()).then(data => {
-            document.getElementById('typing-indicator')?.remove();
-            const ab = document.createElement('div'); ab.className = 'chat-msg ai';
-            ab.innerHTML = '<span class="ai-badge">🤖 Assistant IA</span>' + (data.success ? data.ai_reply.replace(/\n/g, '<br>') : (data.message || 'Erreur.'));
-            div.appendChild(ab); div.scrollTop = div.scrollHeight;
-        }).catch(() => { document.getElementById('typing-indicator')?.remove(); });
+
+        var fd = new FormData();
+        fd.append('action', 'send_chat_message');
+        fd.append('formation_id', FORMATION_ID);
+        fd.append('sender_id', USER_ID);
+        fd.append('receiver_id', 1);
+        fd.append('content', msg);
+
+        fetch('ajax_handler.php', { method: 'POST', body: fd })
+        .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(function(data) {
+            var ind = document.getElementById('typing-indicator');
+            if (ind) ind.remove();
+
+            var ab = document.createElement('div');
+            ab.className = 'chat-msg ai';
+
+            var rawReply = data.success ? (data.ai_reply || '') : (data.message || 'Erreur inconnue.');
+            var cleanReply = rawReply;
+            var ficheData = null;
+
+            if (rawReply.indexOf('[FICHE_READY]') !== -1) {
+                var parts = rawReply.split('[FICHE_READY]');
+                cleanReply = parts[0].trim();
+                try { ficheData = JSON.parse(parts[1]); } catch(e) { console.error('Fiche parse error:', e); }
+            }
+
+            ab.innerHTML = '<span class="ai-badge">🤖 Assistant IA</span>' + cleanReply.replace(/\n/g, '<br>');
+
+            if (ficheData && ficheData.html) {
+                var dlb = document.createElement('div');
+                dlb.className = 'download-bubble';
+                dlb.innerHTML = '<div class="file-icon">📄</div><div class="file-info"><span class="file-name">Fiche_Revision_Aptus.pdf</span><span class="file-meta">Document PDF • Généré par IA</span></div><div style="color:var(--accent-primary)">⬇️</div>';
+                (function(fData) {
+                    dlb.onclick = function() {
+                        var hd = document.getElementById('contenu-fiche-temp');
+                        if (!hd) { hd = document.createElement('div'); hd.id = 'contenu-fiche-temp'; hd.style.display = 'none'; document.body.appendChild(hd); }
+                        hd.innerHTML = fData.html;
+                        telechargerFichePDF('contenu-fiche-temp');
+                    };
+                })(ficheData);
+                ab.appendChild(dlb);
+            }
+
+            div.appendChild(ab);
+            div.scrollTop = div.scrollHeight;
+        })
+        .catch(function(err) {
+            var ind = document.getElementById('typing-indicator');
+            if (ind) ind.remove();
+            var ab = document.createElement('div');
+            ab.className = 'chat-msg ai';
+            ab.innerHTML = '<span class="ai-badge">🤖 Assistant IA</span>Désolé, une erreur est survenue. Réessayez. (' + err.message + ')';
+            div.appendChild(ab);
+            div.scrollTop = div.scrollHeight;
+            console.error('[Chat] Erreur:', err);
+        });
     }
 
     function genererFicheDepuisChat(event) {
@@ -663,8 +784,8 @@ if (!isset($content)) {
      * EXPORT PDF PREMIUM (Version Screenshot)
      * Cette version est robuste et fidèle au design Aptus.
      */
-    function telechargerFichePDF() {
-        const sourceElement = document.getElementById('contenu-fiche');
+    function telechargerFichePDF(customId = 'contenu-fiche') {
+        const sourceElement = document.getElementById(customId);
         
         if (!sourceElement) {
             alert("Erreur : La div 'contenu-fiche' est introuvable.");

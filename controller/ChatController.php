@@ -38,6 +38,16 @@ class ChatController {
     private function generateAIReply(int $student_id, int $tutor_id, int $id_formation, string $student_query): string {
         $db = config::getConnexion();
 
+        // 1. Détecter si l'étudiant demande une fiche de révision
+        $fiche_keywords = ['fiche', 'résumé', 'resume', 'révision', 'revision', 'pdf', 'synthèse'];
+        $wants_fiche = false;
+        foreach ($fiche_keywords as $kw) {
+            if (mb_stripos($student_query, $kw) !== false) {
+                $wants_fiche = true;
+                break;
+            }
+        }
+
         // Récupérer le contexte de la formation
         $stmt = $db->prepare("SELECT titre, description FROM formation WHERE id_formation = :id");
         $stmt->execute(['id' => $id_formation]);
@@ -45,12 +55,32 @@ class ChatController {
 
         $titre  = $formation['titre']       ?? 'cette formation';
         $syllabus = $formation['description'] ?? '';
-        // Tronquer le syllabus si trop long (évite de dépasser les tokens Groq)
-        if (mb_strlen($syllabus) > 2000) {
-            $syllabus = mb_substr(strip_tags($syllabus), 0, 2000) . '...';
-        }
+        
+        if ($wants_fiche) {
+            // Logique spéciale : On génère la fiche via l'AIController
+            $aiC = new AIController();
+            // On récupère l'historique pour une fiche contextuelle
+            $history_raw = $this->getHistory($student_id, $tutor_id, $id_formation);
+            $history_text = "";
+            foreach($history_raw as $msg) {
+                $history_text .= ($msg['sender_id'] == $student_id ? "Étudiant: " : "IA: ") . $msg['content'] . "\n\n";
+            }
+            $history_text .= "Étudiant: " . $student_query; // Ajouter la requête actuelle
 
-        $prompt = "Tu es un assistant pédagogique bienveillant pour la plateforme Aptus AI.
+            $resFiche = $aiC->generateFicheFromChat($history_text);
+            
+            if ($resFiche['success']) {
+                $reply = "C'est une excellente idée ! J'ai analysé nos échanges sur **$titre** et j'ai préparé votre fiche de révision personnalisée. \n\n[FICHE_READY]{ \"html\": " . json_encode($resFiche['fiche_html']) . " }";
+            } else {
+                $reply = "Je voulais vous préparer une fiche de révision, mais j'ai eu un petit souci technique. Posez-moi encore une ou deux questions pour que j'aie assez de matière !";
+            }
+        } else {
+            // Logique standard : Réponse pédagogique
+            if (mb_strlen($syllabus) > 2000) {
+                $syllabus = mb_substr(strip_tags($syllabus), 0, 2000) . '...';
+            }
+
+            $prompt = "Tu es un assistant pédagogique bienveillant pour la plateforme Aptus AI.
 Tu aides les étudiants inscrits à la formation : **$titre**.
 
 Voici un extrait du programme du cours :
@@ -60,7 +90,8 @@ Question de l'étudiant : $student_query
 
 Réponds de façon claire, encourageante et pédagogique. Si la question sort du cadre du cours, oriente gentiment l'étudiant vers son tuteur humain. Maximum 3 paragraphes courts.";
 
-        $reply = $this->callAI($prompt);
+            $reply = $this->callAI($prompt);
+        }
 
         // Préfixe visuel pour indiquer que c'est l'IA
         $prefixed = "🤖 L'assistant IA du tuteur :\n\n" . $reply;

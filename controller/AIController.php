@@ -39,7 +39,8 @@ class AIController
         require_once __DIR__ . '/FormationController.php';
         $formC = new FormationController();
         $f = $formC->getFormationById($id_formation);
-        if (!$f) return ['success' => false, 'message' => 'Formation introuvable.'];
+        if (!$f)
+            return ['success' => false, 'message' => 'Formation introuvable.'];
 
         $mermaid = $this->generateMindMapInternal($f['description']);
         if ($mermaid) {
@@ -64,7 +65,8 @@ class AIController
         require_once __DIR__ . '/FormationController.php';
         $formC = new FormationController();
         $f = $formC->getFormationById($id_formation);
-        if (!$f) return ['success' => false, 'message' => 'Formation introuvable.'];
+        if (!$f)
+            return ['success' => false, 'message' => 'Formation introuvable.'];
 
         $markdown = $this->generateCheatSheetInternal($f['description']);
         if ($markdown) {
@@ -111,7 +113,8 @@ class AIController
             "response_format" => ["type" => "json_object"]
         ];
         $res = $this->callAI($data);
-        if (!$res['success']) return json_encode(['success' => false, 'message' => $res['message']]);
+        if (!$res['success'])
+            return json_encode(['success' => false, 'message' => $res['message']]);
         return json_encode(['success' => true, 'data' => json_decode($res['content'], true)]);
     }
 
@@ -122,23 +125,27 @@ class AIController
             $stmt = $db->prepare("SELECT emotion_detectee, COUNT(*) as count FROM rapport_emotions WHERE id_formation = :id GROUP BY emotion_detectee");
             $stmt->execute(['id' => $id_formation]);
             return ['success' => true, 'stats' => $stmt->fetchAll()];
-        } catch (Exception $e) { return ['success' => false, 'message' => $e->getMessage()]; }
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
     public function analyzeStudentEmotions($stats)
     {
-        if (empty($stats)) return json_encode(['success' => true, 'data' => ['analyseGlobale' => "En attente...", 'conseils' => []]]);
+        if (empty($stats))
+            return json_encode(['success' => true, 'data' => ['analyseGlobale' => "En attente...", 'conseils' => []]]);
         $data = [
             "model" => "llama-3.3-70b-versatile",
             "messages" => [
-                ["role" => "system", "content" => "Strict JSON Output. Format: {\"analyseGlobale\": \"...\", \"conseils\": [\"...\", \"...\"]}"], 
+                ["role" => "system", "content" => "Strict JSON Output. Format: {\"analyseGlobale\": \"...\", \"conseils\": [\"...\", \"...\"]}"],
                 ["role" => "user", "content" => "Analyse emotions JSON: " . json_encode($stats)]
             ],
             "temperature" => 0.6,
             "response_format" => ["type" => "json_object"]
         ];
         $res = $this->callAI($data);
-        if (!$res['success']) return json_encode(['success' => false, 'message' => $res['message']]);
+        if (!$res['success'])
+            return json_encode(['success' => false, 'message' => $res['message']]);
         return json_encode(['success' => true, 'data' => json_decode($res['content'], true)]);
     }
 
@@ -151,14 +158,16 @@ class AIController
             "response_format" => ["type" => "json_object"]
         ];
         $res = $this->callAI($data, 15);
-        if (!$res['success']) return json_encode(['success' => false, 'has_update' => false]);
+        if (!$res['success'])
+            return json_encode(['success' => false, 'has_update' => false]);
         return json_encode(['success' => true] + json_decode($res['content'], true));
     }
 
     public function generateCrashCourse($prompt, $catalogue)
     {
         $ctx = "";
-        foreach ($catalogue as $f) $ctx .= "- {$f['titre']} (ID:{$f['id_formation']})\n";
+        foreach ($catalogue as $f)
+            $ctx .= "- {$f['titre']} (ID:{$f['id_formation']})\n";
         $data = [
             "model" => "llama-3.3-70b-versatile",
             "messages" => [["role" => "user", "content" => "RAG Aptus AI. Catalogue:\n$ctx\nBesoin: '$prompt'. Génère Crash Course 30min JSON: {title, modules:[{formation_id, chapitre, objectif, duree}]}."]],
@@ -166,7 +175,8 @@ class AIController
             "response_format" => ["type" => "json_object"]
         ];
         $res = $this->callAI($data);
-        if (!$res['success']) return json_encode(['success' => false]);
+        if (!$res['success'])
+            return json_encode(['success' => false]);
         return json_encode(['success' => true, 'data' => json_decode($res['content'], true)]);
     }
 
@@ -179,7 +189,8 @@ class AIController
             "response_format" => ["type" => "json_object"]
         ];
         $res = $this->callAI($data);
-        if (!$res['success']) return json_encode(['success' => false]);
+        if (!$res['success'])
+            return json_encode(['success' => false]);
         return json_encode(['success' => true, 'data' => json_decode($res['content'], true)]);
     }
 
@@ -194,11 +205,14 @@ class AIController
                 $desc = $row['description'];
                 if (strpos($desc, '<!-- AI_SYLLABUS_START -->') !== false)
                     $desc = preg_replace('/<!-- AI_SYLLABUS_START -->.*?<!-- AI_SYLLABUS_END -->/s', $html, $desc);
-                else $desc .= $html;
+                else
+                    $desc .= $html;
                 $u = $db->prepare("UPDATE formation SET description = :desc WHERE id_formation = :id");
                 return json_encode(['success' => $u->execute(['desc' => $desc, 'id' => $id])]);
             }
-        } catch (Exception $e) { return json_encode(['success' => false]); }
+        } catch (Exception $e) {
+            return json_encode(['success' => false]);
+        }
         return json_encode(['success' => false]);
     }
 
@@ -211,6 +225,38 @@ class AIController
         } catch (Exception $e) { return json_encode(['success' => false]); }
     }
 
+    public function saveStudentTranscript($id_u, $id_f, $text)
+    {
+        try {
+            $db = config::getConnexion();
+            // Création automatique de la table si absente
+            $db->exec("CREATE TABLE IF NOT EXISTS rapport_transcripts (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_formation INT,
+                id_utilisateur INT,
+                transcript_text TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )");
+            $s = $db->prepare("INSERT INTO rapport_transcripts (id_utilisateur, id_formation, transcript_text) VALUES (:u, :f, :t)");
+            return json_encode(['success' => $s->execute(['u' => $id_u, 'f' => $id_f, 't' => $text])]);
+        } catch (Exception $e) { return json_encode(['success' => false]); }
+    }
+
+    public function getRecentTranscripts($id_f)
+    {
+        try {
+            $db = config::getConnexion();
+            $s = $db->prepare("SELECT t.transcript_text, u.nom, t.created_at 
+                             FROM rapport_transcripts t 
+                             JOIN utilisateur u ON t.id_utilisateur = u.id_utilisateur 
+                             WHERE t.id_formation = ? 
+                             AND t.created_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+                             ORDER BY t.created_at DESC LIMIT 20");
+            $s->execute([$id_f]);
+            return ['success' => true, 'transcripts' => $s->fetchAll()];
+        } catch (Exception $e) { return ['success' => false]; }
+    }
+
     public function consolidateEmotions($id_f)
     {
         try {
@@ -218,7 +264,8 @@ class AIController
             $s = $db->prepare("SELECT emotion_detectee, COUNT(*) as count FROM rapport_emotions WHERE id_formation = :id GROUP BY emotion_detectee");
             $s->execute(['id' => $id_f]);
             $stats = $s->fetchAll();
-            if (empty($stats)) return json_encode(['success' => true]);
+            if (empty($stats))
+                return json_encode(['success' => true]);
             $aiRes = $this->analyzeStudentEmotions($stats);
             $report = json_decode($aiRes, true);
             $summary = $report['data']['analyseGlobale'] ?? "Session terminée.";
@@ -227,10 +274,13 @@ class AIController
             $d = $db->prepare("DELETE FROM rapport_emotions WHERE id_formation = :id");
             $d->execute(['id' => $id_f]);
             return json_encode(['success' => true]);
-        } catch (Exception $e) { return json_encode(['success' => false]); }
+        } catch (Exception $e) {
+            return json_encode(['success' => false]);
+        }
     }
 
-    private function generateMindMapInternal($content) {
+    private function generateMindMapInternal($content)
+    {
         $data = [
             "model" => "llama-3.3-70b-versatile",
             "messages" => [["role" => "system", "content" => "Génère code Mermaid mindmap. Pas de blabla."], ["role" => "user", "content" => "Mindmap pour : " . $content]],
@@ -240,7 +290,8 @@ class AIController
         return $res['success'] ? $res['content'] : null;
     }
 
-    private function generateCheatSheetInternal($content) {
+    private function generateCheatSheetInternal($content)
+    {
         $data = [
             "model" => "llama-3.3-70b-versatile",
             "messages" => [["role" => "system", "content" => "Génère fiche Markdown. Pas d'emojis."], ["role" => "user", "content" => "Fiche pour : " . $content]],
@@ -264,13 +315,24 @@ class AIController
                 <style>.aptus-fiche-content > *:first-child { margin-top: 0 !important; }</style>' . $markdown . '</div>';
     }
 
+    /**
+     * Public wrapper for the internal AI call — used by ChatController.
+     * Accepts the same data array format as the Groq API.
+     */
+    public function generateGenericResponse(array $data): array
+    {
+        return $this->callAI($data);
+    }
+
     private function callAI($data, $timeout = 30)
     {
         foreach ($this->groqKeys as $key) {
             $res = $this->requestGroq($data, $key, $timeout);
-            if ($res['success']) return $res;
+            if ($res['success'])
+                return $res;
         }
-        if (!empty($this->geminiKey)) return $this->requestGemini($data, $this->geminiKey, $timeout);
+        if (!empty($this->geminiKey))
+            return $this->requestGemini($data, $this->geminiKey, $timeout);
         return ['success' => false, 'message' => 'APIs Unavailable'];
     }
 
@@ -295,7 +357,8 @@ class AIController
     private function requestGemini($data, $key, $timeout)
     {
         $prompt = "";
-        foreach ($data['messages'] as $m) $prompt .= $m['content'] . "\n";
+        foreach ($data['messages'] as $m)
+            $prompt .= $m['content'] . "\n";
         $url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" . $key;
         $body = ["contents" => [["parts" => [["text" => $prompt]]]]];
         $ch = curl_init($url);

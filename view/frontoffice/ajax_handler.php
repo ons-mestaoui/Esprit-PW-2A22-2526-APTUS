@@ -58,11 +58,11 @@ switch ($action) {
     // --------------------------------------------------------
     case 'update_dwell_progression':
         require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
-        $controller   = new TuteurDashboardController();
-        $id_formation = (int)($_POST['id_formation'] ?? 0);
-        $id_user      = (int)($_POST['id_user'] ?? SessionManager::getUserId());
-        $mode         = $_POST['mode'] ?? 'dwell'; // 'chapter' ou 'dwell'
-        $new_prog     = (int)($_POST['new_prog'] ?? 0);
+        $controller = new TuteurDashboardController();
+        $id_formation = (int) ($_POST['id_formation'] ?? 0);
+        $id_user = (int) ($_POST['id_user'] ?? SessionManager::getUserId());
+        $mode = $_POST['mode'] ?? 'dwell'; // 'chapter' ou 'dwell'
+        $new_prog = (int) ($_POST['new_prog'] ?? 0);
 
         // Lire la progression actuelle pour ne jamais régresser
         require_once __DIR__ . '/../../controller/InscriptionController.php';
@@ -74,7 +74,7 @@ switch ($action) {
             // On ne fait plus confiance au pourcentage client, on compte les chapitres vus.
             $chapter_id = $_POST['chapter_id'] ?? 0;
 
-            $resources      = $controller->getResources($id_formation);
+            $resources = $controller->getResources($id_formation);
             $total_chapters = count($resources);
 
             if ($total_chapters === 0) {
@@ -84,7 +84,7 @@ switch ($action) {
             }
 
             // markChapterAsViewed écrit en DB via calculateSmartPercentage → updateProgressionValue
-            $final   = $inscriC->markChapterAsViewed($id_user, $id_formation, $chapter_id, $total_chapters);
+            $final = $inscriC->markChapterAsViewed($id_user, $id_formation, $chapter_id, $total_chapters);
             // updateProgression gère les notifications et la gamification (badges, 🎓)
             $success = $controller->updateProgression($id_formation, $id_user, $final);
 
@@ -93,14 +93,14 @@ switch ($action) {
             // Le dwell-time est UNIQUEMENT un indicateur visuel de temps de lecture.
             // Il NE modifie PAS la progression en BD — seuls les chapitres ouverts comptent.
             // Raison : un cours sans chapitres ne doit jamais être marqué "Terminé".
-            $final   = $current; // Retourner la progression DB inchangée
+            $final = $current; // Retourner la progression DB inchangée
             $success = true;
         }
 
         echo json_encode([
-            'success'     => $success,
+            'success' => $success,
             'progression' => $final,
-            'mode'        => $mode
+            'mode' => $mode
         ]);
         break;
 
@@ -112,7 +112,7 @@ switch ($action) {
         $id_formation = $_POST['id_formation'] ?? 0;
         $id_user = $_POST['id_user'] ?? 0;
         $progression = $_POST['progression'] ?? 0;
-        $success = $controller->updateProgression((int)$id_formation, (int)$id_user, (int)$progression);
+        $success = $controller->updateProgression((int) $id_formation, (int) $id_user, (int) $progression);
         echo json_encode(['success' => $success]);
         break;
 
@@ -120,7 +120,7 @@ switch ($action) {
         require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
         $controller = new TuteurDashboardController();
         $id_tuteur = $_GET['tuteur_id'] ?? SessionManager::getUserId();
-        $alerts = $controller->getRecentAIAlerts((int)$id_tuteur);
+        $alerts = $controller->getRecentAIAlerts((int) $id_tuteur);
         echo json_encode(['success' => true, 'alerts' => $alerts]);
         break;
 
@@ -151,7 +151,7 @@ switch ($action) {
             $url = 'data:' . $fileType . ';base64,' . $base64;
         }
 
-        $success = $controller->addResource((int)$id_formation, $type, $titre, $url);
+        $success = $controller->addResource((int) $id_formation, $type, $titre, $url);
         echo json_encode(['success' => $success, 'message' => $message]);
         break;
 
@@ -216,14 +216,14 @@ switch ($action) {
     case 'get_ai_mindmap':
         require_once __DIR__ . '/../../controller/AIController.php';
         $aiC = new AIController();
-        $id_formation = (int)($_GET['id'] ?? 0);
+        $id_formation = (int) ($_GET['id'] ?? 0);
         echo json_encode($aiC->getMindMap($id_formation));
         break;
 
     case 'get_ai_cheatsheet':
         require_once __DIR__ . '/../../controller/AIController.php';
         $aiC = new AIController();
-        $id_formation = (int)($_GET['id'] ?? 0);
+        $id_formation = (int) ($_GET['id'] ?? 0);
         echo json_encode($aiC->getCheatSheet($id_formation));
         break;
 
@@ -232,7 +232,7 @@ switch ($action) {
         $controller = new AIController();
         $id_formation = $_POST['id_formation'] ?? 0;
         $html_content = "<!-- AI_SYLLABUS_START -->" . $_POST['html_content'] . "<!-- AI_SYLLABUS_END -->";
-        
+
         echo $controller->appendSyllabus($id_formation, $html_content);
         break;
 
@@ -241,7 +241,7 @@ switch ($action) {
         $controller = new TuteurDashboardController();
         $id_formation = $_POST['id_formation'] ?? 0;
         $resource_id = $_POST['resource_id'] ?? '';
-        $success = $controller->deleteResource((int)$id_formation, $resource_id);
+        $success = $controller->deleteResource((int) $id_formation, $resource_id);
         echo json_encode(['success' => $success]);
         break;
 
@@ -275,6 +275,26 @@ switch ($action) {
         echo $controller->saveStudentEmotion($id_candidat, $id_formation, $emotion);
         break;
 
+    case 'save_transcript':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
+        $id_user = $_POST['id_user'] ?? SessionManager::getUserId();
+        $id_formation = $_POST['id_formation'] ?? null;
+        $text = $_POST['text'] ?? '';
+        if ($id_formation && !empty($text)) {
+            echo $controller->saveStudentTranscript($id_user, $id_formation, $text);
+        } else {
+            echo json_encode(['success' => false]);
+        }
+        break;
+
+    case 'get_recent_transcripts':
+        require_once __DIR__ . '/../../controller/AIController.php';
+        $controller = new AIController();
+        $id_formation = $_GET['id_formation'] ?? $_POST['id_formation'] ?? 0;
+        echo json_encode($controller->getRecentTranscripts($id_formation));
+        break;
+
 
 
     // --------------------------------------------------------
@@ -284,7 +304,7 @@ switch ($action) {
         $uid = $_GET['user_id'] ?? SessionManager::getUserId();
         require_once __DIR__ . '/../../controller/NotificationController.php';
         $notifC = new NotificationController();
-        $notifs = $notifC->getUnreadNotifications((int)$uid);
+        $notifs = $notifC->getUnreadNotifications((int) $uid);
         echo json_encode(['success' => true, 'notifications' => $notifs]);
         break;
 
@@ -293,11 +313,11 @@ switch ($action) {
         $notif_id = $_POST['notif_id'] ?? null;
         require_once __DIR__ . '/../../controller/NotificationController.php';
         $notifC = new NotificationController();
-        
+
         if ($notif_id) {
-            $success = $notifC->markOneAsRead((int)$notif_id);
+            $success = $notifC->markOneAsRead((int) $notif_id);
         } else {
-            $success = $notifC->markAsRead((int)$uid);
+            $success = $notifC->markAsRead((int) $uid);
         }
         echo json_encode(['success' => $success]);
         break;
@@ -306,7 +326,7 @@ switch ($action) {
         $uid = $_POST['user_id'] ?? SessionManager::getUserId();
         require_once __DIR__ . '/../../controller/NotificationController.php';
         $notifC = new NotificationController();
-        $success = $notifC->deleteAll((int)$uid);
+        $success = $notifC->deleteAll((int) $uid);
         echo json_encode(['success' => $success]);
         break;
 
@@ -331,7 +351,7 @@ switch ($action) {
         }
         require_once __DIR__ . '/../../controller/ChatController.php';
         $chatC = new ChatController();
-        $reply = $chatC->sendMessage((int)$sender_id, (int)$receiver_id, (int)$formation_id, $content);
+        $reply = $chatC->sendMessage((int) $sender_id, (int) $receiver_id, (int) $formation_id, $content);
         echo json_encode(['success' => true, 'ai_reply' => $reply]);
         break;
 
@@ -341,7 +361,7 @@ switch ($action) {
         $formation_id = $_GET['formation_id'] ?? 0;
         require_once __DIR__ . '/../../controller/ChatController.php';
         $chatC = new ChatController();
-        $history = $chatC->getHistory((int)$user1, (int)$user2, (int)$formation_id);
+        $history = $chatC->getHistory((int) $user1, (int) $user2, (int) $formation_id);
         echo json_encode(['success' => true, 'messages' => $history]);
         break;
 
@@ -354,7 +374,7 @@ switch ($action) {
         $comment = $_POST['comment'] ?? '';
         require_once __DIR__ . '/../../controller/PeerLearningController.php';
         $peerC = new PeerLearningController();
-        $success = $peerC->submitReview((int)$session_id, (int)$rating, $comment);
+        $success = $peerC->submitReview((int) $session_id, (int) $rating, $comment);
         echo json_encode(['success' => $success]);
         break;
 
@@ -362,17 +382,17 @@ switch ($action) {
         $uid = SessionManager::getUserId();
         $id_formation = $_POST['id_formation'] ?? 0;
         $transcript = $_POST['transcript_summary'] ?? '';
-        
+
         require_once __DIR__ . '/../../controller/NotificationController.php';
         require_once __DIR__ . '/../../controller/FormationController.php';
-        
+
         $formC = new FormationController();
         $f = $formC->getFormationById($id_formation);
         $titre = $f ? $f['titre'] : "votre cours";
-        
+
         $msg = "🎬 L'enregistrement de '$titre' est disponible ! Retrouvez le transcript IA dans votre espace.";
         $url = "formation_viewer.php?id=" . $id_formation;
-        
+
         $success = NotificationController::creerNotification($uid, 'certif_ready', $msg, $url, 'video', 'URGENT');
         echo json_encode(['success' => $success]);
         break;
@@ -381,7 +401,7 @@ switch ($action) {
         // Handle JSON input from fetch body
         $input = json_decode(file_get_contents('php://input'), true);
         $history = $input['chat_history'] ?? '';
-        
+
         require_once __DIR__ . '/../../controller/AIController.php';
         $aiC = new AIController();
         $result = $aiC->generateFicheFromChat($history);
@@ -395,7 +415,7 @@ switch ($action) {
         require_once __DIR__ . '/../../controller/FormationController.php';
         $formC = new FormationController();
         $id_user = $_GET['user_id'] ?? SessionManager::getUserId();
-        $target_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
+        $target_id = isset($_GET['id']) ? (int) $_GET['id'] : null;
         $data = $formC->getSkillTreePageData($id_user, $target_id);
         echo json_encode($data);
         break;
