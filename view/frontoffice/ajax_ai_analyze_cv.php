@@ -68,7 +68,8 @@ if ($cvData) {
         json_encode($decoded['points_forts'] ?? []),
         json_encode($decoded['points_faibles'] ?? []),
         json_encode($decoded['missing_skills'] ?? []), // Mapping suggestions/missing skills
-        json_encode($decoded['detailed_recommendations'] ?? [])
+        json_encode($decoded['detailed_recommendations'] ?? []),
+        json_encode($decoded['keywords'] ?? [])
     );
     $riac->addRapport($rapportIA);
 }

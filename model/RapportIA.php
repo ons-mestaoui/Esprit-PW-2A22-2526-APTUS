@@ -8,6 +8,7 @@ class RapportIA {
     private ?string $pointsFaibles;
     private ?string $sectionsManquantes;
     private ?string $suggestions;
+    private ?string $keywords;
     private ?string $dateAnalyse;
 
     public function __construct(
@@ -18,6 +19,7 @@ class RapportIA {
         ?string $pointsFaibles = "",
         ?string $sectionsManquantes = "",
         ?string $suggestions = "",
+        ?string $keywords = "",
         ?string $dateAnalyse = null
     ) {
         $this->id_rapport_ia = $id_rapport_ia;
@@ -27,6 +29,7 @@ class RapportIA {
         $this->pointsFaibles = $pointsFaibles;
         $this->sectionsManquantes = $sectionsManquantes;
         $this->suggestions = $suggestions;
+        $this->keywords = $keywords;
         $this->dateAnalyse = $dateAnalyse;
     }
 
@@ -38,6 +41,7 @@ class RapportIA {
     public function getPointsFaibles(): ?string { return $this->pointsFaibles; }
     public function getSectionsManquantes(): ?string { return $this->sectionsManquantes; }
     public function getSuggestions(): ?string { return $this->suggestions; }
+    public function getKeywords(): ?string { return $this->keywords; }
     public function getDateAnalyse(): ?string { return $this->dateAnalyse; }
 }
 ?>

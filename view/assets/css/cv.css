@@ -158,15 +158,16 @@
 .template-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: var(--transition-base);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
 }
 .template-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--accent-primary);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+  border-color: var(--accent-primary-light);
 }
 .template-card__preview {
   aspect-ratio: 3/4;
@@ -208,20 +209,35 @@
 .template-card__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(108, 92, 231, 0.85);
+  background: linear-gradient(135deg, rgba(107, 52, 163, 0.9), rgba(0, 163, 218, 0.9));
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   transition: var(--transition-base);
+  backdrop-filter: blur(2px);
 }
 .template-card:hover .template-card__overlay {
   opacity: 1;
 }
 .template-card__overlay .btn {
-  color: #FFF;
-  border: 2px solid #FFF;
+  background: #fff;
+  color: var(--accent-primary);
+  border: none;
   font-size: var(--fs-sm);
+  padding: 0.6rem 1.2rem;
+  border-radius: 99px;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+.template-card:hover .template-card__overlay .btn {
+  transform: translateY(0);
+}
+.template-card__overlay .btn:hover {
+  transform: scale(1.05) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
 }
 .template-card__info {
   padding: var(--space-4);

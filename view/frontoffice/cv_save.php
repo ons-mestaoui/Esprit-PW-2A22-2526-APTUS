@@ -68,12 +68,23 @@ try {
 
     // Session user
     if (session_status() === PHP_SESSION_NONE) session_start();
-    $id_candidat = $_SESSION['user_id'] ?? null; // NULL est acceptable (colonne DEFAULT NULL)
+    $id_candidat = $_SESSION['id_utilisateur'] ?? null; 
 
     // Construire l'infoContact consolidée
     $infoContact = implode(' | ', array_filter([$email, $phone, $location]));
 
     $cv_id       = !empty($data['cv_id'])       ? (int)$data['cv_id']       : null;
+    
+    // Security Check on Update
+    $cvc = new CVC();
+    if ($cv_id) {
+        $existing = $cvc->getCVById($cv_id);
+        if ($existing && $existing['id_candidat'] && $existing['id_candidat'] != $id_candidat) {
+            echo json_encode(['success' => false, 'message' => 'Accès refusé: Vous n\'êtes pas le propriétaire de ce CV.']);
+            exit;
+        }
+    }
+
     $template_id = !empty($data['template_id']) ? (int)$data['template_id'] : null;
     $photo       = $data['photo']       ?? '';
     $couleur     = $data['color_theme'] ?? '#2563eb';
@@ -120,7 +131,7 @@ try {
     );
 
     // Appel du Contrôleur MVC
-    $cvc = new CVC();
+
 
     $db = config::getConnexion();
     $db->exec('SET FOREIGN_KEY_CHECKS = 0');

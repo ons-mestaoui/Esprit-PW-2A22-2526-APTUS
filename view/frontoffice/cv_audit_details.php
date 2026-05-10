@@ -30,6 +30,7 @@ if ($rapportData) {
         'points_faibles' => json_decode($rapportData['pointsFaibles'], true),
         'missing_skills' => json_decode($rapportData['sectionsManquantes'], true),
         'detailed_recommendations' => json_decode($rapportData['suggestions'], true),
+        'keywords' => isset($rapportData['keywords']) ? json_decode($rapportData['keywords'], true) : [],
     ];
     
     // Si on a l'original complet dans cv table, on merge pour récupérer les scores détaillés
@@ -49,7 +50,12 @@ if (!$analysis) {
 }
 
 // Matching Logic (via le nouveau contrôleur MVC)
-$jobMatches = $riac->matchJobs($analysis['keywords'] ?? []);
+$keywordsForMatching = $analysis['keywords'] ?? [];
+// Fallback sur le titre du poste si aucun mot-clé n'est extrait
+if (empty($keywordsForMatching) && !empty($cv['titrePoste'])) {
+    $keywordsForMatching = explode(' ', $cv['titrePoste']);
+}
+$jobMatches = $riac->matchJobs($keywordsForMatching);
 // Fusion des lacunes et des domaines suggérés pour une recherche précise
 $trainingSearchTerms = array_merge($analysis['missing_skills'] ?? [], $analysis['suggested_training_domains'] ?? []);
 $trainingMatches = $riac->matchTrainingsByDomain($trainingSearchTerms);
@@ -852,7 +858,7 @@ if (!isset($content)) {
                 <p class="match-subtitle"><?php echo htmlspecialchars($job['domain']); ?> • <?php echo htmlspecialchars($job['location']); ?></p>
                 <div class="match-footer">
                     <span style="font-size: 0.75rem; color:#64748b;">Postuler sur Aptus</span>
-                    <button class="btn-apply-small" onclick="window.location.href='hr_posts.php'">Voir l'offre</button>
+                    <button class="btn-apply-small" onclick="window.location.href='job_details.php?id=<?php echo $job['id']; ?>'">Voir l'offre</button>
                 </div>
             </div>
             <?php endforeach; ?>

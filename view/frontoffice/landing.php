@@ -40,12 +40,12 @@
       <a href="#resources" class="nav-anchor">Ressources</a>
     </div>
     <div class="landing-nav__actions">
-      <button class="theme-toggle" aria-label="Toggle theme">
-        <i data-lucide="sun" class="icon-sun" style="display:none;width:20px;height:20px;color:var(--text-primary);"></i>
-        <i data-lucide="moon" class="icon-moon" style="width:20px;height:20px;color:var(--text-primary);"></i>
+      <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme">
+        <i data-lucide="sun" class="icon-sun"></i>
+        <i data-lucide="moon" class="icon-moon"></i>
       </button>
       <a href="login.php" class="btn btn-ghost nav-btn-login">Se connecter</a>
-      <a href="signup_choice.php" class="btn btn-primary glow-btn">S'inscrire</a>
+      <a href="login.php?panel=signup" class="btn btn-primary glow-btn">S'inscrire</a>
     </div>
     <button class="hamburger-landing" id="hamburger-landing" aria-label="Menu">
       <span></span><span></span><span></span>
@@ -60,7 +60,7 @@
       <a href="#resources" class="nav-anchor">Ressources</a>
       <div class="mobile-menu-actions mt-4">
         <a href="login.php" class="btn btn-ghost w-100 mb-2">Se connecter</a>
-        <a href="signup_choice.php" class="btn btn-primary w-100">S'inscrire</a>
+        <a href="login.php?panel=signup" class="btn btn-primary w-100">S'inscrire</a>
       </div>
   </div>
 
@@ -89,7 +89,7 @@
             Aptus connecte instantanément les meilleurs talents et les entreprises visionnaires grâce à un matching prédictif, un générateur de CV intelligent et un parcours d'apprentissage gamifié.
           </p>
           <div class="hero__ctas mt-5">
-            <a href="signup_choice.php" class="btn btn-primary btn-lg glow-btn splash-hover magnetic-btn">
+            <a href="login.php?panel=signup" class="btn btn-primary btn-lg glow-btn splash-hover magnetic-btn">
               <i data-lucide="rocket"></i> S'inscrire
             </a>
             <a href="#showcase-jobs" class="btn btn-ghost btn-lg nav-anchor">
@@ -149,7 +149,7 @@
           <li><div class="feature-icon bg-teal-light"><i data-lucide="scan-line" class="text-teal"></i></div> <div><strong class="text-high-contrast">Analyse sémantique</strong><br><span class="text-sm text-muted">Compréhension profonde des compétences</span></div></li>
           <li><div class="feature-icon bg-teal-light"><i data-lucide="percent" class="text-teal"></i></div> <div><strong class="text-high-contrast">Score de compatibilité</strong><br><span class="text-sm text-muted">Match affiché instantanément</span></div></li>
         </ul>
-        <a href="signup_choice.php" class="btn btn-outline-teal mt-4 rounded-pill">Explorer les offres</a>
+        <a href="login.php?panel=signup" class="btn btn-outline-teal mt-4 rounded-pill">Explorer les offres</a>
       </div>
       <div class="showcase-visual reveal-right">
         <div class="mockup-card glass-panel tilt-card text-high-contrast" data-tilt data-tilt-perspective="1000" data-tilt-max="10" data-tilt-speed="400">
@@ -193,7 +193,7 @@
           <li><div class="feature-icon bg-purple-light"><i data-lucide="wand-2" class="text-purple"></i></div> <div><strong class="text-high-contrast">Rédaction Assistée</strong><br><span class="text-sm text-muted">Phrases d'accroche générées par l'IA</span></div></li>
           <li><div class="feature-icon bg-purple-light"><i data-lucide="layout-template" class="text-purple"></i></div> <div><strong class="text-high-contrast">Templates Premium</strong><br><span class="text-sm text-muted">Designs modernes et percutants</span></div></li>
         </ul>
-        <a href="signup_choice.php" class="btn btn-outline-purple mt-4 rounded-pill">Créer mon CV</a>
+        <a href="login.php?panel=signup" class="btn btn-outline-purple mt-4 rounded-pill">Créer mon CV</a>
       </div>
       <div class="showcase-visual reveal-left relative">
         <div class="mockup-cv-wrapper floating-slow" data-tilt data-tilt-perspective="1000" data-tilt-max="10">
@@ -232,14 +232,14 @@
         <h2 class="section-title accent-font">Évoluez, Gagnez de l'XP et <span class="text-blue text-gradient-blue">dominez</span>.</h2>
         <p class="section-desc text-muted">La formation continue réinventée. Suivez nos cours certifiants, montez en niveau, affrontez la communauté et dévoilez votre expertise aux recruteurs.</p>
         <div class="gamification-features mt-4 grid-2 offset-hover">
-           <a href="signup_choice.php" class="text-decoration-none">
+           <a href="login.php?panel=signup" class="text-decoration-none">
            <div class="gf-item glass-panel p-3 rounded-xl border border-blue-subtle hover-extend-glow hover-lift text-high-contrast">
              <div class="gf-icon mb-2"><i data-lucide="graduation-cap" class="text-blue" style="width:32px;height:32px;"></i></div>
              <div class="h5 mb-1 accent-font">Catalogue de Cours</div>
              <div class="text-sm text-muted">Découvrez nos formations.</div>
            </div>
            </a>
-           <a href="signup_choice.php" class="text-decoration-none">
+           <a href="login.php?panel=signup" class="text-decoration-none">
            <div class="gf-item glass-panel p-3 rounded-xl border border-blue-subtle hover-extend-glow hover-lift text-high-contrast" id="showcase-leaderboard">
              <div class="gf-icon mb-2"><i data-lucide="trophy" class="text-blue" style="width:32px;height:32px;"></i></div>
              <div class="h5 mb-1 accent-font">Leaderboard</div>
@@ -301,14 +301,14 @@
             <div class="resource-icon bg-blue-light rounded-circle d-inline-flex p-3 mb-4"><i data-lucide="book-open" class="text-blue" style="width:28px;height:28px;"></i></div>
             <h3 class="accent-font mb-2">Documentation</h3>
             <p class="text-muted text-sm mb-4">Découvrez toutes les astuces et méthodes pour maîtriser la plateforme.</p>
-            <a href="documentation.php" class="resource-link text-blue fw-bold d-inline-flex align-items-center gap-1 hover-arrow">Lire la Doc <i data-lucide="arrow-right" style="width:16px;"></i></a>
+            <a href="#doc-details" class="resource-link text-blue fw-bold d-inline-flex align-items-center gap-1 hover-arrow nav-anchor">Lire la Doc <i data-lucide="arrow-right" style="width:16px;"></i></a>
           </div>
 
           <div class="resource-card glass-panel p-4 rounded-2xl hover-extend-glow hover-zoom text-high-contrast" data-tilt data-tilt-max="5" data-tilt-glare="true" data-tilt-max-glare="0.2">
             <div class="resource-icon bg-purple-light rounded-circle d-inline-flex p-3 mb-4"><i data-lucide="edit-3" class="text-purple" style="width:28px;height:28px;"></i></div>
             <h3 class="accent-font mb-2">Le Blog Insider</h3>
             <p class="text-muted text-sm mb-4">Tendances du recrutement IA et articles de veille exclusifs de notre communauté.</p>
-            <a href="blog.php" class="resource-link text-purple fw-bold d-inline-flex align-items-center gap-1 hover-arrow">Découvrir le blog <i data-lucide="arrow-right" style="width:16px;"></i></a>
+            <a href="#blog-details" class="resource-link text-purple fw-bold d-inline-flex align-items-center gap-1 hover-arrow nav-anchor">Découvrir le blog <i data-lucide="arrow-right" style="width:16px;"></i></a>
           </div>
 
           <div class="resource-card glass-panel p-4 rounded-2xl hover-extend-glow hover-zoom text-high-contrast" data-tilt data-tilt-max="5" data-tilt-glare="true" data-tilt-max-glare="0.2">
@@ -319,6 +319,171 @@
           </div>
 
         </div>
+    </div>
+  </section>
+
+  <!-- Embedded Doc Details -->
+  <section class="section-doc-details py-6" id="doc-details" style="position:relative; z-index:10;">
+    <div class="container">
+      <div class="text-center mb-10 reveal-up">
+        <div class="section-tag accent-purple mx-auto mb-3">Guide & Découverte</div>
+        <h2 class="section-title accent-font">Un univers de <span class="text-purple text-gradient-purple">Possibilities</span></h2>
+        <p class="section-desc mx-auto text-muted max-w-lg">Plongez dans les détails techniques et fonctionnels qui font d'Aptus l'outil de recrutement le plus avancé du marché.</p>
+      </div>
+
+      <div class="video-central-wrapper d-flex justify-content-center mb-10 pb-5 reveal-up">
+          <div class="glass-panel p-2 rounded-2xl shadow-xl hover-extend-glow transition-all" style="width: 100%; max-width: 900px; border: 1px solid var(--glass-border); overflow: hidden;">
+              <div class="video-inner rounded-xl bg-dark position-relative overflow-hidden" style="padding-top: 56.25%;">
+                  <video class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover;" controls muted loop>
+                      <source src="/aptus_first_official_version/view/assets/video/IMG_E8245_1.mp4" type="video/mp4">
+                      Votre navigateur ne supporte pas la balise vidéo.
+                  </video>
+              </div>
+              <p class="text-center mt-3 text-sm text-muted accent-font text-uppercase tracking-widest opacity-75 mb-2">
+                  <i data-lucide="play-circle" class="me-1" style="width:14px;"></i> Démo Interactive Aptus
+              </p>
+          </div>
+      </div>
+
+      <div class="features-flex-container mb-10 pb-5 reveal-up">
+          <div class="text-center mb-10">
+            <h3 class="accent-font text-high-contrast mb-3">Fonctionnalités Clés</h3>
+            <p class="text-muted text-sm">Des outils conçus pour l'efficacité et la clarté</p>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 35px;">
+              <div class="func-item glass-panel p-5 rounded-2xl hover-lift shadow-lg position-relative" style="flex: 1; min-width: 300px; max-width: 350px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03);">
+                <div class="icon-box-premium mb-4 d-inline-flex align-items-center justify-content-center rounded-xl" style="width: 60px; height: 60px; background: var(--grad-purple); box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3);">
+                    <i data-lucide="brain-circuit" class="text-white" style="width:30px;height:30px;"></i>
+                </div>
+                <h4 class="accent-font h5 fw-bold mb-3">Matching Prédictif</h4>
+                <p class="text-sm text-muted lh-lg">Algorithme propriétaire qui analyse vos compétences pour dénicher les opportunités invisibles à l'œil nu.</p>
+              </div>
+              <div class="func-item glass-panel p-5 rounded-2xl hover-lift shadow-lg position-relative" style="flex: 1; min-width: 300px; max-width: 350px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03);">
+                <div class="icon-box-premium mb-4 d-inline-flex align-items-center justify-content-center rounded-xl" style="width: 60px; height: 60px; background: var(--grad-teal); box-shadow: 0 10px 20px rgba(13, 148, 136, 0.3);">
+                    <i data-lucide="file-json" class="text-white" style="width:30px;height:30px;"></i>
+                </div>
+                <h4 class="accent-font h5 fw-bold mb-3">Générateur de CV</h4>
+                <p class="text-sm text-muted lh-lg">Optimisez chaque mot de votre parcours avec notre IA de rédaction pour passer tous les filtres ATS.</p>
+              </div>
+              <div class="func-item glass-panel p-5 rounded-2xl hover-lift shadow-lg position-relative" style="flex: 1; min-width: 300px; max-width: 350px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03);">
+                <div class="icon-box-premium mb-4 d-inline-flex align-items-center justify-content-center rounded-xl" style="width: 60px; height: 60px; background: var(--grad-orange); box-shadow: 0 10px 20px rgba(234, 88, 12, 0.3);">
+                    <i data-lucide="graduation-cap" class="text-white" style="width:30px;height:30px;"></i>
+                </div>
+                <h4 class="accent-font h5 fw-bold mb-3">Système Certifiant</h4>
+                <p class="text-sm text-muted lh-lg">Validez vos acquis avec des badges officiels et une progression gamifiée reconnue par les recruteurs.</p>
+              </div>
+          </div>
+      </div>
+
+      <div class="insights-flex-container mb-10 pb-5 reveal-up">
+          <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 40px;">
+              <div class="insight-card" style="flex: 1; min-width: 340px; max-width: 520px;">
+                  <div class="glass-panel p-3 rounded-3xl mb-4 hover-extend-glow hover-lift transition-all position-relative overflow-hidden cursor-pointer" data-tilt data-tilt-max="3" style="border: 1px solid var(--glass-border);">
+                      <div class="teaser-visual rounded-2xl bg-dark position-relative" style="height: 350px; overflow: hidden;">
+                            <div class="position-absolute w-100 h-100 bg-purple-light opacity-30 blur-xl z-1"></div>
+                            <div class="position-absolute top-50 start-50 translate-middle z-2 text-center w-100 px-4">
+                                <div class="mb-4 d-inline-flex p-3 rounded-circle bg-white shadow-lg" style="background: rgba(255,255,255,0.1) !important; backdrop-filter: blur(10px);">
+                                    <i data-lucide="wand-2" class="text-purple" style="width: 48px; height: 48px;"></i>
+                                </div>
+                                <h3 class="text-white accent-font fw-bold m-0 mb-3 h2">CV Builder IA</h3>
+                                <span class="badge bg-purple text-white px-4 py-2 rounded-pill fs-xs text-uppercase tracking-tighter">Accès Anticipé</span>
+                            </div>
+                      </div>
+                  </div>
+                  <div class="px-2">
+                    <h4 class="accent-font text-high-contrast h5 fw-bold mb-3">Conception Intelligente</h4>
+                    <p class="text-muted small lh-relaxed">Notre assistant analyse le marché du travail en temps réel pour suggérer les compétences les plus recherchées dans votre domaine.</p>
+                  </div>
+              </div>
+
+              <div class="insight-card" style="flex: 1; min-width: 340px; max-width: 520px;">
+                  <div class="glass-panel p-3 rounded-3xl mb-4 hover-extend-glow hover-lift transition-all position-relative overflow-hidden cursor-pointer" data-tilt data-tilt-max="3" style="border: 1px solid var(--glass-border);">
+                      <div class="teaser-visual rounded-2xl bg-dark position-relative" style="height: 350px; overflow: hidden;">
+                            <div class="position-absolute w-100 h-100 bg-teal-light opacity-30 blur-xl z-1"></div>
+                            <div class="position-absolute top-50 start-50 translate-middle z-2 text-center w-100 px-4">
+                                <div class="mb-4 d-inline-flex p-3 rounded-circle bg-white shadow-lg" style="background: rgba(255,255,255,0.1) !important; backdrop-filter: blur(10px);">
+                                    <i data-lucide="zap" class="text-teal" style="width: 48px; height: 48px;"></i>
+                                </div>
+                                <h3 class="text-white accent-font fw-bold m-0 mb-3 h2">Matching 2.0</h3>
+                                <span class="badge bg-teal text-white px-4 py-2 rounded-pill fs-xs text-uppercase tracking-tighter">Propulsé par GPT-4</span>
+                            </div>
+                      </div>
+                  </div>
+                  <div class="px-2">
+                    <h4 class="accent-font text-high-contrast h5 fw-bold mb-3">Matching Prédictif</h4>
+                    <p class="text-muted small lh-relaxed">Ne perdez plus de temps avec des offres non pertinentes. L'IA apprend de vos préférences pour affiner ses suggestions chaque jour.</p>
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Embedded Blog Details -->
+  <section class="section-blog-details py-6" id="blog-details" style="position:relative; z-index:10;">
+    <div class="container">
+      <div class="text-center mb-10 reveal-up">
+        <div class="section-tag accent-teal mx-auto mb-3">Laboratoire d'idées</div>
+        <h2 class="section-title accent-font">Intelligence & <span class="text-teal text-gradient-teal">Exploration</span></h2>
+        <p class="section-desc mx-auto text-muted max-w-lg">Plongez dans nos recherches sur le futur du travail et les algorithmes qui façonneront les talents de demain.</p>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 35px; align-items: stretch;" class="reveal-up">
+          <div class="article-card" style="flex: 1; min-width: 300px; max-width: 380px;">
+              <div class="glass-panel p-4 rounded-3xl hover-extend-glow hover-lift transition-all h-100 d-flex flex-column text-high-contrast" data-tilt data-tilt-max="5" style="border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03);">
+                  <div class="article-img rounded-2xl mb-4 position-relative overflow-hidden" style="height:220px; background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(192, 38, 211, 0.1));">
+                       <div class="position-absolute top-50 start-50 translate-middle">
+                            <i data-lucide="trending-up" class="text-purple opacity-40" style="width: 80px; height: 80px;"></i>
+                       </div>
+                       <span class="badge position-absolute top-3 end-3 bg-blur-dark text-white rounded-pill px-3 py-1" style="font-size: 10px; backdrop-filter: blur(5px);">TENDANCES</span>
+                  </div>
+                  <h4 class="accent-font h5 fw-bold mb-3">KPIs Recrutement 2024</h4>
+                  <p class="text-sm text-muted lh-relaxed flex-grow-1">Découvrez les indicateurs de performance clés qui transformeront les stratégies RH cette année.</p>
+                  <div class="mt-4 pt-4 border-top border-light-subtle d-flex justify-content-between align-items-center">
+                      <span class="text-xs text-muted opacity-75"><i data-lucide="clock" class="me-1" style="width:12px;"></i> 5 min</span>
+                      <div class="btn-read-more text-purple fw-bold text-xs" style="cursor: pointer;">LIRE L'ARTICLE <i data-lucide="chevron-right" class="ms-1" style="width:14px;"></i></div>
+                  </div>
+              </div>
+          </div>
+
+          <div class="article-card" style="flex: 1; min-width: 300px; max-width: 380px;">
+              <div class="glass-panel p-4 rounded-3xl hover-extend-glow hover-lift transition-all h-100 d-flex flex-column text-high-contrast" data-tilt data-tilt-max="5" style="border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03);">
+                  <div class="article-img rounded-2xl mb-4 position-relative overflow-hidden" style="height:220px; background: linear-gradient(135deg, rgba(234, 88, 12, 0.1), rgba(249, 115, 22, 0.1));">
+                       <div class="position-absolute top-50 start-50 translate-middle">
+                            <i data-lucide="pen-tool" class="text-orange opacity-40" style="width: 80px; height: 80px;"></i>
+                       </div>
+                       <span class="badge position-absolute top-3 end-3 bg-blur-dark text-white rounded-pill px-3 py-1" style="font-size: 10px; backdrop-filter: blur(5px);">CONSEILS</span>
+                  </div>
+                  <h4 class="accent-font h5 fw-bold mb-3">Optimisation Portfolio</h4>
+                  <p class="text-sm text-muted lh-relaxed flex-grow-1">Comment marier créativité visuelle et SEO technique pour captiver instantanément les recruteurs.</p>
+                  <div class="mt-4 pt-4 border-top border-light-subtle d-flex justify-content-between align-items-center">
+                      <span class="text-xs text-muted opacity-75"><i data-lucide="clock" class="me-1" style="width:12px;"></i> 8 min</span>
+                      <div class="btn-read-more text-orange fw-bold text-xs" style="cursor: pointer;">LIRE L'ARTICLE <i data-lucide="chevron-right" class="ms-1" style="width:14px;"></i></div>
+                  </div>
+              </div>
+          </div>
+
+          <div class="article-card" style="flex: 1; min-width: 300px; max-width: 380px;">
+              <div class="glass-panel p-4 rounded-3xl hover-extend-glow hover-lift transition-all h-100 d-flex flex-column text-high-contrast" data-tilt data-tilt-max="5" style="border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03);">
+                  <div class="article-img rounded-2xl mb-4 position-relative overflow-hidden" style="height:220px; background: linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(20, 184, 166, 0.1));">
+                       <div class="position-absolute top-50 start-50 translate-middle">
+                            <i data-lucide="network" class="text-teal opacity-40" style="width: 80px; height: 80px;"></i>
+                       </div>
+                       <span class="badge position-absolute top-3 end-3 bg-blur-dark text-white rounded-pill px-3 py-1" style="font-size: 10px; backdrop-filter: blur(5px);">TECH</span>
+                  </div>
+                  <h4 class="accent-font h5 fw-bold mb-3">Architecture Matching</h4>
+                  <p class="text-sm text-muted lh-relaxed flex-grow-1">Plongez dans les coulisses de l'infrastructure IA neuronale qui propulse le futur d'Aptus.</p>
+                  <div class="mt-4 pt-4 border-top border-light-subtle d-flex justify-content-between align-items-center">
+                      <span class="text-xs text-muted opacity-75"><i data-lucide="clock" class="me-1" style="width:12px;"></i> 12 min</span>
+                      <div class="btn-read-more text-teal fw-bold text-xs" style="cursor: pointer;">LIRE L'ARTICLE <i data-lucide="chevron-right" class="ms-1" style="width:14px;"></i></div>
+                  </div>
+              </div>
+          </div>
+      </div>
+      
+      <div class="text-center mt-12 reveal-up">
+           <a href="login.php?panel=signup" class="btn btn-primary glow-btn px-8 py-3 rounded-pill h5 mb-0">Découvrir tout le Blog</a>
+      </div>
     </div>
   </section>
 
@@ -403,7 +568,7 @@
   <footer class="front-footer landing-footer py-5 mt-0 section-dark">
     <div class="container">
         <div class="front-footer__grid grid-4 gap-4">
-        
+
           <div class="front-footer__brand pe-4">
             <a href="#hero" class="topnav__logo nav-anchor d-flex align-items-center gap-2 mb-3 text-decoration-none">
               <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="topnav__logo-icon" style="width:32px;">
@@ -430,9 +595,9 @@
           <div>
             <h4 class="front-footer__heading accent-font mb-4">Ressources</h4>
             <div class="front-footer__links d-flex flex-column gap-3">
-              <a href="#resources" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Documentation API</a>
-              <a href="#resources" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Blog & Actualités</a>
-              <a href="#resources" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Centre de Support</a>
+              <a href="#doc-details" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Documentation API</a>
+              <a href="#blog-details" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Blog & Actualités</a>
+              <a href="#team-archipel" class="nav-anchor text-muted hover-text-primary text-decoration-none transition-all">Centre de Support</a>
             </div>
           </div>
           
@@ -444,7 +609,7 @@
               <a href="#" class="text-muted hover-text-primary text-decoration-none transition-all">Préférences Cookies</a>
             </div>
           </div>
-          
+
         </div>
         
         <div class="front-footer__bottom border-top border-dark-subtle mt-5 pt-4 d-flex justify-content-between text-muted text-sm flex-wrap gap-3">
@@ -516,40 +681,6 @@
     css.type = "text/css";
     css.innerHTML = ".typewrite > .wrap { border-right: 0.08em solid var(--accent-primary);}";
     document.body.appendChild(css);
-
-    // Counter Animation Logic (Smoothed)
-    document.addEventListener('DOMContentLoaded', () => {
-        const counters = document.querySelectorAll('.counter');
-        const countDuration = 2000; // 2 seconds to reach the number
-        
-        const counterObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if(entry.isIntersecting) {
-                    const counter = entry.target;
-                    const target = +counter.getAttribute('data-target');
-                    let startTimestamp = null;
-                    const step = (timestamp) => {
-                        if (!startTimestamp) startTimestamp = timestamp;
-                        const progress = Math.min((timestamp - startTimestamp) / countDuration, 1);
-                        const easeOutQuart = 1 - Math.pow(1 - progress, 4); // Easing function
-                        const currentCount = Math.floor(easeOutQuart * target);
-                        
-                        counter.innerText = currentCount.toLocaleString('fr-FR') + (target >= 1000 ? '+' : '');
-                        
-                        if (progress < 1) {
-                            window.requestAnimationFrame(step);
-                        }
-                    };
-                    window.requestAnimationFrame(step);
-                    observer.unobserve(counter);
-                }
-            });
-        }, { threshold: 0.5 });
-        
-        counters.forEach(counter => {
-            counterObserver.observe(counter);
-        });
-    });
   </script>
 </body>
 </html>

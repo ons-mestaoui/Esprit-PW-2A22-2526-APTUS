@@ -28,6 +28,13 @@ $cv = [
 if ($cv_id) {
     $row = $cvc->getCVById($cv_id);
     if ($row) {
+        // Security Check: Verify ownership
+        $currentUserId = $_SESSION['id_utilisateur'] ?? null;
+        if ($row['id_candidat'] && $row['id_candidat'] != $currentUserId) {
+            header("Location: cv_templates.php");
+            exit;
+        }
+
         $parts = array_map('trim', explode('|', $row['infoContact'] ?? ''));
         $cv = array_merge($cv, [
             'nomComplet'  => $row['nomComplet'],

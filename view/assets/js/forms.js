@@ -78,11 +78,11 @@
           targetEl.style.display = 'block';
           targetEl.classList.add('animate-fade-in-up');
           var input = targetEl.querySelector('input, textarea, select');
-          if (input) input.setAttribute('required', '');
+          if (input) input.setAttribute('data-required', 'true');
         } else {
           targetEl.style.display = 'none';
           var input = targetEl.querySelector('input, textarea, select');
-          if (input) input.removeAttribute('required');
+          if (input) input.removeAttribute('data-required');
         }
       });
     });
@@ -120,6 +120,9 @@
       var hiddenInput = container.querySelector('.tag-input__hidden');
       var tags = [];
 
+      if (hiddenInput && hiddenInput.value) {
+          tags = hiddenInput.value.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+      }
       if (!input) return;
 
       input.addEventListener('keydown', function(e) {
@@ -156,16 +159,52 @@
           });
         });
       }
+      // Initial render
+      if (tags.length > 0) {
+        renderTags();
+      }
+
+      // Handle suggested skills buttons if they exist nearby
+      var parentGroup = container.closest('.form-group');
+      if (parentGroup) {
+        parentGroup.querySelectorAll('.suggested-skill-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var value = this.textContent.trim();
+            if (value && tags.indexOf(value) === -1) {
+              tags.push(value);
+              renderTags();
+            }
+          });
+        });
+      }
     });
 
     /* ══════════════════════════════════════════════
-       FORM VALIDATION
+       MOTEUR DE VALIDATION PERSONNALISÉ
+       Cette section remplace les contrôles natifs HTML5 par une logique
+       JavaScript sur mesure (Conformité aux contraintes du projet).
        ══════════════════════════════════════════════ */
     document.querySelectorAll('form[data-validate]').forEach(function(form) {
+      
+      // Fonction utilitaire pour récupérer ou créer l'élément d'erreur
+      function getOrCreateErrorEl(field) {
+        var group = field.closest('.form-group');
+        if (!group) return null;
+        
+        var errorEl = group.querySelector('.form-error');
+        if (!errorEl) {
+          errorEl = document.createElement('div');
+          errorEl.className = 'form-error animate-fade-in-up';
+          errorEl.style.marginTop = '4px';
+          group.appendChild(errorEl);
+        }
+        return errorEl;
+      }
+
       form.addEventListener('submit', function(e) {
         var isValid = true;
         
-        // Clear previous errors
+        // Réinitialisation des messages d'erreur et des styles visuels
         form.querySelectorAll('.form-error').forEach(function(err) {
           err.textContent = '';
         });
@@ -173,50 +212,85 @@
           inp.classList.remove('input-error');
         });
 
-        // Validate required fields
-        form.querySelectorAll('[required]').forEach(function(field) {
+        // 1. Validation des champs obligatoires via l'attribut personnalisé 'data-required'
+        form.querySelectorAll('[data-required]').forEach(function(field) {
           if (!field.value.trim()) {
             isValid = false;
             field.classList.add('input-error');
-            var errorEl = field.closest('.form-group')
-              ? field.closest('.form-group').querySelector('.form-error')
-              : null;
-            if (errorEl) errorEl.textContent = 'Ce champ est requis';
+            var errorEl = getOrCreateErrorEl(field);
+            if (errorEl) errorEl.textContent = 'Ce champ est obligatoire';
           }
         });
 
-        // Validate email fields
-        form.querySelectorAll('input[type="email"]').forEach(function(field) {
-          if (field.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value)) {
+        // 2. Validation des formats spécifiques via 'data-type'
+        form.querySelectorAll('[data-type]').forEach(function(field) {
+          var type = field.getAttribute('data-type');
+          var val = field.value.trim();
+          if (!val) return; 
+
+          // Validation Email
+          if (type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
             isValid = false;
             field.classList.add('input-error');
-            var errorEl = field.closest('.form-group')
-              ? field.closest('.form-group').querySelector('.form-error')
-              : null;
-            if (errorEl) errorEl.textContent = 'Email invalide';
+            var errorEl = getOrCreateErrorEl(field);
+            if (errorEl) errorEl.textContent = 'Format d\'email invalide';
+          }
+          // Validation URL
+          if (type === 'url' && !/^https?:\/\/[^\s$.?#].[^\s]*$/.test(val)) {
+            isValid = false;
+            field.classList.add('input-error');
+            var errorEl = getOrCreateErrorEl(field);
+            if (errorEl) errorEl.textContent = 'URL invalide (doit commencer par http/https)';
+          }
+          // Validation Téléphone (Seulement chiffres, espaces, +, -, .)
+          if (type === 'tel' && !/^[0-9+\s\-.()]+$/.test(val)) {
+            isValid = false;
+            field.classList.add('input-error');
+            var errorEl = getOrCreateErrorEl(field);
+            if (errorEl) errorEl.textContent = 'Le numéro de téléphone doit contenir uniquement des chiffres';
           }
         });
 
-        // Validate password match
-        var pw = form.querySelector('[data-match]');
-        if (pw) {
-          var matchTarget = form.querySelector('#' + pw.dataset.match);
-          if (matchTarget && pw.value !== matchTarget.value) {
-            isValid = false;
-            pw.classList.add('input-error');
-            var errorEl = pw.closest('.form-group')
-              ? pw.closest('.form-group').querySelector('.form-error')
-              : null;
-            if (errorEl) errorEl.textContent = 'Les mots de passe ne correspondent pas';
-          }
-        }
+        // 3. Validation de la longueur minimale (Ex: Mot de passe)
+        form.querySelectorAll('input[type="password"], [data-minlength]').forEach(function(field) {
+            var val = field.value.trim();
+            if (!val) return;
 
+            var minLength = parseInt(field.getAttribute('data-minlength') || (field.type === 'password' ? 8 : 0));
+            
+            if (minLength > 0 && val.length < minLength) {
+                isValid = false;  
+                field.classList.add('input-error');
+                var errorEl = getOrCreateErrorEl(field);
+                if (errorEl) {
+                    if (field.type === 'password') {
+                        errorEl.textContent = 'Le mot de passe doit contenir au moins ' + minLength + ' caractères';
+                    } else {
+                        errorEl.textContent = 'Ce champ doit contenir au moins ' + minLength + ' caractères';
+                    }
+                }
+            }
+        });
+
+        // 4. Validation de correspondance (Confirmation de mot de passe)
+        var pwMatches = form.querySelectorAll('[data-match]');
+        pwMatches.forEach(function(pw) {
+           var matchTarget = form.querySelector('#' + pw.dataset.match);
+           if (matchTarget && pw.value !== matchTarget.value) {
+             isValid = false;
+             pw.classList.add('input-error');
+             var errorEl = getOrCreateErrorEl(pw);
+             if (errorEl) errorEl.textContent = 'Les mots de passe ne correspondent pas';
+           }
+         });
+
+        // Si une erreur est détectée, on bloque la soumission et on scrolle vers l'erreur
         if (!isValid) {
           e.preventDefault();
-          // Scroll to first error
           var firstError = form.querySelector('.input-error');
           if (firstError) {
-            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            var rect = firstError.getBoundingClientRect();
+            window.scrollTo({ top: window.pageYOffset + rect.top - 150, behavior: 'smooth' });
             firstError.focus();
           }
         }
@@ -227,10 +301,11 @@
         field.addEventListener('blur', function() {
           if (this.classList.contains('input-error') && this.value.trim()) {
             this.classList.remove('input-error');
-            var errorEl = this.closest('.form-group')
-              ? this.closest('.form-group').querySelector('.form-error')
-              : null;
-            if (errorEl) errorEl.textContent = '';
+            var group = this.closest('.form-group');
+            if (group) {
+              var errorEl = group.querySelector('.form-error');
+              if (errorEl) errorEl.textContent = '';
+            }
           }
         });
       });

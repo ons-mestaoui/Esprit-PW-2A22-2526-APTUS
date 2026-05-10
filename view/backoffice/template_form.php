@@ -137,7 +137,7 @@ $isPremium = $template ? $template['estPremium'] : 0;
                     </datalist>
 
                     <!-- Add custom tag input -->
-                    <div style="display:flex; align-items:center; background: rgba(0,0,0,0.15); border: 1px dashed rgba(255,255,255,0.1); border-radius: 99px; padding: 2px 14px; transition:all 0.3s;" id="add-tag-box">
+                    <div style="display:flex; align-items:center; background: var(--bg-secondary); border: 1px dashed var(--border-color); border-radius: 99px; padding: 2px 14px; transition:all 0.3s;" id="add-tag-box">
                         <i data-lucide="plus" style="width:14px;height:14px; color:var(--text-tertiary); margin-right:4px;"></i>
                         <input type="text" id="custom-tag-input" list="tags-suggestions" placeholder="Nouveau tag (Entrée)" style="background:transparent; border:none; outline:none; color:var(--text-secondary); font-size:13px; width:130px; box-shadow:none;">
                     </div>
@@ -153,13 +153,13 @@ $isPremium = $template ? $template['estPremium'] : 0;
                     </div>
                     <div>
                         <h4 class="fw-semibold text-sm m-0" style="color:#f59e0b; letter-spacing:0.5px;">Statut Premium VIP</h4>
-                        <p class="text-xs m-0 mt-1" style="color:rgba(255,255,255,0.5);">Réservé aux abonnements avancés</p>
+                        <p class="text-xs m-0 mt-1" style="color:var(--text-tertiary);">Réservé aux abonnements avancés</p>
                     </div>
                 </div>
                 
                 <div class="premium-switch" style="z-index:1; position:relative; width:50px; height:26px;">
                     <input type="checkbox" id="tpl-premium" name="estPremium" value="1" <?php echo ($isPremium) ? 'checked' : ''; ?> style="opacity:0; width:0; height:0;">
-                    <label for="tpl-premium" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:34px; transition:.4s; box-shadow:inset 0 1px 3px rgba(0,0,0,0.3);"></label>
+                    <label for="tpl-premium" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:34px; transition:.4s; box-shadow:inset 0 1px 3px rgba(0,0,0,0.3);"></label>
                 </div>
             </div>
 
@@ -209,15 +209,15 @@ $isPremium = $template ? $template['estPremium'] : 0;
 <style>
 .page-tag-wrapper { display: inline-flex; align-items: center; cursor: pointer; animation: fadeIn 0.3s ease; }
 .page-tag-wrapper input[type="checkbox"] { display: none; }
-.page-tag-wrapper span { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #94a3b8; padding: 8px 18px; border-radius: 99px; font-size: 14px; font-weight:500; transition: all 0.3s ease; user-select:none; backdrop-filter: blur(4px); }
+.page-tag-wrapper span { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 8px 18px; border-radius: 99px; font-size: 14px; font-weight:500; transition: all 0.3s ease; user-select:none; backdrop-filter: blur(4px); }
 .page-tag-wrapper input[type="checkbox"]:checked + span { background: rgba(56, 189, 248, 0.1); color: #38bdf8; border-color: #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); text-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
-.page-tag-wrapper span:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); color:#cbd5e1; }
+.page-tag-wrapper span:hover { background: var(--bg-tertiary); border-color: var(--text-tertiary); color: var(--text-primary); }
 
 .premium-wrapper { transition: all 0.3s ease; }
 .premium-wrapper:hover { border-color: rgba(245, 158, 11, 0.4) !important; box-shadow: 0 5px 20px rgba(245, 158, 11, 0.1); transform: translateY(-2px); }
 
 .premium-switch input:checked + label { background: linear-gradient(135deg, #f59e0b, #d946ef) !important; border-color: transparent !important; box-shadow: 0 0 10px rgba(245,158,11,0.5) !important; }
-.premium-switch label:before { position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: rgba(255,255,255,0.4); transition: .4s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+.premium-switch label:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; top: -2px; background-color: rgba(255,255,255,0.4); transition: .4s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 .premium-switch input:checked + label:before { transform: translateX(24px); background-color: white; }
 
 @keyframes fadeIn { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
@@ -234,7 +234,7 @@ $isPremium = $template ? $template['estPremium'] : 0;
 /* Validation Styles for Backoffice */
 .input.is-invalid, .textarea.is-invalid {
     border-color: #dc2626 !important;
-    background-color: #1e293b !important;
+    background-color: var(--bg-input) !important;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23dc2626"><circle cx="12" cy="12" r="10"/><path fill="%23fff" d="M11 7h2v7h-2zm0 8h2v2h-2z"/></svg>');
     background-repeat: no-repeat;
     background-position: right 12px center;
@@ -247,7 +247,7 @@ $isPremium = $template ? $template['estPremium'] : 0;
 }
 .input.is-valid, .textarea.is-valid {
     border-color: #059669 !important;
-    background-color: #1e293b !important;
+    background-color: var(--bg-input) !important;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23059669"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>');
     background-repeat: no-repeat;
     background-position: right 12px center;

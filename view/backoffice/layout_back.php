@@ -1,5 +1,44 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Security: Prevent browser caching of protected pages
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+include_once __DIR__ . '/../../controller/ProfilC.php';
+
+// Access Control: Only Admins can access backoffice
+if (!isset($_SESSION['role']) || strtolower($_SESSION['role']) !== 'admin') {
+    header("Location: ../frontoffice/login.php");
+    exit();
+}
+
+$adminName = $_SESSION['nom'] ?? 'Administrateur';
+$userId = $_SESSION['id_utilisateur'] ?? null;
+
+$userPhoto = null;
+if ($userId) {
+    $profilC = new ProfilC();
+    $userProfil = $profilC->getProfilByIdUtilisateur($userId);
+    if ($userProfil && !empty($userProfil['photo'])) {
+        $userPhoto = $userProfil['photo'];
+    }
+}
+
+// Load user personal preferences (theme)
+$userTheme = 'light';
+if ($userId) {
+    include_once __DIR__ . '/../../controller/UtilisateurC.php';
+    $utC = new UtilisateurC();
+    $userPrefs = $utC->getPreferences($userId);
+    $userTheme = $userPrefs['theme'] ?? 'light';
+}
+?>
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr" data-theme="<?php echo $userTheme; ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,16 +51,51 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="../assets/css/variables.css">
-  <link rel="stylesheet" href="../assets/css/global.css">
-  <link rel="stylesheet" href="../assets/css/layout_back.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/global.css?v=<?php echo time(); ?>">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_back.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/ai_agent.css">
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/cv_premium.css">
   <?php if (isset($pageCSS)): ?>
-    <link rel="stylesheet" href="../assets/css/<?php echo $pageCSS; ?>">
+    <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/<?php echo $pageCSS; ?>">
   <?php endif; ?>
-  <link rel="stylesheet" href="../assets/css/cv_premium.css">
 
   <!-- Theme Toggle (load early to avoid flash) -->
-  <script src="../assets/js/theme-toggle.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
+
+  <?php
+  // Load admin appearance overrides (colors, font, radius)
+  if (!isset($settingsC)) {
+      require_once __DIR__ . '/../../controller/SettingsAdminC.php';
+      $settingsC = new SettingsAdminC();
+  }
+  echo $settingsC->getAppearanceCSS();
+  
+  // Ensure localStorage is in sync with database theme
+  if (isset($userPrefs['theme'])) {
+      echo "<script>
+        if (localStorage.getItem('aptus-theme') !== '" . ($userPrefs['theme']) . "') {
+            localStorage.setItem('aptus-theme', '" . ($userPrefs['theme']) . "');
+        }
+      </script>\n";
+  }
+  ?>
+
+  <script>
+    /**
+     * Security: Force reload if page is loaded from cache (Back/Forward button fix)
+     * This ensures the admin session check is executed on every navigation.
+     */
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        window.location.reload();
+      }
+    });
+  </script>
+  
+  <!-- AI Agent Widget Scripts -->
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent_ext.js"></script>
 </head>
 <body>
 
@@ -33,7 +107,7 @@
     <aside class="sidebar" id="sidebar">
       <!-- Logo -->
       <div class="sidebar__header">
-        <img src="../assets/img/logo.png" alt="Aptus" class="sidebar__logo-icon" style="background:none;padding:2px;">
+        <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="sidebar__logo-icon" style="background:none;padding:2px;">
         <span class="sidebar__logo-text">Aptus</span>
       </div>
 
@@ -66,15 +140,11 @@
           <i data-lucide="briefcase"></i>
           <span>Offres Disponibles</span>
         </a>
-        <a href="posts_stats.php" class="sidebar-link<?php echo ($currentPage==='posts_stats.php')?' active':''; ?>" id="sidebar-posts">
-          <i data-lucide="bar-chart-3"></i>
-          <span>Posts &amp; Stats</span>
-        </a>
       </nav>
 
       <!-- Footer / Logout -->
       <div class="sidebar__footer">
-        <a href="../frontoffice/login.php" class="sidebar__logout" id="sidebar-logout">
+        <a href="../frontoffice/logout.php" class="sidebar__logout" id="sidebar-logout">
           <i data-lucide="log-out"></i>
           <span>Déconnexion</span>
         </a>
@@ -100,7 +170,7 @@
       <div class="back-topbar__actions">
         <!-- Theme Toggle -->
         <button class="theme-toggle" id="admin-theme-toggle" aria-label="Toggle theme">
-          <i data-lucide="sun" class="icon-sun" style="display:none;"></i>
+          <i data-lucide="sun" class="icon-sun"></i>
           <i data-lucide="moon" class="icon-moon"></i>
         </button>
 
@@ -117,8 +187,14 @@
               <span class="back-topbar__admin-name"><?php echo isset($adminName) ? $adminName : 'Administrateur'; ?></span>
               <span class="back-topbar__admin-role">Super Admin</span>
             </div>
-            <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;">
-              <?php echo isset($adminName) ? strtoupper(substr($adminName, 0, 2)) : 'AD'; ?>
+            <div class="avatar" style="width:36px;height:36px;font-size:13px;overflow:hidden;background:var(--bg-glass);display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--border-color);">
+              <?php if ($userPhoto): ?>
+                <img src="<?php echo $userPhoto; ?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
+              <?php else: ?>
+                <span class="avatar-initials">
+                  <?php echo isset($adminName) ? strtoupper(substr($adminName, 0, 2)) : 'AD'; ?>
+                </span>
+              <?php endif; ?>
             </div>
           </div>
           <div class="dropdown-menu">
@@ -131,7 +207,7 @@
               Paramètres
             </a>
             <div class="dropdown-divider"></div>
-            <a href="../frontoffice/login.php" class="dropdown-item" style="color:var(--accent-tertiary);">
+            <a href="../frontoffice/logout.php" class="dropdown-item" style="color:var(--accent-tertiary);">
               <i data-lucide="log-out" style="width:16px;height:16px;"></i>
               Déconnexion
             </a>
@@ -157,13 +233,14 @@
 
   <!-- Scripts -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="../assets/js/nav.js"></script>
-  <script src="../assets/js/forms.js"></script>
-  <script src="../assets/js/charts.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/nav.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/forms.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/charts.js"></script>
   <?php if (isset($pageJS)): ?>
-    <script src="../assets/js/<?php echo $pageJS; ?>"></script>
+    <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
   <?php endif; ?>
-  <script>lucide.createIcons();</script>
+  <script src="/aptus_first_official_version/view/assets/js/alert-dismiss.js"></script>
+  
   <!-- Modal Confirmation Suppression -->
   <div class="aptus-modal-overlay" id="confirm-modal">
       <div class="aptus-modal-content" style="max-width:450px; text-align:center; padding: 40px 32px; position:relative;">
@@ -210,5 +287,26 @@
         });
     };
   </script>
+
+  <!-- ═══════════════════════════════════════════
+       ACCESSIBILITY GESTURE CONTROL (MediaPipe)
+       ═══════════════════════════════════════════ -->
+  
+  <!-- Virtual Cursor -->
+  <div class="a11y-cursor" id="a11y-cursor"></div>
+  
+  <!-- Video Preview Container (PIP) -->
+  <div class="a11y-video-container" id="a11y-video-container">
+    <video id="a11y-webcam" autoplay playsinline></video>
+    <canvas id="a11y-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+  </div>
+  
+  <!-- Toggle Button (Floating) -->
+  <button class="a11y-toggle" id="a11y-toggle" aria-label="Activer la navigation gestuelle" title="Navigation Hand Tracking">
+    <i data-lucide="hand"></i>
+  </button>
+
+  <script type="module" src="/aptus_first_official_version/view/assets/js/a11y-hand-control.js"></script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

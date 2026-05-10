@@ -1,4 +1,47 @@
-<?php $pageTitle = "Tableau de Bord"; ?>
+<?php 
+$pageTitle = "Tableau de Bord"; 
+
+// --- DYNAMIC STATS ---
+try {
+    if (!class_exists('config')) {
+        include_once __DIR__ . '/../../config.php';
+    }
+    $db = config::getConnexion();
+    $nbCandidats = $db->query("SELECT COUNT(*) FROM utilisateur WHERE role = 'Candidat'")->fetchColumn();
+    $nbEntreprises = $db->query("SELECT COUNT(*) FROM utilisateur WHERE role = 'Entreprise'")->fetchColumn();
+    $nbTuteurs = $db->query("SELECT COUNT(*) FROM utilisateur WHERE role = 'Tuteur'")->fetchColumn();
+    $nbAdmins = $db->query("SELECT COUNT(*) FROM utilisateur WHERE role = 'Admin'")->fetchColumn();
+    
+    $recentUsers = $db->query("SELECT u.nom, u.prenom, u.role, p.photo, p.dateCreation 
+                               FROM utilisateur u 
+                               LEFT JOIN profil p ON u.id_utilisateur = p.id_utilisateur 
+                               ORDER BY u.id_utilisateur DESC LIMIT 5")->fetchAll();
+
+    // Weekly Activity Data (Current Week: Mon - Sun)
+    $weeklyActivity = [0, 0, 0, 0, 0, 0, 0];
+    $weeklyQuery = $db->query("SELECT DATE(p.dateCreation) as date, COUNT(*) as count 
+                               FROM utilisateur u 
+                               INNER JOIN profil p ON u.id_utilisateur = p.id_utilisateur 
+                               WHERE p.dateCreation >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
+                               GROUP BY DATE(p.dateCreation)");
+    while ($row = $weeklyQuery->fetch()) {
+        $dayIndex = date('N', strtotime($row['date'])) - 1; // 0 for Monday, 6 for Sunday
+        if ($dayIndex >= 0 && $dayIndex <= 6) {
+            $weeklyActivity[$dayIndex] = (int)$row['count'];
+        }
+    }
+} catch (Exception $e) {
+    $nbCandidats = 0;
+    $nbEntreprises = 0;
+    $nbTuteurs = 0;
+    $nbAdmins = 0;
+    $recentUsers = [];
+    $weeklyActivity = [0, 0, 0, 0, 0, 0, 0];
+}
+
+$totalUsers = $nbCandidats + $nbEntreprises + $nbTuteurs + $nbAdmins;
+// ---------------------
+?>
 
 <?php
 if (!isset($content)) {
@@ -18,14 +61,14 @@ if (!isset($content)) {
   </div>
 </div>
 
-<!-- ═══ Stat Cards (Reference: 4 cards) ═══ -->
+<!-- ═══ Stat Cards ═══ -->
 <div class="grid grid-4 gap-6 mb-8 stagger">
   <div class="stat-card animate-on-scroll" id="stat-hunters">
     <div>
       <div class="stat-card__label">Job Hunters Inscrits</div>
-      <div class="stat-card__value" id="counter-hunters">12,450</div>
-      <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +12% ce mois
+      <div class="stat-card__value" id="counter-hunters">0</div>
+      <div class="stat-card__trend">
+        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +0% ce mois
       </div>
     </div>
     <div class="stat-card__icon purple">
@@ -36,9 +79,9 @@ if (!isset($content)) {
   <div class="stat-card animate-on-scroll" id="stat-enterprises">
     <div>
       <div class="stat-card__label">Entreprises Partenaires</div>
-      <div class="stat-card__value" id="counter-enterprises">845</div>
-      <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +5.2% ce mois
+      <div class="stat-card__value" id="counter-enterprises">0</div>
+      <div class="stat-card__trend">
+        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +0% ce mois
       </div>
     </div>
     <div class="stat-card__icon teal">
@@ -46,64 +89,41 @@ if (!isset($content)) {
     </div>
   </div>
 
-  <div class="stat-card animate-on-scroll" id="stat-cvs">
+  <div class="stat-card animate-on-scroll" id="stat-tuteurs">
     <div>
-      <div class="stat-card__label">CV Analysés par l'IA</div>
-      <div class="stat-card__value" id="counter-cvs">34,102</div>
-      <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +24% ce mois
+      <div class="stat-card__label">Tuteurs / Formateurs</div>
+      <div class="stat-card__value" id="counter-tuteurs">0</div>
+      <div class="stat-card__trend">
+        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +0% ce mois
       </div>
     </div>
-    <div class="stat-card__icon blue">
-      <i data-lucide="file-scan" style="width:22px;height:22px;"></i>
+    <div class="stat-card__icon orange" style="background:var(--accent-warning-light); color:var(--text-warning);">
+      <i data-lucide="graduation-cap" style="width:22px;height:22px;"></i>
     </div>
   </div>
 
-  <div class="stat-card animate-on-scroll" id="stat-formations">
+  <div class="stat-card animate-on-scroll" id="stat-admins">
     <div>
-      <div class="stat-card__label">Formations Suivies</div>
-      <div class="stat-card__value" id="counter-formations">4,520</div>
-      <div class="stat-card__trend down">
-        <i data-lucide="trending-down" style="width:14px;height:14px;"></i> -2.1% ce mois
+      <div class="stat-card__label">Administrateurs</div>
+      <div class="stat-card__value" id="counter-admins">0</div>
+      <div class="stat-card__trend" style="color:var(--text-secondary);">
+        <i data-lucide="shield-check" style="width:14px;height:14px;"></i> Système
       </div>
     </div>
-    <div class="stat-card__icon orange">
-      <i data-lucide="graduation-cap" style="width:22px;height:22px;"></i>
+    <div class="stat-card__icon" style="background:var(--bg-danger); color:var(--text-danger);">
+      <i data-lucide="shield-alert" style="width:22px;height:22px;"></i>
     </div>
   </div>
 </div>
 
-<!-- ═══ Charts Row (Reference: Bar Chart + Recent Table) ═══ -->
-<div class="grid" style="grid-template-columns: 1fr 380px; gap: var(--space-6); margin-bottom: var(--space-8);">
-
-  <!-- Bar Chart: Candidatures vs Formations -->
-  <div class="card">
-    <div class="flex items-center justify-between mb-6">
-      <h3 class="text-md fw-semibold">Candidatures vs Formations (Mensuel)</h3>
-      <select class="select" style="max-width:120px;font-size:var(--fs-xs);" id="chart-filter">
-        <option>6 mois</option>
-        <option>12 mois</option>
-        <option>Cette année</option>
-      </select>
-    </div>
-    <div id="dashboard-bar-chart" style="height:280px;"></div>
-    <div class="flex items-center justify-center gap-6 mt-4" style="font-size:var(--fs-xs);color:var(--text-secondary);">
-      <span style="display:flex;align-items:center;gap:6px;">
-        <span style="width:10px;height:10px;border-radius:3px;background:var(--chart-1);"></span>
-        Candidatures
-      </span>
-      <span style="display:flex;align-items:center;gap:6px;">
-        <span style="width:10px;height:10px;border-radius:3px;background:var(--chart-2);"></span>
-        Formations
-      </span>
-    </div>
-  </div>
+<!-- ═══ Recent Inscriptions Row ═══ -->
+<div style="margin-bottom: var(--space-8);">
 
   <!-- Recent Inscriptions Table -->
   <div class="card" style="overflow:hidden;padding:0;">
     <div class="flex items-center justify-between p-4" style="border-bottom:1px solid var(--border-color);">
       <h3 class="text-sm fw-semibold">Inscriptions Récentes</h3>
-      <a href="#" class="text-sm" style="color:var(--accent-primary);font-weight:500;">Voir tout</a>
+      <a href="users.php" class="text-sm" style="color:var(--accent-primary);font-weight:500;">Voir tout</a>
     </div>
     <table class="data-table">
       <thead>
@@ -111,65 +131,45 @@ if (!isset($content)) {
           <th>Utilisateur</th>
           <th>Type</th>
           <th>Date</th>
-          <th>Statut IA</th>
+          <th>Statut</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px;">AJ</div>
-              <span class="text-sm fw-medium">Alex Jenkins</span>
-            </div>
-          </td>
-          <td><span class="badge badge-info">Job Hunter</span></td>
-          <td class="text-xs text-secondary">Aujourd'hui</td>
-          <td><span class="badge badge-success">● Analysé</span></td>
-        </tr>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px;background:var(--accent-secondary);">TS</div>
-              <span class="text-sm fw-medium">TechSphere Inc.</span>
-            </div>
-          </td>
-          <td><span class="badge badge-primary">Entreprise</span></td>
-          <td class="text-xs text-secondary">Hier</td>
-          <td><span class="badge badge-warning">● En attente</span></td>
-        </tr>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px;">LD</div>
-              <span class="text-sm fw-medium">Laura Dubois</span>
-            </div>
-          </td>
-          <td><span class="badge badge-info">Job Hunter</span></td>
-          <td class="text-xs text-secondary">Hier</td>
-          <td><span class="badge badge-success">● Analysé</span></td>
-        </tr>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px;background:var(--accent-secondary);">DG</div>
-              <span class="text-sm fw-medium">DevGroup SA</span>
-            </div>
-          </td>
-          <td><span class="badge badge-primary">Entreprise</span></td>
-          <td class="text-xs text-secondary">04 Avril</td>
-          <td><span class="badge badge-success">● Vérifié</span></td>
-        </tr>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px;">MR</div>
-              <span class="text-sm fw-medium">Marie Riahi</span>
-            </div>
-          </td>
-          <td><span class="badge badge-info">Job Hunter</span></td>
-          <td class="text-xs text-secondary">03 Avril</td>
-          <td><span class="badge badge-success">● Analysé</span></td>
-        </tr>
+        <?php if (!empty($recentUsers)): ?>
+            <?php foreach ($recentUsers as $user): ?>
+                <tr>
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px; overflow:hidden;">
+                          <?php if (!empty($user['photo'])): ?>
+                            <img src="<?php echo $user['photo']; ?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
+                          <?php else: ?>
+                            <?php echo strtoupper(substr($user['nom'], 0, 1) . substr($user['prenom'], 0, 1)); ?>
+                          <?php endif; ?>
+                      </div>
+                      <span class="text-sm fw-medium"><?php echo htmlspecialchars($user['prenom'] . ' ' . $user['nom']); ?></span>
+                    </div>
+                  </td>
+                  <td>
+                      <?php 
+                        $badgeClass = 'badge-info';
+                        if ($user['role'] === 'Entreprise') $badgeClass = 'badge-primary';
+                        else if ($user['role'] === 'Admin') $badgeClass = 'badge-danger';
+                      ?>
+                      <span class="badge <?php echo $badgeClass; ?>"><?php echo $user['role']; ?></span>
+                  </td>
+                  <td class="text-xs text-secondary"><?php echo date('d M Y', strtotime($user['dateCreation'])); ?></td>
+                  <td><span class="badge badge-success">● Actif</span></td>
+                </tr>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="4" class="text-center text-secondary py-12 text-sm" style="opacity:0.6;">
+                    <i data-lucide="users" style="width:32px;height:32px;margin:0 auto var(--space-2);display:block;color:var(--text-tertiary);"></i>
+                    Aucune inscription récente.
+                </td>
+            </tr>
+        <?php endif; ?>
       </tbody>
     </table>
   </div>
@@ -179,58 +179,56 @@ if (!isset($content)) {
 <div class="grid grid-2 gap-6">
   <div class="card">
     <h3 class="text-md fw-semibold mb-6">Répartition par rôle</h3>
-    <div class="flex items-center justify-center" id="role-donut-chart"></div>
+    <div class="flex items-center justify-center" id="role-donut-chart">
+        <?php if ($totalUsers == 0): ?>
+            <div class="empty-state-mini" style="text-align:center;opacity:0.6;">
+              <p style="font-size:var(--fs-xs);color:var(--text-secondary);">Données insuffisantes</p>
+           </div>
+        <?php endif; ?>
+    </div>
   </div>
   <div class="card">
     <h3 class="text-md fw-semibold mb-6">Activité hebdomadaire</h3>
-    <div id="weekly-chart"></div>
+    <div id="weekly-chart">
+        <?php if (array_sum($weeklyActivity) == 0): ?>
+            <div class="empty-state-mini" style="text-align:center;opacity:0.6;padding-top:var(--space-8);">
+              <p style="font-size:var(--fs-xs);color:var(--text-secondary);">Aucune activité cette semaine</p>
+           </div>
+        <?php endif; ?>
+    </div>
   </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Bar Chart: Candidatures vs Formations
-  AptusCharts.bar('dashboard-bar-chart', [
-    { label: 'Jan', value1: 240, value2: 180, label1: 'Candidatures', label2: 'Formations' },
-    { label: 'Fév', value1: 310, value2: 220, label1: 'Candidatures', label2: 'Formations' },
-    { label: 'Mar', value1: 420, value2: 280, label1: 'Candidatures', label2: 'Formations' },
-    { label: 'Avr', value1: 380, value2: 340, label1: 'Candidatures', label2: 'Formations' },
-    { label: 'Mai', value1: 290, value2: 190, label1: 'Candidatures', label2: 'Formations' },
-    { label: 'Jun', value1: 350, value2: 260, label1: 'Candidatures', label2: 'Formations' },
-  ], {
-    dualBars: true,
-    barColor: 'var(--chart-1)',
-    barColor2: 'var(--chart-2)',
-    height: 280
-  });
-
   // Donut Chart: Roles
   AptusCharts.donut('role-donut-chart', [
-    { label: 'Candidats', value: 12450 },
-    { label: 'Entreprises', value: 845 },
-    { label: 'Admins', value: 12 },
+    { label: 'Candidats', value: <?php echo $nbCandidats; ?> },
+    { label: 'Entreprises', value: <?php echo $nbEntreprises; ?> },
+    { label: 'Tuteurs', value: <?php echo $nbTuteurs; ?> },
+    { label: 'Admins', value: <?php echo $nbAdmins; ?> },
   ], {
     size: 180,
     strokeWidth: 30,
-    centerValue: '13.3k',
+    centerValue: '<?php echo $totalUsers; ?>',
     centerLabel: 'Total'
   });
 
   // Weekly Activity
   AptusCharts.bar('weekly-chart', [
-    { label: 'Lun', value: 45 },
-    { label: 'Mar', value: 62 },
-    { label: 'Mer', value: 78 },
-    { label: 'Jeu', value: 55 },
-    { label: 'Ven', value: 90 },
-    { label: 'Sam', value: 34 },
-    { label: 'Dim', value: 22 },
+    { label: 'Lun', value: <?php echo $weeklyActivity[0]; ?> },
+    { label: 'Mar', value: <?php echo $weeklyActivity[1]; ?> },
+    { label: 'Mer', value: <?php echo $weeklyActivity[2]; ?> },
+    { label: 'Jeu', value: <?php echo $weeklyActivity[3]; ?> },
+    { label: 'Ven', value: <?php echo $weeklyActivity[4]; ?> },
+    { label: 'Sam', value: <?php echo $weeklyActivity[5]; ?> },
+    { label: 'Dim', value: <?php echo $weeklyActivity[6]; ?> },
   ], { barColor: 'var(--chart-3)', height: 200 });
 
   // Animate counters
-  AptusCharts.counter('counter-hunters', 12450);
-  AptusCharts.counter('counter-enterprises', 845);
-  AptusCharts.counter('counter-cvs', 34102);
-  AptusCharts.counter('counter-formations', 4520);
+  AptusCharts.counter('counter-hunters', <?php echo $nbCandidats; ?>);
+  AptusCharts.counter('counter-enterprises', <?php echo $nbEntreprises; ?>);
+  AptusCharts.counter('counter-tuteurs', <?php echo $nbTuteurs; ?>);
+  AptusCharts.counter('counter-admins', <?php echo $nbAdmins; ?>);
 });
 </script>

@@ -107,13 +107,37 @@ class RapportIAController {
     public function matchJobs(array $keywords): array {
         $db = config::getConnexion();
         try {
-            // Nettoyer et garder uniquement les mots-clés de taille >= 3
+            // Nettoyer et garder uniquement les mots-clés de taille >= 2
             $validKeywords = array_filter($keywords, function($kw) {
-                return strlen(trim($kw)) >= 3;
+                return strlen(trim($kw)) >= 2;
             });
             $validKeywordsCount = count($validKeywords);
             
-            if ($validKeywordsCount === 0) return []; // Pas de mots-clés -> pas de match ciblé
+            // Si pas de mots-clés, on fait une recherche TRÈS large sur les dernières offres actives
+            if ($validKeywordsCount === 0) {
+                $sql = "SELECT o.*, u.nom as company, p.ville 
+                        FROM offreemploi o 
+                        LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur 
+                        LEFT JOIN profil p ON o.id_entreprise = p.id_utilisateur 
+                        WHERE o.statut = 'Actif'
+                        ORDER BY o.date_publication DESC LIMIT 5";
+                $stmt = $db->query($sql);
+                $results = $stmt->fetchAll();
+                
+                $matchedJobs = [];
+                foreach ($results as $o) {
+                    $matchedJobs[] = [
+                        'id' => $o['id_offre'],
+                        'title' => $o['titre'],
+                        'domain' => $o['domaine'] ?: 'Expertise',
+                        'match_score' => 50, // Score arbitraire pour le fallback
+                        'location' => ($o['ville'] ?: 'Tunis') . ' (Aptus)',
+                        'salary' => $o['salaire'] ? ($o['salaire'] . ' TND') : 'Non précisé',
+                        'created_at' => $o['date_publication'] ?? ''
+                    ];
+                }
+                return $matchedJobs;
+            }
 
             // Recherche large (toutes les offres qui matchent au moins un mot-clé)
             $where = [];
@@ -125,12 +149,12 @@ class RapportIAController {
                 $idx++;
             }
 
-            $whereStr = "WHERE " . implode(" OR ", $where);
-            $sql = "SELECT o.*, e.raisonSociale as company, p.ville 
+            $whereStr = "WHERE (" . implode(" OR ", $where) . ")";
+            $sql = "SELECT o.*, u.nom as company, p.ville 
                     FROM offreemploi o 
-                    JOIN entreprise e ON o.id_entreprise = e.id_entreprise 
-                    LEFT JOIN profil p ON e.id_entreprise = p.id_utilisateur 
-                    $whereStr";
+                    LEFT JOIN utilisateur u ON o.id_entreprise = u.id_utilisateur 
+                    LEFT JOIN profil p ON o.id_entreprise = p.id_utilisateur 
+                    $whereStr AND o.statut = 'Actif'";
             
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
@@ -151,13 +175,15 @@ class RapportIAController {
 
                     $score = round(($matchCount / $validKeywordsCount) * 100);
 
-                    if ($score >= 40) {
+                    // Seuil abaissé à 20% pour plus de pertinence large
+                    if ($score >= 20) {
                         $matchedJobs[] = [
+                            'id' => $o['id_offre'],
                             'title' => $o['titre'],
                             'domain' => $o['domaine'] ?: 'IT / Tech',
                             'match_score' => $score,
                             'location' => ($o['ville'] ?: 'Tunis') . ' (Aptus)',
-                            'salary' => $o['salaire'] ? ($o['salaire'] . '€ / an') : 'Non précisé',
+                            'salary' => $o['salaire'] ? ($o['salaire'] . ' TND') : 'Non précisé',
                             'created_at' => $o['date_publication'] ?? ''
                         ];
                     }
@@ -230,18 +256,44 @@ class RapportIAController {
     
     public function addRapport(RapportIA $rapport) {
         $db = config::getConnexion();
-        $query = $db->prepare(
-            'INSERT INTO rapport_ia (id_cv, scoreGlobal, pointsForts, pointsFaibles, sectionsManquantes, suggestions, dateAnalyse) 
-            VALUES (:id_cv, :score, :forts, :faibles, :manquantes, :suggestions, NOW())'
-        );
-        $query->execute([
-            'id_cv' => $rapport->getIdCv(),
-            'score' => $rapport->getScoreGlobal(),
-            'forts' => $rapport->getPointsForts(),
-            'faibles' => $rapport->getPointsFaibles(),
-            'manquantes' => $rapport->getSectionsManquantes(),
-            'suggestions' => $rapport->getSuggestions()
-        ]);
+        
+        // On vérifie si la colonne keywords existe (pour compatibilité)
+        $hasKeywords = false;
+        try {
+            $db->query("SELECT keywords FROM rapport_ia LIMIT 1");
+            $hasKeywords = true;
+        } catch (Exception $e) { $hasKeywords = false; }
+
+        if ($hasKeywords) {
+            $query = $db->prepare(
+                'INSERT INTO rapport_ia (id_cv, scoreGlobal, pointsForts, pointsFaibles, sectionsManquantes, suggestions, keywords, dateAnalyse) 
+                VALUES (:id_cv, :score, :forts, :faibles, :manquantes, :suggestions, :keywords, NOW())'
+            );
+            $params = [
+                'id_cv' => $rapport->getIdCv(),
+                'score' => $rapport->getScoreGlobal(),
+                'forts' => $rapport->getPointsForts(),
+                'faibles' => $rapport->getPointsFaibles(),
+                'manquantes' => $rapport->getSectionsManquantes(),
+                'suggestions' => $rapport->getSuggestions(),
+                'keywords' => $rapport->getKeywords()
+            ];
+        } else {
+            $query = $db->prepare(
+                'INSERT INTO rapport_ia (id_cv, scoreGlobal, pointsForts, pointsFaibles, sectionsManquantes, suggestions, dateAnalyse) 
+                VALUES (:id_cv, :score, :forts, :faibles, :manquantes, :suggestions, NOW())'
+            );
+            $params = [
+                'id_cv' => $rapport->getIdCv(),
+                'score' => $rapport->getScoreGlobal(),
+                'forts' => $rapport->getPointsForts(),
+                'faibles' => $rapport->getPointsFaibles(),
+                'manquantes' => $rapport->getSectionsManquantes(),
+                'suggestions' => $rapport->getSuggestions()
+            ];
+        }
+        
+        $query->execute($params);
         return $db->lastInsertId();
     }
 

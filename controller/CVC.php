@@ -140,7 +140,7 @@ class CVC
             $query = $db->prepare('SELECT * FROM cv ORDER BY dateMiseAJour DESC');
             $query->execute();
         } else {
-            $query = $db->prepare('SELECT * FROM cv WHERE id_candidat = :id OR id_candidat IS NULL ORDER BY dateMiseAJour DESC');
+            $query = $db->prepare('SELECT * FROM cv WHERE id_candidat = :id ORDER BY dateMiseAJour DESC');
             $query->execute(['id' => $id_candidat]);
         }
         return $query->fetchAll();
