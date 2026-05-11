@@ -1,0 +1,200 @@
+/* ==========================================================================
+   AI Accessibility Agent Widget - CSS
+   Friendly, Fun, and Non-robotic Design
+   ========================================================================== */
+
+#ai-agent-widget {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 10000;
+    font-family: 'Inter', sans-serif;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    user-select: none;
+}
+
+#ai-agent-widget.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.8);
+}
+
+#ai-agent-widget.is-dragging {
+    transition: none;
+    cursor: grabbing;
+}
+
+.ai-face-container {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-radius: 50%;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+    position: relative;
+    cursor: grab;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border: 3px solid white;
+    transition: transform 0.2s ease;
+}
+
+.is-dragging .ai-face-container {
+    cursor: grabbing;
+    transform: scale(1.1);
+}
+
+.ai-face-container:hover {
+    transform: scale(1.05);
+}
+
+/* The Face */
+.ai-face {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* Eyes */
+.ai-eye {
+    width: 8px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 16px;
+    animation: blink 4s infinite;
+}
+
+.ai-eye.left { left: 18px; }
+.ai-eye.right { right: 18px; }
+
+/* Mouth */
+.ai-mouth {
+    width: 16px;
+    height: 6px;
+    background: #fff;
+    border-radius: 0 0 16px 16px;
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: all 0.2s ease;
+}
+
+/* 0. Power Off State */
+#ai-agent-widget.power-off .ai-face-container {
+    background: #e5e7eb;
+    box-shadow: none;
+    transform: scale(0.9);
+}
+#ai-agent-widget.power-off .ai-eye {
+    height: 2px;
+    border-radius: 2px;
+    animation: none;
+    top: 22px;
+}
+#ai-agent-widget.power-off .ai-mouth {
+    width: 10px;
+    height: 2px;
+    border-radius: 2px;
+    bottom: 20px;
+}
+
+/* Listening Indicator */
+.listening-indicator {
+    position: absolute;
+    bottom: -15px;
+    display: flex;
+    gap: 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.listening-indicator .bar {
+    width: 4px;
+    height: 10px;
+    background: #a855f7;
+    border-radius: 2px;
+    animation: sound-wave 0.5s infinite alternate;
+}
+
+.listening-indicator .bar:nth-child(2) { animation-delay: 0.2s; }
+.listening-indicator .bar:nth-child(3) { animation-delay: 0.4s; }
+
+/* States */
+#ai-agent-widget.state-loading .ai-face-container { animation: pulse-glow 1.5s infinite alternate; }
+#ai-agent-widget.state-loading .ai-mouth { width: 8px; height: 8px; border-radius: 50%; bottom: 16px; }
+#ai-agent-widget.state-listening .ai-face-container { box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2), 0 0 0 8px rgba(168, 85, 247, 0.1); animation: listen-bounce 1s infinite alternate; }
+#ai-agent-widget.state-listening .ai-mouth { width: 20px; height: 4px; border-radius: 4px; bottom: 18px; }
+#ai-agent-widget.state-listening .ai-eye { height: 14px; }
+#ai-agent-widget.state-listening .listening-indicator { opacity: 1; bottom: 8px; }
+#ai-agent-widget.state-speaking .ai-mouth { animation: talk 0.3s infinite alternate; }
+
+/* Controls Panel */
+.ai-controls {
+    background: white;
+    padding: 8px 16px;
+    border-radius: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+/* Layout Flipping - Fixed */
+/* When docked right (face is on right), controls should be on the left of the face. 
+   Row order: .ai-controls (left) then .ai-face-container (right). */
+#ai-agent-widget.dock-right { flex-direction: row; }
+
+/* When docked left (face is on left), controls should be on the right of the face.
+   Row-reverse order: .ai-controls (right) then .ai-face-container (left). */
+#ai-agent-widget.dock-left { flex-direction: row-reverse; }
+
+#ai-agent-widget.dock-right .ai-controls { transform: translateX(20px); }
+#ai-agent-widget.dock-left .ai-controls { transform: translateX(-20px); }
+
+#ai-agent-widget:hover .ai-controls,
+#ai-agent-widget.active .ai-controls,
+#ai-agent-widget.power-off .ai-controls {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+}
+
+.ai-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 50%;
+    transition: background 0.2s, color 0.2s;
+}
+
+.ai-btn:hover { background: #f3f4f6; color: #6366f1; }
+.ai-btn.danger { color: #ef4444; }
+.ai-btn.danger:hover { background: #fee2e2; }
+.ai-btn.success { color: #10b981; }
+.ai-btn.success:hover { background: #d1fae5; }
+.ai-btn.active-ptt { background: #6366f1; color: white; transform: scale(1.1); box-shadow: 0 0 10px rgba(99,102,241,0.5); }
+
+.ai-status-text { font-size: 13px; font-weight: 600; color: #374151; min-width: 60px; }
+
+/* Animations */
+@keyframes blink { 0%, 96%, 98% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+@keyframes pulse-glow { 0% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); opacity: 0.8; } 100% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.8); opacity: 1; } }
+@keyframes listen-bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-4px); } }
+@keyframes talk { 0% { height: 4px; width: 14px; border-radius: 4px; } 100% { height: 16px; width: 16px; border-radius: 50%; bottom: 12px; } }
+@keyframes sound-wave { 0% { height: 4px; } 100% { height: 14px; } }

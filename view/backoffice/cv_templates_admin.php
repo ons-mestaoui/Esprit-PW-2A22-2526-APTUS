@@ -1,6 +1,36 @@
-<?php $pageTitle = "Templates CV"; $pageCSS = "cv.css"; ?>
+<?php 
+$pageTitle = "Templates CV"; 
+$pageCSS = "cv.css"; 
 
-<?php
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../model/Template.php';
+require_once __DIR__ . '/../../controller/TemplateC.php';
+require_once __DIR__ . '/../../controller/CVC.php';
+
+$tc = new TemplateC();
+$cvc = new CVC();
+
+// --- CRUD Actions ---
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
+    $tc->deleteTemplate($_GET['id']);
+    header("Location: cv_templates_admin.php");
+    exit;
+}
+
+$dbTemplates = $tc->listeTemplates();
+$totalTemplates = count($dbTemplates);
+
+// --- Stats Aggregation ---
+$newTemplatesMonth = $tc->getNewTemplatesThisMonth();
+$usageStats = $tc->getTemplateUsageStats();
+$typeUsageStats = $tc->getTemplateUsageByType(); // New: Usage by Free vs Premium
+$mostUsedTemplate = !empty($usageStats) ? $usageStats[0] : ['nom' => 'Aucun', 'usage_count' => 0];
+
+$totalCVs = $cvc->getTotalCVs();
+$growth = $cvc->getCVGrowth();
+$cvTrend = $growth['last'] > 0 ? round((($growth['current'] - $growth['last']) / $growth['last']) * 100) : 0;
+$recentAdditions = $cvc->getRecentCVAdditionsCount();
+
 if (!isset($content)) {
     $content = __FILE__;
     include 'layout_back.php';
@@ -15,198 +45,290 @@ if (!isset($content)) {
       <h1>Templates CV</h1>
       <p>Gérez les templates disponibles pour les utilisateurs</p>
     </div>
-    <button class="btn btn-primary" data-modal="add-template-modal" id="add-template-btn">
+    <a href="template_form.php?action=add" class="btn btn-primary" id="add-template-btn">
       <i data-lucide="plus" style="width:18px;height:18px;"></i>
       Ajouter un Template
-    </button>
+    </a>
   </div>
 </div>
 
-<!-- ═══ Stats Cards ═══ -->
+<!-- ═══ Layout Restructuration: Stats Full Width Row ═══ -->
 <div class="grid grid-4 gap-6 mb-8 stagger">
-  <div class="stat-card animate-on-scroll">
-    <div>
-      <div class="stat-card__label">Total Templates</div>
-      <div class="stat-card__value">24</div>
-      <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +3 ce mois
+    <div class="stat-card animate-on-scroll">
+      <div>
+        <div class="stat-card__label">Total Templates</div>
+        <div class="stat-card__value"><?php echo $totalTemplates; ?></div>
+        <div class="stat-card__trend up">
+          <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +<?php echo $newTemplatesMonth; ?> ce mois
+        </div>
       </div>
+      <div class="stat-card__icon purple"><i data-lucide="layout-template" style="width:22px;height:22px;"></i></div>
     </div>
-    <div class="stat-card__icon purple"><i data-lucide="layout-template" style="width:22px;height:22px;"></i></div>
-  </div>
-  <div class="stat-card animate-on-scroll">
-    <div>
-      <div class="stat-card__label">Plus utilisé</div>
-      <div class="stat-card__value" style="font-size:var(--fs-md);">Tech Stack</div>
-      <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> 1,240 utilisations
+    
+    <div class="stat-card animate-on-scroll">
+      <div>
+        <div class="stat-card__label">Plus utilisé</div>
+        <div class="stat-card__value" style="font-size:1.4rem;"><?php echo htmlspecialchars($mostUsedTemplate['nom']); ?></div>
+        <div class="stat-card__trend up">
+          <i data-lucide="trending-up" style="width:14px;height:14px;"></i> <?php echo number_format($mostUsedTemplate['usage_count']); ?> utilisations
+        </div>
       </div>
+      <div class="stat-card__icon teal"><i data-lucide="star" style="width:22px;height:22px;"></i></div>
     </div>
-    <div class="stat-card__icon teal"><i data-lucide="star" style="width:22px;height:22px;"></i></div>
-  </div>
-  <div class="stat-card animate-on-scroll">
-    <div>
-      <div class="stat-card__label">CVs générés (total)</div>
-      <div class="stat-card__value">8,432</div>
-      <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +18% ce mois
+    
+    <div class="stat-card animate-on-scroll">
+      <div>
+        <div class="stat-card__label">CVs générés</div>
+        <div class="stat-card__value"><?php echo number_format($totalCVs); ?></div>
+        <div class="stat-card__trend <?php echo $cvTrend >= 0 ? 'up' : 'down'; ?>">
+          <i data-lucide="<?php echo $cvTrend >= 0 ? 'trending-up' : 'trending-down'; ?>" style="width:14px;height:14px;"></i> 
+          <?php echo ($cvTrend >= 0 ? '+' : '') . $cvTrend; ?>% ce mois
+        </div>
       </div>
+      <div class="stat-card__icon blue"><i data-lucide="file-check" style="width:22px;height:22px;"></i></div>
     </div>
-    <div class="stat-card__icon blue"><i data-lucide="file-check" style="width:22px;height:22px;"></i></div>
-  </div>
-  <div class="stat-card animate-on-scroll">
-    <div>
-      <div class="stat-card__label">Ajouts récents</div>
-      <div class="stat-card__value">3</div>
-      <div class="stat-card__trend">
-        <span class="text-tertiary">Cette semaine</span>
+    
+    <div class="stat-card animate-on-scroll">
+      <div>
+        <div class="stat-card__label">Ajouts récents</div>
+        <div class="stat-card__value"><?php echo $recentAdditions; ?></div>
+        <div class="stat-card__trend">
+          <span class="text-tertiary">Ces 7 derniers jours</span>
+        </div>
       </div>
+      <div class="stat-card__icon orange"><i data-lucide="clock" style="width:22px;height:22px;"></i></div>
     </div>
-    <div class="stat-card__icon orange"><i data-lucide="clock" style="width:22px;height:22px;"></i></div>
-  </div>
 </div>
 
-<!-- ═══ Top Used Templates Chart + Table ═══ -->
-<div class="grid" style="grid-template-columns: 1fr 300px; gap: var(--space-6);">
-  <!-- Templates Table -->
-  <div class="card-flat" style="overflow:hidden;">
+<!-- ═══ Charts Row: Dual Perspective ═══ -->
+<div class="grid gap-6 mb-8" style="grid-template-columns: repeat(12, 1fr);">
+    <!-- Bar Chart (Top Usage) -->
+    <div class="card animate-on-scroll" style="grid-column: span 8;">
+        <div class="flex items-center justify-between mb-6">
+            <h4 class="text-sm fw-semibold">Popularité des Templates</h4>
+            <div class="text-xs text-secondary">Basé sur le volume de création</div>
+        </div>
+        <div id="template-usage-chart" style="min-height: 250px; width: 100%;"></div>
+    </div>
+
+    <!-- Donut Chart (Free vs Premium) -->
+    <div class="card animate-on-scroll" style="grid-column: span 4;">
+        <h4 class="text-sm fw-semibold mb-6">Répartition par Type</h4>
+        <div class="flex items-center" style="min-height: 200px;">
+            <div id="template-type-usage-donut" style="width: 150px; height: 150px;"></div>
+            <div class="flex-1 ml-8 flex flex-col gap-6">
+                <?php 
+                $totalUsage = array_sum(array_column($typeUsageStats, 'usage_count'));
+                // Sort to ensure Gratuit is first
+                usort($typeUsageStats, function($a, $b) { return $a['estPremium'] - $b['estPremium']; });
+                
+                foreach ($typeUsageStats as $stat): 
+                    $pct = $totalUsage > 0 ? round(($stat['usage_count'] / $totalUsage) * 100) : 0;
+                    $label = $stat['estPremium'] ? 'Premium' : 'Gratuit';
+                    $color = $stat['estPremium'] ? 'var(--accent-primary)' : 'var(--accent-secondary)';
+                ?>
+                <div class="flex flex-col">
+                    <div class="flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <span style="width:12px;height:12px;border-radius:4px;background:<?php echo $color; ?>;"></span>
+                            <span class="text-sm fw-semibold text-high-contrast"><?php echo $label; ?></span>
+                        </span>
+                        <span class="text-xs text-secondary fw-medium"><?php echo $stat['usage_count']; ?> CVs</span>
+                    </div>
+                    <div class="text-lg fw-bold mt-1" style="color: <?php echo $color; ?>; padding-left: 20px;">
+                        <?php echo $pct; ?>%
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Table Section Full Width ═══ -->
+<div class="card-flat" style="overflow:hidden;">
     <div class="flex items-center justify-between p-4" style="border-bottom:1px solid var(--border-color);">
-      <h3 class="text-md fw-semibold">Tous les Templates</h3>
-      <div class="search-bar" style="max-width:240px;">
+      <h3 class="text-md fw-semibold">Gérer les Templates</h3>
+      <div class="search-bar" style="max-width:300px;">
         <i data-lucide="search" style="width:16px;height:16px;"></i>
-        <input type="text" class="input" placeholder="Rechercher..." id="admin-template-search">
+        <input type="text" class="input" placeholder="Rechercher un template..." id="admin-template-search">
       </div>
     </div>
     <table class="data-table">
       <thead>
         <tr>
-          <th>Template</th>
-          <th>Catégorie</th>
-          <th>Utilisations</th>
+          <th>Miniature</th>
+          <th>Nom du Template</th>
+          <th>Description (Tags)</th>
+          <th>Type</th>
           <th>Date d'ajout</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <?php
-        $adminTemplates = [
-          ['name' => 'Tech Stack', 'cat' => 'Technologie', 'uses' => 1240, 'date' => '15 Jan 2026'],
-          ['name' => 'Executive Pro', 'cat' => 'Business', 'uses' => 980, 'date' => '20 Jan 2026'],
-          ['name' => 'Créatif Bold', 'cat' => 'Design', 'uses' => 856, 'date' => '02 Fév 2026'],
-          ['name' => 'Modern Flow', 'cat' => 'Moderne', 'uses' => 723, 'date' => '10 Fév 2026'],
-          ['name' => 'Data Analyst', 'cat' => 'Technologie', 'uses' => 654, 'date' => '18 Mar 2026'],
-          ['name' => 'Marketing Pro', 'cat' => 'Marketing', 'uses' => 512, 'date' => '25 Mar 2026'],
-          ['name' => 'Minimaliste', 'cat' => 'Minimaliste', 'uses' => 489, 'date' => '01 Avr 2026'],
-        ];
-        foreach ($adminTemplates as $i => $t):
-        ?>
+        <?php foreach ($dbTemplates as $t): ?>
         <tr>
           <td>
-            <div class="flex items-center gap-3">
-              <div style="width:32px;height:40px;border-radius:4px;background:var(--gradient-card);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-                <i data-lucide="file-text" style="width:14px;height:14px;color:var(--text-tertiary);"></i>
-              </div>
-              <span class="fw-medium"><?php echo $t['name']; ?></span>
+             <div class="miniature-wrapper" onclick="openLightbox('<?php echo htmlspecialchars($t['urlMiniature'], ENT_QUOTES); ?>')" style="position:relative; cursor:pointer; border-radius: 6px; overflow: hidden; display: inline-block;">
+                <img src="<?php echo htmlspecialchars($t['urlMiniature']); ?>" alt="miniature" style="width: 50px; height: 65px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); display: block; transition: transform 0.3s;" onerror="this.src='../../assets/images/placeholder.png';">
+                <div class="miniature-overlay" style="position:absolute; inset:0; background:rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s; pointer-events:none;">
+                    <i data-lucide="zoom-in" style="width:20px;height:20px; color:white;"></i>
+                </div>
+             </div>
+          </td>
+          <td>
+            <span class="fw-medium text-high-contrast"><?php echo htmlspecialchars($t['nom']); ?></span>
+          </td>
+          <td>
+            <div class="flex flex-wrap gap-1" style="max-width: 250px;">
+                <?php 
+                $tags = array_filter(array_map('trim', explode(',', $t['description'])));
+                if (!empty($tags)) {
+                    foreach($tags as $tag) {
+                        echo '<span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:11px;">'.htmlspecialchars($tag).'</span>';
+                    }
+                } else {
+                    echo '<span class="text-muted text-xs">Aucun tag</span>';
+                }
+                ?>
             </div>
           </td>
-          <td><span class="badge badge-primary"><?php echo $t['cat']; ?></span></td>
-          <td class="fw-medium"><?php echo number_format($t['uses']); ?></td>
-          <td class="text-secondary text-sm"><?php echo $t['date']; ?></td>
+          <td>
+            <?php if($t['estPremium']): ?>
+                <span class="badge" style="background:#f59e0b; color:white;">Premium</span>
+            <?php else: ?>
+                <span class="badge" style="background:#10b981; color:white;">Gratuit</span>
+            <?php endif; ?>
+          </td>
+          <td class="text-secondary text-sm"><?php echo date('d M Y', strtotime($t['dateCreation'])); ?></td>
           <td>
             <div class="flex gap-1">
-              <button class="btn btn-sm btn-ghost" title="Éditer"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
-              <button class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+              <a href="template_form.php?action=edit&id=<?php echo $t['id_template']; ?>" class="btn btn-sm btn-ghost" title="Éditer">
+                 <i data-lucide="pencil" style="width:14px;height:14px;"></i>
+              </a>
+              
+              <button class="btn btn-sm btn-ghost" style="color:var(--accent-tertiary);" title="Supprimer" onclick="deleteTemplate(<?php echo $t['id_template']; ?>, '<?php echo addslashes($t['nom']); ?>')">
+                 <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+              </button>
             </div>
           </td>
         </tr>
         <?php endforeach; ?>
+        <?php if($totalTemplates === 0): ?>
+        <tr>
+            <td colspan="5" class="text-center py-4 text-muted">Aucun template trouvé.</td>
+        </tr>
+        <?php endif; ?>
       </tbody>
     </table>
-    <div class="pagination" style="padding:var(--space-4);">
-      <button class="pagination__btn">&laquo;</button>
-      <button class="pagination__btn active">1</button>
-      <button class="pagination__btn">2</button>
-      <button class="pagination__btn">3</button>
-      <button class="pagination__btn">&raquo;</button>
-    </div>
-  </div>
-
-  <!-- Top Used Chart -->
-  <div class="card">
-    <h4 class="text-sm fw-semibold mb-6">Templates les plus utilisés</h4>
-    <div id="template-usage-chart"></div>
-  </div>
 </div>
 
-<!-- ═══ Add Template Modal ═══ -->
-<div class="modal-overlay" id="add-template-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <h3>Ajouter un Template</h3>
-      <button class="modal-close btn-icon" aria-label="Fermer">
-        <i data-lucide="x" style="width:20px;height:20px;"></i>
-      </button>
-    </div>
-    <div class="modal-body">
-      <form class="auth-form" data-validate id="add-template-form">
-        <div class="form-group">
-          <label class="form-label" for="tpl-name">Nom du template</label>
-          <input type="text" class="input" id="tpl-name" name="name" placeholder="Ex: Tech Stack" required>
-          <span class="form-error"></span>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="tpl-category">Catégorie</label>
-          <select class="select" id="tpl-category" name="category" required>
-            <option value="">Sélectionnez...</option>
-            <option>Technologie</option>
-            <option>Business</option>
-            <option>Design</option>
-            <option>Marketing</option>
-            <option>Santé</option>
-            <option>Minimaliste</option>
-            <option>Moderne</option>
-            <option>Classique</option>
-            <option>Créatif</option>
-          </select>
-          <span class="form-error"></span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Fichier template (HTML/CSS)</label>
-          <div class="drop-zone">
-            <input type="file" class="drop-zone__input" name="template_file" accept=".html,.css,.zip">
-            <div class="drop-zone__prompt">
-              <i data-lucide="upload-cloud" style="width:28px;height:28px;"></i>
-              <span>Déposez le fichier ici ou <span class="text-accent">parcourir</span></span>
-              <span class="text-xs text-tertiary">HTML, CSS, ZIP</span>
-            </div>
-            <div class="drop-zone__preview"></div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="tpl-description">Description</label>
-          <textarea class="textarea" id="tpl-description" name="description" rows="3" placeholder="Décrivez ce template..."></textarea>
-        </div>
-      </form>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary modal-close">Annuler</button>
-      <button class="btn btn-primary" type="submit" form="add-template-form">
-        <i data-lucide="plus" style="width:16px;height:16px;"></i>
-        Ajouter
-      </button>
-    </div>
-  </div>
 </div>
 
+<!-- Lightbox Modal -->
+<div id="lightbox-modal" onclick="closeLightbox(event)">
+   <div id="lightbox-close" onclick="closeLightboxEvent()">&times;</div>
+   <img id="lightbox-img" src="" alt="Aperçu Grand Format">
+</div>
+
+<style>
+/* Lightbox CSS */
+#lightbox-modal { position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 999999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
+#lightbox-modal.active { opacity: 1; pointer-events: auto; }
+#lightbox-img { max-width: 90vw; max-height: 90vh; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); object-fit: contain; transform: scale(0.95); transition: transform 0.3s ease-in-out; }
+#lightbox-modal.active #lightbox-img { transform: scale(1); }
+#lightbox-close { position: absolute; top: 25px; right: 35px; color: white; font-size: 36px; cursor: pointer; background: rgba(255,255,255,0.1); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 1000000; }
+#lightbox-close:hover { background: rgba(239, 68, 68, 0.8); transform: rotate(90deg); }
+
+.miniature-wrapper:hover img { transform: scale(1.1); box-shadow: 0 0 15px rgba(56,189,248,0.5); }
+.miniature-wrapper:hover .miniature-overlay { opacity: 1 !important; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
+// --- Global Lightbox logic ---
+function openLightbox(strBase64) {
+    if(!strBase64) return;
+    document.getElementById('lightbox-img').src = strBase64;
+    document.getElementById('lightbox-modal').classList.add('active');
+}
+function openPreviewLightbox() {
+    const src = document.getElementById('tpl-img-preview').src;
+    if(src && src.startsWith('data:image')) {
+        openLightbox(src);
+    }
+}
+function closeLightbox(e) {
+    if(e.target.id === 'lightbox-modal') {
+        document.getElementById('lightbox-modal').classList.remove('active');
+    }
+}
+function closeLightboxEvent() {
+    document.getElementById('lightbox-modal').classList.remove('active');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-  // Template usage chart
-  AptusCharts.bar('template-usage-chart', [
-    { label: 'Tech Stack', value: 1240 },
-    { label: 'Exec Pro', value: 980 },
-    { label: 'Créatif', value: 856 },
-    { label: 'Modern', value: 723 },
-    { label: 'Data', value: 654 },
-  ], { barColor: 'var(--chart-1)', height: 220 });
+    // Move lightbox to body to avoid CSS transform constraints breaking position:fixed
+    const lightboxModal = document.getElementById('lightbox-modal');
+    if (lightboxModal) {
+        document.body.appendChild(lightboxModal);
+    }
+
+  // Chart initialization
+  if (typeof AptusCharts !== 'undefined') {
+      const usageData = <?php echo json_encode(array_map(function($s) { 
+          return ['label' => $s['nom'], 'value' => (int)$s['usage_count']]; 
+      }, $usageStats)); ?>;
+      
+      AptusCharts.bar('template-usage-chart', usageData, { barColor: 'var(--chart-1)', height: 220 });
+  }
+
+  // Donut Chart: Free vs Premium
+  if (typeof AptusCharts !== 'undefined') {
+      const typeData = <?php 
+          // Re-sort for the chart to match legend order
+          usort($typeUsageStats, function($a, $b) { return $a['estPremium'] - $b['estPremium']; });
+          echo json_encode(array_map(function($s) { 
+              return [
+                  'label' => $s['estPremium'] ? 'Premium' : 'Gratuit', 
+                  'value' => (int)$s['usage_count'],
+                  'color' => $s['estPremium'] ? 'var(--accent-primary)' : 'var(--accent-secondary)'
+              ]; 
+          }, $typeUsageStats)); 
+      ?>;
+      
+      AptusCharts.donut('template-type-usage-donut', typeData, {
+          size: 160,
+          strokeWidth: 25,
+          centerValue: '<?php echo number_format($totalCVs); ?>',
+          centerLabel: 'CVs'
+      });
+  }
+});
+
+async function deleteTemplate(id, name) {
+    const ok = await aptusConfirm(
+        'Supprimer le Template ?',
+        `Êtes-vous sûr de vouloir supprimer le template "${name}" ? Cette action est irréversible.`
+    );
+    if (ok) {
+        window.location.href = `cv_templates_admin.php?action=delete&id=${id}`;
+    }
+}
+
+// --- Live Search ---
+document.getElementById('admin-template-search')?.addEventListener('input', function(e) {
+    const term = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('.data-table tbody tr');
+    let found = 0;
+    
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const matches = text.includes(term);
+        row.style.display = matches ? '' : 'none';
+        if(matches) found++;
+    });
+    
+    // Optional: show "No results" row if found === 0
 });
 </script>

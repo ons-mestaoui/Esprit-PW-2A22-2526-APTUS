@@ -1,12 +1,10 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 $pageTitle = "Visionneuse de Cours - Aptus AI";
 
 require_once __DIR__ . '/../../controller/FormationController.php';
 require_once __DIR__ . '/../../controller/SessionManager.php';
 SessionManager::start();
+SessionManager::requireLogin();
 
 $id_formation = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $id_user = SessionManager::getUserId();
@@ -268,7 +266,7 @@ if (!isset($content)) {
     .chat-fab {
         position: fixed;
         bottom: 2rem;
-        right: 2rem;
+        right: calc(var(--space-6, 1.5rem) + 56px + 1rem);
         z-index: 9999;
         width: 60px;
         height: 60px;

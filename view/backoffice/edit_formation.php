@@ -228,10 +228,7 @@ if (!isset($content)) {
             if (val.length === 0) { valid = false; error = "Le domaine est obligatoire."; }
         }
         else if (input.id === 'ef-date') {
-            const now = new Date(); now.setHours(0,0,0,0);
-            const d = new Date(val);
             if (val === "") { valid = false; error = "La date est obligatoire."; }
-            else if (d < now) { valid = false; error = "La date ne peut pas être dans le passé."; }
         }
         else if (input.id === 'ef-tuteur' || input.name === 'niveau' || input.id === 'ef-lieu') {
             if (val === "") { valid = false; error = "Ce champ est obligatoire."; }
@@ -323,7 +320,10 @@ if (!isset($content)) {
         return false;
     };
 
-    document.getElementById('lieu-select-edit').addEventListener('change', function () {
-        document.getElementById('url-field-edit').style.display = (this.value == '1') ? 'block' : 'none';
-    });
+    const lieuSelectEdit = document.getElementById('ef-lieu');
+    if (lieuSelectEdit) {
+        lieuSelectEdit.addEventListener('change', function () {
+            document.getElementById('url-field-edit').style.display = (this.value == '1') ? 'block' : 'none';
+        });
+    }
 </script>

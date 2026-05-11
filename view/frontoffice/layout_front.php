@@ -1,5 +1,28 @@
+<?php
+// Load user preferences early so they can be applied to the page
+if (session_status() === PHP_SESSION_NONE) session_start();
+$_layout_prefs = [];
+if (isset($_SESSION['id_utilisateur'])) {
+    if (!class_exists('UtilisateurC')) include_once __DIR__ . '/../../controller/UtilisateurC.php';
+    $_layout_uC = new UtilisateurC();
+    $_layout_prefs = $_layout_uC->getPreferences($_SESSION['id_utilisateur']);
+}
+$_lp_theme      = htmlspecialchars($_layout_prefs['theme']         ?? 'light');
+$_lp_accent     = htmlspecialchars($_layout_prefs['accent_color']  ?? '#6B34A3');
+$_lp_fontSize   = max(12, min(20, intval($_layout_prefs['font_size'] ?? 14)));
+$_lp_fontFamily = htmlspecialchars($_layout_prefs['font_family']   ?? 'Inter');
+$_lp_radius     = $_layout_prefs['border_radius'] ?? 'medium';
+$_lp_radiusMap  = [
+    'none'   => ['0px',  '0px',  '0px',  '0px',  '0px',  '0px'],
+    'small'  => ['2px',  '4px',  '6px',  '8px',  '10px', '12px'],
+    'medium' => ['4px',  '8px',  '12px', '16px', '20px', '24px'],
+    'large'  => ['6px',  '12px', '18px', '24px', '28px', '32px'],
+    'full'   => ['10px', '20px', '24px', '32px', '36px', '9999px'],
+];
+$_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
+?>
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr" data-theme="<?= $_lp_theme ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +33,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <?php if ($_lp_fontFamily !== 'Inter'): ?>
+  <link href="https://fonts.googleapis.com/css2?family=<?= urlencode($_lp_fontFamily) ?>:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <?php endif; ?>
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/variables.css">
@@ -20,8 +46,33 @@
   <?php if (isset($pageCSS)): ?>
     <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/<?php echo $pageCSS; ?>">
   <?php endif; ?>
+  <?php if (!empty($_layout_prefs)): ?>
+  <!-- AI Agent Widget -->
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/ai_agent.css">
+  <?php endif; ?>
+
+  <!-- User preference overrides (injected server-side from DB) -->
+  <style>
+    :root {
+      --accent-primary:       <?= $_lp_accent ?>;
+      --accent-primary-light: <?= $_lp_accent ?>26;
+      --accent-primary-dark:  <?= $_lp_accent ?>;
+      --font-family: '<?= $_lp_fontFamily ?>', 'Inter', sans-serif;
+      --radius-xs:   <?= $_lp_r[0] ?>;
+      --radius-sm:   <?= $_lp_r[1] ?>;
+      --radius-md:   <?= $_lp_r[2] ?>;
+      --radius-lg:   <?= $_lp_r[3] ?>;
+      --radius-xl:   <?= $_lp_r[4] ?>;
+      --radius-2xl:  <?= $_lp_r[5] ?>;
+    }
+    html { font-size: <?= $_lp_fontSize ?>px; }
+  </style>
 
   <!-- Theme Toggle (load early to avoid flash) -->
+  <script>
+    // Sync DB theme preference to localStorage before theme-toggle.js reads it
+    localStorage.setItem('aptus-theme', '<?= $_lp_theme ?>');
+  </script>
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
   <script>
     // 🛡️ SÉCURITÉ : Définition de l'URL de base pour FaceAPI et AJAX
@@ -58,7 +109,7 @@
       $currentName = $_SESSION['nom'] ?? 'Utilisateur';
     ?>
     <!-- Logo -->
-    <a href="<?php echo ($currentRole === 'Entreprise') ? 'hr_posts.php' : 'jobs_feed.php'; ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
+    <a href="<?php echo ($currentRole === 'Entreprise') ? 'hr_posts.php' : ($currentRole === 'Tuteur' ? 'tuteur_dashboard.php' : 'jobs_feed.php'); ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
       <img src="/aptus_first_official_version/view/assets/img/logo.png" alt="Aptus" class="landing-nav__logo-icon" style="background:none;">
       <span class="gradient-text accent-font h4 m-0">Aptus</span>
     </a>
@@ -75,8 +126,11 @@
         <a href="hr_candidatures.php" class="nav-anchor" id="nav-hr-candidatures"><i data-lucide="users"></i><span>Candidatures</span></a>
         <a href="profil_entreprise.php" class="nav-anchor" id="nav-hr-profile"><i data-lucide="building"></i><span>Profil Entreprise</span></a>
         <a href="veille_feed_ent.php" class="nav-anchor" id="nav-hr-veille"><i data-lucide="line-chart"></i><span>Veille Marché</span></a>
+      <?php elseif ($currentRole === 'Tuteur'): ?>
+        <!-- Tuteur: no nav links, only logo + right actions -->
       <?php else: ?>
         <a href="jobs_feed.php" class="nav-anchor" id="nav-jobs"><i data-lucide="briefcase"></i><span>Offres d'emploi</span></a>
+        <a href="my_applications.php" class="nav-anchor" id="nav-my-applications"><i data-lucide="clipboard-list"></i><span>Mes Candidatures</span></a>
         <a href="cv_templates.php" class="nav-anchor" id="nav-cv"><i data-lucide="file-badge"></i><span>Générer CV</span></a>
         <a href="formations_catalog.php" class="nav-anchor" id="nav-formations"><i data-lucide="graduation-cap"></i><span>Formations</span></a>
         <a href="formations_my.php" class="nav-anchor" id="nav-my-formations"><i data-lucide="book-open"></i><span>Mes Formations</span></a>
@@ -275,7 +329,7 @@
           </div>
         </div>
         <div class="dropdown-menu">
-          <?php if ($currentRole !== 'Entreprise'): ?>
+          <?php if ($currentRole === 'Candidat'): ?>
           <a href="profil_candidat.php" class="dropdown-item" id="dropdown-profile">
             <i data-lucide="user" style="width:16px;height:16px;"></i>
             Mon Profil
@@ -283,6 +337,11 @@
           <a href="skill_tree.php" class="dropdown-item" id="dropdown-skilltree">
             <i data-lucide="git-branch" style="width:16px;height:16px;"></i>
             Arbre de Compétences
+          </a>
+          <?php elseif ($currentRole === 'Tuteur'): ?>
+          <a href="profil_tuteur.php" class="dropdown-item" id="dropdown-profile">
+            <i data-lucide="user" style="width:16px;height:16px;"></i>
+            Mon Profil
           </a>
           <?php endif; ?>
           <a href="settings.php<?php echo ($currentRole === 'Entreprise') ? '?role=entreprise' : ''; ?>" class="dropdown-item" id="dropdown-settings">
@@ -307,8 +366,12 @@
       <a href="profil_entreprise.php" class="nav-anchor"><i data-lucide="building"></i> Profil Entreprise</a>
       <a href="veille_feed_ent.php" class="nav-anchor"><i data-lucide="line-chart"></i> Veille Marché</a>
       <a href="settings.php?role=entreprise" class="nav-anchor"><i data-lucide="settings"></i> Paramètres</a>
+    <?php elseif ($currentRole === 'Tuteur'): ?>
+      <a href="profil_tuteur.php" class="nav-anchor"><i data-lucide="user"></i> Mon Profil</a>
+      <a href="settings.php" class="nav-anchor"><i data-lucide="settings"></i> Paramètres</a>
     <?php else: ?>
       <a href="jobs_feed.php" class="nav-anchor"><i data-lucide="briefcase"></i> Offres d'emploi</a>
+      <a href="my_applications.php" class="nav-anchor"><i data-lucide="clipboard-list"></i> Mes Candidatures</a>
       <a href="cv_templates.php" class="nav-anchor"><i data-lucide="file-badge"></i> Générer CV</a>
       <a href="formations_catalog.php" class="nav-anchor"><i data-lucide="graduation-cap"></i> Formations</a>
       <a href="formations_my.php" class="nav-anchor"><i data-lucide="book-open"></i> Mes Formations</a>
@@ -760,11 +823,27 @@
   </script>
 
   <!-- Floating Accessibility Tool -->
-  <button id="tts-universal-btn" onclick="TTS.toggleUniversal()" 
+  <button id="tts-universal-btn" onclick="TTS.toggleUniversal()"
           style="position: fixed; bottom: 2rem; left: 2rem; z-index: 9999; width: 45px; height: 45px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: var(--shadow-md); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
           title="Activer le mode Lecture (TTS Universel)">
       <i data-lucide="headphones" style="width: 20px;"></i>
   </button>
+
+  <!-- Hand Control (a11y) -->
+  <div class="a11y-cursor" id="a11y-cursor"></div>
+  <div class="a11y-video-container" id="a11y-video-container">
+    <video id="a11y-webcam" autoplay playsinline></video>
+    <canvas id="a11y-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+  </div>
+  <button class="a11y-toggle" id="a11y-toggle" aria-label="Activer la navigation gestuelle" title="Navigation Hand Tracking">
+    <i data-lucide="hand"></i>
+  </button>
+  <script type="module" src="/aptus_first_official_version/view/assets/js/a11y-hand-control.js"></script>
+
+  <!-- AI Agent Widget (only for logged-in users) -->
+  <?php if (!empty($_layout_prefs)): ?>
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent.js"></script>
+  <?php endif; ?>
 </body>
 </html>
 

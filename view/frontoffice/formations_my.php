@@ -1,16 +1,13 @@
 <?php
-// Session nécessaire pour les messages flash (succès/erreur)
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 $pageTitle = "Mes Formations - Aptus AI";
 
 if (!isset($content)) {
     require_once __DIR__ . '/../../config.php';
     require_once __DIR__ . '/../../controller/SessionManager.php';
     require_once __DIR__ . '/../../controller/InscriptionController.php';
-    
+
     SessionManager::start();
+    SessionManager::requireLogin();
 
     $inscriptionC = new InscriptionController();
 

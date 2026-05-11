@@ -50,9 +50,7 @@ class SessionManager
                 return (int) $_GET['user_id'];
         }
 
-        // 4. Final Fallback: Demo User (ID 10)
-        // Many parts of the project use ID 10 as a default for demonstration.
-        return 10;
+        return null;
     }
 
     /**

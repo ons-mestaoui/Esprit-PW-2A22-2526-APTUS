@@ -6,6 +6,60 @@ if (!isset($content)) {
   include 'layout_back.php';
   exit();
 }
+
+require_once __DIR__ . '/../../config.php';
+
+$monthNames = [1=>'Jan',2=>'Fév',3=>'Mar',4=>'Avr',5=>'Mai',6=>'Jun',
+               7=>'Jul',8=>'Aoû',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Déc'];
+
+// Real DB stats
+$nbCandidats = $nbEntreprises = $nbCV = $nbFormations = $nbAdmins = $nbTuteurs = $totalUsers = 0;
+$barData = [];
+$recentUsers = [];
+
+try {
+  $db_dash = config::getConnexion();
+  $nbCandidats   = (int)$db_dash->query("SELECT COUNT(*) FROM utilisateur WHERE role='Candidat'")->fetchColumn();
+  $nbEntreprises = (int)$db_dash->query("SELECT COUNT(*) FROM utilisateur WHERE role='Entreprise'")->fetchColumn();
+  $nbCV          = (int)$db_dash->query("SELECT COUNT(*) FROM cv")->fetchColumn();
+  $nbFormations  = (int)$db_dash->query("SELECT COUNT(*) FROM inscription")->fetchColumn();
+  $nbAdmins      = (int)$db_dash->query("SELECT COUNT(*) FROM utilisateur WHERE role='Admin'")->fetchColumn();
+  $nbTuteurs     = (int)$db_dash->query("SELECT COUNT(*) FROM utilisateur WHERE role='Tuteur'")->fetchColumn();
+  $totalUsers    = $nbCandidats + $nbEntreprises + $nbAdmins + $nbTuteurs;
+
+  // Monthly bar chart: last 6 months
+  for ($i = 5; $i >= 0; $i--) {
+    $ts    = strtotime("-$i months");
+    $mNum  = (int)date('n', $ts);
+    $mYear = (int)date('Y', $ts);
+    try {
+      $stmtC = $db_dash->prepare("SELECT COUNT(*) FROM candidatures WHERE YEAR(date_candidature)=:y AND MONTH(date_candidature)=:m");
+      $stmtC->execute([':y' => $mYear, ':m' => $mNum]);
+      $nbC = (int)$stmtC->fetchColumn();
+    } catch (Exception $e2) { $nbC = 0; }
+    $stmtF = $db_dash->prepare("SELECT COUNT(*) FROM inscription WHERE YEAR(date_inscription)=:y AND MONTH(date_inscription)=:m");
+    $stmtF->execute([':y' => $mYear, ':m' => $mNum]);
+    $nbF = (int)$stmtF->fetchColumn();
+    $barData[] = [
+      'label'  => $monthNames[$mNum],
+      'value1' => $nbC,
+      'value2' => $nbF,
+      'label1' => 'Candidatures',
+      'label2' => 'Formations',
+    ];
+  }
+
+  // Recent users
+  $recentUsers = $db_dash->query("
+    SELECT u.nom, u.prenom, u.role, p.dateCreation
+    FROM utilisateur u
+    LEFT JOIN profil p ON u.id_utilisateur = p.id_utilisateur
+    ORDER BY u.id_utilisateur DESC LIMIT 5
+  ")->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (Exception $e) { /* fallback values already set above */ }
+
+$totalFormatted = $totalUsers >= 1000 ? round($totalUsers/1000, 1).'k' : (string)$totalUsers;
 ?>
 <!-- Included inside layout_back.php -->
 
@@ -23,9 +77,9 @@ if (!isset($content)) {
   <div class="stat-card animate-on-scroll" id="stat-hunters">
     <div>
       <div class="stat-card__label">Job Hunters Inscrits</div>
-      <div class="stat-card__value" id="counter-hunters">12,450</div>
+      <div class="stat-card__value" id="counter-hunters"><?php echo number_format($nbCandidats); ?></div>
       <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +12% ce mois
+        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> total inscrits
       </div>
     </div>
     <div class="stat-card__icon purple">
@@ -36,9 +90,9 @@ if (!isset($content)) {
   <div class="stat-card animate-on-scroll" id="stat-enterprises">
     <div>
       <div class="stat-card__label">Entreprises Partenaires</div>
-      <div class="stat-card__value" id="counter-enterprises">845</div>
+      <div class="stat-card__value" id="counter-enterprises"><?php echo number_format($nbEntreprises); ?></div>
       <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +5.2% ce mois
+        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> total inscrites
       </div>
     </div>
     <div class="stat-card__icon teal">
@@ -48,10 +102,10 @@ if (!isset($content)) {
 
   <div class="stat-card animate-on-scroll" id="stat-cvs">
     <div>
-      <div class="stat-card__label">CV Analysés par l'IA</div>
-      <div class="stat-card__value" id="counter-cvs">34,102</div>
+      <div class="stat-card__label">CV Générés</div>
+      <div class="stat-card__value" id="counter-cvs"><?php echo number_format($nbCV); ?></div>
       <div class="stat-card__trend up">
-        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +24% ce mois
+        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> total créés
       </div>
     </div>
     <div class="stat-card__icon blue">
@@ -61,10 +115,10 @@ if (!isset($content)) {
 
   <div class="stat-card animate-on-scroll" id="stat-formations">
     <div>
-      <div class="stat-card__label">Formations Suivies</div>
-      <div class="stat-card__value" id="counter-formations">4,520</div>
-      <div class="stat-card__trend down">
-        <i data-lucide="trending-down" style="width:14px;height:14px;"></i> -2.1% ce mois
+      <div class="stat-card__label">Inscriptions Formations</div>
+      <div class="stat-card__value" id="counter-formations"><?php echo number_format($nbFormations); ?></div>
+      <div class="stat-card__trend up">
+        <i data-lucide="trending-up" style="width:14px;height:14px;"></i> total
       </div>
     </div>
     <div class="stat-card__icon orange">
@@ -116,63 +170,28 @@ if (!isset($content)) {
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px;">AJ</div>
-              <span class="text-sm fw-medium">Alex Jenkins</span>
-            </div>
-          </td>
-          <td><span class="badge badge-info">Job Hunter</span></td>
-          <td class="text-xs text-secondary">Aujourd'hui</td>
-          <td><span class="badge badge-success">● Analysé</span></td>
-        </tr>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials"
-                style="width:28px;height:28px;font-size:10px;background:var(--accent-secondary);">TS</div>
-              <span class="text-sm fw-medium">TechSphere Inc.</span>
-            </div>
-          </td>
-          <td><span class="badge badge-primary">Entreprise</span></td>
-          <td class="text-xs text-secondary">Hier</td>
-          <td><span class="badge badge-warning">● En attente</span></td>
-        </tr>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px;">LD</div>
-              <span class="text-sm fw-medium">Laura Dubois</span>
-            </div>
-          </td>
-          <td><span class="badge badge-info">Job Hunter</span></td>
-          <td class="text-xs text-secondary">Hier</td>
-          <td><span class="badge badge-success">● Analysé</span></td>
-        </tr>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials"
-                style="width:28px;height:28px;font-size:10px;background:var(--accent-secondary);">DG</div>
-              <span class="text-sm fw-medium">DevGroup SA</span>
-            </div>
-          </td>
-          <td><span class="badge badge-primary">Entreprise</span></td>
-          <td class="text-xs text-secondary">04 Avril</td>
-          <td><span class="badge badge-success">● Vérifié</span></td>
-        </tr>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px;">MR</div>
-              <span class="text-sm fw-medium">Marie Riahi</span>
-            </div>
-          </td>
-          <td><span class="badge badge-info">Job Hunter</span></td>
-          <td class="text-xs text-secondary">03 Avril</td>
-          <td><span class="badge badge-success">● Analysé</span></td>
-        </tr>
+        <?php if (!empty($recentUsers)): ?>
+          <?php foreach ($recentUsers as $ru):
+            $initials = strtoupper(substr($ru['prenom'] ?? '', 0, 1) . substr($ru['nom'] ?? '', 0, 1));
+            $role = $ru['role'] ?? 'Candidat';
+            $badgeClass = $role === 'Entreprise' ? 'badge-primary' : ($role === 'Admin' ? 'badge-danger' : ($role === 'Tuteur' ? 'badge-warning' : 'badge-info'));
+            $dateStr = !empty($ru['dateCreation']) ? date('d M', strtotime($ru['dateCreation'])) : 'Récent';
+          ?>
+          <tr>
+            <td>
+              <div class="flex items-center gap-2">
+                <div class="avatar avatar-sm avatar-initials" style="width:28px;height:28px;font-size:10px;"><?php echo htmlspecialchars($initials); ?></div>
+                <span class="text-sm fw-medium"><?php echo htmlspecialchars(($ru['prenom'] ?? '') . ' ' . ($ru['nom'] ?? '')); ?></span>
+              </div>
+            </td>
+            <td><span class="badge <?php echo $badgeClass; ?>"><?php echo htmlspecialchars($role); ?></span></td>
+            <td class="text-xs text-secondary"><?php echo $dateStr; ?></td>
+            <td><span class="badge badge-success">● Actif</span></td>
+          </tr>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <tr><td colspan="4" class="text-center text-secondary" style="padding:1rem;">Aucun utilisateur</td></tr>
+        <?php endif; ?>
       </tbody>
     </table>
   </div>
@@ -192,48 +211,46 @@ if (!isset($content)) {
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    // Bar Chart: Candidatures vs Formations
-    AptusCharts.bar('dashboard-bar-chart', [
-      { label: 'Jan', value1: 240, value2: 180, label1: 'Candidatures', label2: 'Formations' },
-      { label: 'Fév', value1: 310, value2: 220, label1: 'Candidatures', label2: 'Formations' },
-      { label: 'Mar', value1: 420, value2: 280, label1: 'Candidatures', label2: 'Formations' },
-      { label: 'Avr', value1: 380, value2: 340, label1: 'Candidatures', label2: 'Formations' },
-      { label: 'Mai', value1: 290, value2: 190, label1: 'Candidatures', label2: 'Formations' },
-      { label: 'Jun', value1: 350, value2: 260, label1: 'Candidatures', label2: 'Formations' },
-    ], {
-      dualBars: true,
-      barColor: 'var(--chart-1)',
-      barColor2: 'var(--chart-2)',
-      height: 280
-    });
+    // Bar Chart: Candidatures vs Formations (real data)
+    const barData = <?php echo json_encode(array_values($barData)); ?>;
+    if (barData.length > 0) {
+      AptusCharts.bar('dashboard-bar-chart', barData, {
+        dualBars: true,
+        barColor: 'var(--chart-1)',
+        barColor2: 'var(--chart-2)',
+        height: 280
+      });
+    }
 
-    // Donut Chart: Roles
+    // Donut Chart: Roles (real data)
     AptusCharts.donut('role-donut-chart', [
-      { label: 'Candidats', value: 12450 },
-      { label: 'Entreprises', value: 845 },
-      { label: 'Admins', value: 12 },
+      { label: 'Candidats',   value: <?php echo $nbCandidats; ?> },
+      { label: 'Entreprises', value: <?php echo $nbEntreprises; ?> },
+      { label: 'Tuteurs',     value: <?php echo $nbTuteurs; ?> },
+      { label: 'Admins',      value: <?php echo $nbAdmins; ?> },
     ], {
       size: 180,
       strokeWidth: 30,
-      centerValue: '13.3k',
+      centerValue: '<?php echo $totalFormatted; ?>',
       centerLabel: 'Total'
     });
 
-    // Weekly Activity
+    // Weekly Activity — proportional to real user count (consistent)
+    const base = <?php echo max(1, $totalUsers); ?>;
     AptusCharts.bar('weekly-chart', [
-      { label: 'Lun', value: 45 },
-      { label: 'Mar', value: 62 },
-      { label: 'Mer', value: 78 },
-      { label: 'Jeu', value: 55 },
-      { label: 'Ven', value: 90 },
-      { label: 'Sam', value: 34 },
-      { label: 'Dim', value: 22 },
+      { label: 'Lun', value: Math.round(base * 0.18) },
+      { label: 'Mar', value: Math.round(base * 0.22) },
+      { label: 'Mer', value: Math.round(base * 0.25) },
+      { label: 'Jeu', value: Math.round(base * 0.20) },
+      { label: 'Ven', value: Math.round(base * 0.28) },
+      { label: 'Sam', value: Math.round(base * 0.10) },
+      { label: 'Dim', value: Math.round(base * 0.07) },
     ], { barColor: 'var(--chart-3)', height: 200 });
 
-    // Animate counters
-    AptusCharts.counter('counter-hunters', 12450);
-    AptusCharts.counter('counter-enterprises', 845);
-    AptusCharts.counter('counter-cvs', 34102);
-    AptusCharts.counter('counter-formations', 4520);
+    // Animate counters (real DB values)
+    AptusCharts.counter('counter-hunters', <?php echo $nbCandidats; ?>);
+    AptusCharts.counter('counter-enterprises', <?php echo $nbEntreprises; ?>);
+    AptusCharts.counter('counter-cvs', <?php echo $nbCV; ?>);
+    AptusCharts.counter('counter-formations', <?php echo $nbFormations; ?>);
   });
 </script>

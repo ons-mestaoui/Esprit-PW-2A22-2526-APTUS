@@ -729,9 +729,12 @@ if (!isset($content)) {
         hiddenDesc.value = quill.root.innerHTML;
         if (quill.getText().trim().length === 0) hiddenDesc.value = '';
     };
-    document.getElementById('lieu-select').addEventListener('change', function () {
-        document.getElementById('url-field').style.display = (this.value == '1') ? 'block' : 'none';
-    });
+    const lieuSelect = document.getElementById('af-lieu');
+    if (lieuSelect) {
+        lieuSelect.addEventListener('change', function () {
+            document.getElementById('url-field').style.display = (this.value == '1') ? 'block' : 'none';
+        });
+    }
 
     // ── VIEW SWITCHER ─────────────────────────────────────────────
     function switchView(viewName) {

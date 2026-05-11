@@ -987,13 +987,19 @@ class FormationController
                 break;
 
             case 'add_formation':
+                ob_start();
+                $result = $this->add_formation_handler($_POST, $_FILES);
+                ob_end_clean();
                 header('Content-Type: application/json');
-                echo json_encode($this->add_formation_handler($_POST, $_FILES));
+                echo json_encode($result);
                 break;
 
             case 'edit_formation':
+                ob_start();
+                $result = $this->edit_formation_handler($_POST, $_FILES);
+                ob_end_clean();
                 header('Content-Type: application/json');
-                echo json_encode($this->edit_formation_handler($_POST, $_FILES));
+                echo json_encode($result);
                 break;
 
             case 'delete_formation':
@@ -1064,7 +1070,7 @@ class FormationController
         $is_online = (int) ($data['is_online'] ?? 0);
         $lien_room = trim($data['online_url'] ?? '');
 
-        $image_base64 = $formation_old['image_base64'];
+        $image_base64 = $formation_old['image_base64'] ?? '';
         if (isset($files['image']) && $files['image']['error'] === UPLOAD_ERR_OK) {
             $image_data = file_get_contents($files['image']['tmp_name']);
             $type = strtolower(pathinfo($files['image']['name'], PATHINFO_EXTENSION));

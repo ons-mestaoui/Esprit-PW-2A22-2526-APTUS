@@ -5,25 +5,21 @@ require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controller/FormationController.php';
 require_once __DIR__ . '/../../controller/UserC.php';
 
+require_once __DIR__ . '/../../controller/SessionManager.php';
+SessionManager::start();
+SessionManager::requireLogin();
+
+$session_id = SessionManager::getUserId();
+$id_tuteur  = $session_id;
+
 $formationC = new FormationController();
 $userC = new UserC();
 
 // 1. Gérer l'action AJAX pour le calendrier
 if (isset($_GET['action']) && $_GET['action'] == 'getCalendarEvents') {
-    $id_tuteur = $_GET['id_tuteur'] ?? 0;
     $formationC->getCalendarEventsJSON($id_tuteur);
     exit();
 }
-
-require_once __DIR__ . '/../../controller/SessionManager.php';
-SessionManager::start();
-
-// Use centralized SessionManager for tutor identification
-// Allow override via GET param (for admin/back-office deep-linking and testing)
-$session_id   = SessionManager::getUserId();
-$id_tuteur    = isset($_GET['tuteur_id']) && (int)$_GET['tuteur_id'] > 0
-                ? (int)$_GET['tuteur_id']
-                : $session_id;
 
 require_once __DIR__ . '/../../controller/TuteurDashboardController.php';
 $dashC = new TuteurDashboardController();

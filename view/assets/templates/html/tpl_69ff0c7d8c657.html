@@ -1,0 +1,203 @@
+<style>
+/* --- Template Sarcelle Premium (Final & Corrigé) --- */
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
+
+.cv-render { 
+    /* Couleurs Dynamiques */
+    --primary-color: var(--cv-accent, #008080); 
+    --cv-dark: #1e293b;
+    --cv-gray: #64748b;
+    --cv-light-bg: #f8fafc;
+    
+    font-family: 'Lato', sans-serif; 
+    background: #fff; 
+    display: flex; 
+    flex-direction: column;
+    min-height: 1123px; /* Format A4 */
+    width: 100%;
+}
+
+/* --- ENTÊTE --- */
+.cv-header {
+    text-align: center;
+    padding: 50px 40px 30px;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.cv-name { 
+    margin: 0; 
+    font-size: 36px; 
+    font-weight: 900; 
+    color: var(--cv-dark); 
+    text-transform: uppercase; 
+    letter-spacing: 3px;
+}
+
+.cv-job-title { 
+    margin: 10px 0 25px; 
+    font-size: 18px; 
+    font-weight: 700; 
+    color: var(--primary-color); 
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.header-contact-info {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    font-size: 14px;
+    color: var(--cv-gray);
+}
+
+/* --- LAYOUT --- */
+.cv-body { display: flex; flex: 1; }
+.cv-main-column { width: 65%; padding: 40px 50px; }
+.cv-sidebar-column { 
+    width: 35%; 
+    background-color: var(--cv-light-bg); 
+    padding: 40px 30px; 
+    border-left: 1px solid #e2e8f0;
+}
+
+/* --- SECTIONS --- */
+.cv-section { margin-bottom: 40px; }
+.cv-section-title { 
+    font-weight: 900; 
+    font-size: 15px; 
+    color: var(--primary-color); 
+    border-bottom: 2px solid var(--primary-color); 
+    margin-bottom: 20px; 
+    padding-bottom: 8px; 
+    text-transform: uppercase; 
+}
+
+.cv-content { font-size: 14.5px; color: #475569; line-height: 1.7; text-align: justify; }
+
+/* --- ITEMS --- */
+.item { margin-bottom: 25px; }
+.item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.item-title { font-weight: 700; font-size: 16px; color: var(--cv-dark); }
+.item-date { font-size: 13px; color: var(--primary-color); font-weight: 700; }
+.item-company { font-size: 14px; color: var(--cv-gray); font-style: italic; }
+
+/* --- COMPÉTENCES --- */
+.skill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.skill-pill { 
+    background-color: #fff; 
+    color: var(--primary-color); 
+    border: 1.5px solid var(--primary-color);
+    padding: 6px 12px; 
+    border-radius: 6px; 
+    font-size: 12px; 
+    font-weight: 700;
+}
+
+/* --- PHOTO (Correction superposition) --- */
+.photo-container { margin-bottom: 40px; text-align: center; }
+.photo-wrapper { 
+    width: 150px; height: 150px; 
+    border-radius: 50%; border: 3px solid var(--primary-color); 
+    margin: 0 auto; overflow: hidden;
+    background: #f1f5f9;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+}
+.photo-wrapper img { 
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%; 
+    object-fit: cover; z-index: 2;
+}
+.photo-text { color: var(--primary-color); font-size: 11px; font-weight: 900; z-index: 1; }
+
+/* --- LANGUES --- */
+.lang-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+.lang-level { color: var(--primary-color); font-weight: 700; }
+
+</style>
+
+<div class="cv-render">
+    <header class="cv-header">
+        <h1 class="cv-name" id="preview-nomComplet">Jean Dupont</h1>
+        <p class="cv-job-title" id="preview-titrePoste">Développeur Full-Stack</p>
+        <div class="header-contact-info" id="preview-infoContact">
+            <span>📧 nom@exemple.com</span>
+            <span>📞 +216 22 000 000</span>
+            <span>📍 Tunis, Tunisie</span>
+        </div>
+    </header>
+
+    <div class="cv-body">
+        <main class="cv-main-column">
+            
+            <section class="cv-section">
+                <div class="cv-section-title" data-cv-zone="title-2">Résumé Professionnel</div>
+                <div class="cv-content" id="preview-resume" data-cv-zone="resume">
+                    Passionné par le développement web et les nouvelles technologies. Fort d'une solide base technique acquise lors de ma formation, je cherche à relever de nouveaux défis.
+                </div>
+            </section>
+
+            <section class="cv-section">
+                <div class="cv-section-title" data-cv-zone="title-3">Expérience</div>
+                <div id="preview-experience" data-cv-zone="experience">
+                    <div class="item">
+                        <div class="item-header">
+                            <span class="item-title">Développeur Web (Stage)</span>
+                            <span class="item-date">2024 - Présent</span>
+                        </div>
+                        <p class="item-company">Entreprise Tech - Tunis</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="cv-section">
+                <div class="cv-section-title" data-cv-zone="title-5">Formation</div>
+                <div id="preview-formation" data-cv-zone="formation">
+                    <div class="item">
+                        <div class="item-header">
+                            <span class="item-title">Ingénieur en Informatique</span>
+                            <span class="item-date">2020 - 2023</span>
+                        </div>
+                        <p class="item-company">Université de Tunis</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <aside class="cv-sidebar-column">
+            
+            <div class="photo-container">
+                <div class="photo-wrapper">
+                    <span class="photo-text">PHOTO</span>
+                    <img id="preview-photo" src="" alt="" data-cv-zone="photo">
+                </div>
+            </div>
+
+            <section class="cv-section">
+                <div class="cv-section-title" data-cv-zone="title-4">Compétences</div>
+                <div class="skill-group" id="preview-competences" data-cv-zone="competences">
+                    <span class="skill-pill">JavaScript</span>
+                    <span class="skill-pill">React.js</span>
+                    <span class="skill-pill">Python</span>
+                    <span class="skill-pill">SQL</span>
+                </div>
+            </section>
+
+            <section class="cv-section">
+                <div class="cv-section-title" data-cv-zone="title-6">Langues</div>
+                <div id="preview-langues" data-cv-zone="langues">
+                    <div class="lang-row">
+                        <strong>Français</strong>
+                        <span class="lang-level">Bilingue</span>
+                    </div>
+                    <div class="lang-row">
+                        <strong>Anglais</strong>
+                        <span class="lang-level">Technique</span>
+                    </div>
+                </div>
+            </section>
+
+        </aside>
+    </div>
+</div>

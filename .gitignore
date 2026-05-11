@@ -1,3 +1,31 @@
 # Secrets & API Keys
 api_keys.php
 .env
+
+# Claude AI memory (local only)
+.claude/
+
+
+# Tunnel / AR scripts (local dev tools)
+Aptus_AR_Tunnel.ps1
+Lancer_Tunnel_AR.bat
+pinggy_log.txt
+tunnel_log.txt
+
+# Temp / debug files
+last_email_debug.html
+message.txt
+temp_out.html
+platform_settings.json
+
+# Scratch / one-off dev scripts
+scratch/
+
+# Temp CSS leftovers
+*.css_fixed.css
+*.css_tmp.css
+
+# Runtime cache
+view/backoffice/cache_*.json
+view/backoffice/cache_pulse.json
+

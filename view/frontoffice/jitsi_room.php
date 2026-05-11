@@ -5,7 +5,7 @@ SessionManager::start();
 $room_url = $_GET['url'] ?? '';
 $id_formation = $_GET['id_formation'] ?? 0;
 $id_user = SessionManager::getUserId();
-$role = strtolower($_GET['role'] ?? $_SESSION['role'] ?? 'candidat'); 
+$role = strtolower($_SESSION['role'] ?? 'candidat');
 
 // 🛡️ SÉCURITÉ & FLEXIBILITÉ : Si le lien est vide ou invalide (#), on génère un nom de salle unique
 if (empty($room_url) || $room_url === '#' || trim($room_url) === '%23' || strpos($room_url, 'meet.jit.si') === false) {
@@ -68,7 +68,7 @@ if (!isset($content)) {
         text-align: center;
         font-size: 1.1rem;
         z-index: 100;
-        display: none;
+        display: block;
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
@@ -109,11 +109,11 @@ if (!isset($content)) {
 
 <div class="jitsi-container">
     <div class="ia-status-bar">
-        <a href="formations_my.php"
+        <a href="<?php echo ($role === 'tuteur') ? 'tuteur_dashboard.php' : 'formations_my.php'; ?>"
             style="display:flex; align-items:center; gap:6px; color:var(--text-secondary); text-decoration:none; font-size:0.82rem; font-weight:600; padding:4px 10px; border-radius:8px; border:1px solid var(--border-color); transition: all 0.2s;"
             onmouseover="this.style.background='var(--bg-surface)'; this.style.color='var(--text-primary)'"
             onmouseout="this.style.background='transparent'; this.style.color='var(--text-secondary)'">
-            <i data-lucide="arrow-left" style="width:14px;height:14px;"></i> Mes Formations
+            <i data-lucide="arrow-left" style="width:14px;height:14px;"></i> <?php echo ($role === 'tuteur') ? 'Tableau de bord' : 'Mes Formations'; ?>
         </a>
 
         <div style="font-size:0.85rem;">
@@ -142,9 +142,8 @@ if (!isset($content)) {
     <div id="jitsi-meet-wrap"></div>
 
     <div id="stt-transcript-bar">
-        <span style="opacity:0.6; font-size: 0.8rem; display:block; margin-bottom: 2px;">Transcription en direct
-            (STT)</span>
-        <span id="stt-text">En attente de parole...</span>
+        <span style="opacity:0.6; font-size: 0.8rem; display:block; margin-bottom: 2px;">Transcription en direct (STT)</span>
+        <span id="stt-text">Démarrage de la transcription...</span>
     </div>
 
     <?php if ($role !== 'tuteur'): ?>
@@ -174,7 +173,13 @@ if (!isset($content)) {
         };
         const api = new JitsiMeetExternalAPI(domain, options);
 
-        initSTT();
+        // Start STT after a short delay to let the browser stabilize
+        setTimeout(initSTT, 800);
+
+        // Retry STT when Jitsi fully connects (in case first attempt failed)
+        api.addEventListener('videoConferenceJoined', () => {
+            if (!window._sttActive) setTimeout(initSTT, 500);
+        });
 
         api.addEventListener('videoConferenceLeft', () => {
 
@@ -187,7 +192,7 @@ if (!isset($content)) {
             <?php endif; ?>
 
             // Fausse notification d'enregistrement SUPPRIMÉE
-            window.location.href = "formations_my.php";
+            window.location.href = "<?php echo ($role === 'tuteur') ? 'tuteur_dashboard.php' : 'formations_my.php'; ?>";
         });
 
         <?php if ($role !== 'tuteur'): ?>
@@ -196,63 +201,75 @@ if (!isset($content)) {
     });
 
     function initSTT() {
-        if (!('webkitSpeechRecognition' in window) && !('speechRecognition' in window)) return;
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        const bar = document.getElementById('stt-transcript-bar');
+        if (window._sttActive) return;
         const sttText = document.getElementById('stt-text');
-        
-        let isStopped = false;
-        let lastSavedTranscript = "";
 
-        recognition.lang = 'fr-FR';
-        recognition.continuous = true;
-        recognition.interimResults = true;
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                window._sttActive = true;
+                sttText.innerText = 'Écoute en cours...';
 
-        recognition.onstart = () => { bar.style.display = 'block'; };
+                const CHUNK_MS = 3000;
+                const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                    ? 'audio/webm;codecs=opus'
+                    : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+                const baseMime = mimeType.split(';')[0];
+                let lastSavedTranscript = "";
 
-        recognition.onerror = (event) => {
-            console.warn('STT Error:', event.error);
-            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                isStopped = true;
-            }
-        };
+                function recordChunk() {
+                    if (!window._sttActive) return;
+                    const chunks = [];
+                    const recorder = new MediaRecorder(stream, { mimeType });
 
-        recognition.onresult = (event) => {
-            let interimTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    fullTranscript += event.results[i][0].transcript + ". ";
-                    sttText.innerHTML = `<span style="color:#10b981; font-weight:600;">${event.results[i][0].transcript}</span>`;
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
+                    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+                    recorder.onstop = () => {
+                        // Start next chunk immediately (no gap while Groq processes)
+                        recordChunk();
+
+                        if (!chunks.length) return;
+                        const blob = new Blob(chunks, { type: baseMime });
+                        const reader = new FileReader();
+                        reader.onloadend = async () => {
+                            const base64 = reader.result.split(',')[1];
+                            try {
+                                const res = await fetch('/aptus_first_official_version/controller/stt.php', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ audio: base64, mimeType: baseMime })
+                                });
+                                const data = await res.json();
+                                if (data.text && data.text.trim().length > 1) {
+                                    fullTranscript += data.text + ' ';
+                                    sttText.innerHTML = `<span style="color:#10b981;font-weight:600;">${data.text}</span>`;
+                                }
+                            } catch (e) { console.warn('STT error:', e); }
+                        };
+                        reader.readAsDataURL(blob);
+                    };
+
+                    recorder.start();
+                    setTimeout(() => { if (recorder.state === 'recording') recorder.stop(); }, CHUNK_MS);
                 }
-            }
-            if (interimTranscript) sttText.innerText = interimTranscript || "Écoute en cours...";
-        };
 
-        recognition.onend = () => {
-            if (!isStopped) {
-                setTimeout(() => { try { recognition.start(); } catch (e) { } }, 200);
-            }
-        };
+                recordChunk();
 
-        try { recognition.start(); } catch (e) { }
-
-        // 💾 SAUVEGARDE PÉRIODIQUE DU STT (Toutes les 15s)
-        setInterval(() => {
-            if (fullTranscript !== lastSavedTranscript) {
-                const newText = fullTranscript.substring(lastSavedTranscript.length);
-                if (newText.trim().length > 2) {
-                    const fd = new FormData();
-                    fd.append('action', 'save_transcript');
-                    fd.append('id_formation', <?php echo $id_formation; ?>);
-                    fd.append('text', newText);
-                    fetch('ajax_handler.php', { method: 'POST', body: fd });
-                    lastSavedTranscript = fullTranscript;
-                }
-            }
-        }, 15000);
+                // 💾 SAUVEGARDE PÉRIODIQUE (toutes les 15s)
+                setInterval(() => {
+                    const newText = fullTranscript.substring(lastSavedTranscript.length);
+                    if (newText.trim().length > 2) {
+                        const fd = new FormData();
+                        fd.append('action', 'save_transcript');
+                        fd.append('id_formation', <?php echo $id_formation; ?>);
+                        fd.append('text', newText);
+                        fetch('ajax_handler.php', { method: 'POST', body: fd });
+                        lastSavedTranscript = fullTranscript;
+                    }
+                }, 15000);
+            })
+            .catch(() => {
+                sttText.innerText = 'Microphone non accessible.';
+            });
     }
 
     <?php if ($role !== 'tuteur'): ?>
@@ -262,7 +279,7 @@ if (!isset($content)) {
             const indicator = document.getElementById('emotion-indicator');
 
             // 🗺️ SÉCURITÉ 3 : Chemins Robustes (Point 3)
-            const MODEL_URL = APTUS_BASE_URL + 'view/models/';
+            const MODEL_URL = APTUS_BASE_URL + 'view/assets/js/models/';
             let lastEmotion = "neutre";
 
             const trad = {
@@ -326,7 +343,6 @@ if (!isset($content)) {
 
     <?php if ($role === 'tuteur'): ?>
         let cockpitInterval = null;
-        let transcriptInterval = null;
 
         function showClassEmotions() {
             Swal.fire({
@@ -334,30 +350,29 @@ if (!isset($content)) {
                 html: `
                 <div class="aptus-cockpit">
                     <div class="cockpit-header">
-                        <div class="cockpit-logo"><div class="cockpit-orb-mini"></div><div><div class="cockpit-title">Cockpit Live Aptus</div><div class="cockpit-subtitle">Monitoring IA & STT en temps réel</div></div></div>
+                        <div class="cockpit-logo"><div class="cockpit-orb-mini"></div><div><div class="cockpit-title">Cockpit Live Aptus</div><div class="cockpit-subtitle">Bilan émotionnel IA de la classe</div></div></div>
                         <div class="cockpit-live-badge"><span class="live-dot"></span> LIVE</div>
                     </div>
-                    <div class="cockpit-body" style="grid-template-columns: 320px 1fr;">
+                    <div class="cockpit-body" style="grid-template-columns: 280px 1fr;">
                         <div class="cockpit-chart-col">
                             <div class="chart-donut-wrap">
                                 <canvas id="emotionsChart"></canvas>
                                 <div class="donut-center"><div class="donut-score" id="engagementScore">—</div><div class="donut-label">Engagement</div></div>
                             </div>
                             <div id="emotion-bars" class="emotion-bars" style="margin-bottom:20px;"></div>
-                            <div id="ai-recommandations" class="cockpit-ai-panel" style="padding:10px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:0.75rem;">
-                                <p>Analyse IA en cours...</p>
-                            </div>
                         </div>
-                        <div class="cockpit-transcript-col" style="padding:1.5rem; background:rgba(0,0,0,0.3); max-height:500px; overflow-y:auto;">
-                            <div class="cockpit-agent-badge" style="margin-bottom:10px;">💬 TRANSCRIPTIONS RÉCENTES</div>
-                            <div id="live-transcripts" style="display:flex; flex-direction:column; gap:10px;">
-                                <p style="opacity:0.5; font-size:0.8rem;">En attente de paroles...</p>
+                        <div style="padding:1.5rem; display:flex; flex-direction:column; gap:1rem;">
+                            <div id="ai-recommandations" class="cockpit-ai-panel" style="padding:1rem; background:rgba(255,255,255,0.05); border-radius:10px; font-size:0.82rem; line-height:1.6;">
+                                <p style="opacity:0.5;">Analyse IA en cours...</p>
+                            </div>
+                            <div id="no-data-msg" style="display:none; text-align:center; opacity:0.5; font-size:0.85rem; padding:2rem 0;">
+                                Aucune donnée émotionnelle pour cette session.<br>Les candidats doivent autoriser la caméra.
                             </div>
                         </div>
                     </div>
                 </div>
             `,
-                width: '1000px', padding: 0, showConfirmButton: true, confirmButtonText: '✕ &nbsp;Fermer', confirmButtonColor: '#6366f1', background: 'transparent', backdrop: 'rgba(5, 5, 20, 0.85)',
+                width: '750px', padding: 0, showConfirmButton: true, confirmButtonText: '✕ &nbsp;Fermer', confirmButtonColor: '#6366f1', background: 'transparent', backdrop: 'rgba(5, 5, 20, 0.85)',
                 customClass: { popup: 'swal-cockpit-popup', confirmButton: 'swal-cockpit-btn' },
                 didOpen: () => {
                     if (window.lucide) lucide.createIcons();
@@ -367,36 +382,19 @@ if (!isset($content)) {
                         fd.append('id_formation', <?php echo $id_formation; ?>);
                         fetch('ajax_handler.php', { method: 'POST', body: fd })
                             .then(res => res.json())
-                            .then(data => { if (data.success) updateCockpitUI(data.stats); });
-                    };
-
-                    const refreshTranscripts = () => {
-                        fetch('ajax_handler.php?action=get_recent_transcripts&id_formation=<?php echo $id_formation; ?>')
-                            .then(res => res.json())
                             .then(data => {
-                                if (data.success) {
-                                    const container = document.getElementById('live-transcripts');
-                                    if (data.transcripts.length > 0) {
-                                        container.innerHTML = data.transcripts.map(t => `
-                                            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; border-left:3px solid #6366f1;">
-                                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                                                    <span style="font-weight:700; color:#a5b4fc; font-size:0.75rem;">${t.nom}</span>
-                                                    <span style="opacity:0.4; font-size:0.65rem;">${new Date(t.created_at).toLocaleTimeString()}</span>
-                                                </div>
-                                                <p style="margin:0; font-size:0.85rem; line-height:1.4;">${t.transcript_text}</p>
-                                            </div>
-                                        `).join('');
-                                    }
+                                if (data.success && data.stats.length > 0) {
+                                    document.getElementById('no-data-msg').style.display = 'none';
+                                    updateCockpitUI(data.stats);
+                                } else {
+                                    document.getElementById('no-data-msg').style.display = 'block';
                                 }
                             });
                     };
-
                     refreshStats();
-                    refreshTranscripts();
                     cockpitInterval = setInterval(refreshStats, 10000);
-                    transcriptInterval = setInterval(refreshTranscripts, 5000);
                 },
-                willClose: () => { clearInterval(cockpitInterval); clearInterval(transcriptInterval); }
+                willClose: () => { clearInterval(cockpitInterval); }
             });
         }
 

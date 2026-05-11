@@ -4,13 +4,12 @@
  * skill_tree.php — Version Obsidian Neural Map (Optimisée AJAX)
  * ============================================================
  */
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 $pageTitle = "Skill Tree — Parcours de Compétences - Aptus AI";
 
 require_once __DIR__ . '/../../controller/SessionManager.php';
-$id_user = SessionManager::getUserId() ?? 10;
+SessionManager::start();
+SessionManager::requireLogin();
+$id_user = SessionManager::getUserId() ?? 0;
 
 if (!isset($content)) {
     require_once __DIR__ . '/../../config.php';

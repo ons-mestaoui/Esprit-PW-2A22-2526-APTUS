@@ -1,0 +1,244 @@
+<style>
+/* Reset et dimensionnement global */
+* { box-sizing: border-box; }
+
+.cv-render { 
+    font-family: 'Inter', sans-serif; 
+    color: #1e293b; 
+    line-height: 1.7; 
+    font-size: 14px; 
+    --cv-accent: #1e293b; 
+    --cv-separator: #d97706; 
+    display: flex; 
+    flex-direction: column; 
+    height: 100%; 
+    min-height: 850px; 
+    width: 100%;
+    background: #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+/* --- EN-TÊTE HORIZONTAL (Photo + Infos) --- */
+.cv-header { 
+    width: 100%;
+    padding: 40px 50px;
+    background: #fff;
+    display: flex;
+    align-items: center; 
+    gap: 35px; 
+}
+
+/* Photo en haut à gauche */
+.photo-wrapper { 
+    width: 140px; 
+    height: 140px; 
+    border-radius: 50%; 
+    background-color: #31828e; 
+    flex-shrink: 0; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    cursor: pointer; 
+    overflow: hidden;
+    position: relative;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.photo-wrapper img { width: 100%; height: 100%; object-fit: cover; display: none; }
+.photo-text { color: #fff; font-size: 13px; text-align: center; line-height: 1.3;}
+#file-upload { display: none; } 
+
+/* Textes de l'en-tête (Alignés à gauche) */
+.header-info {
+    flex: 1; 
+    text-align: left; 
+}
+
+.cv-name { 
+    margin: 0 0 5px; 
+    font-size: 32px; 
+    font-weight: 900; 
+    color: #0f172a; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+
+.cv-title { 
+    margin: 0 0 15px; 
+    font-size: 18px; 
+    font-weight: 400; 
+    color: #64748b; 
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.contact-info { 
+    font-size: 13px; 
+    color: #475569; 
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px; 
+}
+
+/* Ligne orange de séparation */
+.header-separator {
+    width: calc(100% - 100px); 
+    margin: 0 auto;
+    height: 3px;
+    background-color: var(--cv-separator);
+}
+
+/* --- CORPS DU CV (2 COLONNES) --- */
+.cv-body {
+    display: flex;
+    flex-direction: row; 
+    flex: 1; 
+}
+
+/* Colonne Principale (Gauche) */
+.cv-main { 
+    width: 65%; 
+    padding: 40px 50px; 
+    background: #fff; 
+    display: flex;
+    flex-direction: column;
+}
+
+/* Colonne Secondaire (Droite) - CORRECTION APPLIQUÉE ICI */
+.cv-sidebar { 
+    width: 35%; 
+    background: #f8fafc; 
+    padding: 40px 30px; 
+    border-left: 1px solid #e2e8f0; 
+    display: block; /* Remplacé "flex" par "block" pour forcer les textes à rester en haut */
+}
+
+/* --- SECTIONS ET TEXTES --- */
+.cv-section { 
+    margin: 0 0 35px 0; 
+    text-align: left; 
+    width: 100%; 
+}
+
+/* Sécurité supplémentaire : On s'assure que le 1er élément de droite n'a pas de marge au dessus */
+.cv-sidebar .cv-section:first-child {
+    margin-top: 0 !important;
+}
+
+.cv-section-title { 
+    font-weight: 800; 
+    font-size: 15px; 
+    color: var(--cv-accent); 
+    margin-bottom: 15px; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px; 
+}
+
+.cv-content { 
+    white-space: pre-line; 
+    font-size: 14px; 
+    color: #334155; 
+    text-align: left; 
+}
+
+.item-subtitle {
+    font-weight: 700;
+    color: #475569;
+    margin-top: 15px;
+    margin-bottom: 2px;
+}
+</style>
+
+<div class="cv-render template-manager">
+    
+    <div class="cv-header">
+        <div class="photo-wrapper" id="photo-wrapper" title="Cliquez pour ajouter une photo">
+            <span class="photo-text" id="photo-text">Cliquez pour<br>insérer photo</span>
+            <img id="profile-pic" src="" alt="Photo de profil">
+        </div>
+        <input type="file" id="file-upload" accept="image/*">
+
+        <div class="header-info">
+            <div class="cv-name" id="preview-nomComplet" contenteditable="true">MIAW DUPONT</div>
+            <div class="cv-title" id="preview-titrePoste" contenteditable="true">Ingénieur en IA</div>
+            
+            <div class="contact-info" id="preview-infoContact" contenteditable="true">
+                Tunis, Tunisie | +216 22 123 456 | miaw@gmail.com | linkedin.com/in/miaw
+            </div>
+        </div>
+    </div>
+    
+    <div class="header-separator"></div>
+
+    <div class="cv-body">
+        
+        <div class="cv-main">
+            <div class="cv-section">
+                <div class="cv-section-title">Résumé Professionnel</div>
+                <div class="cv-content" id="preview-resume" contenteditable="true">Diplômé d'ingénierie IA, avec un solide portefeuille de projets académiques et personnels. Expérimenté dans le développement de programmes complexes en C et le développement web. Capacité démontrée à gérer le stress et à innover au sein d'environnements d'équipe dynamiques.</div>
+            </div>
+
+            <div class="cv-section">
+                <div class="cv-section-title">Expérience Professionnelle</div>
+                <div class="cv-content" id="preview-experience" contenteditable="true"><div class="item-subtitle">EY - Ingénieur en IA (Juillet 2023 - Présent)</div>
+• Facilitation d'une dynamique d'équipe efficace pour atteindre les objectifs.
+• Adaptation exceptionnelle dans des situations à haute pression.
+• Création de solutions novatrices à des problèmes complexes.
+
+<div class="item-subtitle">TT Corporation - Stagiaire IT (Mai 2023 - Juin 2023)</div>
+• Acquisition de connaissances sur la gestion de projet et l'analyse de données stratégiques.</div>
+            </div>
+
+            <div class="cv-section">
+                <div class="cv-section-title">Formation</div>
+                <div class="cv-content" id="preview-formation" contenteditable="true"><div class="item-subtitle">Master en Ingénierie Intelligence Artificielle (2021 - 2023)</div>
+Université de Tunis
+Maîtrise démontrée en programmation algorithmique et structures de données.</div>
+            </div>
+        </div>
+
+        <div class="cv-sidebar">
+            <div class="cv-section">
+                <div class="cv-section-title">Compétences</div>
+                <div class="cv-content" id="preview-competences" contenteditable="true">• C/C++
+• Python
+• Machine Learning
+• Développement Web (HTML/CSS)
+• Git & GitHub
+• Résolution de problèmes</div>
+            </div>
+            
+            <div class="cv-section">
+                <div class="cv-section-title">Langues</div>
+                <div class="cv-content" id="preview-langues" contenteditable="true">• Français (B2 - Professionnel)
+• Arabe (Natif)
+• Anglais (Technique)</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const photoWrapper = document.getElementById('photo-wrapper');
+    const fileUpload = document.getElementById('file-upload');
+    const profilePic = document.getElementById('profile-pic');
+    const photoText = document.getElementById('photo-text');
+
+    photoWrapper.addEventListener('click', () => {
+        fileUpload.click();
+    });
+
+    fileUpload.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePic.src = e.target.result;
+                profilePic.style.display = 'block'; 
+                photoText.style.display = 'none'; 
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+</script>

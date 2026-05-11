@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>CV Professionnel - Style Sarcelle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --teal: #008080;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --light-bg: #f8fafc;
+        }
+
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Lato', sans-serif; 
+            background: #333639; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh;
+        }
+        
+        .cv-container { 
+            width: 210mm; 
+            min-height: 297mm;
+            background: #fff; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); 
+            display: flex; 
+            flex-direction: column;
+        }
+
+        [contenteditable]:focus { 
+            outline: 2px solid var(--teal); 
+            background-color: rgba(0,128,128,0.02); 
+            border-radius: 4px; 
+        }
+
+        /* --- ENTÊTE --- */
+        .cv-header {
+            text-align: center;
+            padding: 50px 40px 30px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .cv-name { 
+            margin: 0; 
+            font-size: 36px; 
+            font-weight: 900; 
+            color: var(--dark); 
+            text-transform: uppercase; 
+            letter-spacing: 3px;
+        }
+        .cv-job-title { 
+            margin: 10px 0 25px; 
+            font-size: 18px; 
+            font-weight: 400; 
+            color: var(--teal); 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .header-contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        /* --- LAYOUT --- */
+        .cv-body {
+            display: flex;
+            flex: 1;
+        }
+
+        .cv-main-column { 
+            width: 65%; 
+            padding: 40px 50px; 
+        }
+        
+        .cv-sidebar-column { 
+            width: 35%; 
+            background-color: var(--light-bg); 
+            padding: 40px 30px; 
+            border-left: 1px solid #e2e8f0;
+        }
+
+        /* --- SECTIONS --- */
+        .cv-section { margin-bottom: 40px; }
+        .cv-section-title { 
+            font-weight: 700; 
+            font-size: 16px; 
+            color: var(--teal); 
+            border-bottom: 2px solid var(--teal); 
+            margin-bottom: 20px; 
+            padding-bottom: 8px; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+        }
+
+        .cv-content { font-size: 14.5px; color: #475569; line-height: 1.7; text-align: justify; }
+
+        /* --- LISTES EXP/FORM --- */
+        .item { margin-bottom: 25px; }
+        .item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+        .item-title { font-weight: 700; font-size: 16px; color: var(--dark); }
+        .item-date { font-size: 13px; color: var(--teal); font-weight: 700; }
+        .item-company { font-size: 14px; color: var(--gray); font-style: italic; margin-bottom: 8px; }
+        .item-desc { margin: 0; padding-left: 18px; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        /* --- COMPÉTENCES --- */
+        .skill-group { display: flex; flex-wrap: wrap; gap: 10px; }
+        .skill-pill { 
+            background-color: #fff; 
+            color: var(--teal); 
+            border: 1px solid var(--teal);
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: 700;
+        }
+
+        /* --- PHOTO --- */
+        .photo-container { margin-bottom: 40px; text-align: center; }
+        .photo-wrapper { 
+            width: 150px; height: 150px; 
+            border-radius: 50%; background-color: #fff; 
+            border: 2px solid var(--teal); 
+            margin: 0 auto; 
+            display: flex; justify-content: center; align-items: center; 
+            cursor: pointer; overflow: hidden;
+            transition: transform 0.2s;
+        }
+        .photo-wrapper:hover { transform: scale(1.05); }
+        .photo-wrapper img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .photo-text { color: var(--teal); font-size: 11px; font-weight: 700; }
+        #file-upload { display: none; }
+
+        /* --- LANGUES --- */
+        .lang-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: var(--dark); }
+        .lang-level { color: var(--gray); font-style: italic; }
+
+    </style>
+</head>
+<body>
+
+    <div class="cv-container">
+        <header class="cv-header">
+            <h1 class="cv-name" id="preview-nomComplet" contenteditable="true">Jean Dupont</h1>
+            <p class="cv-job-title" id="preview-titrePoste" contenteditable="true">Développeur Full-Stack</p>
+            
+            <div class="header-contact-info" id="preview-infoContact" contenteditable="true">
+                <span>📧 nom@exemple.com</span>
+                <span>📞 +216 22 000 000</span>
+                <span>📍 Tunis, Tunisie</span>
+            </div>
+        </header>
+
+        <div class="cv-body">
+            <main class="cv-main-column">
+                
+                <section class="cv-section">
+                    <h3 class="cv-section-title">Résumé</h3>
+                    <div class="cv-content" id="preview-resume" contenteditable="true">
+                        Passionné par le développement web et les nouvelles technologies. Fort d'une solide base technique acquise lors de ma formation et de mes stages, je cherche à relever de nouveaux défis au sein d'une équipe innovante et dynamique.
+                    </div>
+                </section>
+
+                <section class="cv-section">
+                    <h3 class="cv-section-title">Expérience</h3>
+                    <div id="preview-experience">
+                    <div class="item">
+                        <div class="item-header">
+                            <span class="item-title" contenteditable="true">Développeur Web (Stage)</span>
+                            <span class="item-date" contenteditable="true">2024 - Présent</span>
+                        </div>
+                        <p class="item-company" contenteditable="true">Entreprise Tech - Tunis</p>
+                        <ul class="item-desc" contenteditable="true">
+                            <li>Développement de fonctionnalités front-end performantes en React.js.</li>
+                            <li>Optimisation des requêtes API et amélioration des temps de réponse.</li>
+                            <li>Collaboration avec l'équipe design pour l'intégration UI/UX.</li>
+                        </ul>
+                    </div>
+                    </div>
+                </section>
+
+                <section class="cv-section">
+                    <h3 class="cv-section-title">Formation</h3>
+                    <div id="preview-formation">
+                    <div class="item">
+                        <div class="item-header">
+                            <span class="item-title" contenteditable="true">Diplôme d'Ingénieur en Informatique</span>
+                            <span class="item-date" contenteditable="true">2020 - 2023</span>
+                        </div>
+                        <p class="item-company" contenteditable="true">Université de Tunis</p>
+                    </div>
+                    </div>
+                </section>
+
+            </main>
+
+            <aside class="cv-sidebar-column">
+                
+                <div class="photo-container">
+                    <div class="photo-wrapper" id="photo-wrapper">
+                        <span class="photo-text" id="photo-text">AJOUTER<br>UNE PHOTO</span>
+                        <img id="profile-pic" src="" alt="Profil">
+                    </div>
+                    <input type="file" id="file-upload" accept="image/*">
+                </div>
+
+                <section class="cv-section">
+                    <h3 class="cv-section-title">Compétences</h3>
+                    <div class="skill-group" id="preview-competences" contenteditable="true">
+                        <span class="skill-pill">JavaScript</span>
+                        <span class="skill-pill">Python</span>
+                        <span class="skill-pill">SQL</span>
+                        <span class="skill-pill">HTML/CSS</span>
+                        <span class="skill-pill">Git</span>
+                        <span class="skill-pill">Docker</span>
+                        <span class="skill-pill">React.js</span>
+                    </div>
+                </section>
+
+                <section class="cv-section">
+                    <h3 class="cv-section-title">Langues</h3>
+                    <div id="preview-langues" contenteditable="true">
+                        <div class="lang-row">
+                            <strong>Arabe</strong>
+                            <span class="lang-level">Natif</span>
+                        </div>
+                        <div class="lang-row">
+                            <strong>Français</strong>
+                            <span class="lang-level">Bilingue</span>
+                        </div>
+                        <div class="lang-row">
+                            <strong>Anglais</strong>
+                            <span class="lang-level">Technique</span>
+                        </div>
+                    </div>
+                </section>
+
+            </aside>
+        </div>
+    </div>
+
+    <script>
+        const photoWrapper = document.getElementById('photo-wrapper');
+        const fileUpload = document.getElementById('file-upload');
+        const profilePic = document.getElementById('profile-pic');
+        const photoText = document.getElementById('photo-text');
+
+        photoWrapper.addEventListener('click', () => fileUpload.click());
+        fileUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    profilePic.src = e.target.result;
+                    profilePic.style.display = 'block';
+                    photoText.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>
