@@ -562,9 +562,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Initialisation de la carte (Centrée sur la Tunisie)
     const map = L.map('map').setView([36.8065, 10.1815], 11);
 
-    // 2. Ajout de la couche de tuiles (Version Française d'OpenStreetMap)
-    L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap France | &copy; OpenStreetMap contributors'
+    // 2. Ajout de la couche de tuiles (Standard OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     // 3. Récupération des offres depuis PHP
@@ -678,7 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     jobMarkers.push(marker);
                 }
             } catch (err) { console.error(err); }
-            await new Promise(resolve => setTimeout(resolve, 50));
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
     }
 

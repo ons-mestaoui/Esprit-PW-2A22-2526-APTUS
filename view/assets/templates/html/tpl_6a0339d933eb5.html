@@ -1,4 +1,9 @@
 <style>
+
+    :root {
+        --cv-accent: var(--cv-accent); /* Default accent */
+        --primary: var(--cv-accent);
+    }
 /* Reset et dimensionnement global */
 * { box-sizing: border-box; }
 
@@ -7,7 +12,7 @@
     color: #1e293b; 
     line-height: 1.8; /* Interligne très aéré */
     font-size: 16px; /* Police de base extra-large */
-    --cv-accent: var(--cv-accent, #2563eb); 
+    --cv-accent: var(--cv-accent); 
     display: flex; 
     height: 100%; 
     min-height: 850px; /* Force la hauteur pour remplir la grande box */

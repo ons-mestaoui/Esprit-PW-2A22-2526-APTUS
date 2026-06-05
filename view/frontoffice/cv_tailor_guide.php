@@ -530,7 +530,7 @@ if (!isset($content)) {
                                 <p style="font-size: 0.9rem; margin-top: 12px; color: var(--text-secondary); line-height:1.5;">
                                     Nous avons trouvé cette formation dans notre catalogue pour vous aider à maîtriser cet aspect critique du poste.
                                 </p>
-                                <a href="formations_catalog.php?id=<?php echo $gap['real_formation']['id_formation'] ?? '#'; ?>" class="btn-primary" style="display:inline-block; margin-top:15px; padding: 10px 20px; font-size: 0.85rem; border-radius:12px;">S'inscrire maintenant</a>
+                                <a href="formation_detail.php?id=<?php echo $gap['real_formation']['id_formation'] ?? '#'; ?>" class="btn-primary" style="display:inline-block; margin-top:15px; padding: 10px 20px; font-size: 0.85rem; border-radius:12px;">S'inscrire maintenant</a>
                             </div>
                         <?php else: ?>
                             <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 20px; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-primary);">

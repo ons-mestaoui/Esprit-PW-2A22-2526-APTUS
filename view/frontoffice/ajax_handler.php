@@ -304,8 +304,9 @@ switch ($action) {
         $uid = $_GET['user_id'] ?? SessionManager::getUserId();
         require_once __DIR__ . '/../../controller/NotificationController.php';
         $notifC = new NotificationController();
-        $notifs = $notifC->getUnreadNotifications((int) $uid);
-        echo json_encode(['success' => true, 'notifications' => $notifs]);
+        $notifs = $notifC->getAll((int) $uid, 20);
+        $unreadCount = $notifC->countUnread((int) $uid);
+        echo json_encode(['success' => true, 'notifications' => $notifs, 'unread_count' => $unreadCount]);
         break;
 
     case 'mark_notifications_read':

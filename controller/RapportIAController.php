@@ -148,12 +148,13 @@ class RapportIAController {
                 $matchedJobs = [];
                 foreach ($results as $o) {
                     $matchedJobs[] = [
-                        'id' => $o['id_offre'],
-                        'title' => $o['titre'],
-                        'domain' => $o['domaine'] ?: 'Expertise',
+                        'id_offre' => $o['id_offre'],
+                        'titre' => $o['titre'],
+                        'domaine' => $o['domaine'] ?: 'Expertise',
                         'match_score' => 50, // Score arbitraire pour le fallback
-                        'location' => ($o['ville'] ?: 'Tunis') . ' (Aptus)',
-                        'salary' => $o['salaire'] ? ($o['salaire'] . ' TND') : 'Non précisé',
+                        'lieu' => ($o['ville'] ?: 'Tunis') . ' (Aptus)',
+                        'entreprise' => $o['company'] ?? 'Aptus Partner',
+                        'salaire' => $o['salaire'] ? ($o['salaire'] . ' TND') : 'Non précisé',
                         'created_at' => $o['date_publication'] ?? ''
                     ];
                 }
@@ -182,47 +183,35 @@ class RapportIAController {
             $results = $stmt->fetchAll();
 
             if ($results) {
-                $matchedJobs = [];
-                
-                foreach ($results as $o) {
-                    $matchCount = 0;
-                    $textToSearch = mb_strtolower($o['titre'] . ' ' . $o['domaine'] . ' ' . $o['competences_requises'], 'UTF-8');
+                return array_map(function($j) use ($validKeywords) {
+                    $score = 0;
+                    $titleLower = mb_strtolower($j['titre']);
+                    $descLower = mb_strtolower($j['competences_requises']);
+                    $domLower = mb_strtolower($j['domaine']);
                     
                     foreach ($validKeywords as $kw) {
-                        if (mb_strpos($textToSearch, mb_strtolower(trim($kw), 'UTF-8')) !== false) {
-                            $matchCount++;
-                        }
+                        $kwL = mb_strtolower($kw);
+                        if (str_contains($titleLower, $kwL)) $score += 30;
+                        if (str_contains($descLower, $kwL)) $score += 10;
+                        if (str_contains($domLower, $kwL)) $score += 20;
                     }
-
-                    $score = round(($matchCount / $validKeywordsCount) * 100);
-
-                    // Seuil abaissé à 20% pour plus de pertinence large
-                    if ($score >= 20) {
-                        $matchedJobs[] = [
-                            'id' => $o['id_offre'],
-                            'title' => $o['titre'],
-                            'domain' => $o['domaine'] ?: 'IT / Tech',
-                            'match_score' => $score,
-                            'location' => ($o['ville'] ?: 'Tunis') . ' (Aptus)',
-                            'salary' => $o['salaire'] ? ($o['salaire'] . ' TND') : 'Non précisé',
-                            'created_at' => $o['date_publication'] ?? ''
-                        ];
-                    }
-                }
-
-                // Trier par score décroissant
-                usort($matchedJobs, function($a, $b) {
-                    return $b['match_score'] <=> $a['match_score'];
-                });
-
-                // Garder les 9 meilleurs
-                return array_slice($matchedJobs, 0, 9);
+                    
+                    $scorePercent = min(98, 20 + $score); 
+                    
+                    return [
+                        'id' => $j['id_offre'],
+                        'title' => $j['titre'],
+                        'match_score' => $scorePercent,
+                        'domain' => $j['domaine'],
+                        'location' => ($j['ville'] ?: 'Tunis'),
+                        'image' => null
+                    ];
+                }, $results);
             }
         } catch (Exception $e) {
             error_log("MatchJobs Error: " . $e->getMessage());
         }
 
-        // Fallback vide si vraiment rien en DB (mieux que du hardcoded faux)
         return [];
     }
 
@@ -235,7 +224,6 @@ class RapportIAController {
             $where = [];
             $params = [];
             
-            // On nettoie les termes de recherche (souvent des listes d'IA)
             $cleanTerms = [];
             foreach ($searchTerms as $term) {
                 $trimmed = trim($term);
@@ -252,18 +240,34 @@ class RapportIAController {
                 $stmt->execute($params);
                 $results = $stmt->fetchAll();
             } else {
-                // Si rien n'est passé, on ne renvoie rien pour éviter le hors-sujet
                 return [];
             }
 
             if ($results) {
-                return array_map(function($f) {
+                return array_map(function($f) use ($cleanTerms) {
+                    $score = 0;
+                    $titleLower = mb_strtolower($f['titre']);
+                    $descLower = mb_strtolower($f['description']);
+                    
+                    foreach ($cleanTerms as $kw) {
+                        $kwL = mb_strtolower($kw);
+                        if (str_contains($titleLower, $kwL)) $score += 30;
+                        if (str_contains($descLower, $kwL)) $score += 10;
+                    }
+                    
+                    $scorePercent = min(98, 30 + $score); 
+
                     return [
                         'id' => $f['id_formation'],
                         'title' => $f['titre'],
+                        'nom_formation' => $f['titre'],
                         'domain' => $f['domaine'] ?: 'Expertise',
-                        'duration' => 'Flexible',
-                        'level' => $f['niveau'] ?: 'Intermédiaire'
+                        'domaine' => $f['domaine'] ?: 'Expertise',
+                        'duree_formation' => 'Flexible',
+                        'level' => $f['niveau'] ?: 'Intermédiaire',
+                        'niveau' => $f['niveau'] ?: 'Intermédiaire',
+                        'match_score' => $scorePercent,
+                        'image' => null
                     ];
                 }, $results);
             }

@@ -1,11 +1,27 @@
 <?php
 // Load user preferences early so they can be applied to the page
 if (session_status() === PHP_SESSION_NONE) session_start();
+
+// Security: Prevent browser caching of protected pages
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+
+// Check Authentication
+$userId = $_SESSION['id_utilisateur'] ?? null;
+$userRole = isset($_SESSION['role']) ? strtolower($_SESSION['role']) : null;
+
+if (!$userId || !in_array($userRole, ['candidat', 'entreprise', 'tuteur'])) {
+    header("Location: login.php");
+    exit();
+}
+
 $_layout_prefs = [];
-if (isset($_SESSION['id_utilisateur'])) {
+if ($userId) {
     if (!class_exists('UtilisateurC')) include_once __DIR__ . '/../../controller/UtilisateurC.php';
     $_layout_uC = new UtilisateurC();
-    $_layout_prefs = $_layout_uC->getPreferences($_SESSION['id_utilisateur']);
+    $_layout_prefs = $_layout_uC->getPreferences($userId);
 }
 $_lp_theme      = htmlspecialchars($_layout_prefs['theme']         ?? 'light');
 $_lp_accent     = htmlspecialchars($_layout_prefs['accent_color']  ?? '#6B34A3');
@@ -57,6 +73,7 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
       --accent-primary:       <?= $_lp_accent ?>;
       --accent-primary-light: <?= $_lp_accent ?>26;
       --accent-primary-dark:  <?= $_lp_accent ?>;
+      --grad-primary: linear-gradient(135deg, <?= $_lp_accent ?> 0%, #00A3DA 100%);
       --font-family: '<?= $_lp_fontFamily ?>', 'Inter', sans-serif;
       --radius-xs:   <?= $_lp_r[0] ?>;
       --radius-sm:   <?= $_lp_r[1] ?>;
@@ -65,6 +82,7 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
       --radius-xl:   <?= $_lp_r[4] ?>;
       --radius-2xl:  <?= $_lp_r[5] ?>;
     }
+    body { background-color: var(--bg-body); }
     html { font-size: <?= $_lp_fontSize ?>px; }
   </style>
 
@@ -85,6 +103,14 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
 
   <!-- PDF Export: html2pdf.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  <script>
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        window.location.reload();
+      }
+    });
+  </script>
 </head>
 <body>
 
@@ -132,10 +158,11 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
         <a href="jobs_feed.php" class="nav-anchor" id="nav-jobs"><i data-lucide="briefcase"></i><span>Offres d'emploi</span></a>
         <a href="my_applications.php" class="nav-anchor" id="nav-my-applications"><i data-lucide="clipboard-list"></i><span>Mes Candidatures</span></a>
         <a href="cv_templates.php" class="nav-anchor" id="nav-cv"><i data-lucide="file-badge"></i><span>Générer CV</span></a>
+        <a href="cv_my.php" class="nav-anchor" id="nav-cv-my"><i data-lucide="file-text"></i><span>Mes CVs</span></a>
         <a href="formations_catalog.php" class="nav-anchor" id="nav-formations"><i data-lucide="graduation-cap"></i><span>Formations</span></a>
         <a href="formations_my.php" class="nav-anchor" id="nav-my-formations"><i data-lucide="book-open"></i><span>Mes Formations</span></a>
         <a href="veille_feed.php" class="nav-anchor" id="nav-veille"><i data-lucide="line-chart"></i><span>Veille Marché</span></a>
-        <a href="cv_my.php" class="nav-anchor" id="nav-cv-my"><i data-lucide="file-text"></i><span>Mes CVs</span></a>
+        
       <?php endif; ?>
     </div>
 
@@ -588,13 +615,17 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
                 if (_dndMode) {
                     notifs = notifs.filter(n => n.type.startsWith('URGENT_'));
                 }
-                updateNotifUI(notifs); 
+                updateNotifUI(notifs, data.unread_count); 
             }
         })
         .catch(() => {}); // silent fail
     }
 
-    function updateNotifUI(notifs) {
+    function updateNotifUI(notifs, unreadCount) {
+        if (unreadCount === undefined) {
+            unreadCount = notifs.filter(n => n.is_read == 0).length;
+        }
+        
         const badge     = document.getElementById('notif-badge');
         const headCount = document.getElementById('notif-head-count');
         const list      = document.getElementById('notif-items');
@@ -603,28 +634,28 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
         const count     = notifs.length;
 
         // Update badge
-        if (count > 0) {
-            badge.textContent     = count > 99 ? '99+' : count;
+        if (unreadCount > 0) {
+            badge.textContent     = unreadCount > 99 ? '99+' : unreadCount;
             badge.style.display   = 'block';
-            headCount.textContent = count;
+            headCount.textContent = unreadCount;
 
-            // Check if there is any URGENT in the list for pulse
-            const hasUrgent = notifs.some(n => n.type.startsWith('URGENT_'));
+            // Check if there is any URGENT in the UNREAD list for pulse
+            const hasUrgent = notifs.some(n => n.type.startsWith('URGENT_') && n.is_read == 0);
 
             // Ring bell + play tick sound when NEW notifs arrive
-            if (!_bellRung || count > _prevCount) {
+            if (!_bellRung || unreadCount > _prevCount) {
                 bellIcon.classList.remove('bell-has-notif');
                 void bellIcon.offsetWidth;
                 bellIcon.classList.add('bell-has-notif');
                 if (hasUrgent) pulse.style.display = 'block';
                 _bellRung = true;
                 // Play tick and send push only when count increases (new notification)
-                if (count > _prevCount && _prevCount !== 0) {
+                if (unreadCount > _prevCount && _prevCount !== 0) {
                     playNotifTick();
                     
                     // Native Browser Push
                     if (notifs.length > 0 && !_dndMode) {
-                        const newest = notifs[0];
+                        const newest = notifs.find(n => n.is_read == 0) || notifs[0];
                         sendNativePush("Nouvelle notification Aptus", {
                             body: newest.message,
                             icon: "/aptus_first_official_version/view/assets/img/logo.png"
@@ -638,14 +669,14 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
             pulse.style.display   = 'none';
             bellIcon.classList.remove('bell-has-notif');
         }
-        _prevCount = count;
+        _prevCount = unreadCount;
 
         // Render items
         if (count === 0) {
             list.innerHTML = `
                 <div class="notif-empty">
                     <div class="notif-empty__icon">${_dndMode ? '🌙' : '✅'}</div>
-                    <p>${_dndMode ? 'Mode Silence : Seules les alertes critiques s\'afficheront.' : 'Vous êtes à jour !<br>Aucune nouvelle notification.'}</p>
+                    <p>${_dndMode ? 'Mode Silence : Seules les alertes critiques s\'afficheront.' : 'Vous êtes à jour !<br>Aucune notification.'}</p>
                 </div>`;
             return;
         }
@@ -654,6 +685,7 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
         notifs.forEach(n => {
             let typeKey = n.type.replace('URGENT_', '').replace('SILENT_', '');
             const isUrgent = n.type.startsWith('URGENT_');
+            const isRead = n.is_read == 1;
             
             typeKey  = NOTIF_ICONS[typeKey] ? typeKey : 'default';
             const icon     = NOTIF_ICONS[typeKey] || 'bell';
@@ -665,9 +697,10 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
             }
             
             const urgentStyle = isUrgent ? 'border-left: 4px solid var(--accent-tertiary); background: var(--accent-tertiary-light); opacity: 0.95;' : '';
+            const readClass = isRead ? '' : 'unread';
 
             html += `
-            <a href="${href}" class="notif-item unread" onclick="markOneRead(${n.id_notifs}, this)" style="${urgentStyle}">
+            <a href="${href}" class="notif-item ${readClass}" onclick="markOneRead(${n.id_notifs}, this)" style="${urgentStyle}">
                 <div class="notif-item__icon type-${typeKey}" ${isUrgent ? 'style="background:#ef4444; color:#fff;"' : ''}>
                     <i data-lucide="${icon}" style="width:18px;height:18px;"></i>
                 </div>
@@ -683,11 +716,31 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
     }
 
     function markOneRead(id, el) {
-        el.classList.remove('unread');
-        const formData = new FormData();
-        formData.append('action', 'mark_notifications_read');
-        formData.append('notif_id', id);
-        fetch('/aptus_first_official_version/view/frontoffice/ajax_handler.php', { method: 'POST', body: formData });
+        if (el.classList.contains('unread')) {
+            el.classList.remove('unread');
+            const badge = document.getElementById('notif-badge');
+            const headCount = document.getElementById('notif-head-count');
+            let current = parseInt(headCount.textContent) || 0;
+            if (current > 0) {
+                current--;
+                headCount.textContent = current;
+                badge.textContent = current > 99 ? '99+' : current;
+                if (current === 0) {
+                    badge.style.display = 'none';
+                    const pulse = document.getElementById('bell-pulse');
+                    if (pulse) pulse.style.display = 'none';
+                }
+                _prevCount = current;
+            }
+            const formData = new FormData();
+            formData.append('action', 'mark_notifications_read');
+            formData.append('notif_id', id);
+            fetch('/aptus_first_official_version/view/frontoffice/ajax_handler.php', { 
+                method: 'POST', 
+                body: formData,
+                keepalive: true 
+            });
+        }
     }
 
     function markAllRead() {
@@ -695,7 +748,7 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
         formData.append('action', 'mark_notifications_read');
         fetch('/aptus_first_official_version/view/frontoffice/ajax_handler.php', { method: 'POST', body: formData })
         .then(r => r.json())
-        .then(data => { if (data.success) updateNotifUI([]); });
+        .then(data => { if (data.success) fetchNotifications(); });
     }
 
     function deleteAllNotifications() {
@@ -843,6 +896,7 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
   <!-- AI Agent Widget (only for logged-in users) -->
   <?php if (!empty($_layout_prefs)): ?>
   <script src="/aptus_first_official_version/view/assets/js/ai_agent.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent_ext.js"></script>
   <?php endif; ?>
 </body>
 </html>

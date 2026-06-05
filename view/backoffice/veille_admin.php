@@ -105,9 +105,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     }
     elseif ($action === 'delete_rapport') {
-        $vc->supprimerRapport($_POST['id_rapport_marche']);
-        header('Location: veille_admin.php?success=3&tab=rapports');
-        exit;
+        $id = $_POST['id_rapport_marche'] ?? $_POST['delete_id'] ?? null;
+        if ($id) {
+            $vc->supprimerRapport($id);
+            header('Location: veille_admin.php?success=3&tab=rapports');
+            exit;
+        }
     }
 
     // ===================== DONNEES =====================
@@ -170,9 +173,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     }
     elseif ($action === 'delete_donnee') {
-        $vc->supprimerDonnee($_POST['id_donnee']);
-        header('Location: veille_admin.php?success=6&tab=donnees');
-        exit;
+        $id = $_POST['id_donnee'] ?? $_POST['delete_id'] ?? null;
+        if ($id) {
+            $vc->supprimerDonnee($id);
+            header('Location: veille_admin.php?success=6&tab=donnees');
+            exit;
+        }
     }
 
     // If we reach here with errors, override the active tab based on the action
@@ -1062,29 +1068,7 @@ if(isset($_GET['success']) && isset($msgs[$_GET['success']])):
     </div>
 </div>
 
-<!-- 3. Modal Confirmation Suppression -->
-<div class="modal-overlay" id="modal-delete">
-    <div class="modal-content" style="max-width:450px; text-align:center; padding: 40px 32px;">
-        <button class="modal-close" onclick="closeModals()"><i data-lucide="x" style="width:24px;height:24px;"></i></button>
-        
-        <div style="width:64px; height:64px; background:rgba(239,68,68,0.1); color:#ef4444; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
-            <i data-lucide="alert-triangle" style="width:32px;height:32px;"></i>
-        </div>
-        
-        <h3 style="margin-bottom:12px; color:var(--text-primary);">Confirmation de suppression</h3>
-        <p id="delete-modal-msg" style="color:var(--text-secondary); margin-bottom:24px; line-height:1.6;">Êtes-vous sûr de vouloir continuer ? Cette action est irréversible.</p>
-        
-        <form action="veille_admin.php" method="POST" id="form-delete">
-            <input type="hidden" name="action" id="delete-action" value="">
-            <input type="hidden" name="" id="delete-id-field" value="">
-            
-            <div style="display:flex; gap:12px; justify-content:center;">
-                <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closeModals()">Annuler</button>
-                <button type="submit" class="btn btn-primary" style="flex:1; background:#ef4444; border-color:#ef4444; color:white;">Oui, Supprimer</button>
-            </div>
-        </form>
-    </div>
-</div>
+
 
 <script>
 function switchTab(tabId) {
@@ -1095,9 +1079,6 @@ function switchTab(tabId) {
     document.getElementById('tab-' + tabId).classList.add('active');
 }
 
-function closeModals() {
-    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
-}
 
 function openRapportModal(type, data = null) {
     const isEdit = (type === 'edit');
@@ -1175,7 +1156,11 @@ function openRapportModal(type, data = null) {
         goToStep(1);
     }
 
-    document.getElementById('modal-rapport').classList.add('active');
+    const modal = document.getElementById('modal-rapport');
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.classList.add('active');
+    }, 10);
 }
 
 // Stepper Logic
@@ -1305,7 +1290,11 @@ function openDonneeModal(type, data = null) {
     document.getElementById('donnee-date').value = data?.date_collecte || '';
     document.getElementById('donnee-desc').value = data?.description || '';
     
-    document.getElementById('modal-donnee').classList.add('active');
+    const modal = document.getElementById('modal-donnee');
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.classList.add('active');
+    }, 10);
 }
 
 // Preview image and convert to base64
@@ -2114,14 +2103,27 @@ function toggleSortSalary() {
 }
 
 function openDeleteModal(actionName, idFieldName, idValue, message) {
-    document.getElementById('delete-action').value = actionName;
+    const modalDelete = document.getElementById('modal-delete');
+    const formDelete = document.getElementById('form-delete');
+    const actionInput = document.getElementById('delete-action');
     const idField = document.getElementById('delete-id-field');
+    const msgField = document.getElementById('delete-modal-msg');
+
+    if (!modalDelete || !formDelete) return;
+
+    actionInput.value = actionName;
     idField.name = idFieldName;
     idField.value = idValue;
+    formDelete.action = "veille_admin.php"; // Ensure it posts back here
     
-    document.getElementById('delete-modal-msg').innerText = message;
+    if (msgField) msgField.innerText = message;
     
-    document.getElementById('modal-delete').classList.add('active');
+    modalDelete.style.display = 'flex';
+    setTimeout(() => {
+        modalDelete.classList.add('active');
+    }, 10);
+
+    if (window.lucide) lucide.createIcons();
 }
 </script>
 

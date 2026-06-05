@@ -14,7 +14,7 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
 if (isset($_SESSION['id_utilisateur'])) {
     session_unset();
     session_destroy();
-
+    
     // Explicitly clear the session cookie from the browser
     if (isset($_COOKIE[session_name()])) {
         setcookie(session_name(), '', time() - 3600, '/');
@@ -61,8 +61,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (isset($user['est_verifie']) && $user['est_verifie'] == 0 && strtolower($user['role'] ?? '') !== 'admin') {
                     $error = "Votre compte n'est pas encore activé. Veuillez cliquer sur le lien envoyé dans votre boîte mail.";
                 } else {
-                    // 2FA temporarily disabled
-                    // Normal Login
+                    // Check if 2FA is enabled
+                    $utilisateurC = new UtilisateurC();
+                    $prefs = $utilisateurC->getPreferences($user['id_utilisateur']);
+                    
+                    if (!empty($prefs['two_factor_enabled'])) {
+                        // Redirect to 2FA verification page
+                        $_SESSION['temp_2fa_user'] = [
+                            'id' => $user['id_utilisateur'],
+                            'nom' => $user['nom'],
+                            'prenom' => $user['prenom'] ?? '',
+                            'role' => $user['role']
+                        ];
+                        header("Location: two_factor.php");
+                        exit();
+                    }
+
+                    // Normal Login (no 2FA)
                     $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
                     $_SESSION['nom'] = $user['nom'];
                     $_SESSION['prenom'] = $user['prenom'] ?? '';
@@ -73,10 +88,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'admin' => '../backoffice/dashboard.php',
                         'candidat' => 'jobs_feed.php',
                         'entreprise' => 'hr_posts.php',
-                        'tuteur' => 'tuteur_dashboard.php'
+                        'tuteur' => 'dashboard_tuteur.php'
                     ];
                     $roleKey = strtolower($user['role']);
-
+                    
                     header("Location: " . ($roleRoutes[$roleKey] ?? 'landing.php'));
                     exit();
                 }
@@ -228,7 +243,7 @@ if (isset($_GET['error'])) {
       gap: var(--space-4);
       overflow-y: auto;
     }
-
+    
     .auth-split-form h1 {
       font-size: var(--fs-xl);
       font-weight: 800;
@@ -257,7 +272,7 @@ if (isset($_GET['error'])) {
       box-shadow: var(--shadow-lg);
       filter: brightness(1.1);
     }
-
+    
     .btn-outline-white {
       transition: all 0.3s ease;
     }
@@ -286,14 +301,14 @@ if (isset($_GET['error'])) {
       border-radius: var(--radius-lg);
       text-align: left;
     }
-
+    
     .role-card-mini:hover {
       transform: translateY(-3px);
       border-color: var(--accent-primary);
       background: var(--bg-card);
       box-shadow: var(--shadow-xl);
     }
-
+    
     .role-card-mini:hover .role-icon {
       color: var(--accent-primary);
       transform: scale(1.1);
@@ -312,12 +327,12 @@ if (isset($_GET['error'])) {
     .role-card-mini:nth-child(3):hover .role-icon {
       color: var(--accent-tertiary);
     }
-
+    
     .role-info h4 {
       margin: 0;
       font-size: var(--fs-base);
     }
-
+    
     .role-info p {
       margin: 0;
       font-size: var(--fs-xs);
@@ -453,7 +468,7 @@ if (isset($_GET['error'])) {
       transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       text-decoration: none;
     }
-
+    
     [data-theme="dark"] .btn-social {
       background: rgba(255, 255, 255, 0.05);
       border-color: rgba(255, 255, 255, 0.1);
@@ -465,7 +480,7 @@ if (isset($_GET['error'])) {
       border-color: var(--accent-primary);
       background: var(--bg-card);
     }
-
+    
     [data-theme="dark"] .btn-social:hover {
       background: rgba(255, 255, 255, 0.1);
       border-color: var(--accent-primary);
@@ -490,7 +505,7 @@ if (isset($_GET['error'])) {
     .btn-social:hover .social-icon {
       transform: rotate(10deg);
     }
-
+    
     .faceid-divider {
       display: flex;
       align-items: center;
@@ -528,13 +543,13 @@ if (isset($_GET['error'])) {
 
   <div class="auth-page">
     <div class="auth-container" id="auth-container">
-
+      
       <!-- Sign Up Container (Choices) -->
       <div class="form-container sign-up-container">
         <div class="auth-split-form">
           <h1>Rejoignez Aptus</h1>
           <p style="margin-bottom: var(--space-8); color: var(--text-primary); opacity: 0.8; font-weight: 500;">Sélectionnez votre profil pour commencer votre aventure avec Aptus</p>
-
+          
           <div class="role-grid-mini">
             <a href="signup_candidat.php" class="role-card-mini">
               <div class="role-icon" style="color: var(--accent-primary);">
@@ -578,7 +593,7 @@ if (isset($_GET['error'])) {
       <div class="form-container sign-in-container">
         <form class="auth-split-form" id="login-form" method="POST" action="" data-validate>
           <h1>Connexion</h1>
-
+          
           <?php if (!empty($error)): ?>
             <div class="alert alert-danger" style="color:red; background-color:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); padding:10px; border-radius:5px; text-align:center; margin-bottom: 15px; font-size: 14px;">
                 <?php echo $error; ?>
@@ -607,7 +622,7 @@ if (isset($_GET['error'])) {
 
 
           <a href="forgot_password.php" class="text-xs text-secondary" style="margin: 10px 0;">Mot de passe oublié ?</a>
-
+          
           <button type="submit" class="btn btn-primary btn-lg w-full" style="margin-top:var(--space-2);">Se connecter</button>
 
           <!-- Face ID Divider & Button -->
@@ -637,7 +652,7 @@ if (isset($_GET['error'])) {
               ← Retour à la connexion classique
             </button>
           </div>
-
+          
           <div class="auth-footer" style="margin-top: var(--space-6);">
              <a href="landing.php" class="back-to-site">
               <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>

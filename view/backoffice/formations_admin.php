@@ -784,23 +784,6 @@ if (!isset($content)) {
         }
         document.getElementById('modal-creneau').style.display = 'flex';
     }
-    function closeModal() {
-        document.getElementById('modal-creneau').style.display = 'none';
-    }
-
-    function closeModals() {
-        const modals = ['add-formation-modal', 'modal-course-factory', 'modal-creneau', 'modal-creneau-action', 'modal-formation-detail'];
-        modals.forEach(id => {
-            const m = document.getElementById(id);
-            if (m) {
-                m.classList.remove('active');
-                m.style.display = 'none';
-            }
-        });
-        // Reset modal error banner if it exists
-        const banner = document.getElementById('modal-error-banner');
-        if (banner) banner.style.display = 'none';
-    }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
 
 

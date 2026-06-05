@@ -1,9 +1,9 @@
 # Secrets & API Keys
 api_keys.php
 .env
+.env.php 
 
-# Claude AI memory (local only)
-.claude/
+
 
 
 # Tunnel / AR scripts (local dev tools)

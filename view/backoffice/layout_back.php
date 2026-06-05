@@ -1,3 +1,23 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Security: Prevent browser caching of protected pages
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+
+$userId = $_SESSION['id_utilisateur'] ?? null;
+$userRole = isset($_SESSION['role']) ? strtolower($_SESSION['role']) : null;
+
+// Access Control: Only Admins can access backoffice
+if (!$userId || $userRole !== 'admin') {
+    header("Location: ../frontoffice/login.php");
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
@@ -32,6 +52,14 @@
   <script>
     // 🛡️ SÉCURITÉ : Définition de l'URL de base pour FaceAPI et AJAX
     const APTUS_BASE_URL = window.location.origin + "/aptus_first_official_version/";
+  </script>
+  
+  <script>
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        window.location.reload();
+      }
+    });
   </script>
 </head>
 <body>
@@ -78,10 +106,7 @@
           <i data-lucide="briefcase"></i>
           <span>Offres Disponibles</span>
         </a>
-        <a href="posts_stats.php" class="sidebar-link<?php echo ($currentPage==='posts_stats.php')?' active':''; ?>" id="sidebar-posts">
-          <i data-lucide="bar-chart-3"></i>
-          <span>Posts &amp; Stats</span>
-        </a>
+        
       </nav>
 
       <!-- Footer / Logout -->
@@ -157,7 +182,7 @@
         <div class="modal-content" style="background:var(--bg-card); border-radius:24px; max-width:450px; text-align:center; padding: 40px 32px; position:relative; border:1px solid var(--border-color); box-shadow:var(--shadow-2xl);">
             <button class="modal-close" onclick="closeModals()" style="position:absolute; top:20px; right:20px; color:var(--text-tertiary); background:none; border:none; cursor:pointer;"><i data-lucide="x" style="width:24px;height:24px;"></i></button>
 
-            <div style="width:64px; height:64px; background: var(--accent-tertiary-light); color: var(--accent-tertiary); border-radius: 50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; border: 1px solid var(--accent-tertiary);">
+            <div style="width:64px; height:64px; background: var(--bg-danger); color: var(--text-danger); border-radius: 50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; border: 1px solid var(--text-danger);">
                 <i data-lucide="alert-triangle" style="width:32px;height:32px;"></i>
             </div>
 
@@ -170,7 +195,7 @@
 
                 <div style="display:flex; gap:12px; justify-content:center;">
                     <button type="button" class="btn btn-secondary" style="flex:1; border-radius:12px; padding:12px;" onclick="closeModals()">Annuler</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1; background: var(--accent-tertiary); border-color: var(--accent-tertiary); color:white; border-radius:12px; padding:12px; font-weight:600;">Oui, Supprimer</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1; background: var(--text-danger); border-color: var(--text-danger); color:white; border-radius:12px; padding:12px; font-weight:600;">Oui, Supprimer</button>
                 </div>
             </form>
         </div>
@@ -218,20 +243,14 @@
     let deleteCallback = null;
 
     function closeModals() {
-        // Liste de tous les IDs de modals possibles dans le backoffice
-        const modalIds = ['modal-delete', 'modal-alert', 'add-formation-modal', 'modal-creneau', 'modal-creneau-action', 'modal-formation-detail'];
-        
-        modalIds.forEach(id => {
-            const modal = document.getElementById(id);
-            if (modal) {
-                modal.classList.remove('active');
-                // On attend la fin de l'animation CSS (0.3s) avant de masquer
-                setTimeout(() => { 
-                    if (!modal.classList.contains('active')) {
-                        modal.style.display = 'none'; 
-                    }
-                }, 300);
-            }
+        const modals = document.querySelectorAll('.modal-overlay');
+        modals.forEach(modal => {
+            modal.classList.remove('active');
+            setTimeout(() => { 
+                if (!modal.classList.contains('active')) {
+                    modal.style.display = 'none'; 
+                }
+            }, 300);
         });
     }
 

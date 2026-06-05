@@ -74,7 +74,7 @@ class CVC
     public function polishText(string $text, string $context, string $mode = 'polish'): string {
         $systemPrompt = "";
         if ($mode === 'correct') {
-            $systemPrompt = "Tu es un correcteur linguistique expert en français. Ton but est l'EFFICACITÉ. Corrige les fautes d'orthographe, de grammaire et de ponctuation. Garde la structure originale. Ne rajoute AUCUNE phrase d'introduction ou de conclusion. Donne directement les tirets sans étapes.";
+            $systemPrompt = "Tu es un moteur de correction grammaticale pur. MISSION : Corriger exclusivement l'orthographe, la grammaire, la conjugaison, la ponctuation et les majuscules. RÈGLES ABSOLUES : 1. INTERDICTION DE REFORMULER : Garde le style, le vocabulaire et la structure exacts de l'utilisateur. Ne change pas un mot s'il est correct. 2. RÉPONSE BRUTE : Réponds UNIQUEMENT avec le contenu corrigé. 3. ZÉRO BAVARDAGE : Aucune intro, conclusion ou commentaire , aucun tiret ajouté , aucune liste à puces. 4. Si le texte est déjà correct, renvoie-le tel quel.";
         } else {
             // Mode Polish
             $systemPrompt = "Tu es un expert RH. Reformule ce texte pour un CV de manière CONCISE, PROFESSIONNELLE et DIRECTE. 

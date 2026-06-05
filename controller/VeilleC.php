@@ -211,9 +211,22 @@ class VeilleC
     public function supprimerDonnee($id)
     {
         try {
+            $this->delierDonneeDeTousRapports($id);
             $sql = "DELETE FROM donnee_marche WHERE id_donnee = :id";
             $req = $this->db->prepare($sql);
             $req->bindParam(':id', $id);
+            $req->execute();
+        } catch (Exception $e) {
+            die('Erreur: ' . $e->getMessage());
+        }
+    }
+
+    public function delierDonneeDeTousRapports($id_donnee)
+    {
+        try {
+            $sql = "DELETE FROM liaison_rapport_donnee WHERE id_donnee = :id_donnee";
+            $req = $this->db->prepare($sql);
+            $req->bindParam(':id_donnee', $id_donnee);
             $req->execute();
         } catch (Exception $e) {
             die('Erreur: ' . $e->getMessage());
