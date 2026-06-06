@@ -118,9 +118,10 @@ class AgentController {
         $messages[] = ["role" => "user", "content" => $prompt];
 
         $payload = [
-            "model" => "google/gemini-2.0-flash-001", // Modèle ultra-rapide et performant
+            "model" => "google/gemini-2.5-flash", // Modèle ultra-rapide et performant
             "messages" => $messages,
-            "response_format" => ["type" => "json_object"]
+            "response_format" => ["type" => "json_object"],
+            "max_tokens" => 500
         ];
 
         $ch = curl_init("https://openrouter.ai/api/v1/chat/completions");
@@ -156,7 +157,7 @@ class AgentController {
     private function askGeminiDirect($prompt, $referer = '') {
         if (empty($this->geminiKey)) return null;
 
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $this->geminiKey;
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $this->geminiKey;
         
         $contents = [];
         foreach ($_SESSION['agent_history'] as $h) $contents[] = $h;

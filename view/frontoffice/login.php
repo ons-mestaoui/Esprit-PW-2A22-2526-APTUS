@@ -443,68 +443,7 @@ if (isset($_GET['error'])) {
       transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.15);
     }
     .btn-faceid svg, .btn-faceid i { color: var(--accent-primary, #6366f1); }
-    /* Social Login Buttons - Glassmorphism & Premium Style */
-    .social-auth-container {
-      display: flex;
-      justify-content: center;
-      gap: var(--space-4);
-      width: 100%;
-      margin-top: var(--space-2);
-    }
-    .btn-social {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-3);
-      padding: var(--space-3) var(--space-4);
-      border-radius: var(--radius-full);
-      border: 1px solid var(--border-color);
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      font-weight: 600;
-      font-size: var(--fs-sm);
-      cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      text-decoration: none;
-    }
-    
-    [data-theme="dark"] .btn-social {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
 
-    .btn-social:hover {
-      transform: translateY(-4px) scale(1.02);
-      box-shadow: var(--shadow-lg);
-      border-color: var(--accent-primary);
-      background: var(--bg-card);
-    }
-    
-    [data-theme="dark"] .btn-social:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: var(--accent-primary);
-    }
-
-    .btn-social.google:hover {
-      background: rgba(234, 67, 53, 0.08);
-      border-color: rgba(234, 67, 53, 0.4);
-      color: #EA4335 !important;
-    }
-    .btn-social.github:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: var(--text-primary);
-      color: var(--text-primary) !important;
-    }
-    .social-icon {
-      width: 20px;
-      height: 20px;
-      transition: transform 0.3s ease;
-      fill: currentColor;
-    }
-    .btn-social:hover .social-icon {
-      transform: rotate(10deg);
-    }
     
     .faceid-divider {
       display: flex;
@@ -627,10 +566,12 @@ if (isset($_GET['error'])) {
 
           <!-- Face ID Divider & Button -->
           <div class="faceid-divider">ou</div>
-          <button type="button" class="btn-faceid" id="faceid-login-toggle">
+          <button type="button" class="btn-faceid" id="faceid-login-toggle" style="margin-bottom:var(--space-3);">
             <i data-lucide="scan-face" style="width:20px;height:20px;"></i>
             Se connecter avec Face ID
           </button>
+
+
 
           <!-- Face ID Login Panel (hidden by default) -->
           <div class="faceid-login-panel" id="faceid-login-panel">

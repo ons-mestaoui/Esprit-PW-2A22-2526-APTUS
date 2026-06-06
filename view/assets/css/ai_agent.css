@@ -198,3 +198,23 @@
 @keyframes listen-bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-4px); } }
 @keyframes talk { 0% { height: 4px; width: 14px; border-radius: 4px; } 100% { height: 16px; width: 16px; border-radius: 50%; bottom: 12px; } }
 @keyframes sound-wave { 0% { height: 4px; } 100% { height: 14px; } }
+
+/* Theme overrides for AI Agent controls */
+[data-theme="dark"] .ai-controls {
+    background: #1e293b !important;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .ai-btn {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .ai-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #a855f7;
+}
+
+[data-theme="dark"] .ai-status-text {
+    color: #e2e8f0;
+}

@@ -23,15 +23,6 @@
             display: flex; 
             justify-content: center; 
             min-height: 100vh;
-            transition: background 0.3s ease;
-        }
-        
-        html[data-theme="dark"] body {
-            background: #0f172a;
-        }
-        
-        html[data-theme="light"] body {
-            background: #f1f5f9;
         }
         
         .cv-container { 
@@ -215,8 +206,8 @@
                 
                 <div class="photo-container">
                     <div class="photo-wrapper" id="photo-wrapper">
-                        <span class="photo-text" id="photo-text" style="display: none;">AJOUTER<br>UNE PHOTO</span>
-                        <img id="profile-pic" src="/aptus_first_official_version/view/assets/img/rayen.jpg" alt="Profil" style="display: block;">
+                        <span class="photo-text" id="photo-text">AJOUTER<br>UNE PHOTO</span>
+                        <img id="profile-pic" src="" alt="Profil">
                     </div>
                     <input type="file" id="file-upload" accept="image/*">
                 </div>
@@ -271,39 +262,10 @@
                     profilePic.src = e.target.result;
                     profilePic.style.display = 'block';
                     photoText.style.display = 'none';
-                    // Post message to parent to sync the photo state
-                    try {
-                        window.parent.postMessage({ type: 'iframe-photo-upload', value: e.target.result }, '*');
-                    } catch (err) {
-                        console.error("Parent postMessage error:", err);
-                    }
                 };
                 reader.readAsDataURL(file);
             }
         });
-
-        // Sync Theme from Parent
-        function syncTheme() {
-            try {
-                const parentTheme = window.parent.document.documentElement.getAttribute('data-theme') || 'light';
-                document.documentElement.setAttribute('data-theme', parentTheme);
-            } catch (e) {
-                console.error("Theme sync error:", e);
-            }
-        }
-        
-        syncTheme();
-        
-        // Listen to parent theme changes
-        try {
-            const observer = new MutationObserver(syncTheme);
-            observer.observe(window.parent.document.documentElement, {
-                attributes: true,
-                attributeFilter: ['data-theme']
-            });
-        } catch (e) {
-            console.error("Observer error:", e);
-        }
     </script>
 </body>
 </html>

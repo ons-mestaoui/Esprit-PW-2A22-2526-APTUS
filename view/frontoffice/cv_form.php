@@ -24,7 +24,7 @@ $cv = [
     'nomComplet'  => '', 'email' => '', 'telephone' => '', 'adresse' => '',
     'titrePoste'  => '', 'resume' => '', 'experience' => '',
     'competences' => '', 'langues' => '', 'formation' => '',
-    'urlPhoto'    => '', 'couleurTheme' => '#6B34A3'
+    'urlPhoto'    => '/aptus_first_official_version/view/assets/img/rayen.jpg', 'couleurTheme' => '#6B34A3'
 ];
 
 if ($cv_id) {
@@ -49,7 +49,7 @@ if ($cv_id) {
             'competences' => $row['competences'],
             'langues'     => $row['langues'],
             'formation'   => $row['formation'],
-            'urlPhoto'    => $row['urlPhoto'],
+            'urlPhoto'    => !empty($row['urlPhoto']) ? $row['urlPhoto'] : '/aptus_first_official_version/view/assets/img/rayen.jpg',
             'couleurTheme'=> $row['couleurTheme'] ?? '#6B34A3',
         ]);
         $template_id = $row['id_template'];
@@ -1291,7 +1291,8 @@ $receiverScript = '
                     setVal("#preview-infoContact, [data-cv-zone=\"contact\"], .contact-info, .cv-contact", clean, true);
                 } else if (d.field === "photo") {
                     const pi = document.querySelectorAll("#preview-photo, .cv-photo img, .profile-img, #profile-pic, [data-cv-zone=\"photo\"] img");
-                    pi.forEach(i => { i.src = d.value; i.style.display = "block"; });
+                    const imgUrl = d.value || "/aptus_first_official_version/view/assets/img/rayen.jpg";
+                    pi.forEach(i => { i.src = imgUrl; i.style.display = "block"; });
                     document.querySelectorAll("#photo-text, .photo-text").forEach(t => t.style.display = "none");
                 }
             } else if (e.data.type === "cv-labels") {
@@ -1943,6 +1944,13 @@ function toggleBionicMode(enabled) {
 window.addEventListener('message', (e) => {
     if (e.data.type === 'request-full-sync') {
         syncAllData();
+    } else if (e.data.type === 'iframe-photo-upload') {
+        document.getElementById('photo-b64').value = e.data.value;
+        const pi = document.getElementById('photo-preview-img');
+        if (pi) {
+            pi.src = e.data.value;
+            pi.style.display = 'block';
+        }
     }
 });
 

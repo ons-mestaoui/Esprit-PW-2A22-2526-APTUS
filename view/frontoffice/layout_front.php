@@ -133,6 +133,34 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
       $currentUserId = SessionManager::getUserId(false);
       $currentRole = $_SESSION['role'] ?? 'Candidat'; 
       $currentName = $_SESSION['nom'] ?? 'Utilisateur';
+
+      if ($currentUserId) {
+          if (!class_exists('UtilisateurC')) {
+              include_once __DIR__ . '/../../controller/UtilisateurC.php';
+          }
+          if (!class_exists('ProfilC')) {
+              include_once __DIR__ . '/../../controller/ProfilC.php';
+          }
+          $_layout_uC = new UtilisateurC();
+          $_layout_pC = new ProfilC();
+          
+          $_current_user = $_layout_uC->getUtilisateurById($currentUserId);
+          $_current_profil = $_layout_pC->getProfilByIdUtilisateur($currentUserId);
+          
+          if ($_current_user) {
+              if ($currentRole === 'Entreprise') {
+                  $currentFullName = $_current_user['nom'];
+              } else {
+                  $currentFullName = ($_current_user['prenom'] ?? '') . ' ' . $_current_user['nom'];
+              }
+          } else {
+              $currentFullName = $currentName;
+          }
+          $currentPhoto = $_current_profil ? ($_current_profil['photo'] ?? null) : null;
+      } else {
+          $currentFullName = $currentName;
+          $currentPhoto = null;
+      }
     ?>
     <!-- Logo -->
     <a href="<?php echo ($currentRole === 'Entreprise') ? 'hr_posts.php' : ($currentRole === 'Tuteur' ? 'tuteur_dashboard.php' : 'jobs_feed.php'); ?>" class="landing-nav__logo nav-anchor text-decoration-none d-flex align-items-center gap-2">
@@ -348,12 +376,16 @@ $_lp_r = $_lp_radiusMap[$_lp_radius] ?? $_lp_radiusMap['medium'];
       <div class="dropdown" id="profile-dropdown">
         <div class="dropdown-trigger topnav__profile">
           <div class="topnav__profile-info">
-            <span class="topnav__profile-name"><?php echo htmlspecialchars($currentName); ?></span>
+            <span class="topnav__profile-name"><?php echo htmlspecialchars($currentFullName); ?></span>
             <span class="topnav__profile-role"><?php echo htmlspecialchars($currentRole); ?></span>
           </div>
-          <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;">
-            <?php echo strtoupper(substr($currentName, 0, 2)); ?>
-          </div>
+          <?php if (!empty($currentPhoto)): ?>
+            <img src="<?php echo $currentPhoto; ?>" class="avatar" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+          <?php else: ?>
+            <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;display:flex;align-items:center;justify-content:center;">
+              <?php echo strtoupper(substr($currentName, 0, 2)); ?>
+            </div>
+          <?php endif; ?>
         </div>
         <div class="dropdown-menu">
           <?php if ($currentRole === 'Candidat'): ?>

@@ -19,10 +19,8 @@ $pageTitle = "Guide Aptus - Explorez la magie";
   <script src="/aptus_first_official_version/view/assets/js/theme-toggle.js"></script>
 </head>
 <body class="landing-page-body">
-  
   <!-- Interactive Cursor Aura -->
   <div id="cursor-aura"></div>
-
   <!-- NAVIGATION -->
   <?php echo getNavElements(); ?>
 

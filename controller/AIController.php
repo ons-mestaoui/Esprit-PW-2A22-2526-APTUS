@@ -1,12 +1,8 @@
+
 <?php
 require_once __DIR__ . '/../config.php';
 
-$keys_path = __DIR__ . '/../api_keys.php';
-if (file_exists($keys_path)) {
-    require_once $keys_path;
-} else {
-    die(json_encode(['success' => false, 'message' => 'Fichier de configuration API introuvable.']));
-}
+require_once __DIR__ . '/EnvLoader.php';
 
 class AIController
 {
@@ -15,10 +11,28 @@ class AIController
 
     public function __construct()
     {
-        if (defined('GROQ_API_KEYS'))
-            $this->groqKeys = GROQ_API_KEYS;
-        if (defined('GEMINI_API_KEY'))
-            $this->geminiKey = GEMINI_API_KEY;
+        $envPath = __DIR__ . '/../.env';
+        if (!file_exists($envPath)) {
+            $envPath = dirname(__DIR__) . '/.env';
+        }
+        EnvLoader::load($envPath);
+
+        $this->geminiKey = $_ENV['GEMINI_API_KEY'] ?? $_SERVER['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY') ?? '';
+
+        $keys = [];
+        $envGroqKeys = $_ENV['GROQ_API_KEYS'] ?? $_SERVER['GROQ_API_KEYS'] ?? getenv('GROQ_API_KEYS') ?? '';
+        if (!empty($envGroqKeys)) {
+            $keys = explode(',', $envGroqKeys);
+        }
+
+        foreach (['GROQ_KEY_1', 'GROQ_KEY_2', 'GROQ_KEY_3', 'GROQ_API_KEY'] as $var) {
+            $val = $_ENV[$var] ?? $_SERVER[$var] ?? getenv($var) ?? '';
+            if (!empty($val) && !in_array($val, $keys)) {
+                $keys[] = $val;
+            }
+        }
+
+        $this->groqKeys = $keys;
     }
 
     // ============================================================
@@ -359,7 +373,7 @@ class AIController
         $prompt = "";
         foreach ($data['messages'] as $m)
             $prompt .= $m['content'] . "\n";
-        $url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" . $key;
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $key;
         $body = ["contents" => [["parts" => [["text" => $prompt]]]]];
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

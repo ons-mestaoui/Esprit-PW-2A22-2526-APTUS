@@ -17,6 +17,22 @@ if (!$userId || $userRole !== 'admin') {
     header("Location: ../frontoffice/login.php");
     exit();
 }
+
+if (!class_exists('UtilisateurC')) {
+    include_once __DIR__ . '/../../controller/UtilisateurC.php';
+}
+if (!class_exists('ProfilC')) {
+    include_once __DIR__ . '/../../controller/ProfilC.php';
+}
+$_layout_uC = new UtilisateurC();
+$_layout_pC = new ProfilC();
+
+$_admin_user = $_layout_uC->getUtilisateurById($userId);
+$_admin_profil = $_layout_pC->getProfilByIdUtilisateur($userId);
+$_layout_prefs = $_layout_uC->getPreferences($userId);
+
+$adminName = $_admin_user ? ($_admin_user['nom'] . ' ' . ($_admin_user['prenom'] ?? '')) : 'Administrateur';
+$adminPhoto = $_admin_profil ? ($_admin_profil['photo'] ?? null) : null;
 ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
@@ -37,6 +53,10 @@ if (!$userId || $userRole !== 'admin') {
   <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/layout_back.css">
   <?php if (isset($pageCSS)): ?>
     <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/<?php echo $pageCSS; ?>">
+  <?php endif; ?>
+  <?php if (!empty($_layout_prefs)): ?>
+  <!-- AI Agent Widget -->
+  <link rel="stylesheet" href="/aptus_first_official_version/view/assets/css/ai_agent.css">
   <?php endif; ?>
 
   <!-- Quill JS for Rich Text Editor -->
@@ -154,9 +174,13 @@ if (!$userId || $userRole !== 'admin') {
               <span class="back-topbar__admin-name"><?php echo isset($adminName) ? $adminName : 'Administrateur'; ?></span>
               <span class="back-topbar__admin-role">Super Admin</span>
             </div>
-            <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;">
-              <?php echo isset($adminName) ? strtoupper(substr($adminName, 0, 2)) : 'AD'; ?>
-            </div>
+            <?php if (!empty($adminPhoto)): ?>
+              <img src="<?php echo $adminPhoto; ?>" class="avatar" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+            <?php else: ?>
+              <div class="avatar avatar-initials" style="width:36px;height:36px;font-size:13px;display:flex;align-items:center;justify-content:center;">
+                <?php echo isset($adminName) ? strtoupper(substr($adminName, 0, 2)) : 'AD'; ?>
+              </div>
+            <?php endif; ?>
           </div>
           <div class="dropdown-menu">
             <a href="profil_admin.php" class="dropdown-item">
@@ -235,6 +259,10 @@ if (!$userId || $userRole !== 'admin') {
   <script src="/aptus_first_official_version/view/assets/js/charts.js"></script>
   <?php if (isset($pageJS)): ?>
     <script src="/aptus_first_official_version/view/assets/js/<?php echo $pageJS; ?>"></script>
+  <?php endif; ?>
+  <?php if (!empty($_layout_prefs)): ?>
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent.js"></script>
+  <script src="/aptus_first_official_version/view/assets/js/ai_agent_ext.js"></script>
   <?php endif; ?>
   <script>
     lucide.createIcons();

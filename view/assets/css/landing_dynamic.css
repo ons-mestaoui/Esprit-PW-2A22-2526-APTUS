@@ -372,7 +372,7 @@ body.landing-page-body {
   padding: 8rem 5%;
   position: relative;
   z-index: 5;
-  background: var(--landing-bg);
+  background: transparent;
 }
 .section-resources,
 .section-team,
@@ -732,3 +732,20 @@ body.landing-page-body {
 .secondary-gradient { background: linear-gradient(135deg, #0d9488 0%, #2dd4bf 100%); box-shadow: 0 4px 10px rgba(13, 148, 136, 0.3); }
 .hover-bg-subtle:hover { background: rgba(124, 58, 237, 0.05); }
 [data-theme="dark"] .hover-bg-subtle:hover { background: rgba(124, 58, 237, 0.15); }
+
+/* Global Plexus Tech Background Canvas */
+#global-plexus-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.9;
+  transition: opacity 0.5s ease;
+}
+[data-theme="dark"] #global-plexus-canvas {
+  opacity: 0.75;
+}
+
